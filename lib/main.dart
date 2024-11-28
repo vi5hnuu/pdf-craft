@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/pages/HomeScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 
@@ -39,7 +40,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(opacity: animation, child: child),
           ),
         ),
-      ]);
+        GoRoute(
+          name: 'home',
+          path: '/',
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: const Homescreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>FadeTransition(opacity: animation, child: child),
+          ),
+         )
+  ]);
 
   @override
   void initState() {
@@ -52,10 +62,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MaterialApp.router(
       key: parentNavKey,
       scaffoldMessengerKey: NotificationService.messengerKey,
-      title: 'Code Sprout',
+      title: 'Pdf craft',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(1, 223, 81, 73)),
         useMaterial3: true,
       ),
       routerConfig: router,

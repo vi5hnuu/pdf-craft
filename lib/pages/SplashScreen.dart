@@ -34,12 +34,12 @@ class _SplashScreenState extends State<SplashScreen> {
             Container(
               width: double.infinity,
               margin: const EdgeInsets.symmetric(horizontal: 75,vertical: 125),
-              child:LottieBuilder.asset("assets/lottie/developer.json",fit: BoxFit.fitWidth,animate: true,backgroundLoading: true,),
+              child:LottieBuilder.asset("assets/lottie/files.json",fit: BoxFit.fitWidth,animate: true,backgroundLoading: true,),
             ),
             Column(
               children: [
                 Text(
-                  "Code Sprout",
+                  "Pdf Craft",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontFamily: "PermanentMarker", fontSize: 32, color: Theme.of(context).primaryColor),
                 ),
@@ -52,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   goToHome(){
-    // GoRouter.of(context).replaceNamed('problems info');
+    GoRouter.of(context).replaceNamed('home');
   }
 
   @override
