@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   goToHome(){
-    GoRouter.of(context).replaceNamed('problems info');
+    GoRouter.of(context).goNamed('home');
   }
 
   @override
