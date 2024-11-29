@@ -8,6 +8,11 @@ import 'package:pdf_craft/pages/tab-screens/HomeScreen.dart';
 import 'package:pdf_craft/pages/tab-screens/ScannerScreen.dart';
 import 'package:pdf_craft/pages/tab-screens/SettingScreen.dart';
 import 'package:pdf_craft/pages/tab-screens/ToolsScreen.dart';
+import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
+import 'package:pdf_craft/pages/tab-widgets/HomeScreen.dart';
+import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
+import 'package:pdf_craft/pages/tab-widgets/SettingScreen.dart';
+import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
