@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:pdf_craft/constants/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 
 import '../../singletons/DioSingleton.dart';
 

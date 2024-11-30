@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:pdf_craft/constants/Constants.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/models/request/page-numbers.dart';
@@ -9,6 +8,7 @@ import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 
 import '../../singletons/DioSingleton.dart';
 

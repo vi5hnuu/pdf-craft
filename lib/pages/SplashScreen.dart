@@ -45,6 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final theme=Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
         body: Column(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -56,12 +57,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             Column(
               children: [
-                Text(
-                  "Pdf Craft",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: "PermanentMarker", fontSize: 32, color: Theme.of(context).primaryColor),
-                ),
-                const SizedBox(height: 15),
                 SpinKitPulse(color: theme.primaryColor)
               ],
             ),

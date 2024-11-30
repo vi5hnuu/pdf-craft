@@ -15,6 +15,18 @@ class MainScreen extends StatelessWidget {
 
     return Scaffold(
       body: navigationShell,
+      appBar: AppBar(elevation: 5,leading: Padding(
+        padding: const EdgeInsets.only(left: 16.0),
+        child: Image.asset("assets/logo.webp",fit: BoxFit.fitWidth,width: 124,),
+      ),backgroundColor: Colors.black,leadingWidth: 112,
+      actions: [IconButton(onPressed: () {
+        
+      }, icon: Icon(Icons.search,color: Colors.white,size: 36,)),
+      Padding(
+        padding: const EdgeInsets.only(right: 8.0,left: 16),
+        child: CircleAvatar(child: Icon(Icons.person)),
+      )
+      ],),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.shifting,
         elevation: 5,
@@ -24,7 +36,7 @@ class MainScreen extends StatelessWidget {
         showUnselectedLabels: true,
         items:const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home',activeIcon: Icon(Icons.home),tooltip: 'Home',backgroundColor: Colors.black),
-          BottomNavigationBarItem(icon: Icon(Icons.folder_copy_outlined), label: 'Files',activeIcon: Icon(Icons.settings),tooltip: 'Files',backgroundColor: Colors.black),
+          BottomNavigationBarItem(icon: Icon(Icons.folder_copy_outlined), label: 'Files',activeIcon: Icon(Icons.folder),tooltip: 'Files',backgroundColor: Colors.black),
           BottomNavigationBarItem(icon: Icon(Icons.build_outlined), label: 'Tools',activeIcon: Icon(Icons.build),tooltip: 'Tools',backgroundColor: Colors.black),
           BottomNavigationBarItem(icon: Icon(Icons.document_scanner_outlined), label: 'Scanner',activeIcon: Icon(Icons.document_scanner),tooltip: 'Scanner',backgroundColor: Colors.black),
           BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Settings',activeIcon: Icon(Icons.settings),tooltip: 'Settings',backgroundColor: Colors.black),
