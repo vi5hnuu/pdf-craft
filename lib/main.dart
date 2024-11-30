@@ -12,12 +12,18 @@ import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
-final GlobalKey<NavigatorState> _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
-final GlobalKey<NavigatorState> _filesNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'files');
-final GlobalKey<NavigatorState> _toolsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'tools');
-final GlobalKey<NavigatorState> _scannerNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'scanner');
-final GlobalKey<NavigatorState> _settingsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'settings');
+final GlobalKey<NavigatorState> _rootNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'root');
+final GlobalKey<NavigatorState> _homeNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'home');
+final GlobalKey<NavigatorState> _filesNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'files');
+final GlobalKey<NavigatorState> _toolsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'tools');
+final GlobalKey<NavigatorState> _scannerNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'scanner');
+final GlobalKey<NavigatorState> _settingsNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'settings');
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +33,8 @@ void main() {
   ]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.black, // Change to your desired color
-    systemNavigationBarIconBrightness: Brightness.light, // Adjust icons if needed
+    systemNavigationBarIconBrightness:
+        Brightness.light, // Adjust icons if needed
   ));
   runApp(NestedTabNavigationExampleApp());
 }
@@ -46,11 +53,28 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const SplashScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(opacity: animation, child: child),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        // The screen to display as the root in the first tab of the
+        // bottom navigation bar.
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/file-selection',
+        name: 'file-selection',
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: FilesListing(
+              type: ListingType.fromJson(state.uri.queryParameters['type']!)),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
         ),
       ),
       StatefulShellRoute.indexedStack(
-        builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) {
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (BuildContext context, GoRouterState state,
+            StatefulNavigationShell navigationShell) {
           return MainScreen(navigationShell: navigationShell);
         },
         branches: <StatefulShellBranch>[
@@ -62,7 +86,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                 // bottom navigation bar.
                 path: '/',
                 name: 'home',
-                builder: (BuildContext context, GoRouterState state) => const HomeScreen(),
+                builder: (BuildContext context, GoRouterState state) =>
+                    const HomeScreen(),
               ),
             ],
           ),
@@ -73,34 +98,42 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
               GoRoute(
                 path: '/files',
                 name: 'files',
-                builder: (BuildContext context, GoRouterState state) => const FilesScreen(),
+                builder: (BuildContext context, GoRouterState state) =>
+                    const FilesScreen(),
                 routes: [
                   GoRoute(
                     // The screen to display as the root in the first tab of the
                     // bottom navigation bar.
-                      path: 'listing',
-                      name: 'listing',
-                      builder: (BuildContext context, GoRouterState state) => FilesListing(type: ListingType.fromJson(state.uri.queryParameters['type']!)),
-                  )
+                    parentNavigatorKey: _rootNavigatorKey,
+                    path: 'listing',
+                    name: 'listing',
+                    pageBuilder: (context, state) => CustomTransitionPage<void>(
+                      key: state.pageKey,
+                      child: FilesListing(
+                          type: ListingType.fromJson(state.uri.queryParameters['type']!)),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                          FadeTransition(opacity: animation, child: child),
+                    ),
+                  ),
                 ]
               ),
             ],
           ),
           StatefulShellBranch(
-            navigatorKey: _toolsNavigatorKey,
-            initialLocation: '/tools',
-            routes: [
-              GoRoute(
-                // The screen to display as the root in the first tab of the
-                // bottom navigation bar.
-                path: '/tools',
-                name: 'tools',
-                builder: (BuildContext context, GoRouterState state) => const ToolsScreen(),
-              ),
-            ]
-          ),
+              navigatorKey: _toolsNavigatorKey,
+              initialLocation: '/tools',
+              routes: [
+                GoRoute(
+                  // The screen to display as the root in the first tab of the
+                  // bottom navigation bar.
+                  path: '/tools',
+                  name: 'tools',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      const ToolsScreen(),
+                ),
+              ]),
           StatefulShellBranch(
-            navigatorKey: _scannerNavigatorKey,
+              navigatorKey: _scannerNavigatorKey,
               initialLocation: '/scanner',
               routes: [
                 GoRoute(
@@ -108,12 +141,12 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                   // bottom navigation bar.
                   path: '/scanner',
                   name: 'scanner',
-                  builder: (BuildContext context, GoRouterState state) => const ScannerScreen(),
+                  builder: (BuildContext context, GoRouterState state) =>
+                      const ScannerScreen(),
                 ),
-              ]
-          ),
+              ]),
           StatefulShellBranch(
-            navigatorKey: _settingsNavigatorKey,
+              navigatorKey: _settingsNavigatorKey,
               initialLocation: '/setting',
               routes: [
                 GoRoute(
@@ -121,10 +154,10 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                   // bottom navigation bar.
                   path: '/setting',
                   name: 'setting',
-                  builder: (BuildContext context, GoRouterState state) => const SettingScreen(),
+                  builder: (BuildContext context, GoRouterState state) =>
+                      const SettingScreen(),
                 ),
-              ]
-          ),
+              ]),
         ],
       ),
     ],
@@ -138,8 +171,10 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        brightness: Brightness.dark, // Ensures dark mode defaults
-        scaffoldBackgroundColor: Colors.black, // Black background
+        brightness: Brightness.dark,
+        // Ensures dark mode defaults
+        scaffoldBackgroundColor: Colors.black,
+        // Black background
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.black,
           titleTextStyle: TextStyle(color: Colors.white, fontSize: 20),

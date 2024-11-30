@@ -11,11 +11,12 @@ class NotificationService {
 
   static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? showSnackbar({required String text, MaterialColor color = Colors.red, bool showCloseIcon = true,Duration? duration}){
       final snackbar = SnackBar(
-      content: Text(text),
+      content: Text(text,style: TextStyle(color: Colors.white),),
       elevation: 5,
       backgroundColor: color,
       behavior: SnackBarBehavior.floating,
       showCloseIcon: showCloseIcon,
+      closeIconColor: Colors.white,
       duration: duration ?? const Duration(seconds: 2),
     );
     return _scaffoldMessengerKey.currentState?.showSnackBar(snackbar);

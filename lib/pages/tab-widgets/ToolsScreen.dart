@@ -14,16 +14,18 @@ class _ToolsScreenState extends State<ToolsScreen> {
     return SafeArea(child: Padding(
       padding: const EdgeInsets.all(8.0),
       child: GridView.count(crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
         children: [
-          PdfTool(name: "Merge Pdf",),
-          PdfTool(name: "Reorder Pdf",),
-          PdfTool(name: "Split Pdf",),
-          PdfTool(name: "Pdf To Jpg",),
-          PdfTool(name: "Image To Pdf",),
-          PdfTool(name: "Page Numbers",),
-          PdfTool(name: "Rotate Pdf",),
-          PdfTool(name: "Unprotect Pdf",),
-          PdfTool(name: "Protect Pdf",),
+          PdfTool(assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
+          PdfTool(assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
+          PdfTool(assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
+          PdfTool(assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
+          PdfTool(assetFilePath: "assets/tools/image-to-pdf.png",name: "Image To Pdf",),
+          PdfTool(assetFilePath: "assets/tools/page-numbers.png",name: "Page Numbers",),
+          PdfTool(assetFilePath: "assets/tools/rotate-pdf.png",name: "Rotate Pdf",),
+          PdfTool(assetFilePath: "assets/tools/unprotect-pdf.png",name: "Unprotect Pdf",),
+          PdfTool(assetFilePath: "assets/tools/protect-pdf.png",name: "Protect Pdf",),
       ],),
     ));
   }
@@ -31,14 +33,27 @@ class _ToolsScreenState extends State<ToolsScreen> {
 
 class PdfTool extends StatelessWidget {
   final String name;
+  final String assetFilePath;
 
   const PdfTool({
     super.key,
-    required this.name
+    required this.name,
+    required this.assetFilePath
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(child: Card(child: Padding(padding: EdgeInsets.all(8),child: Text(name),),elevation: 0.1,borderOnForeground: true));
+    return GestureDetector(child: Container(
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05),borderRadius: BorderRadius.circular(12)),
+      padding: EdgeInsets.all(8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: Image.asset(assetFilePath,fit: BoxFit.fitWidth,height: double.infinity,),),
+          SizedBox(height: 12,),
+          Text(name,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),)
+        ],
+      ),
+    ));
   }
 }
