@@ -6,11 +6,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SystemFiles {
   final List<FileSystemEntity> files;
@@ -91,7 +93,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                     itemBuilder: (context, index) {
                       final file = state.files[index];
                       return ListTile(
-                        selected: state.exists(file)!=null,
+                        selected: state.getSelectedFile(file)!=null,
                         selectedTileColor: Colors.green.withOpacity(0.15),
                         selectedColor: Colors.green,
                         leading: file is Directory
@@ -101,10 +103,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                             color: Colors.orange),
                         title: Text(file.path.split('/').last),
                         subtitle: (file is! Directory) ? Text(Utility.bytesToSize(File(file.path).lengthSync())) : null,
-                        onTap: file is! Directory ? (state.selectedFiles.isEmpty || state.exists(file)!=null || widget.multiSelect ? (){
-                          // _toggleFileSelection(file);
-                          router.pushNamed("pdf-file-preview",pathParameters: {'pdfFilePath':file.path});
-                        } : null) : () =>_loadDirectoryFiles((pathToDirectory..add(file.path)).last),
+                        onTap:()=> _onItemClick(file: file,isDirectory: file is Directory,hasSelectedFiles:state.selectedFiles.isNotEmpty,isSelectedFile: state.getSelectedFile(file)!=null, isMultiselectAllow: widget.multiSelect)
                       );
                     })),
                                 AnimatedOpacity(opacity:state.selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: state.selectedFiles.isNotEmpty ? Container(
@@ -142,5 +141,25 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   void dispose() {
     bloc.add(const ResetFilesState());
     super.dispose();
+  }
+
+  _onItemClick({required FileSystemEntity file,required bool isDirectory,required bool hasSelectedFiles,required bool isSelectedFile,required bool isMultiselectAllow}) async {
+    try{
+      if(!isDirectory){
+        if(!hasSelectedFiles || isSelectedFile || isMultiselectAllow){
+          // _toggleFileSelection(file);
+          final  extension ='.${file.path.split('.').last}';
+          if(Utility.isPdf(file.path)) {
+            GoRouter.of(context).pushNamed("pdf-file-preview",pathParameters: {'pdfFilePath':file.path});
+          } else {
+            OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[extension] ?? '*/*');
+          }
+        }
+      }else{
+        _loadDirectoryFiles((pathToDirectory..add(file.path)).last);
+      }
+    }catch(e){
+      NotificationService.showSnackbar(text: "Something went wrong",color: Colors.red,showCloseIcon: true);
+    }
   }
 }

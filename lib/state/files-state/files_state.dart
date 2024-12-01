@@ -31,7 +31,7 @@ class FilesState extends Equatable with WithHttpState {
     );
   }
 
-  FileSystemEntity? exists(FileSystemEntity file) {
+  FileSystemEntity? getSelectedFile(FileSystemEntity file) {
     try{
       return selectedFiles.firstWhere((f)=>f.path==file.path);
     }catch(e){

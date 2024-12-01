@@ -39,7 +39,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     on<ToggleFileSelection>((event, emit) async {
       final selectedFiles = [...state.selectedFiles];
-      if (state.exists(event.file) != null) {
+      if (state.getSelectedFile(event.file) != null) {
         selectedFiles.removeWhere((file) => file.path == event.file.path);
       } else {
         selectedFiles.add(event.file);

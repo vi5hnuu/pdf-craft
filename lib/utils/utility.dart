@@ -10,4 +10,8 @@ class Utility{
     // Format to 2 decimal places for readability
     return '${size.toStringAsFixed(2)} ${sizes[i]}';
   }
+
+  static bool isPdf(String path) {
+    return path.endsWith('pdf');
+  }
 }
