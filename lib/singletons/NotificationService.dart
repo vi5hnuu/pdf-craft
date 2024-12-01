@@ -10,7 +10,8 @@ class NotificationService {
   static get messengerKey => _scaffoldMessengerKey;
 
   static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? showSnackbar({required String text, MaterialColor color = Colors.red, bool showCloseIcon = true,Duration? duration}){
-      final snackbar = SnackBar(
+    _scaffoldMessengerKey.currentState?.clearSnackBars();
+    final snackbar = SnackBar(
       content: Text(text,style: TextStyle(color: Colors.white),),
       elevation: 5,
       backgroundColor: color,
