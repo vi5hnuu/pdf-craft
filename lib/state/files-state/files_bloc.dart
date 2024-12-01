@@ -50,7 +50,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     on<SearchFile>((event, emit) async {
       if (_searchSubscription != null) await _searchSubscription!.cancel();
       if (_searchController != null) await _searchController!.close();
-      _searchController = StreamController<List<File>>();
+      _searchController = StreamController<List<File>>.broadcast();
       List<File> files = [];
       _searchSubscription = searchFiles(event.path, event.nameLike).listen(
             (data) {
@@ -106,7 +106,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
                 .split('/')
                 .last
                 .toLowerCase();
-            if (!fileName.contains(userInput.toLowerCase())) continue;
+            if (!fileName.startsWith(userInput.toLowerCase())) continue;
             yield entity;
           } else if (entity is Directory) {
             yield* searchFiles(entity.path, userInput);
