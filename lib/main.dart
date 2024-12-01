@@ -63,8 +63,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/file-selection',
-        name: 'file-selection',
+        path: '/file-management',
+        name: 'file-management',
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: FilesListing(
@@ -104,9 +104,6 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                     const FilesScreen(),
                 routes: [
                   GoRoute(
-                    // The screen to display as the root in the first tab of the
-                    // bottom navigation bar.
-                    parentNavigatorKey: _rootNavigatorKey,
                     path: 'listing',
                     name: 'listing',
                     pageBuilder: (context, state) => CustomTransitionPage<void>(

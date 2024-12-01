@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,9 +8,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
-import 'package:pdf_craft/utils/StoragePermissions.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:pdf_craft/utils/utility.dart';
 
 class SystemFiles {
   final List<FileSystemEntity> files;
@@ -31,8 +30,10 @@ class SystemFiles {
 
 class DirectoryFilesListing extends StatefulWidget {
   final String directoryPath;
+  final bool multiSelect;
+  final List<String> limitToExtensions;
 
-  const DirectoryFilesListing({super.key, required this.directoryPath});
+  const DirectoryFilesListing({super.key, required this.directoryPath,this.multiSelect=false,this.limitToExtensions=const []});
 
   @override
   State<DirectoryFilesListing> createState() => _DirectoryFilesListingState();
@@ -52,6 +53,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   @override
   Widget build(BuildContext context) {
+    final router=GoRouter.of(context);
 
     return Scaffold(
         body: SafeArea(
@@ -60,7 +62,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
           if (pathToDirectory.length <= 1) {
-            GoRouter.of(context).pop();
+            router.pop();
           } else {
             setState(() {
               pathToDirectory.removeLast();
@@ -70,8 +72,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         },
         child:  BlocConsumer<FilesBloc,FilesState>(listener: (context, state) {
           final error=state.getError(forr: HttpStates.LOAD_DIRECTORY_FILES);
-          if(error==null) return;
-          NotificationService.showSnackbar(text: error,color: Colors.red);
+          if(error!=null){
+            NotificationService.showSnackbar(text: error,color: Colors.red);
+            setState(()=>pathToDirectory.removeLast());
+          }
         },
           buildWhen: (previous, current) => previous!=current,
           listenWhen: (previous, current) => previous!=current,
@@ -79,30 +83,36 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           return Stack(children: [
             if(!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))(state.files.isEmpty
                 ? const Center(child: Text('No files found'))
-                : ListView.builder(
-                itemCount: state.files.length,
-                itemBuilder: (context, index) {
-                  final file = state.files[index];
-                  return ListTile(
-                    leading: file is Directory
-                        ? const Icon(FontAwesomeIcons.solidFolder,
-                        color: Colors.yellowAccent)
-                        : const Icon(FontAwesomeIcons.file,
-                        color: Colors.green),
-                    title: Text(file.path.split('/').last),
-                    subtitle: Text(
-                        '${file is Directory ? 'Directory' : '${File(file.path).lengthSync()} bytes'}'),
-                    onTap: file is! Directory
-                        ? null
-                        : () {
-                      pathToDirectory = [
-                        ...pathToDirectory,
-                        file.path
-                      ];
-                      _loadDirectoryFiles(pathToDirectory.last);
-                    },
-                  );
-                })),
+                : Column(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                Expanded(child: ListView.builder(
+                    itemCount: state.files.length,
+                    itemBuilder: (context, index) {
+                      final file = state.files[index];
+                      return ListTile(
+                        selected: state.exists(file)!=null,
+                        selectedTileColor: Colors.green.withOpacity(0.15),
+                        selectedColor: Colors.green,
+                        leading: file is Directory
+                            ? const Icon(FontAwesomeIcons.solidFolder,
+                            color: Colors.yellowAccent)
+                            : const Icon(FontAwesomeIcons.file,
+                            color: Colors.orange),
+                        title: Text(file.path.split('/').last),
+                        subtitle: (file is! Directory) ? Text(Utility.bytesToSize(File(file.path).lengthSync())) : null,
+                        onTap: file is! Directory ? (state.selectedFiles.isEmpty || state.exists(file)!=null || widget.multiSelect ? ()=>_toggleFileSelection(file) : null) : () =>_loadDirectoryFiles((pathToDirectory..add(file.path)).last),
+                      );
+                    })),
+                                AnimatedOpacity(opacity:state.selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: state.selectedFiles.isNotEmpty ? Container(
+                                  padding: const EdgeInsets.all(16),
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(color: Colors.black87),
+                                  child: FilledButton(onPressed: ()=>router.pop(),
+                                      child: Text("Complete Selection")),
+                                ):null)
+                              ],
+                            )),
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
               Expanded(
                   child: Container(
@@ -118,6 +128,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   _loadDirectoryFiles(String path){
     if(bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
     bloc.add(LoadDirectoryFiles(path: pathToDirectory.last));
+  }
+
+
+  void _toggleFileSelection(FileSystemEntity file) {
+    bloc.add(ToggleFileSelection(file: file));
   }
 
   @override
