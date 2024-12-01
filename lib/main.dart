@@ -13,6 +13,7 @@ import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
+import 'package:pdf_craft/widgets/PdfPreview.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -69,6 +70,19 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
           key: state.pageKey,
           child: FilesListing(
               type: ListingType.fromJson(state.uri.queryParameters['type']!)),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        // The screen to display as the root in the first tab of the
+        // bottom navigation bar.
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/pdf-file-preview/:pdfFilePath',
+        name: 'pdf-file-preview',
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: PdfPreview(pdfFilePath: state.pathParameters['pdfFilePath']!),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

@@ -101,7 +101,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                             color: Colors.orange),
                         title: Text(file.path.split('/').last),
                         subtitle: (file is! Directory) ? Text(Utility.bytesToSize(File(file.path).lengthSync())) : null,
-                        onTap: file is! Directory ? (state.selectedFiles.isEmpty || state.exists(file)!=null || widget.multiSelect ? ()=>_toggleFileSelection(file) : null) : () =>_loadDirectoryFiles((pathToDirectory..add(file.path)).last),
+                        onTap: file is! Directory ? (state.selectedFiles.isEmpty || state.exists(file)!=null || widget.multiSelect ? (){
+                          // _toggleFileSelection(file);
+                          router.pushNamed("pdf-file-preview",pathParameters: {'pdfFilePath':file.path});
+                        } : null) : () =>_loadDirectoryFiles((pathToDirectory..add(file.path)).last),
                       );
                     })),
                                 AnimatedOpacity(opacity:state.selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: state.selectedFiles.isNotEmpty ? Container(
