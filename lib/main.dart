@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/enums/listing-type.dart';
 import 'package:pdf_craft/pages/MainScreen.dart';
@@ -10,6 +11,7 @@ import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/SettingScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
@@ -165,7 +167,9 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return MultiBlocProvider(providers: [
+      BlocProvider(lazy: true,create: (context) => FilesBloc())
+    ], child: MaterialApp.router(
       scaffoldMessengerKey: NotificationService.messengerKey,
       title: 'Pdf craft',
       debugShowCheckedModeBanner: false,
@@ -187,6 +191,6 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         ),
       ),
       routerConfig: _router,
-    );
+    ));
   }
 }

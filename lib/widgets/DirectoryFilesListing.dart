@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
+import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:rxdart/rxdart.dart';
 
 class SystemFiles {
@@ -35,19 +39,20 @@ class DirectoryFilesListing extends StatefulWidget {
 }
 
 class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
-  BehaviorSubject<SystemFiles> systemFilesController =
-      BehaviorSubject.seeded(const SystemFiles(files: [], isLoading: true));
+  late final FilesBloc bloc;
   List<String> pathToDirectory = [];
 
   @override
   void initState() {
+    bloc=BlocProvider.of<FilesBloc>(context);
     pathToDirectory = [widget.directoryPath];
-    _checkAndLoadFiles(pathToDirectory.last);
+    _loadDirectoryFiles(pathToDirectory.last);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
         body: SafeArea(
       child: PopScope(
@@ -59,89 +64,65 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           } else {
             setState(() {
               pathToDirectory.removeLast();
-              _checkAndLoadFiles(pathToDirectory.last);
+              _loadDirectoryFiles(pathToDirectory.last);
             });
           }
         },
-        child: StreamBuilder<SystemFiles>(
-          stream: systemFilesController.stream,
-          builder: (context, snapshot) {
-            final systemFiles = snapshot.data!;
-            return Stack(children: [
-              systemFiles.files.isEmpty
-                  ? const Center(child: Text('No files found'))
-                  : ListView.builder(
-                      itemCount: systemFiles.files.length,
-                      itemBuilder: (context, index) {
-                        final file = systemFiles.files[index];
-                        return ListTile(
-                          leading: file is Directory
-                              ? Icon(FontAwesomeIcons.solidFolder,
-                                  color: Colors.yellowAccent)
-                              : Icon(FontAwesomeIcons.file,
-                                  color: Colors.green),
-                          title: Text(file.path.split('/').last),
-                          subtitle: Text(
-                              '${file is Directory ? 'Directory' : '${File(file.path).lengthSync()} bytes'}'),
-                          onTap: file is! Directory
-                              ? null
-                              : () {
-                                  pathToDirectory = [
-                                    ...pathToDirectory,
-                                    file.path
-                                  ];
-                                  _checkAndLoadFiles(file.path);
-                                },
-                        );
-                      }),
-              if (systemFilesController.value.isLoading == true)
-                Expanded(
-                    child: Container(
-                  decoration:BoxDecoration(color: Colors.black.withOpacity(0.8)),
-                  child: const Align(alignment: Alignment.center, child: SpinKitRipple(size: 72, color: Colors.green)),
-                )),
-            ]);
-          },
-        ),
+        child:  BlocConsumer<FilesBloc,FilesState>(listener: (context, state) {
+          final error=state.getError(forr: HttpStates.LOAD_DIRECTORY_FILES);
+          if(error==null) return;
+          NotificationService.showSnackbar(text: error,color: Colors.red);
+        },
+          buildWhen: (previous, current) => previous!=current,
+          listenWhen: (previous, current) => previous!=current,
+          builder: (context, state) {
+          return Stack(children: [
+            if(!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))(state.files.isEmpty
+                ? const Center(child: Text('No files found'))
+                : ListView.builder(
+                itemCount: state.files.length,
+                itemBuilder: (context, index) {
+                  final file = state.files[index];
+                  return ListTile(
+                    leading: file is Directory
+                        ? const Icon(FontAwesomeIcons.solidFolder,
+                        color: Colors.yellowAccent)
+                        : const Icon(FontAwesomeIcons.file,
+                        color: Colors.green),
+                    title: Text(file.path.split('/').last),
+                    subtitle: Text(
+                        '${file is Directory ? 'Directory' : '${File(file.path).lengthSync()} bytes'}'),
+                    onTap: file is! Directory
+                        ? null
+                        : () {
+                      pathToDirectory = [
+                        ...pathToDirectory,
+                        file.path
+                      ];
+                      _loadDirectoryFiles(pathToDirectory.last);
+                    },
+                  );
+                })),
+            if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
+              Expanded(
+                  child: Container(
+                    decoration:BoxDecoration(color: Colors.black.withOpacity(0.8)),
+                    child: const Align(alignment: Alignment.center, child: SpinKitRipple(size: 72, color: Colors.green)),
+                  )),
+          ]);
+        },),
       ),
     ));
   }
 
-  Future<void> _checkAndLoadFiles(String path) async {
-    if (await StoragePermissions.requestPermissions()) {
-      await _loadFiles(path);
-    } else {
-      NotificationService.showSnackbar(
-          text: "Permission denied", color: Colors.red, showCloseIcon: true);
-    }
+  _loadDirectoryFiles(String path){
+    if(bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
+    bloc.add(LoadDirectoryFiles(path: pathToDirectory.last));
   }
 
-  Future<void> _loadFiles(String path) async {
-    try {
-      systemFilesController.sink
-          .add(systemFilesController.value.copyWith(loading: true));
-      // await Future.delayed(Duration(minutes: 5));
-      Directory directory = Directory(path);
-      if (directory.existsSync() == false) {
-        systemFilesController.sink
-            .add(systemFilesController.value.copyWith(loading: false));
-        NotificationService.showSnackbar(
-            text: "Directory does not exists",
-            color: Colors.red,
-            showCloseIcon: true);
-        return;
-      }
-      List<FileSystemEntity> files = directory.listSync();
-      systemFilesController.sink.add(SystemFiles(files: files));
-    } catch (e) {
-      setState(() => pathToDirectory.removeLast());
-      NotificationService.showSnackbar(
-          text: "Failed to show directory files",
-          color: Colors.red,
-          showCloseIcon: true);
-    } finally {
-      systemFilesController.sink
-          .add(systemFilesController.value.copyWith(loading: false));
-    }
+  @override
+  void dispose() {
+    bloc.add(const ResetFilesState());
+    super.dispose();
   }
 }
