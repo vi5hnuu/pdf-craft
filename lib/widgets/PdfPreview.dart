@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -27,6 +28,9 @@ class _PdfPreviewState extends State<PdfPreview> {
   late PdfControllerPinch pdfController;
   String? docTitle;
 
+
+  final errorLottie=ErrorView(subtitle: Text("Failed to Load Document",style: TextStyle(color: Colors.red,fontSize: 24,fontWeight: FontWeight.bold)));
+
   @override
   void initState() {
     pdfController = PdfControllerPinch(document: PdfDocument.openFile(widget.pdfFilePath,password: widget.password),initialPage: 1);
@@ -36,6 +40,7 @@ class _PdfPreviewState extends State<PdfPreview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title:  Text(
           docTitle ?? "Pdf View",
@@ -48,7 +53,7 @@ class _PdfPreviewState extends State<PdfPreview> {
             builder: (context, currentPage, child) {
               final totalPages = pdfController.pagesCount ?? 1;
               final displayPage = currentPage ?? 1;
-              return Padding(
+              return pdfController.pagesCount==null ? const Text("") : Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Center(
                   child: Text(
@@ -67,7 +72,7 @@ class _PdfPreviewState extends State<PdfPreview> {
         minScale: 1,
         maxScale:10,
         scrollDirection: Axis.vertical,
-        onDocumentError: (error) => const Center(child: Text("Failed to load document"),),
+        onDocumentError: (error) => Center(child: errorLottie,),
         onDocumentLoaded: (document) {
           setState(()=>docTitle=document.sourceName.split('/').last);
         },
@@ -79,7 +84,7 @@ class _PdfPreviewState extends State<PdfPreview> {
           ),
           documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
           pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
-          errorBuilder: (_, error) => Center(child: Text(error.toString())),
+          errorBuilder: (_, error) => Center(child: errorLottie),
         ),
         onPageChanged: (page) {
           print('Current page: ${page}');
@@ -92,5 +97,28 @@ class _PdfPreviewState extends State<PdfPreview> {
   void dispose() {
     pdfController.dispose();
     super.dispose();
+  }
+}
+
+class ErrorView extends StatelessWidget {
+  final Widget? subtitle;
+
+  const ErrorView({
+    super.key,
+    this.subtitle
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 75,vertical: 125),
+      child:Column(
+        children: [
+          LottieBuilder.asset("assets/lottie/error.json",fit: BoxFit.fitWidth,animate: true,backgroundLoading: true,),
+          if(subtitle!=null) subtitle!
+        ],
+      ),
+    );
   }
 }
