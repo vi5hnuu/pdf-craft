@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ToolsScreen extends StatefulWidget {
   const ToolsScreen({super.key});
@@ -9,15 +10,18 @@ class ToolsScreen extends StatefulWidget {
 }
 
 class _ToolsScreenState extends State<ToolsScreen> {
+
   @override
   Widget build(BuildContext context) {
+    final router=GoRouter.of(context);
+
     return SafeArea(child: Padding(
       padding: const EdgeInsets.all(8.0),
       child: GridView.count(crossAxisCount: 3,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
         children: [
-          PdfTool(assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
+          PdfTool(onTap: () => router.pushNamed("merge-tool"),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
           PdfTool(assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
           PdfTool(assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
           PdfTool(assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
@@ -34,16 +38,20 @@ class _ToolsScreenState extends State<ToolsScreen> {
 class PdfTool extends StatelessWidget {
   final String name;
   final String assetFilePath;
+  final VoidCallback? onTap;
 
   const PdfTool({
     super.key,
+    this.onTap,
     required this.name,
     required this.assetFilePath
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(child: Container(
+    return GestureDetector(
+        onTap: onTap,
+        child: Container(
       decoration: BoxDecoration(color: Colors.white.withOpacity(0.05),borderRadius: BorderRadius.circular(12)),
       padding: EdgeInsets.all(8),
       child: Column(

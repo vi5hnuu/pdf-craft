@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/enums/listing-type.dart';
+import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/pages/MainScreen.dart';
+import 'package:pdf_craft/pages/MergePdfView.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/HomeScreen.dart';
@@ -73,6 +77,15 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      GoRoute(
+        // The screen to display as the root in the first tab of the
+        // bottom navigation bar.
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/merge-tool',
+        name: 'merge-tool',
+        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
+        builder: (BuildContext context, GoRouterState state) => MergePdfView(files: []),
       ),
       GoRoute(
         // The screen to display as the root in the first tab of the
@@ -186,6 +199,7 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        canvasColor: Colors.white,
         brightness: Brightness.dark,
         // Ensures dark mode defaults
         scaffoldBackgroundColor: Colors.black,
