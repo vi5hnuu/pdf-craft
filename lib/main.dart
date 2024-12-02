@@ -16,6 +16,7 @@ import 'package:pdf_craft/pages/PageNumbersPdfView.dart';
 import 'package:pdf_craft/pages/PdfToJpgView.dart';
 import 'package:pdf_craft/pages/ProtectPdfView.dart';
 import 'package:pdf_craft/pages/ReorderPdfView.dart';
+import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfTypeView.dart';
@@ -84,6 +85,17 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const Errorpage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.searchRoute.name,
+        path: AppRoutes.searchRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: SearchScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

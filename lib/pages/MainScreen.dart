@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:rxdart/rxdart.dart';
@@ -20,18 +21,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final overlayController = OverlayPortalController();
-  final BehaviorSubject<String> searchSubject = BehaviorSubject();
 
   @override
   void initState() {
-    searchSubject
-        .debounceTime(const Duration(milliseconds: 500))
-        .listen((value) {
-      if (mounted)
-        BlocProvider.of<FilesBloc>(context)
-            .add(SearchFile(path: Constants.rootStoragePath, nameLike: value));
-    }, cancelOnError: false);
     super.initState();
   }
 
@@ -41,64 +33,7 @@ class _MainScreenState extends State<MainScreen> {
     final md = MediaQuery.of(context);
 
     return Scaffold(
-      body: BlocConsumer<FilesBloc, FilesState>(
-          listener: (context, state) {
-            if (state.searchStream == null) {
-              overlayController.hide();
-            }
-            state.searchStream!.listen((data) {
-              if (data.isEmpty)
-                overlayController.hide();
-              else
-                overlayController.show();
-            });
-          },
-          listenWhen: (previous, current) =>
-              previous.searchStream != current.searchStream,
-          buildWhen: (previous, current) =>
-              previous.searchStream != current.searchStream,
-          builder: (context, state) {
-            final screenHeight = md.size.height;
-            final appBarHeight =
-                Scaffold.of(context).appBarMaxHeight ?? kToolbarHeight;
-            final searchStream = state.searchStream;
-            return OverlayPortal(
-              controller: overlayController,
-              overlayChildBuilder: (context) {
-                return Positioned(
-                  top: appBarHeight,
-                  left: 0, // Adjust to position container full-width
-                  right: 0, // Ensure it stretches full width
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minHeight: 100,
-                      maxHeight: screenHeight / 3,
-                    ),
-                    width: double.infinity,
-                    // Full width
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8)),
-                    margin: EdgeInsets.all(12),
-                    padding: EdgeInsets.all(8),
-                    child: StreamBuilder(
-                      stream: searchStream,
-                      builder: (context, snapshot) {
-                        if (snapshot.data == null) return Text("data");
-                        return ListView.builder(itemCount: snapshot.data!.length,itemBuilder: (context, index) {
-                          return Text(
-                            snapshot.data![index].path,
-                            style: TextStyle(color: Colors.black),
-                          );
-                        },);
-                      },
-                    ),
-                  ),
-                );
-              },
-              child: widget.navigationShell,
-            );
-          }),
+      body: widget.navigationShell,
       appBar: AppBar(
         elevation: 5,
         leading: Padding(
@@ -112,10 +47,7 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Colors.black,
         leadingWidth: 112,
         actions: [
-          Flexible(
-            child: TextFormField(
-                onChanged: (value) => searchSubject.sink.add(value)),
-          ),
+          IconButton(onPressed: () => GoRouter.of(context).pushNamed(AppRoutes.searchRoute.name), icon: const Icon(Icons.search)),
           Padding(
             padding: const EdgeInsets.only(right: 8.0, left: 16),
             child: CircleAvatar(child: Icon(Icons.person)),

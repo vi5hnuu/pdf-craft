@@ -9,6 +9,8 @@ class AppRoutes{
 
   static AppRoute errorRoute=AppRoute(name: 'error', path: '/error');
 
+  static AppRoute searchRoute=AppRoute(name: 'search', path: '/search');
+
   static AppRoute fileManagement=AppRoute(name: 'file-management', path: '/file-management');
 
   static AppRoute mergePdfRoute=AppRoute(name: 'merge-pdf-tool', path: '/merge-pdf-tool');

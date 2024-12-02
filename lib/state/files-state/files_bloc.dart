@@ -38,8 +38,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     });
 
     on<SearchFile>((event, emit) async {
-      if (_searchSubscription != null) await _searchSubscription!.cancel();
-      if (_searchController != null) await _searchController!.close();
+      if (_searchSubscription != null) await _searchSubscription?.cancel();
+      if (_searchController != null) await _searchController?.close();
       _searchController = StreamController<List<File>>.broadcast();
       List<File> files = [];
       _searchSubscription = searchFiles(event.path, event.nameLike).listen(
@@ -51,7 +51,14 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       );
       emit(state.copyWith(searchStream: _searchController!.stream));
     });
+
+    on<ResetSearch>((event, emit) async {
+      if (_searchSubscription != null) await _searchSubscription!.cancel();
+      if (_searchController != null) await _searchController!.close();
+      emit(state.copyWith(searchStream: null));
+    });
   }
+
 
   Future<List<FileSystemEntity>> _loadDirectoryFiles(String path) async {
     try {

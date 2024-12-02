@@ -13,6 +13,7 @@ import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/FileTile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 
@@ -84,20 +85,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                     itemCount: state.files.length,
                     itemBuilder: (context, index) {
                       final file = state.files[index];
-                      return ListTile(
-                        enabled: file is Directory || widget.limitSelectionToExtensions.isEmpty || widget.limitSelectionToExtensions.contains(Utility.fileExtension(file as File)),
-                        selected: _isFileSelected(file),
-                        selectedTileColor: Colors.green.withOpacity(0.15),
-                        selectedColor: Colors.green,
-                        leading: file is Directory
-                            ? const Icon(FontAwesomeIcons.solidFolder,
-                            color: Colors.yellowAccent)
-                            : const Icon(FontAwesomeIcons.file,
-                            color: Colors.orange),
-                        title: Text(file.path.split('/').last),
-                        subtitle: (file is! Directory) ? Text(Utility.bytesToSize(File(file.path).lengthSync())) : null,
-                        onTap:()=> _onItemClick(file: file)
-                      );
+                      return FileTile(file: file,
+                        selected:  _isFileSelected(file),
+                        onPress: ()=> _onItemClick(file: file),
+                        enabled: file is Directory || widget.limitSelectionToExtensions.isEmpty || widget.limitSelectionToExtensions.contains(Utility.fileExtension(file as File)));
                     })),
                                 AnimatedOpacity(opacity:selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: selectedFiles.isNotEmpty ? Container(
                                   padding: const EdgeInsets.all(16),
@@ -168,3 +159,6 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     }
   }
 }
+
+
+
