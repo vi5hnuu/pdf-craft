@@ -145,11 +145,12 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file as File)] ?? '*/*');
         }
       }else{
+        if(_isFileSelected(file)){
+         setState(()=>selectedFiles.removeWhere((selectedFile)=>selectedFile.path==file.path));
+          return;
+        }
         if(widget.multiSelect==true || selectedFiles.isEmpty){
-          setState((){
-            if(_isFileSelected(file)) selectedFiles.removeWhere((selectedFile)=>selectedFile.path==file.path);
-            else selectedFiles.add(file as File);
-          });
+          setState(()=>selectedFiles.add(file as File));
         }else{
           NotificationService.showSnackbar(text: "Multiple file selection not allowed");
         }

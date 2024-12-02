@@ -80,7 +80,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      PdfPageThumbnail(controller: _pdfController, pageNumber: _pageIndexes[index]+1, width: 100, height: 200),
+                      PdfPageThumbnail(document: snapshot.data!, pageNumber: _pageIndexes[index]+1, width: 100, height: 200),
                       Text(Utility.fileName(file: widget.file)),
                       Text('Page ${_pageIndexes[index]+1}'),
                     ],
