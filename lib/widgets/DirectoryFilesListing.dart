@@ -7,6 +7,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -150,7 +151,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           // _toggleFileSelection(file);
           final  extension ='.${file.path.split('.').last}';
           if(Utility.isPdf(file.path)) {
-            GoRouter.of(context).pushNamed("pdf-file-preview",pathParameters: {'pdfFilePath':file.path});
+            GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':file.path});
           } else {
             OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[extension] ?? '*/*');
           }

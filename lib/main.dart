@@ -23,6 +23,7 @@ import 'package:pdf_craft/pages/tab-widgets/HomeScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/SettingScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
@@ -61,11 +62,11 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
   final GoRouter _router = GoRouter(
     debugLogDiagnostics: true,
     navigatorKey: _rootNavigatorKey, //navigator = 1
-    initialLocation: '/splash',
+    initialLocation: AppRoutes.splashRoute.path,
     routes: [
       GoRoute(
-        name: 'splash',
-        path: '/splash',
+        name: AppRoutes.splashRoute.name,
+        path: AppRoutes.splashRoute.path,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const SplashScreen(),
@@ -77,8 +78,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/file-management',
-        name: 'file-management',
+        path: AppRoutes.fileManagement.path,
+        name: AppRoutes.fileManagement.name,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: FilesListing(
@@ -91,8 +92,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/merge-pdf-tool',
-        name: 'merge-pdf-tool',
+        path: AppRoutes.mergePdfRoute.path,
+        name: AppRoutes.mergePdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => MergePdfView(files: []),
       ),
@@ -100,8 +101,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/reorder-pages-pdf-tool',
-        name: 'reorder-pages-pdf-tool',
+        path: AppRoutes.reorderPdfPagesRoute.path,
+        name: AppRoutes.reorderPdfPagesRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => ReorderPdfView(file: File("xy/y/temporaryPdf.pdf")),
       ),
@@ -109,8 +110,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/pdf-to-jpg-tool',
-        name: 'pdf-to-jpg-tool',
+        path: AppRoutes.pdfToJpgRoute.path,
+        name: AppRoutes.pdfToJpgRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => PdfToJpgView(file: File("xy/y/temporaryPdf.pdf"),),
       ),
@@ -118,8 +119,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/image-to-pdf-tool',
-        name: 'image-to-pdf-tool',
+        path: AppRoutes.imageToPdfRoute.path,
+        name: AppRoutes.imageToPdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => ImageToPdfView(files: []),
       ),
@@ -127,8 +128,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/page-numbers-tool',
-        name: 'page-numbers-tool',
+        path: AppRoutes.pageNumbersRoute.path,
+        name: AppRoutes.pageNumbersRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => PageNumberPdfView(file: File("temporary.pdf")),
       ),
@@ -136,14 +137,14 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/split-pdf-tool',
-        name: 'split-pdf-tool',
+        path: AppRoutes.splitPdfRoute.path,
+        name: AppRoutes.splitPdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => SplitPdfView(file: File("xy/y/temporaryPdf.pdf")),
         routes: [
           GoRoute(
-              path: ':splitType',
-              name: 'split-pdf-by-type',
+              path: AppRoutes.splitByTypePdfRoute.path,
+              name: AppRoutes.splitByTypePdfRoute.name,
               builder: (BuildContext context, GoRouterState state) => SplitPdfTypeView(file: File("xy/y/temporaryPdf.pdf"),outFileName: state.uri.queryParameters['outFileName']!,type:SplitType.fromJson(state.pathParameters['splitType']!)),
           ),
         ]
@@ -152,8 +153,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/unprotect-pdf-tool',
-        name: 'unprotect-pdf-tool',
+        path: AppRoutes.unprotectPdfRoute.path,
+        name: AppRoutes.unprotectPdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => ProtectPdfView(file: File("temporary.pdf")),
       ),
@@ -161,8 +162,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/protect-pdf-tool',
-        name: 'protect-pdf-tool',
+        path: AppRoutes.protectPdfRoute.path,
+        name: AppRoutes.protectPdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: File("temporary.pdf")),
       ),
@@ -170,8 +171,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/rotate-pdf-tool',
-        name: 'rotate-pdf-tool',
+        path: AppRoutes.rotatePdfRoute.path,
+        name: AppRoutes.rotatePdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: File("temporary.pdf")),
       ),
@@ -179,8 +180,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/pdf-file-preview/:pdfFilePath',
-        name: 'pdf-file-preview',
+        path: AppRoutes.pdfFilePreviewRoute.path,
+        name: AppRoutes.pdfFilePreviewRoute.name,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: PdfPreview(pdfFilePath: state.pathParameters['pdfFilePath']!),
@@ -201,8 +202,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
               GoRoute(
                 // The screen to display as the root in the first tab of the
                 // bottom navigation bar.
-                path: '/',
-                name: 'home',
+                path: AppRoutes.homeRoute.path,
+                name: AppRoutes.homeRoute.name,
                 builder: (BuildContext context, GoRouterState state) =>
                     const HomeScreen(),
               ),
@@ -210,17 +211,17 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
           ),
           StatefulShellBranch(
             navigatorKey: _filesNavigatorKey,
-            initialLocation: '/files',
+            initialLocation: AppRoutes.filesRoute.path,
             routes: <RouteBase>[
               GoRoute(
-                path: '/files',
-                name: 'files',
+                path: AppRoutes.filesRoute.path,
+                name: AppRoutes.filesRoute.name,
                 builder: (BuildContext context, GoRouterState state) =>
                     const FilesScreen(),
                 routes: [
                   GoRoute(
-                    path: 'listing',
-                    name: 'listing',
+                    path: AppRoutes.filesListingRoute.path,
+                    name: AppRoutes.filesListingRoute.name,
                     pageBuilder: (context, state) => CustomTransitionPage<void>(
                       key: state.pageKey,
                       child: FilesListing(
@@ -235,39 +236,39 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
           ),
           StatefulShellBranch(
               navigatorKey: _toolsNavigatorKey,
-              initialLocation: '/tools',
+              initialLocation: AppRoutes.toolsRoute.path,
               routes: [
                 GoRoute(
                   // The screen to display as the root in the first tab of the
                   // bottom navigation bar.
-                  path: '/tools',
-                  name: 'tools',
+                  path: AppRoutes.toolsRoute.path,
+                  name: AppRoutes.toolsRoute.name,
                   builder: (BuildContext context, GoRouterState state) =>
                       const ToolsScreen(),
                 ),
               ]),
           StatefulShellBranch(
               navigatorKey: _scannerNavigatorKey,
-              initialLocation: '/scanner',
+              initialLocation: AppRoutes.scannerRoute.path,
               routes: [
                 GoRoute(
                   // The screen to display as the root in the first tab of the
                   // bottom navigation bar.
-                  path: '/scanner',
-                  name: 'scanner',
+                  path: AppRoutes.scannerRoute.path,
+                  name: AppRoutes.scannerRoute.name,
                   builder: (BuildContext context, GoRouterState state) =>
                       const ScannerScreen(),
                 ),
               ]),
           StatefulShellBranch(
               navigatorKey: _settingsNavigatorKey,
-              initialLocation: '/setting',
+              initialLocation: AppRoutes.settingsRoute.path,
               routes: [
                 GoRoute(
                   // The screen to display as the root in the first tab of the
                   // bottom navigation bar.
-                  path: '/setting',
-                  name: 'setting',
+                  path: AppRoutes.settingsRoute.path,
+                  name: AppRoutes.settingsRoute.name,
                   builder: (BuildContext context, GoRouterState state) =>
                       const SettingScreen(),
                 ),

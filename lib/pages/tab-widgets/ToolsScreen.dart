@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/routes.dart';
 
 class ToolsScreen extends StatefulWidget {
   const ToolsScreen({super.key});
@@ -21,15 +22,15 @@ class _ToolsScreenState extends State<ToolsScreen> {
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
         children: [
-          PdfTool(onTap: () => router.pushNamed("merge-pdf-tool"),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
-          PdfTool(onTap: () => router.pushNamed("reorder-pages-pdf-tool"),assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
-          PdfTool(onTap: () => router.pushNamed("split-pdf-tool"),assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
-          PdfTool(onTap: () => router.pushNamed("pdf-to-jpg-tool"),assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
-          PdfTool(onTap: () => router.pushNamed("image-to-pdf-tool"),assetFilePath: "assets/tools/image-to-pdf.png",name: "Image To Pdf",),
-          PdfTool(onTap: () => router.pushNamed("page-numbers-tool"),assetFilePath: "assets/tools/page-numbers.png",name: "Page Numbers",),
-          PdfTool(onTap: () => router.pushNamed("rotate-pdf-tool"),assetFilePath: "assets/tools/rotate-pdf.png",name: "Rotate Pdf",),
-          PdfTool(onTap: () => router.pushNamed("unprotect-pdf-tool"),assetFilePath: "assets/tools/unprotect-pdf.png",name: "Unprotect Pdf",),
-          PdfTool(onTap: () => router.pushNamed("protect-pdf-tool"),assetFilePath: "assets/tools/protect-pdf.png",name: "Protect Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.mergePdfRoute.name),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.reorderPdfPagesRoute.name),assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.splitPdfRoute.name),assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.pdfToJpgRoute.name),assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.imageToPdfRoute.name),assetFilePath: "assets/tools/image-to-pdf.png",name: "Image To Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.pageNumbersRoute.name),assetFilePath: "assets/tools/page-numbers.png",name: "Page Numbers",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.rotatePdfRoute.name),assetFilePath: "assets/tools/rotate-pdf.png",name: "Rotate Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.unprotectPdfRoute.name),assetFilePath: "assets/tools/unprotect-pdf.png",name: "Unprotect Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.protectPdfRoute.name),assetFilePath: "assets/tools/protect-pdf.png",name: "Protect Pdf",),
       ],),
     ));
   }
