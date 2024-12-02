@@ -56,19 +56,29 @@ class _SearchScreenState extends State<SearchScreen> {
         bottom: PreferredSize(preferredSize: const Size(double.infinity,  60),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: TextFormField(onChanged: (value) => searchSubject.sink.add(value)),
+              child: TextFormField(onChanged: (value) => searchSubject.sink.add(value),enableSuggestions: true),
             )),
       ),
       body: BlocBuilder<FilesBloc, FilesState>(
           buildWhen: (previous, current) => previous.searchStream != current.searchStream,
           builder: (context, state) {
             final searchStream = state.searchStream;
+            //searchStream will never be null as initial it is null but blockBuilder won't run initially it run only on state change
             return searchStream==null ? Text("Try seaching something",style: TextStyle(color: Colors.white)) :
             StreamBuilder(stream: searchStream, builder: (context, snapshot) {
-              return ListView.builder(itemCount: snapshot.data?.length ?? 0,itemBuilder: (context, index) {
-                final File file=snapshot.data![index];
-                return FileTile(file: file,onPress: () => _openFile(file));
-              },);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0,vertical: 8),
+                    child: Text("Total ${snapshot.data?.length ?? 0} files found.",style: TextStyle(fontWeight: FontWeight.bold),),
+                  ),
+                  Expanded(child: ListView.builder(itemCount: snapshot.data?.length ?? 0,itemBuilder: (context, index) {
+                    final File file=snapshot.data![index];
+                    return FileTile(file: file,onPress: () => _openFile(file));
+                  },))
+                ],
+              );
             },);
           }),
 
