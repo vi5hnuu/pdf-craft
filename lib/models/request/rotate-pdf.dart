@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 class RotatePdf {
@@ -12,4 +14,14 @@ class RotatePdf {
     required this.page_angles,
     required this.file,
     required this.maintain_ratio});
+
+  Map<String,dynamic> toJson() {
+    return {
+      "out_file_name":out_file_name,
+      "file_angle":file_angle,
+      "page_angles":page_angles,
+      "maintain_ratio":maintain_ratio,
+      "file":file,
+    };
+  }
 }

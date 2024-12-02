@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
@@ -38,12 +41,14 @@ class _MergePdfViewState extends State<MergePdfView> {
         listenWhen: (previous, current) => previous.httpStates[HttpStates.MERGE_PDF]!=current.httpStates[HttpStates.MERGE_PDF],
         buildWhen: (previous, current) => previous.httpStates[HttpStates.MERGE_PDF]!=current.httpStates[HttpStates.MERGE_PDF],
         listener: (context, state) {
-          if(state.isDone(forr: HttpStates.MERGE_PDF)){
+          final httpState=state.httpStates[HttpStates.MERGE_PDF];
+          if(httpState?.done==true){
             NotificationService.showSnackbar(text: "Merge Successfull",color: Colors.green);
-          }else if(state.isError(forr: HttpStates.MERGE_PDF)){
-            NotificationService.showSnackbar(text: "Merge failed",color: Colors.red);
-          }else{
-            NotificationService.showSnackbar(text: "Stated merging",color: Colors.lightBlue);
+            if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
+          }else if(httpState?.error!=null){
+            NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
+          }else if(httpState?.loading==true){
+            NotificationService.showSnackbar(text: "Started merging",color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -107,7 +112,7 @@ class _MergePdfViewState extends State<MergePdfView> {
     });
   }
 
-  void _startMerge() {
-    BlocProvider.of<PdfBloc>(context).add(MergePdfEvent(mergePdf: MergePdf(out_file_name: "out_file_name", files: widget.files)));
+  void _startMerge() async {
+    BlocProvider.of<PdfBloc>(context).add(MergePdfEvent(mergePdf: MergePdf(out_file_name: "out_file_name", files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
   }
 }

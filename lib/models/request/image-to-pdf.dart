@@ -5,5 +5,12 @@ class ImageToPdf {
   final List<MultipartFile> files;
 
   ImageToPdf({required this.out_file_name,required this.files});
+
+  Map<String,dynamic> toJson() {
+    return {
+      "out_file_name":out_file_name,
+      "files":files,
+    };
+  }
 }
 

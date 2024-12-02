@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 
@@ -9,6 +11,16 @@ class SplitPdf{
   final MultipartFile file;
 
   SplitPdf({required this.out_file_name,required this.type,required this.fixed,required this.ranges,required this.file});
+
+  Map<String,dynamic> toJson() {
+    return {
+      "out_file_name":out_file_name,
+      "type":type,
+      "fixed":fixed,
+      "ranges":ranges,
+      "file":file,
+    };
+  }
 }
 
 

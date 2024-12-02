@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 class UnProtectPdf {
@@ -6,4 +8,12 @@ class UnProtectPdf {
   final MultipartFile file;
 
   UnProtectPdf({required this.out_file_name,required this.password,required this.file});
+
+  Map<String,dynamic> toJson() {
+    return {
+      "out_file_name":out_file_name,
+      "password":password,
+      "file":file,
+    };
+  }
 }

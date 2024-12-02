@@ -9,4 +9,14 @@ class ProtectPdf {
   final MultipartFile file;
 
   ProtectPdf({required this.out_file_name,required this.owner_password,required this.user_password,required this.user_access_permissions,required this.file});
+
+  Map<String,dynamic> toJson() {
+    return {
+    'out_file_name':out_file_name,
+    'owner_password':owner_password,
+    'user_password':user_password,
+    'user_access_permissions':user_access_permissions,
+    'file':file,
+    };
+  }
 }
