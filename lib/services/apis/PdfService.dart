@@ -58,7 +58,7 @@ class PdfService {
     return await DioSingleton().dio.post(_rotatePdf,rotatePdf,cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> unprotectPdf({required UnlockPdf unlockOdf, CancelToken? cancelToken}) async {
+  Future<MultipartFile> unprotectPdf({required UnProtectPdf unlockOdf, CancelToken? cancelToken}) async {
     return await DioSingleton().dio.post(_unprotectPdf,unlockOdf,cancelToken:cancelToken);
   }
 

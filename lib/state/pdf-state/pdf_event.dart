@@ -42,7 +42,7 @@ class RotatePdfEvent extends PdfEvent{
 }
 
 class UnprotectPdfEvent extends PdfEvent{
-  final UnlockPdf unlockPdf;
+  final UnProtectPdf unlockPdf;
   const UnprotectPdfEvent({required this.unlockPdf, super.cancelToken});
 }
 

@@ -6,7 +6,7 @@ class ProtectPdf {
   final String owner_password;
   final String user_password;
   final Set<UserAccessPermission> user_access_permissions;//empty means user has owner permission
-  final MultipartFile file;//empty means user has owner permission
+  final MultipartFile file;
 
   ProtectPdf({required this.out_file_name,required this.owner_password,required this.user_password,required this.user_access_permissions,required this.file});
 }

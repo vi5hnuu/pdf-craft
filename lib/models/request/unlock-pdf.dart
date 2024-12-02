@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 
-class UnlockPdf {
+class UnProtectPdf {
   final String out_file_name;
   final String password;
   final MultipartFile file;
 
-  UnlockPdf({required this.out_file_name,required this.password,required this.file});
+  UnProtectPdf({required this.out_file_name,required this.password,required this.file});
 }

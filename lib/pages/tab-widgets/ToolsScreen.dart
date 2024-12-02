@@ -22,14 +22,14 @@ class _ToolsScreenState extends State<ToolsScreen> {
         crossAxisSpacing: 8,
         children: [
           PdfTool(onTap: () => router.pushNamed("merge-pdf-tool"),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
-          PdfTool(assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
-          PdfTool(assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
-          PdfTool(assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
-          PdfTool(assetFilePath: "assets/tools/image-to-pdf.png",name: "Image To Pdf",),
-          PdfTool(assetFilePath: "assets/tools/page-numbers.png",name: "Page Numbers",),
-          PdfTool(assetFilePath: "assets/tools/rotate-pdf.png",name: "Rotate Pdf",),
-          PdfTool(assetFilePath: "assets/tools/unprotect-pdf.png",name: "Unprotect Pdf",),
-          PdfTool(assetFilePath: "assets/tools/protect-pdf.png",name: "Protect Pdf",),
+          PdfTool(onTap: () => router.pushNamed("reorder-pages-pdf-tool"),assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
+          PdfTool(onTap: () => router.pushNamed("split-pdf-tool"),assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
+          PdfTool(onTap: () => router.pushNamed("pdf-to-jpg-tool"),assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
+          PdfTool(onTap: () => router.pushNamed("image-to-pdf-tool"),assetFilePath: "assets/tools/image-to-pdf.png",name: "Image To Pdf",),
+          PdfTool(onTap: () => router.pushNamed("page-numbers-tool"),assetFilePath: "assets/tools/page-numbers.png",name: "Page Numbers",),
+          PdfTool(onTap: () => router.pushNamed("rotate-pdf-tool"),assetFilePath: "assets/tools/rotate-pdf.png",name: "Rotate Pdf",),
+          PdfTool(onTap: () => router.pushNamed("unprotect-pdf-tool"),assetFilePath: "assets/tools/unprotect-pdf.png",name: "Unprotect Pdf",),
+          PdfTool(onTap: () => router.pushNamed("protect-pdf-tool"),assetFilePath: "assets/tools/protect-pdf.png",name: "Protect Pdf",),
       ],),
     ));
   }
