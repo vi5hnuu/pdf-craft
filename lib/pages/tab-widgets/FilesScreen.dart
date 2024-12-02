@@ -93,7 +93,7 @@ class _FilesScreenState extends State<FilesScreen> {
                     StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.rootStoragePath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInRoot.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/hard-disk.svg",title: "Internal Storage",),
                     StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.downloadsStoragePath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDownloads.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/downloads.svg",title: "Downloads",),
                     StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.documentsStoragePath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDocuments.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/documents.svg",title: "Documents",),
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.rootStoragePath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalProcessedFiles.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/folder-management.svg",title: "Processed Files",),
+                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.processedDirPath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalProcessedFiles.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/folder-management.svg",title: "Processed Files",),
                   ],
                 );
               },)
@@ -137,7 +137,7 @@ class _FilesScreenState extends State<FilesScreen> {
                 final stats=snapshot.data;
                 return Column(
                   children: [
-                    StorageTile(trailing:stats==null || stats.isLoading ?  SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalFileInBin.toString(),style: TextStyle(fontSize: 16),),
+                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.binDirPath)),trailing:stats==null || stats.isLoading ?  SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalFileInBin.toString(),style: TextStyle(fontSize: 16),),
                       leadingIconSvgPath: "assets/icons/recycle-bin.svg",title: "Bin",),
                   ],
                 );
@@ -153,15 +153,26 @@ class _FilesScreenState extends State<FilesScreen> {
   _loadStats() async{
     try{
       if(await StoragePermissions.requestPermissions()){
+        await _createMainDirs();
         storageStats.sink.add(storageStats.value.copyWith(isLoading: true));
         // await Future.delayed(Duration(minutes: 5));
-        final stats=await Future.wait([Directory(Constants.rootStoragePath).list(followLinks: false).length,Directory(Constants.downloadsStoragePath).list(followLinks: false).length,Directory(Constants.documentsStoragePath).list(followLinks: false).length]);
-        storageStats.sink.add(StorageStats(totalItemsInRoot: stats[0], totalItemsInDownloads: stats[1], totalItemsInDocuments: stats[2], totalProcessedFiles: 0, totalFileInBin: 0));
+        final stats=await Future.wait([Directory(Constants.rootStoragePath).list(followLinks: false).length,Directory(Constants.downloadsStoragePath).list(followLinks: false).length,Directory(Constants.documentsStoragePath).list(followLinks: false).length,Directory(Constants.processedDirPath).list(followLinks: false).length,Directory(Constants.binDirPath).list(followLinks: false).length]);
+        storageStats.sink.add(StorageStats(totalItemsInRoot: stats[0], totalItemsInDownloads: stats[1], totalItemsInDocuments: stats[2], totalProcessedFiles: stats[3], totalFileInBin: stats[4]));
       }else{
         NotificationService.showSnackbar(text: "Storage permission denied",color: Colors.red);
       }
     }catch(e){
+      NotificationService.showSnackbar(text: "Something went wrong",color: Colors.red);
+    }
+  }
 
+  Future<void> _createMainDirs() async {
+    final mainDirs=[Constants.downloadsStoragePath,Constants.documentsStoragePath,Constants.processedDirPath,Constants.binDirPath];
+    for (var dirPath in mainDirs) {
+      final dir=Directory(dirPath);
+      if(!(await dir.exists())){
+        dir.create(recursive: true);
+      }
     }
   }
 }

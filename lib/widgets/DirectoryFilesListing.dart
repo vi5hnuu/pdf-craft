@@ -69,6 +69,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           if(error!=null){
             NotificationService.showSnackbar(text: error,color: Colors.red);
             setState(()=>pathToDirectory.removeLast());
+            if(pathToDirectory.isEmpty) router.pop();
           }
         },
           buildWhen: (previous, current) => previous!=current,

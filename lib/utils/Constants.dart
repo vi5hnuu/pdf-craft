@@ -1,6 +1,7 @@
 class Constants {
   static const String baseUrl = "http://192.168.71.148:8082/api/v1";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
+  static const String binDirPath = "storage/emulated/0/ilvPdfBin";
   static const String rootStoragePath = "storage/emulated/0";
   static const String downloadsStoragePath =
       '${Constants.rootStoragePath}/Download';
