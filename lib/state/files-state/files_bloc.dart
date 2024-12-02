@@ -37,16 +37,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       }
     });
 
-    on<ToggleFileSelection>((event, emit) async {
-      final selectedFiles = [...state.selectedFiles];
-      if (state.getSelectedFile(event.file) != null) {
-        selectedFiles.removeWhere((file) => file.path == event.file.path);
-      } else {
-        selectedFiles.add(event.file);
-      }
-      emit(state.copyWith(selectedFiles: selectedFiles));
-    });
-
     on<SearchFile>((event, emit) async {
       if (_searchSubscription != null) await _searchSubscription!.cancel();
       if (_searchController != null) await _searchController!.close();
@@ -60,10 +50,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         onError: _searchController!.addError,
       );
       emit(state.copyWith(searchStream: _searchController!.stream));
-    });
-
-    on<ResetFilesState>((event, emit) async {
-      emit(FilesState.initial());
     });
   }
 

@@ -6,7 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/enums/listing-type.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
+import 'package:pdf_craft/pages/ErrorPage.dart';
 import 'package:pdf_craft/pages/ImageToPdfView.dart';
 import 'package:pdf_craft/pages/MainScreen.dart';
 import 'package:pdf_craft/pages/MergePdfView.dart';
@@ -24,8 +26,10 @@ import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/SettingScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
 import 'package:pdf_craft/widgets/PdfPreview.dart';
 
@@ -75,17 +79,26 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         ),
       ),
       GoRoute(
-        // The screen to display as the root in the first tab of the
-        // bottom navigation bar.
+        name: AppRoutes.errorRoute.name,
+        path: AppRoutes.errorRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const Errorpage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if(state.extra is! FileSelectionConfig) return AppRoutes.errorRoute.path;
+        },
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.fileManagement.path,
         name: AppRoutes.fileManagement.name,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: FilesListing(
-              type: ListingType.fromJson(state.uri.queryParameters['type']!)),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-              FadeTransition(opacity: animation, child: child),
+          child: FilesManagement(config: state.extra as FileSelectionConfig),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(opacity: animation, child: child),
         ),
       ),
       GoRoute(
@@ -95,7 +108,7 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         path: AppRoutes.mergePdfRoute.path,
         name: AppRoutes.mergePdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
-        builder: (BuildContext context, GoRouterState state) => MergePdfView(files: []),
+        builder: (BuildContext context, GoRouterState state) => MergePdfView(files: (state.extra as Map)['files'] as List<File>),
       ),
       GoRoute(
         // The screen to display as the root in the first tab of the
@@ -224,10 +237,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                     name: AppRoutes.filesListingRoute.name,
                     pageBuilder: (context, state) => CustomTransitionPage<void>(
                       key: state.pageKey,
-                      child: FilesListing(
-                          type: ListingType.fromJson(state.uri.queryParameters['type']!)),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                          FadeTransition(opacity: animation, child: child),
+                      child: FilesManagement(config: state.extra as FileSelectionConfig),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(opacity: animation, child: child),
                     ),
                   ),
                 ]
@@ -281,7 +292,8 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(providers: [
-      BlocProvider(lazy: true,create: (context) => FilesBloc())
+      BlocProvider(lazy: true,create: (context) => FilesBloc()),
+      BlocProvider(lazy: true,create: (context) => PdfBloc(pdfService: PdfService()))
     ], child: MaterialApp.router(
       scaffoldMessengerKey: NotificationService.messengerKey,
       title: 'Pdf craft',

@@ -4,20 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/enums/listing-type.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 
-class FilesListing extends StatefulWidget {
-  final ListingType type;
+class FilesManagement extends StatefulWidget {
+  final FileSelectionConfig config;
 
-  const FilesListing({super.key, required this.type});
+  const FilesManagement({super.key, required this.config});
 
   @override
-  State<FilesListing> createState() => _FilesListingState();
+  State<FilesManagement> createState() => _FilesManagementState();
 }
 
-class _FilesListingState extends State<FilesListing> {
+class _FilesManagementState extends State<FilesManagement> {
 
   @override
   void initState() {
@@ -26,9 +27,18 @@ class _FilesListingState extends State<FilesListing> {
 
   @override
   Widget build(BuildContext context) {
+    final router=GoRouter.of(context);
+
     return Scaffold(
       body: SafeArea(
-        child: DirectoryFilesListing(directoryPath: widget.type.path),
+        child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files){
+          final result={'files':files};
+          if(widget.config.redirectPath==null) {
+            router.pop(result);
+          } else {
+            router.push(widget.config.redirectPath!,extra: result);
+          }
+        } ,directoryPath: widget.config.path,multiSelect: widget.config.multiSelect,limitSelectionToExtensions: widget.config.limitToExtensions),
       ),
     );
   }

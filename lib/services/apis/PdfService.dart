@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
@@ -30,39 +32,39 @@ class PdfService {
     return _instance;
   }
 
-  Future<MultipartFile> mergePdf({required MergePdf mergePdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_mergePdf,mergePdf,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> mergePdf({required MergePdf mergePdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_mergePdf,data:mergePdf,options: Options(contentType: 'application/json'),cancelToken: cancelToken);
   }
 
-  Future<MultipartFile> reorderPdf({required ReorderPdf reorderPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_reorderPdf,reorderPdf,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> reorderPdf({required ReorderPdf reorderPdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_reorderPdf,data:reorderPdf,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> splitPdf({required SplitPdf splitPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_splitPdf,splitPdf,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> splitPdf({required SplitPdf splitPdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_splitPdf,data:splitPdf,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> pdfToJpg({required PdfToJpg pdfToJpg, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_pdfToJpg,pdfToJpg,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> pdfToJpg({required PdfToJpg pdfToJpg, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_pdfToJpg,data:pdfToJpg,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> imageToPdf({required ImageToPdf imageToPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_imageToPdf,imageToPdf,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> imageToPdf({required ImageToPdf imageToPdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_imageToPdf,data:imageToPdf,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> pageNumbers({required PageNumbers pageNumber, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_pageNumbers,pageNumber,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> pageNumbers({required PageNumbers pageNumber, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_pageNumbers,data:pageNumber,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> rotatePdf({required RotatePdf rotatePdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_rotatePdf,rotatePdf,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> rotatePdf({required RotatePdf rotatePdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_rotatePdf,data:rotatePdf,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> unprotectPdf({required UnProtectPdf unlockOdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_unprotectPdf,unlockOdf,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> unprotectPdf({required UnProtectPdf unlockOdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_unprotectPdf,data:unlockOdf,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 
-  Future<MultipartFile> protectpdf({required ProtectPdf protectPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_protectpdf,protectPdf,cancelToken:cancelToken);
+  Future<Response<MultipartFile>> protectpdf({required ProtectPdf protectPdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_protectpdf,data:protectPdf,options: Options(contentType: 'application/json'),cancelToken:cancelToken);
   }
 }

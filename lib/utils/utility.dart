@@ -20,4 +20,8 @@ class Utility{
   static String fileName({required File file}) {
     return file.path.split('/').last;
   }
+
+  static fileExtension(File file) {
+    return '.${file.path.split('.').last}';
+  }
 }

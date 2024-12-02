@@ -1,7 +1,25 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 
 class ToolsScreen extends StatefulWidget {
   const ToolsScreen({super.key});
@@ -22,15 +40,15 @@ class _ToolsScreenState extends State<ToolsScreen> {
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
         children: [
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.mergePdfRoute.name),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.reorderPdfPagesRoute.name),assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.splitPdfRoute.name),assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.pdfToJpgRoute.name),assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.imageToPdfRoute.name),assetFilePath: "assets/tools/image-to-pdf.png",name: "Image To Pdf",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.pageNumbersRoute.name),assetFilePath: "assets/tools/page-numbers.png",name: "Page Numbers",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.rotatePdfRoute.name),assetFilePath: "assets/tools/rotate-pdf.png",name: "Rotate Pdf",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.unprotectPdfRoute.name),assetFilePath: "assets/tools/unprotect-pdf.png",name: "Unprotect Pdf",),
-          PdfTool(onTap: () => router.pushNamed(AppRoutes.protectPdfRoute.name),assetFilePath: "assets/tools/protect-pdf.png",name: "Protect Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.mergePdfRoute.path,multiSelect: true,minSelection: 2,limitToExtensions: ['.pdf'])),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.reorderPdfPagesRoute.path,multiSelect: false,limitToExtensions: ['.pdf'] )),assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.splitPdfRoute.path,multiSelect: false,limitToExtensions: ['.pdf'])),assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.pdfToJpgRoute.path,multiSelect: false,limitToExtensions: ['.pdf'])),assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.imageToPdfRoute.path,multiSelect: true,limitToExtensions: ['.jpg','.png','.jpeg'])),assetFilePath: "assets/tools/image-to-pdf.png",name: "Image To Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.pageNumbersRoute.path,multiSelect: false,limitToExtensions: ['.pdf'] )),assetFilePath: "assets/tools/page-numbers.png",name: "Page Numbers",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.rotatePdfRoute.path,multiSelect: false,limitToExtensions: ['.pdf'] )),assetFilePath: "assets/tools/rotate-pdf.png",name: "Rotate Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.unprotectPdfRoute.path,multiSelect: false,limitToExtensions: ['.pdf'])),assetFilePath: "assets/tools/unprotect-pdf.png",name: "Unprotect Pdf",),
+          PdfTool(onTap: () => router.pushNamed(AppRoutes.fileManagement.name,extra: FileSelectionConfig(path: Constants.rootStoragePath,redirectPath: AppRoutes.protectPdfRoute.path,multiSelect: false,limitToExtensions: ['.pdf'])),assetFilePath: "assets/tools/protect-pdf.png",name: "Protect Pdf",),
       ],),
     ));
   }

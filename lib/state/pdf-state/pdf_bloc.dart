@@ -26,7 +26,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MERGE_PDF,const HttpState.loading())));
       try {
         await pdfService.mergePdf(mergePdf: event.mergePdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.MERGE_PDF)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.MERGE_PDF,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MERGE_PDF, HttpState.error(error:e.message))));
       } catch (e) {
@@ -38,7 +38,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REORDER_PDF,const HttpState.loading())));
       try {
         await pdfService.reorderPdf(reorderPdf: event.reorderPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.REORDER_PDF)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.REORDER_PDF,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REORDER_PDF, HttpState.error(error:e.message))));
       } catch (e) {
@@ -50,7 +50,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.SPLIT_PDF,const HttpState.loading())));
       try {
         await pdfService.splitPdf(splitPdf: event.splitPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.SPLIT_PDF)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.SPLIT_PDF,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.SPLIT_PDF, HttpState.error(error:e.message))));
       } catch (e) {
@@ -62,7 +62,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PDF_TO_JPG,const HttpState.loading())));
       try {
         await pdfService.pdfToJpg(pdfToJpg: event.pdfToJpg,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.PDF_TO_JPG)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.PDF_TO_JPG,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PDF_TO_JPG, HttpState.error(error:e.message))));
       } catch (e) {
@@ -74,7 +74,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF,const HttpState.loading())));
       try {
         await pdfService.imageToPdf(imageToPdf: event.imageToPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.IMAGE_TO_PDF)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF, HttpState.error(error:e.message))));
       } catch (e) {
@@ -86,7 +86,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS,const HttpState.loading())));
       try {
         await pdfService.pageNumbers(pageNumber: event.pageNumber,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.PAGE_NUMBERS)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS, HttpState.error(error:e.message))));
       } catch (e) {
@@ -98,7 +98,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ROTATE_PDF,const HttpState.loading())));
       try {
         await pdfService.rotatePdf(rotatePdf: event.rotatePdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.ROTATE_PDF)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.ROTATE_PDF,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ROTATE_PDF, HttpState.error(error:e.message))));
       } catch (e) {
@@ -110,7 +110,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNLOCK_PDF,const HttpState.loading())));
       try {
         await pdfService.unprotectPdf(unlockOdf: event.unlockPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.UNLOCK_PDF)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.UNLOCK_PDF,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNLOCK_PDF, HttpState.error(error:e.message))));
       } catch (e) {
@@ -122,7 +122,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PROTECT_PDF,const HttpState.loading())));
       try {
         await pdfService.protectpdf(protectPdf: event.protectPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..remove(HttpStates.PROTECT_PDF)));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.PROTECT_PDF,const HttpState.done())));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PROTECT_PDF, HttpState.error(error:e.message))));
       } catch (e) {

@@ -15,28 +15,18 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class SystemFiles {
-  final List<FileSystemEntity> files;
-  final bool? isLoading;
-  final String? error;
-
-  const SystemFiles({required this.files, this.isLoading, this.error});
-
-  SystemFiles copyWith(
-      {List<FileSystemEntity>? newFiles, bool? loading, String? err}) {
-    return SystemFiles(
-        files: newFiles ?? files,
-        isLoading: loading ?? isLoading,
-        error: err ?? error);
-  }
-}
 
 class DirectoryFilesListing extends StatefulWidget {
   final String directoryPath;
-  final bool multiSelect;
-  final List<String> limitToExtensions;
+  final bool? multiSelect;//on null no selection allow
+  final List<String> limitSelectionToExtensions;
+  final int? minSelection;
+  final Function(List<File>)? onDoneSelection;
 
-  const DirectoryFilesListing({super.key, required this.directoryPath,this.multiSelect=false,this.limitToExtensions=const []});
+  DirectoryFilesListing({super.key, required this.directoryPath,this.multiSelect,this.limitSelectionToExtensions=const [],this.onDoneSelection,this.minSelection}){
+    if(multiSelect==null && (onDoneSelection!=null || minSelection!=null)) throw Exception("multiSelect is disabled but onDownSelection/minSelection is not null");
+    if(multiSelect!=null && onDoneSelection==null) throw Exception("OnDoneSelection is required");
+  }
 
   @override
   State<DirectoryFilesListing> createState() => _DirectoryFilesListingState();
@@ -44,6 +34,7 @@ class DirectoryFilesListing extends StatefulWidget {
 
 class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   late final FilesBloc bloc;
+  final List<File> selectedFiles=[];
   List<String> pathToDirectory = [];
 
   @override
@@ -86,15 +77,15 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           return Stack(children: [
             if(!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))(state.files.isEmpty
                 ? const Center(child: Text('No files found'))
-                : Column(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
+                : Column(mainAxisSize: MainAxisSize.max,
+                  children: [
                 Expanded(child: ListView.builder(
                     itemCount: state.files.length,
                     itemBuilder: (context, index) {
                       final file = state.files[index];
                       return ListTile(
-                        selected: state.getSelectedFile(file)!=null,
+                        enabled: file is Directory || widget.limitSelectionToExtensions.isEmpty || widget.limitSelectionToExtensions.contains(Utility.fileExtension(file as File)),
+                        selected: _isFileSelected(file),
                         selectedTileColor: Colors.green.withOpacity(0.15),
                         selectedColor: Colors.green,
                         leading: file is Directory
@@ -104,14 +95,14 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                             color: Colors.orange),
                         title: Text(file.path.split('/').last),
                         subtitle: (file is! Directory) ? Text(Utility.bytesToSize(File(file.path).lengthSync())) : null,
-                        onTap:()=> _onItemClick(file: file,isDirectory: file is Directory,hasSelectedFiles:state.selectedFiles.isNotEmpty,isSelectedFile: state.getSelectedFile(file)!=null, isMultiselectAllow: widget.multiSelect)
+                        onTap:()=> _onItemClick(file: file)
                       );
                     })),
-                                AnimatedOpacity(opacity:state.selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: state.selectedFiles.isNotEmpty ? Container(
+                                AnimatedOpacity(opacity:selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: selectedFiles.isNotEmpty ? Container(
                                   padding: const EdgeInsets.all(16),
                                   width: double.infinity,
                                   decoration: BoxDecoration(color: Colors.black87),
-                                  child: FilledButton(onPressed: ()=>router.pop(),
+                                  child: FilledButton(onPressed:widget.onDoneSelection==null || (widget.minSelection!=null && selectedFiles.length<widget.minSelection!) ? null : ()=>widget.onDoneSelection!(selectedFiles),
                                       child: Text("Complete Selection")),
                                 ):null)
                               ],
@@ -128,36 +119,48 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     ));
   }
 
+  bool _isFileSelected(FileSystemEntity file){
+    if(file is Directory) return false;
+    try{
+      return selectedFiles.firstWhere((selectedFile)=>selectedFile.path==file.path)!=null;
+    }catch(e){
+     return false;
+    }
+  }
+
   _loadDirectoryFiles(String path){
     if(bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
     bloc.add(LoadDirectoryFiles(path: pathToDirectory.last));
   }
 
 
-  void _toggleFileSelection(FileSystemEntity file) {
-    bloc.add(ToggleFileSelection(file: file));
-  }
-
   @override
   void dispose() {
-    bloc.add(const ResetFilesState());
     super.dispose();
   }
 
-  _onItemClick({required FileSystemEntity file,required bool isDirectory,required bool hasSelectedFiles,required bool isSelectedFile,required bool isMultiselectAllow}) async {
+  _onItemClick({required FileSystemEntity file}) async {
     try{
-      if(!isDirectory){
-        if(!hasSelectedFiles || isSelectedFile || isMultiselectAllow){
-          // _toggleFileSelection(file);
-          final  extension ='.${file.path.split('.').last}';
-          if(Utility.isPdf(file.path)) {
-            GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':file.path});
-          } else {
-            OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[extension] ?? '*/*');
-          }
+      if(file is Directory){
+        _loadDirectoryFiles((pathToDirectory..add(file.path)).last);
+        return;
+      }
+
+      if(widget.multiSelect==null){//allow opening file only
+        if(Utility.isPdf(file.path)) {
+          GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':file.path});
+        } else {
+          OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file as File)] ?? '*/*');
         }
       }else{
-        _loadDirectoryFiles((pathToDirectory..add(file.path)).last);
+        if(widget.multiSelect==true || selectedFiles.isEmpty){
+          setState((){
+            if(_isFileSelected(file)) selectedFiles.removeWhere((selectedFile)=>selectedFile.path==file.path);
+            else selectedFiles.add(file as File);
+          });
+        }else{
+          NotificationService.showSnackbar(text: "Multiple file selection not allowed");
+        }
       }
     }catch(e){
       NotificationService.showSnackbar(text: "Something went wrong",color: Colors.red,showCloseIcon: true);
