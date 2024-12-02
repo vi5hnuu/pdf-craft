@@ -6,4 +6,8 @@ enum SplitType {
 
   final String type;
   const SplitType(this.type);
+
+  static SplitType fromJson(String splitType){
+    return SplitType.values.firstWhere((type)=>type.type.toLowerCase()==splitType.toLowerCase());
+  }
 }

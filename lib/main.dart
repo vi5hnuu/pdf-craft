@@ -5,10 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/enums/listing-type.dart';
+import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/pages/MainScreen.dart';
 import 'package:pdf_craft/pages/MergePdfView.dart';
+import 'package:pdf_craft/pages/PdfToJpgView.dart';
+import 'package:pdf_craft/pages/ReorderPdfView.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
+import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfTypeView.dart';
+import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
 import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/HomeScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
@@ -82,11 +87,46 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
         parentNavigatorKey: _rootNavigatorKey,
-        path: '/merge-tool',
-        name: 'merge-tool',
+        path: '/merge-pdf-tool',
+        name: 'merge-pdf-tool',
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => MergePdfView(files: []),
       ),
+      GoRoute(
+        // The screen to display as the root in the first tab of the
+        // bottom navigation bar.
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/reorder-pages-pdf-tool',
+        name: 'reorder-pages-pdf-tool',
+        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
+        builder: (BuildContext context, GoRouterState state) => ReorderPdfView(file: File("xy/y/temporaryPdf.pdf")),
+      ),
+      GoRoute(
+        // The screen to display as the root in the first tab of the
+        // bottom navigation bar.
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/pdf-to-jpg-tool',
+        name: 'pdf-to-jpg-tool',
+        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
+        builder: (BuildContext context, GoRouterState state) => PdfToJpgView(file: File("xy/y/temporaryPdf.pdf"),),
+      ),
+      GoRoute(
+        // The screen to display as the root in the first tab of the
+        // bottom navigation bar.
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/split-pdf-tool',
+        name: 'split-pdf-tool',
+        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
+        builder: (BuildContext context, GoRouterState state) => SplitPdfView(file: File("xy/y/temporaryPdf.pdf")),
+        routes: [
+          GoRoute(
+              path: ':splitType',
+              name: 'split-pdf-by-type',
+              builder: (BuildContext context, GoRouterState state) => SplitPdfTypeView(file: File("xy/y/temporaryPdf.pdf"),outFileName: state.uri.queryParameters['outFileName']!,type:SplitType.fromJson(state.pathParameters['splitType']!)),
+          ),
+        ]
+      ),
+
       GoRoute(
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.

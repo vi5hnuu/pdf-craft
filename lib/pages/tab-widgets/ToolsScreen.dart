@@ -21,7 +21,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
         children: [
-          PdfTool(onTap: () => router.pushNamed("merge-tool"),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
+          PdfTool(onTap: () => router.pushNamed("merge-pdf-tool"),assetFilePath: "assets/tools/merge-pdf.png",name: "Merge Pdf",),
           PdfTool(assetFilePath: "assets/tools/reorder-pdf.png",name: "Reorder Pdf",),
           PdfTool(assetFilePath: "assets/tools/split-pdf.png",name: "Split Pdf",),
           PdfTool(assetFilePath: "assets/tools/pdf-to-jpg.png",name: "Pdf to Jpg",),

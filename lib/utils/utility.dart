@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class Utility{
   static String bytesToSize(int bytes) {
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
@@ -13,5 +15,9 @@ class Utility{
 
   static bool isPdf(String path) {
     return path.endsWith('pdf');
+  }
+
+  static String fileName({required File file}) {
+    return file.path.split('/').last;
   }
 }
