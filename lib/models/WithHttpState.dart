@@ -1,4 +1,3 @@
-
 import 'package:pdf_craft/models/HttpState.dart';
 
 mixin WithHttpState{

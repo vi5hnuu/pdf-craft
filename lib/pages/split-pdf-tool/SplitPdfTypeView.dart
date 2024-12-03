@@ -4,8 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
-import 'package:pdf_craft/utils/utility.dart';
-import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 
 class SplitPdfTypeView extends StatefulWidget {

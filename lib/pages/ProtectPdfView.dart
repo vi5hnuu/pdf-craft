@@ -8,12 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/user-access-permission.dart';
 import 'package:pdf_craft/models/request/protect-pdf.dart';
-import 'package:pdf_craft/pages/PdfToJpgView.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
-import 'package:pdf_craft/utils/utility.dart';
 
 class ProtectPdfView extends StatefulWidget {
   final File file;

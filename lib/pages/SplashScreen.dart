@@ -1,15 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
-import 'package:pdf_craft/utils/Constants.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

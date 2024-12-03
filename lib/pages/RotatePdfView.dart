@@ -1,20 +1,12 @@
 import 'dart:io';
-
-import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdf_craft/extensions/string-etension.dart';
-import 'package:pdf_craft/models/enums/direction.dart';
-import 'package:pdf_craft/models/enums/quality.dart';
-import 'package:pdf_craft/models/request/pdf-to-jpg.dart';
-import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
-import 'package:pdf_craft/utils/utility.dart';
 
 class RotatePdfView extends StatefulWidget {
   final File file;

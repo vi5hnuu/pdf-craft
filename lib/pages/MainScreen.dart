@@ -1,12 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
-import 'package:pdf_craft/state/files-state/files_bloc.dart';
-import 'package:pdf_craft/utils/Constants.dart';
-import 'package:rxdart/rxdart.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;

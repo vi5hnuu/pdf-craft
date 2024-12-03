@@ -2,24 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdf_craft/models/enums/listing-type.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
-import 'package:pdf_craft/models/file-selection-config.dart';
-import 'package:pdf_craft/models/file-selection-config.dart';
-import 'package:pdf_craft/models/file-selection-config.dart';
-import 'package:pdf_craft/routes.dart';
-import 'package:pdf_craft/routes.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
-import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:rxdart/rxdart.dart';
 
 class StorageStats{

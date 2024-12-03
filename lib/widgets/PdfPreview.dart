@@ -1,17 +1,6 @@
-import 'dart:async';
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
-import 'package:pdf_craft/state/files-state/files_bloc.dart';
-import 'package:pdf_craft/utils/Constants.dart';
-import 'package:pdf_craft/utils/httpStates.dart';
-import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdfx/pdfx.dart';
 
 class PdfPreview extends StatefulWidget {
