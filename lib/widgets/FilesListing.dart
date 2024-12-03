@@ -30,6 +30,9 @@ class _FilesManagementState extends State<FilesManagement> {
     final router=GoRouter.of(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text("File Management"),
+      ),
       body: SafeArea(
         child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files){
           final result={'files':files};

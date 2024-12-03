@@ -31,6 +31,7 @@ import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
 import 'package:pdf_craft/widgets/PdfPreview.dart';
 
@@ -254,11 +255,14 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                   GoRoute(
                     path: AppRoutes.filesListingRoute.path,
                     name: AppRoutes.filesListingRoute.name,
-                    pageBuilder: (context, state) => CustomTransitionPage<void>(
-                      key: state.pageKey,
-                      child: FilesManagement(config: state.extra as FileSelectionConfig),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(opacity: animation, child: child),
-                    ),
+                    pageBuilder: (context, state){
+                      final config=state.extra as FileSelectionConfig;
+                      return CustomTransitionPage<void>(
+                        key: state.pageKey,
+                        child: DirectoryFilesListing(directoryPath: config.path),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(opacity: animation, child: child),
+                      );
+                    },
                   ),
                 ]
               ),

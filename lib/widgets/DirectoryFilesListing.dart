@@ -50,55 +50,53 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   Widget build(BuildContext context) {
     final router=GoRouter.of(context);
 
-    return Scaffold(
-        body: SafeArea(
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          if (pathToDirectory.length <= 1) {
-            router.pop();
-          } else {
-            setState(() {
-              pathToDirectory.removeLast();
-              _loadDirectoryFiles(pathToDirectory.last);
-            });
-          }
-        },
-        child:  BlocConsumer<FilesBloc,FilesState>(listener: (context, state) {
-          final error=state.getError(forr: HttpStates.LOAD_DIRECTORY_FILES);
-          if(error!=null){
-            NotificationService.showSnackbar(text: error,color: Colors.red);
-            setState(()=>pathToDirectory.removeLast());
-            if(pathToDirectory.isEmpty) router.pop();
-          }
-        },
-          buildWhen: (previous, current) => previous!=current,
-          listenWhen: (previous, current) => previous!=current,
-          builder: (context, state) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (pathToDirectory.length <= 1) {
+          router.pop();
+        } else {
+          setState(() {
+            pathToDirectory.removeLast();
+            _loadDirectoryFiles(pathToDirectory.last);
+          });
+        }
+      },
+      child:  BlocConsumer<FilesBloc,FilesState>(listener: (context, state) {
+        final error=state.getError(forr: HttpStates.LOAD_DIRECTORY_FILES);
+        if(error!=null){
+          NotificationService.showSnackbar(text: error,color: Colors.red);
+          setState(()=>pathToDirectory.removeLast());
+          if(pathToDirectory.isEmpty) router.pop();
+        }
+      },
+        buildWhen: (previous, current) => previous!=current,
+        listenWhen: (previous, current) => previous!=current,
+        builder: (context, state) {
           return Stack(children: [
             if(!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))(state.files.isEmpty
                 ? const Center(child: Text('No files found'))
                 : Column(mainAxisSize: MainAxisSize.max,
-                  children: [
+              children: [
                 Expanded(child: ListView.builder(
                     itemCount: state.files.length,
                     itemBuilder: (context, index) {
                       final file = state.files[index];
                       return FileTile(file: file,
-                        selected:  _isFileSelected(file),
-                        onPress: ()=> _onItemClick(file: file),
-                        enabled: file is Directory || widget.limitSelectionToExtensions.isEmpty || widget.limitSelectionToExtensions.contains(Utility.fileExtension(file as File)));
+                          selected:  _isFileSelected(file),
+                          onPress: ()=> _onItemClick(file: file),
+                          enabled: file is Directory || widget.limitSelectionToExtensions.isEmpty || widget.limitSelectionToExtensions.contains(Utility.fileExtension(file as File)));
                     })),
-                                AnimatedOpacity(opacity:selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: selectedFiles.isNotEmpty ? Container(
-                                  padding: const EdgeInsets.all(16),
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(color: Colors.black87),
-                                  child: FilledButton(onPressed:widget.onDoneSelection==null || (widget.minSelection!=null && selectedFiles.length<widget.minSelection!) ? null : ()=>widget.onDoneSelection!(selectedFiles),
-                                      child: Text("Complete Selection")),
-                                ):null)
-                              ],
-                            )),
+                AnimatedOpacity(opacity:selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: selectedFiles.isNotEmpty ? Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(color: Colors.black87),
+                  child: FilledButton(onPressed:widget.onDoneSelection==null || (widget.minSelection!=null && selectedFiles.length<widget.minSelection!) ? null : ()=>widget.onDoneSelection!(selectedFiles),
+                      child: Text("Complete Selection")),
+                ):null)
+              ],
+            )),
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
               Expanded(
                   child: Container(
@@ -107,8 +105,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   )),
           ]);
         },),
-      ),
-    ));
+    );
   }
 
   bool _isFileSelected(FileSystemEntity file){
