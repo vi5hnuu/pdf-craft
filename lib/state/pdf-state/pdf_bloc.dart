@@ -44,8 +44,10 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<ReorderPdfEvent>((event,emit)async{
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REORDER_PDF,const HttpState.loading())));
       try {
-        await pdfService.reorderPdf(reorderPdf: event.reorderPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.REORDER_PDF,const HttpState.done())));
+        Response<Uint8List> fileRes =await pdfService.reorderPdf(reorderPdf:event.reorderPdf,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to reorder pdf page/s");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.REORDER_PDF,HttpState.done(extras: {'savedFile':saveFile}))));
       }  on DioException catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REORDER_PDF, HttpState.error(error:e.message))));
       } catch (e) {

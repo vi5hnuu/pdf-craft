@@ -1,8 +1,16 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
+import 'package:pdf_craft/models/request/reorder-pdf.dart';
+import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
 import 'package:pdfx/pdfx.dart';
@@ -26,6 +34,7 @@ class ReorderPdfView extends StatefulWidget {
 }
 
 class _ReorderPdfViewState extends State<ReorderPdfView> {
+  late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   final int pageSize=20;
   final ScrollController controller=ScrollController();
   final Map<int,Thumbnail> thumbnails={};
@@ -39,6 +48,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     _pdfController = PdfController(document: PdfDocument.openFile(widget.file.path),initialPage: 1);
     _pdfController.document.then((doc)=>setState((){
       document=doc;
+      _pageIndexes=List.generate(doc.pagesCount, (index) => index);
       _tryRenderingNextThumbnails();
     }));
     controller.addListener(() => _tryRenderingNextThumbnails());
@@ -64,7 +74,20 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
             child: const Center(child: Icon(Icons.error, color: Colors.red)),
           );
         }
-        return Column(
+        return BlocListener<PdfBloc,PdfState>(
+            listenWhen: (previous, current) => previous.httpStates[HttpStates.REORDER_PDF]!=current.httpStates[HttpStates.REORDER_PDF],
+            listener: (context, state) {
+              final httpState=state.httpStates[HttpStates.REORDER_PDF];
+              if(httpState?.done==true){
+                NotificationService.showSnackbar(text: "Reorder Successfull",color: Colors.green);
+                if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
+              }else if(httpState?.error!=null){
+                NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
+              }else if(httpState?.loading==true){
+                NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
+              }
+            }
+            ,child: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
             Expanded(child: ReorderableListView.builder(
@@ -101,22 +124,22 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                     mainAxisSize: MainAxisSize.max,
                     children: [
                       Column(
-                          children: [
-                            if(thumbnail!.isLoading==true) CircularProgressIndicator()
-                            else if(thumbnail!.error!=null) Icon(Icons.error)
-                            else Image.memory(thumbnail.image!.bytes)
-                          ],
-                        ),
-                        Text(Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black),),
+                        children: [
+                          if(thumbnail!.isLoading==true) CircularProgressIndicator()
+                          else if(thumbnail!.error!=null) Icon(Icons.error)
+                          else Image.memory(thumbnail.image!.bytes)
+                        ],
+                      ),
+                      Text(Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black),),
                       Text('Page ${_pageIndexes[index]+1}'),
                     ],
                   ),
                 );
               },
             )),
-            FilledButton(onPressed: (){}, child: const Text("Reorder Pdf Pages"))
+            FilledButton(onPressed: _onReorderPages, child: const Text("Reorder Pdf Pages"))
           ],
-        );
+        ));
       },) ,
     );
   }
@@ -175,6 +198,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   _loadingCount(){
     return thumbnails.entries.where((thumbnail) => thumbnail.value.isLoading==true).length;
   }
+
   List<MapEntry<int,Thumbnail>> _errorThumbnails(){
     return thumbnails.entries.where((thumbnail) => thumbnail.value.error!=null).toList();
   }
@@ -205,5 +229,9 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     } catch (e) {
       throw Exception("Failed to load pdf page");
     }
+  }
+
+  void _onReorderPages() async {
+    bloc.add(ReorderPdfEvent(reorderPdf: ReorderPdf(out_file_name: "out_file_name", order: _pageIndexes.map((pageIndex)=>pageIndex+1).toList(), file: await MultipartFile.fromFile(widget.file.path))));
   }
 }
