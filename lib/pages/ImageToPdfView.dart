@@ -42,12 +42,12 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
       body: BlocListener<PdfBloc,PdfState>(listener: (context, state) {
         final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
         if(httpState?.done==true){
-          NotificationService.showSnackbar(text: "Reorder Successfull",color: Colors.green);
+          NotificationService.showSnackbar(text: "Image to pdf successfull",color: Colors.green);
           if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
         }else if(httpState?.error!=null){
           NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
         }else if(httpState?.loading==true){
-          NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
+          NotificationService.showSnackbar(text: "Started converting image/s to pdf",color: Colors.lightBlue);
         }
       },child: Column(
         mainAxisSize: MainAxisSize.max,
