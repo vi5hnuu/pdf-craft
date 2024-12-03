@@ -10,13 +10,13 @@ import 'package:pdf_craft/models/padding-info.dart';
 class PageNumbers {
   final String out_file_name;
   final PageNoType page_no_type;
-  final int size;//14 default
+  final int? size;//14 default
   final ColorInfo fill_color;
   final PositionInfo vertical_position;
   final PositionInfo horizontal_position;
-  final Padding padding; //default 0
-  final int from_page; //default 0
-  final int to_page; //default lengthOfPDF
+  final Padding? padding; //default 0
+  final int? from_page; //default 0
+  final int? to_page; //default lengthOfPDF
   final FontName font_name;
   final MultipartFile file;
 
