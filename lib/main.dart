@@ -149,13 +149,15 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         builder: (BuildContext context, GoRouterState state) => PdfToJpgView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        // The screen to display as the root in the first tab of the
-        // bottom navigation bar.
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.imageToPdfRoute.path,
         name: AppRoutes.imageToPdfRoute.name,
-        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
-        builder: (BuildContext context, GoRouterState state) => ImageToPdfView(files: []),
+        builder: (BuildContext context, GoRouterState state) => ImageToPdfView(files: ((state.extra as Map)['files'] as List<File>)),
       ),
       GoRoute(
         // The screen to display as the root in the first tab of the

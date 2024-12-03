@@ -82,12 +82,14 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<ImageToPdfEvent>((event,emit)async{
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF,const HttpState.loading())));
       try {
-        await pdfService.imageToPdf(imageToPdf: event.imageToPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF,const HttpState.done())));
+        Response<Uint8List> fileRes =await pdfService.imageToPdf(imageToPdf:event.imageToPdf,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to convert images to pdf page");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF,HttpState.done(extras: {'savedFile':saveFile}))));
       }  on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF, HttpState.error(error:e.message))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF, HttpState.error(error:"Failed to reorder pages."))));
       } catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.IMAGE_TO_PDF, HttpState.error(error: e.toString()))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REORDER_PDF, HttpState.error(error: "Failed to reorder pages."))));
       }
     });
 

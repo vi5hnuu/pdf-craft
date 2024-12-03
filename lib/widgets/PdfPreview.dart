@@ -22,7 +22,7 @@ class _PdfPreviewState extends State<PdfPreview> {
 
   @override
   void initState() {
-    pdfController = PdfControllerPinch(document: PdfDocument.openFile(widget.pdfFilePath,password: widget.password),initialPage: 1);
+    pdfController = PdfControllerPinch(viewportFraction: 1,document: PdfDocument.openFile(widget.pdfFilePath,password: widget.password),initialPage: 1);
     super.initState();
   }
 

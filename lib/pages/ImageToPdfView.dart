@@ -33,6 +33,8 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
 
   @override
   Widget build(BuildContext context) {
+    final md=MediaQuery.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -78,21 +80,28 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
               final file = widget.files[index];
               return Padding(
                 key: ValueKey(file.path),
-                padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
-                child: ListTile(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6),side: BorderSide(color: Colors.grey)),
-                  title: Text(
-                    Utility.fileName(file: file),
-                    style: TextStyle(overflow: TextOverflow.ellipsis, color: Colors.black),
-                  ),
-                  leading: Icon(Icons.drag_indicator, color: Colors.grey),
-                  tileColor: Colors.white,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 6),
+                child: Flex(
+                  direction: Axis.horizontal,
+                  children: [
+                    Image.file(file,width: md.size.width*0.25,fit: BoxFit.fitWidth,errorBuilder: (context, error, stackTrace) => Icon(Icons.error),),
+                    Flexible(child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(children: [
+                        Expanded(child: Text(Utility.fileName(file: file),style: const TextStyle(overflow: TextOverflow.ellipsis, color: Colors.black,fontWeight: FontWeight.bold))),
+                        const Icon(Icons.drag_indicator, color: Colors.grey),
+                      ],),
+                    ))
+                  ],
+                )
               );
             },
           )),
-          FilledButton(onPressed: _onConvertToPdf, child: const Text("Convert to pdf"))
+          Container(
+            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            child: FilledButton(onPressed: _onConvertToPdf, child: const Text("Convert to pdf")),
+          )
         ],
       ))
     );
