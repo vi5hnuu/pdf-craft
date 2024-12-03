@@ -6,4 +6,8 @@ enum Quality {
   final int dpi;
 
   const Quality(this.dpi);
+
+  static fromDpi(int dpi){
+    return Quality.values.firstWhere((quality)=>quality.dpi==dpi);
+  }
 }

@@ -8,11 +8,14 @@ class PdfToJpg {
   final String out_file_name; //zip name/single image name is single=true
   final Quality quality;
   final bool single;
-  final Direction direction;//if image is single -> join horizontally or vertically
-  final int imageGap; // gap if single=true
-  final MultipartFile file; // gap if single=true
+  final Direction? direction;//if image is single -> join horizontally or vertically
+  final int? imageGap; // gap if single=true
+  final MultipartFile file;
 
-  PdfToJpg({required this.file,required this.out_file_name,required this.quality,required this.single,required this.direction,required this.imageGap});
+  PdfToJpg({required this.file,required this.out_file_name,required this.quality,required this.single,required this.direction,this.imageGap}){
+    if(single && (direction==null || imageGap==null)) throw Exception("for single image direction/imageGap cannot be null");
+    if(!single && (direction!=null || imageGap!=null)) throw Exception("for multiple images direction/imageGap should be null");
+  }
 
   Map<String,dynamic> toJson() {
     return {

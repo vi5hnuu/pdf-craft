@@ -4,4 +4,8 @@ enum Direction {
 
   final String direction;
   const Direction(this.direction);
+
+  static Direction fromJson(String direction){
+    return Direction.values.firstWhere((dir)=>dir.direction==direction);
+  }
 }
