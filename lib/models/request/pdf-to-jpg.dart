@@ -22,7 +22,7 @@ class PdfToJpg {
       "out_file_name":out_file_name,
       "quality":quality.dpi,
       "single":single,
-      "direction":direction.direction,
+      "direction":direction?.direction,
       "imageGap":imageGap,
       "file":file,
     };

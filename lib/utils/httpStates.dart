@@ -6,7 +6,7 @@ class HttpStates{
   static const String IMAGE_TO_PDF="IMAGE_TO_PDF";
   static const String PAGE_NUMBERS="PAGE_NUMBERS";
   static const String ROTATE_PDF="ROTATE_PDF";
-  static const String UNLOCK_PDF="UNLOCK_PDF";
+  static const String UNPROTECT_PDF="UNLOCK_PDF";
   static const String PROTECT_PDF="PROTECT_PDF";
 
 

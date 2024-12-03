@@ -46,7 +46,9 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
         title: Text('Pdf To Jpg'),
         elevation: 5,
       ),
-      body: BlocListener<PdfBloc,PdfState>(listener: (context, state) {
+      body: BlocListener<PdfBloc,PdfState>(
+          listenWhen: (previous, current) => previous.httpStates[HttpStates.PDF_TO_JPG]!=current.httpStates[HttpStates.PDF_TO_JPG],
+          listener: (context, state) {
         final httpState=state.httpStates[HttpStates.PDF_TO_JPG];
         if(httpState?.done==true){
           NotificationService.showSnackbar(text: "Page to Jpeg Successfull",color: Colors.green);

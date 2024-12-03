@@ -39,7 +39,9 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
         title: Text('Image to Pdf'),
         elevation: 5,
       ),
-      body: BlocListener<PdfBloc,PdfState>(listener: (context, state) {
+      body: BlocListener<PdfBloc,PdfState>(
+          listenWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
+          listener: (context, state) {
         final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
         if(httpState?.done==true){
           NotificationService.showSnackbar(text: "Image to pdf successfull",color: Colors.green);

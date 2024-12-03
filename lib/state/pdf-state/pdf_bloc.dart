@@ -116,14 +116,14 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     });
 
     on<UnprotectPdfEvent>((event,emit)async{
-      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNLOCK_PDF,const HttpState.loading())));
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNPROTECT_PDF,const HttpState.loading())));
       try {
         await pdfService.unprotectPdf(unlockOdf: event.unlockPdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.UNLOCK_PDF,const HttpState.done())));
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.UNPROTECT_PDF,const HttpState.done())));
       }  on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNLOCK_PDF, HttpState.error(error:e.message))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNPROTECT_PDF, HttpState.error(error:e.message))));
       } catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNLOCK_PDF, HttpState.error(error: e.toString()))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.UNPROTECT_PDF, HttpState.error(error: e.toString()))));
       }
     });
 
