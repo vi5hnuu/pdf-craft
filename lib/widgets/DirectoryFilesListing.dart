@@ -77,9 +77,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           return Stack(children: [
             if(!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))(state.files.isEmpty
                 ? const Center(child: Text('No files found'))
-                : Column(mainAxisSize: MainAxisSize.max,
+                : Flex(
+              direction: Axis.vertical,
               children: [
-                Expanded(child: ListView.builder(
+                Flexible(fit: FlexFit.tight,child: ListView.builder(
                     itemCount: state.files.length,
                     itemBuilder: (context, index) {
                       final file = state.files[index];
@@ -98,11 +99,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ],
             )),
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
-              Expanded(
-                  child: Container(
-                    decoration:BoxDecoration(color: Colors.black.withOpacity(0.8)),
-                    child: const Align(alignment: Alignment.center, child: SpinKitRipple(size: 72, color: Colors.green)),
-                  )),
+              Container(
+                decoration:BoxDecoration(color: Colors.black.withOpacity(0.8)),
+                child: const Align(alignment: Alignment.center, child: SpinKitRipple(size: 72, color: Colors.green)),
+              ),
           ]);
         },),
     );
@@ -146,11 +146,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
          setState(()=>selectedFiles.removeWhere((selectedFile)=>selectedFile.path==file.path));
           return;
         }
-        if(widget.multiSelect==true || selectedFiles.isEmpty){
-          setState(()=>selectedFiles.add(file as File));
-        }else{
-          NotificationService.showSnackbar(text: "Multiple file selection not allowed");
+        if(widget.multiSelect==false){
+          selectedFiles.clear();
         }
+        setState(()=>selectedFiles.add(file as File));
       }
     }catch(e){
       NotificationService.showSnackbar(text: "Something went wrong",color: Colors.red,showCloseIcon: true);

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
@@ -34,7 +35,7 @@ class ReorderPdfView extends StatefulWidget {
 
 class _ReorderPdfViewState extends State<ReorderPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
-  final int pageSize=20;
+  final int pageSize=10;
   final ScrollController controller=ScrollController();
   final Map<int,Thumbnail> thumbnails={};
   late final PdfDocument? document;
@@ -46,6 +47,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   void initState() {
     _pdfController = PdfController(document: PdfDocument.openFile(widget.file.path),initialPage: 1);
     _pdfController.document.then((doc)=>setState((){
+      if(!mounted) return;
       document=doc;
       _pageIndexes=List.generate(doc.pagesCount, (index) => index);
       _tryRenderingNextThumbnails();
@@ -56,6 +58,8 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
 
   @override
   Widget build(BuildContext context) {
+    final md=MediaQuery.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -109,34 +113,47 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                   ),
                 ),
               ),
-              onReorderStart: (index)=>setState(()=>draggingItemIndex=index),
-              onReorderEnd: (index)=>setState(()=>draggingItemIndex=null),
               scrollController: controller,
               itemBuilder: (context, index) {
                 final pageNo=_pageIndexes[index]+1;
                 final thumbnail=thumbnails[pageNo];
+                final thumbnailWidth=md.size.width*0.25;
+                final thumbnailHeight=thumbnailWidth*1.404;
                 return Padding(
-                  key: ValueKey('page-${pageNo}'),
+                  key: ValueKey('page-$pageNo'),
                   padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
-                  child: Row(
-                    key: ValueKey(pageNo),
-                    mainAxisSize: MainAxisSize.max,
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        children: [
-                          if(thumbnail!.isLoading==true) CircularProgressIndicator()
-                          else if(thumbnail!.error!=null) Icon(Icons.error)
-                          else Image.memory(thumbnail.image!.bytes)
-                        ],
+                      Container(
+                        height: thumbnailHeight,
+                        width: thumbnailWidth,
+                        decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
+                        child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
                       ),
-                      Text(Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black),),
-                      Text('Page ${_pageIndexes[index]+1}'),
+                      Flexible(child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(textAlign: TextAlign.justify,softWrap: true,maxLines: 3,Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold,fontSize: 18,)),
+                            Text('Page No ${pageNo}',style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500,fontStyle: FontStyle.italic),)
+                          ],
+                        ),
+                      )),
                     ],
                   ),
                 );
               },
             )),
-            FilledButton(onPressed: _onReorderPages, child: const Text("Reorder Pdf Pages"))
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16.0),
+              child: FilledButton(onPressed: _onReorderPages, child: const Text("Reorder Pdf Pages")),
+            )
           ],
         ));
       },) ,
@@ -153,19 +170,13 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     });
   }
 
-  @override
-  void dispose() {
-    _pdfController.dispose();
-    super.dispose();
-  }
-
   _tryRenderingNextThumbnails() async {
     if(document==null) return;
 
     await _reloadErroredThumbnails(document!);
 
     if(thumbnails.isEmpty) {
-      _loadThumbnails();
+      await _loadThumbnails();
       return;
     }
     if(!controller.hasClients) return;
@@ -173,6 +184,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     final scrollPixels=controller.position.pixels;
     final percentScroll= (scrollPixels/maxScroll)*100;
     if(percentScroll<90) return;
+    await _loadThumbnails();
   }
 
   _reloadErroredThumbnails(PdfDocument document) async{
@@ -203,13 +215,20 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   }
 
   _loadThumbnail({required PdfDocument document,required int pageNo}) async{
+    if(thumbnails[pageNo]?.image!=null || thumbnails[pageNo]?.isLoading==true) return;
     try{
-      thumbnails.put(pageNo, Thumbnail(isLoading: true));
-      final PdfPageImage? image=await _loadPageImage(document: document!, pageNumber: pageNo);
+      setState((){
+        if(mounted) thumbnails.put(pageNo, Thumbnail(isLoading: true));
+      });
+      final PdfPageImage? image=await _loadPageImage(document: document, pageNumber: pageNo);
       if(image==null) throw Exception();
-      thumbnails.put(pageNo, Thumbnail(image: image));
+      setState((){
+        if(mounted) thumbnails.put(pageNo, Thumbnail(image: image));
+      });
     }catch(e){
-      thumbnails.put(pageNo, Thumbnail(error: "failed to render thumbnail"));
+      setState((){
+        if(mounted) thumbnails.put(pageNo, Thumbnail(error: "failed to render thumbnail"));
+      });
     }
   }
 
@@ -231,6 +250,12 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   }
 
   void _onReorderPages() async {
-    bloc.add(ReorderPdfEvent(reorderPdf: ReorderPdf(out_file_name: "out_file_name", order: _pageIndexes.map((pageIndex)=>pageIndex+1).toList(), file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(ReorderPdfEvent(reorderPdf: ReorderPdf(out_file_name: "out_file_name", order: _pageIndexes, file: await MultipartFile.fromFile(widget.file.path))));
+  }
+
+  @override
+  void dispose() {
+    _pdfController.dispose();
+    super.dispose();
   }
 }
