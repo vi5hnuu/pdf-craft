@@ -47,7 +47,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
         elevation: 5,
       ),
       body: BlocListener<PdfBloc,PdfState>(listener: (context, state) {
-        final httpState=state.httpStates[HttpStates.REORDER_PDF];
+        final httpState=state.httpStates[HttpStates.PDF_TO_JPG];
         if(httpState?.done==true){
           NotificationService.showSnackbar(text: "Page to Jpeg Successfull",color: Colors.green);
           if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
