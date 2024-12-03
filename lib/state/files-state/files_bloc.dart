@@ -93,8 +93,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     final directory = Directory(directoryPath);
     if (await directory.exists()) {
-      await for (var entity in directory.list(
-          recursive: false, followLinks: false)) {
+      await for (var entity in directory.list(recursive: false, followLinks: false)) {
         try {
           if (entity is File) {
             final fileName = entity.path
