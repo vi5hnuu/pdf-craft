@@ -1,7 +1,15 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/models/request/image-to-pdf.dart';
+import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 
 class ImageToPdfView extends StatefulWidget {
@@ -9,19 +17,14 @@ class ImageToPdfView extends StatefulWidget {
   final String? outFileName;
 
   // const MergePdfView({super.key,required this.files,this.outFileName}):assert(files.length>1);
-  ImageToPdfView({super.key, required this.files, this.outFileName}) {
-    files.addAll(List.generate(
-      50,
-          (index) => File("this is a big name for file${index + 1}.pdf"),
-    ));
-  }
+  ImageToPdfView({super.key, required this.files, this.outFileName});
 
   @override
   State<ImageToPdfView> createState() => _ImageToPdfViewState();
 }
 
 class _ImageToPdfViewState extends State<ImageToPdfView> {
-  int? draggingItemIndex;
+  late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
 
   @override
   void initState() {
@@ -36,7 +39,17 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
         title: Text('Image to Pdf'),
         elevation: 5,
       ),
-      body: Column(
+      body: BlocListener<PdfBloc,PdfState>(listener: (context, state) {
+        final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
+        if(httpState?.done==true){
+          NotificationService.showSnackbar(text: "Reorder Successfull",color: Colors.green);
+          if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
+        }else if(httpState?.error!=null){
+          NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
+        }else if(httpState?.loading==true){
+          NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
+        }
+      },child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
           Expanded(child: ReorderableListView.builder(
@@ -59,8 +72,6 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 ),
               ),
             ),
-            onReorderStart: (index)=>setState(()=>draggingItemIndex=index),
-            onReorderEnd: (index)=>setState(()=>draggingItemIndex=null),
             itemBuilder: (context, index) {
               final file = widget.files[index];
               return Padding(
@@ -79,9 +90,9 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
               );
             },
           )),
-          FilledButton(onPressed: (){}, child: const Text("Convert to pdf"))
+          FilledButton(onPressed: _onConvertToPdf, child: const Text("Convert to pdf"))
         ],
-      ),
+      ))
     );
   }
 
@@ -93,5 +104,9 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
       final File file = widget.files.removeAt(oldIndex);
       widget.files.insert(newIndex, file);
     });
+  }
+
+  void _onConvertToPdf() async {
+    bloc.add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: "out_file_name", files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
   }
 }
