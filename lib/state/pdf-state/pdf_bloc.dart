@@ -70,12 +70,14 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<PdfToJpgEvent>((event,emit)async{
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PDF_TO_JPG,const HttpState.loading())));
       try {
-        await pdfService.pdfToJpg(pdfToJpg: event.pdfToJpg,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.PDF_TO_JPG,const HttpState.done())));
+        Response<Uint8List> fileRes =await pdfService.pdfToJpg(pdfToJpg:event.pdfToJpg,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception();
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.PDF_TO_JPG,HttpState.done(extras: {'savedFile':saveFile}))));
       }  on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PDF_TO_JPG, HttpState.error(error:e.message))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PDF_TO_JPG, const HttpState.error(error:"Failed to convert pdf to jpg"))));
       } catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PDF_TO_JPG, HttpState.error(error: e.toString()))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PDF_TO_JPG, const HttpState.error(error: "Failed to convert pdf to jpg"))));
       }
     });
 

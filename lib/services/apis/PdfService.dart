@@ -47,7 +47,7 @@ class PdfService {
   }
 
   Future<Response<Uint8List>> pdfToJpg({required PdfToJpg pdfToJpg, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_pdfToJpg,data:FormData.fromMap(pdfToJpg.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+    return await DioSingleton().dio.post(_pdfToJpg,data:FormData.fromMap(pdfToJpg.toJson()),options: Options(contentType: 'multipart/form-data',responseType: ResponseType.bytes),cancelToken: cancelToken);
   }
 
   Future<Response<Uint8List>> imageToPdf({required ImageToPdf imageToPdf, CancelToken? cancelToken}) async {
