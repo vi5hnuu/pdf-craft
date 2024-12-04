@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/models/enums/user-access-permission.dart';
 
@@ -12,10 +15,12 @@ class ProtectPdf {
 
   Map<String,dynamic> toJson() {
     return {
-    'out_file_name':out_file_name,
-    'owner_password':owner_password,
-    'user_password':user_password,
-    'user_access_permissions':user_access_permissions,
+      "protect-pdf-info":MultipartFile.fromString(jsonEncode({
+        'out_file_name':out_file_name,
+        'owner_password':owner_password,
+        'user_password':user_password,
+        'user_access_permissions':user_access_permissions.map((perm)=>perm.bit).toList(),
+      }),contentType: DioMediaType.parse("application/json")),
     'file':file,
     };
   }

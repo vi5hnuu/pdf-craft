@@ -176,7 +176,6 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.splitPdfRoute.path,
         name: AppRoutes.splitPdfRoute.name,
-        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => SplitPdfView(file: File("xy/y/temporaryPdf.pdf")),
         routes: [
           GoRoute(
@@ -187,22 +186,27 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         ]
       ),
       GoRoute(
-        // The screen to display as the root in the first tab of the
-        // bottom navigation bar.
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.protectPdfRoute.path,
+        name: AppRoutes.protectPdfRoute.name,
+        builder: (BuildContext context, GoRouterState state) => ProtectPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.unprotectPdfRoute.path,
         name: AppRoutes.unprotectPdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
-        builder: (BuildContext context, GoRouterState state) => ProtectPdfView(file: File("temporary.pdf")),
-      ),
-      GoRoute(
-        // The screen to display as the root in the first tab of the
-        // bottom navigation bar.
-        parentNavigatorKey: _rootNavigatorKey,
-        path: AppRoutes.protectPdfRoute.path,
-        name: AppRoutes.protectPdfRoute.name,
-        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
-        builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: File("temporary.pdf")),
+        builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         // The screen to display as the root in the first tab of the
