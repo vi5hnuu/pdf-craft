@@ -15,9 +15,7 @@ class UnProtectPdfView extends StatefulWidget {
   final File file;
   final String? outFileName;
 
-  // const MergePdfView({super.key,required this.files,this.outFileName}):assert(files.length>1);
-  UnProtectPdfView({super.key, required this.file, this.outFileName}) {
-  }
+  UnProtectPdfView({super.key, required this.file, this.outFileName});
 
   @override
   State<UnProtectPdfView> createState() => _UnProtectPdfViewState();
@@ -25,7 +23,7 @@ class UnProtectPdfView extends StatefulWidget {
 
 class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
-  final TextEditingController passwordC=TextEditingController();
+  String password="";
 
   @override
   void initState() {
@@ -35,7 +33,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text('UnProtect Pdf'),
         elevation: 5,
@@ -51,18 +49,23 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
             }else if(httpState?.loading==true){
               NotificationService.showSnackbar(text: "Started file un-protection",color: Colors.lightBlue);
             }
-          },child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children:[
-            // final Set<UserAccessPermission> user_access_permissions;//empty means user has owner permission
-            TextFormField(controller: passwordC),
-            FilledButton(onPressed: _onUnProtectPdf, child: Text("Remove password"))
-          ],
-        ),),
+          },child: Padding(
+          padding: EdgeInsets.all(12),
+            child: Column(
+            mainAxisSize: MainAxisSize.max,
+            children:[
+              TextFormField(keyboardType: TextInputType.text,
+                          decoration: InputDecoration(labelText: "password",border: OutlineInputBorder()),
+                          onChanged: (value) => setState(()=>password=value)),
+              SizedBox(height: 16,),
+              FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text("Remove password"))
+            ],
+                    ),
+          ),),
     );
   }
 
   void _onUnProtectPdf() async{
-    bloc.add(UnprotectPdfEvent(unlockPdf: UnProtectPdf(out_file_name: "out_file_name", password: passwordC.text, file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(UnprotectPdfEvent(unlockPdf: UnProtectPdf(out_file_name: "out_file_name", password: password, file: await MultipartFile.fromFile(widget.file.path))));
   }
 }

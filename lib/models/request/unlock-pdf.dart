@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -11,8 +12,10 @@ class UnProtectPdf {
 
   Map<String,dynamic> toJson() {
     return {
-      "out_file_name":out_file_name,
-      "password":password,
+      "unprotect-pdf-info":MultipartFile.fromString(jsonEncode({
+        "out_file_name":out_file_name,
+        "password":password,}),
+          contentType: DioMediaType.parse("application/json")),
       "file":file,
     };
   }

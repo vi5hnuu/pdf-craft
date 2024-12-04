@@ -205,7 +205,6 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.unprotectPdfRoute.path,
         name: AppRoutes.unprotectPdfRoute.name,
-        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
