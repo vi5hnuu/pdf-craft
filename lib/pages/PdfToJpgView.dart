@@ -33,7 +33,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   TextEditingController gapController=TextEditingController();
   int qualityDpi=Quality.LOW.dpi;
   bool isSingle=false;
-  String? direction;
+  String? direction=Direction.VERTICAL.direction;
 
   @override
   void initState() {
@@ -71,25 +71,40 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                 mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
-                  DropdownButtonFormField(
-                      dropdownColor: Colors.black,
-                      decoration: InputDecoration(border: OutlineInputBorder()),value: qualityDpi,
-                      items: Quality.values.map((quality)=>DropdownMenuItem(child: Text(quality.name.capitalize()),value: quality.dpi,)).toList(), onChanged: (value){
-                    if(value!=null) setState(() =>qualityDpi=value);
-                  }),
-                  SizedBox(height: 16),//isSingle
-                  SizedBox(height: 16),//isSingle
-                  if(isSingle) Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: TextFormField(keyboardType: TextInputType.number,
-                        decoration: InputDecoration(border: OutlineInputBorder()),
-                        controller: gapController,
-                        validator: (value){
-                          final val=int.tryParse(gapController.value.text);
-                          return val!=null && val>0 ? null : "Invalid gap";
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text("Image Quality",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                      SizedBox(width: 12),
+                      Flexible(
+                        child: DropdownButtonFormField(
+                            dropdownColor: Colors.black,
+                            decoration: InputDecoration(border: OutlineInputBorder()),value: qualityDpi,
+                            items: Quality.values.map((quality)=>DropdownMenuItem(child: Text(quality.name.capitalize()),value: quality.dpi,)).toList(), onChanged: (value){
+                          if(value!=null) setState(() =>qualityDpi=value);
                         }),
+                      )
+                    ],
                   ),
+                  SizedBox(height: 16),//isSingle
+                  if(isSingle) Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text("Image Gap",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                      SizedBox(width: 12),
+                      Flexible(
+                        child: TextFormField(keyboardType: TextInputType.number,
+                            decoration: InputDecoration(border: OutlineInputBorder()),
+                            controller: gapController,
+                            validator: (value){
+                              final val=int.tryParse(gapController.value.text);
+                              return val!=null && val>0 ? null : "Invalid gap";
+                            }),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),//isSingle
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Row(
@@ -101,9 +116,9 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                     ),
                   ),
                   AnimatedOpacity(opacity: isSingle ? 1 : 0, duration: Duration(milliseconds: 300),child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text("Join Images ",style: TextStyle(fontSize: 20),),
+                      Text("Join Images ",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold),),
                       SizedBox(width: 16,),
                       Flexible(child: DropdownButtonFormField(
                           dropdownColor: Colors.black,

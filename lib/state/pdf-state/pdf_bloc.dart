@@ -98,12 +98,14 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<PageNumbersEvent>((event,emit)async{
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS,const HttpState.loading())));
       try {
-        await pdfService.pageNumbers(pageNumber: event.pageNumber,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS,const HttpState.done())));
+        Response<Uint8List> fileRes =await pdfService.pageNumbers(pageNumber:event.pageNumber,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to write page type");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS,HttpState.done(extras: {'savedFile':saveFile}))));
       }  on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS, HttpState.error(error:e.message))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS, HttpState.error(error:"Failed to write page type."))));
       } catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS, HttpState.error(error: e.toString()))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PAGE_NUMBERS, HttpState.error(error: "Failed to write page type."))));
       }
     });
 
