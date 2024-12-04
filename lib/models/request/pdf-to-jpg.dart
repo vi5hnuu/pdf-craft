@@ -13,8 +13,11 @@ class PdfToJpg {
 
   Map<String,dynamic> toJson() {
     return {
-      "meta":meta.toJson(),
       "file":file,
+      "meta": MultipartFile.fromString(
+        jsonEncode(meta.toJson()),
+        contentType: DioMediaType.parse("application/json"),
+      ),
     };
   }
 }
@@ -38,7 +41,7 @@ class PdfToJpgMeta{
       "quality":quality.dpi,
       "single":single,
       "direction":direction?.direction,
-      "imageGap":imageGap,
+      "image_gap":imageGap,
     };
   }
 }
