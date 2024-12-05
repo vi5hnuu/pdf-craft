@@ -68,12 +68,12 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                 NotificationService.showSnackbar(text: "Started Splitting",color: Colors.lightBlue);
               }
             },child: Flex(direction: Axis.vertical,children: [
-            if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(onSplitSelect: (splitType) => setState(()=>type=splitType))
-            else SplitPdfRange(file: widget.file, type: type!),
+            if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
+            else SplitPdfRange(file: widget.file, type: type!,onRangeChange:(rgs)=>setState(()=>ranges=rgs)),
             Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
-                child: FilledButton(onPressed: ()=>{}, child: const Text("Reorder Pdf Pages")),
+                child: FilledButton(onPressed: _onExtractAllPages, child: const Text("Split Pdf Pages")),
               )
           ],) ,
             ),
@@ -81,7 +81,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
   }
 
   _onExtractAllPages() async{
-    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(out_file_name: "out_file_name", type: type!, fixed: fixed, ranges: ranges, file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(out_file_name: "out_file_name", type: type!, fixed: type==SplitType.FIXED_RANGE ? ranges.first.from : null, ranges: [SplitType.FIXED_RANGE,SplitType.EXTRACT_ALL_PAGES].contains(type) ? null : ranges, file: await MultipartFile.fromFile(widget.file.path))));
   }
 }
 

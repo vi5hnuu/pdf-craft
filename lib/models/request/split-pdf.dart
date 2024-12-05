@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -14,10 +15,12 @@ class SplitPdf{
 
   Map<String,dynamic> toJson() {
     return {
-      "out_file_name":out_file_name,
-      "type":type,
-      "fixed":fixed,
-      "ranges":ranges,
+      "split-pdf-info":MultipartFile.fromString(jsonEncode({
+        "out_file_name":out_file_name,
+        "type":type.type,
+        "fixed":fixed,
+        "ranges":ranges,
+      }),contentType: DioMediaType.parse("application/json")),
       "file":file,
     };
   }
@@ -29,4 +32,11 @@ class RangeModel {
   final int to;
 
   RangeModel({required this.from,required this.to});
+
+  Map<String,dynamic> toJson() {
+    return {
+      "from":from,
+      "to":to
+    };
+  }
 }

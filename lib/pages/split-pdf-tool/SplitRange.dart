@@ -9,35 +9,22 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
+import 'package:pdf_craft/models/thumbnail-stats.dart';
+import 'package:pdf_craft/models/thumbnail.dart';
 import 'package:pdf_craft/routes.dart';
-import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/widgets/SplitItem.dart';
 import 'package:pdfx/pdfx.dart';
-
-class Thumbnail{
-  bool? isLoading;
-  String? error;
-  PdfPageImage? image;
-
-  Thumbnail({this.isLoading,this.error,this.image});
-}
-
-class ThumbnailStats{
-  int loadingCount;
-  int errorCount;
-  int fetchedCount;
-
-  ThumbnailStats({required this.loadingCount,required this.errorCount,required this.fetchedCount});
-}
 
 class SplitPdfRange extends StatefulWidget {
   final File file;
   final String? outFileName;
   final SplitType type;
+  final Function(List<RangeModel> rgs) onRangeChange;
 
-  const SplitPdfRange({super.key, required this.file, this.outFileName,required this.type}):assert(type!=SplitType.EXTRACT_ALL_PAGES);
+  const SplitPdfRange({super.key, required this.file, this.outFileName,required this.type, required this.onRangeChange}):assert(type!=SplitType.EXTRACT_ALL_PAGES);
 
   @override
   State<SplitPdfRange> createState() => _SplitPdfRangeState();
@@ -62,9 +49,9 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     _pdfController.document.then((doc)=>setState((){
       if(!mounted) return;
       document=doc;
-      initNextRanges();
+      if(widget.type==SplitType.FIXED_RANGE) initNextRanges();
     }));
-    controller.addListener(() => _tryRenderingNextThumbnails());
+    if(widget.type==SplitType.FIXED_RANGE) controller.addListener(() => _tryRenderingNextThumbnails());
     super.initState();
   }
 
@@ -109,27 +96,41 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                       return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
                     }),
               )
-              else Column(
-                children: [
-                  Row(
-                    children: [
-                      TextFormField(keyboardType: TextInputType.number,
-                          decoration: InputDecoration(label: Text("from"),border: OutlineInputBorder()),
-                          controller: rangeStart,
-                          validator: (value){
-                            return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
-                          }),
-                      SizedBox(width: 12,),
-                      TextFormField(keyboardType: TextInputType.number,
-                          decoration: InputDecoration(label: Text("To"),border: OutlineInputBorder()),
-                          controller: rangeEnd,
-                          validator: (value){
-                            return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
-                          }),
-                    ],
-                  ),
-                  FilledButton(onPressed: ()=>_addRange(RangeModel(from: int.parse(rangeStart.text), to: int.parse(rangeEnd.text))), child: Text("Add Range")),
-                ],
+              else Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Flexible(
+                          child: TextFormField(keyboardType: TextInputType.number,
+                              decoration: InputDecoration(label: Text("from"),border: OutlineInputBorder()),
+                              controller: rangeStart,
+                              validator: (value){
+                                return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                              }),
+                        ),
+                        SizedBox(width: 12,),
+                        Flexible(
+                          child: TextFormField(keyboardType: TextInputType.number,
+                              decoration: InputDecoration(label: Text("To"),border: OutlineInputBorder()),
+                              controller: rangeEnd,
+                              validator: (value){
+                                return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                              }),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12,),
+                    FilledButton(onPressed: document==null ? null : (){
+                      final from= min(int.tryParse(rangeStart.text) ?? 1, document!.pagesCount)-1;
+                      final to=min(int.tryParse(rangeEnd.text) ?? 1, document!.pagesCount)-1;
+                      if(from<0 || to<0) return;
+                      _addRange(RangeModel(from:from, to:to ));
+                    }, child: Text("Add Range")),
+                  ],
+                ),
               ),
               SizedBox(height: 16),
               Expanded(
@@ -142,7 +143,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                   if(_thumbnailsCache[range.from+1]==null) return SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: SplitItem(range:range,startThumbnail: _thumbnailsCache[range.from+1]!,endThumbnail: range.from==range.to ? null : _thumbnailsCache[range.to+1],),
+                    child: SplitItem(onDelete: widget.type!=SplitType.FIXED_RANGE ? ()=>_removeRange(range):null,range:range,startThumbnail: _thumbnailsCache[range.from+1]!,endThumbnail: range.from==range.to ? null : _thumbnailsCache[range.to+1],),
                   );
                 })),
             ],
@@ -170,13 +171,15 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     for(int rangeStart=nextPageRangeIndex;rangeStart<nextPageRangeIndex+pageSize;rangeStart++){
       int from=rangeStart*fixedRange;
       int to=min((from+fixedRange).toInt(), (document!.pagesCount).toInt())-1;
-      if(from>=document!.pagesCount){
-        return;
-      }
-      await _loadThumbnail(document: document!, pageNo: from+1);
-      if(from!=to) await _loadThumbnail(document: document!, pageNo: to+1);
+      if(from>=document!.pagesCount) return;
+      await _tryLoadingRange(document!, from, to);
       _pageRanges.add(RangeModel(from: from, to: to));
     }
+  }
+
+  _tryLoadingRange(PdfDocument document,int from,int to)async{
+    await _loadThumbnail(document: document, pageNo: from+1);
+    if(from!=to) await _loadThumbnail(document: document, pageNo: to+1);
   }
 
   _tryRenderingNextThumbnails() async {
@@ -266,25 +269,16 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     }
   }
 
-  _addRange(RangeModel rangeNew){
-    for(int rIdx=0;rIdx<_pageRanges.length;rIdx++){
-      final xrange=_pageRanges[rIdx];
-
-      if(xrange.to>=rangeNew.from && (rIdx+1<_pageRanges.length && _pageRanges[rIdx+1].from<=rangeNew.to)){
-        NotificationService.showSnackbar(text: "Invalid range (collision)",color: Colors.red);
-        return;
-      }
-      else if(xrange.to<rangeNew.from && (rIdx+1>=_pageRanges.length || _pageRanges[rIdx+1].from>rangeNew.to)){
-        setState(() {
-          if(rIdx+1>=_pageRanges.length) _pageRanges.add(rangeNew);
-          else _pageRanges.insert(rIdx+1, rangeNew);
-        });
-      }
-    }
+  _addRange(RangeModel rangeNew) async{//this from,to are real pageNo
+    if(rangeNew.from>rangeNew.to) return;
+    await _tryLoadingRange(document!, rangeNew.from, rangeNew.to);
+    setState(()=>_pageRanges=_mergeGroups(_pageRanges..add(rangeNew)));
+    widget.onRangeChange(_pageRanges);
   }
 
   _removeRange(RangeModel range){
     setState(()=>_pageRanges.removeWhere((xrange)=>xrange.from==range.from && xrange.to==range.to));
+    widget.onRangeChange(_pageRanges);
   }
 
   void _onReorderPages() async {
@@ -293,6 +287,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   @override
   void dispose() {
     _pdfController.dispose();
+    controller.dispose();
     super.dispose();
   }
 
@@ -300,49 +295,29 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     if(value==null || int.parse(value)<1) return;
     Timer.run(() => setState((){
       fixedRange=int.tryParse(value) ?? 1;
+      widget.onRangeChange([RangeModel(from: fixedRange, to: fixedRange)]);
       initNextRanges();
     }));
   }
-}
 
-class SplitItem extends StatelessWidget {
-  final pageWidth=150.0;
-  final RangeModel range;
-  final Thumbnail startThumbnail;
-  final Thumbnail? endThumbnail;
+  List<RangeModel> _mergeGroups(List<RangeModel> ranges){
+    ranges.sort((a, b) => (a.from<b.from) ? a.from-b.from : a.to-b.to);
 
-  const SplitItem({
-    super.key,
-    required this.range,
-    required this.startThumbnail,
-    required this.endThumbnail
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Flex(
-      direction: Axis.horizontal,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          height: pageWidth*1.4,
-          width: pageWidth,
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
-          child: (startThumbnail.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
-        ),
-        if(endThumbnail!=null) Column(
-          children: [
-            Text("${range.from+1}-${range.to+1}"),
-            SizedBox(width: 50,child: Container(height: 2,decoration: BoxDecoration(color: Colors.white),),)
-          ],
-        ),
-        if(endThumbnail!=null) Container(
-          height: pageWidth*1.4,
-          width: pageWidth,
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
-          child: (endThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (endThumbnail!.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(endThumbnail!.image!.bytes,fit: BoxFit.fitWidth,)),
-        )
-      ],
-    );;
+    List<RangeModel> mergedRanges=[];
+    for(final range in ranges){
+      if(mergedRanges.isEmpty){
+        mergedRanges.add(range);
+        continue;
+      }
+      final topR=mergedRanges.last;
+      if(range.from<=topR.to) {
+        mergedRanges.removeLast();
+        mergedRanges.add(RangeModel(from: topR.from, to: max(range.to, topR.to)));
+      }else{
+        mergedRanges.add(range);
+      }
+    }
+    return mergedRanges;
   }
 }
+
