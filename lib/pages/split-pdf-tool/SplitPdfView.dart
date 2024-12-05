@@ -44,7 +44,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
     final router=GoRouter.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text('Split Pdf'),
         elevation: 5,
@@ -69,7 +69,12 @@ class _SplitPdfViewState extends State<SplitPdfView> {
               }
             },child: Flex(direction: Axis.vertical,children: [
             if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(onSplitSelect: (splitType) => setState(()=>type=splitType))
-            else SplitPdfRange(file: widget.file, type: type!)
+            else SplitPdfRange(file: widget.file, type: type!),
+            Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16.0),
+                child: FilledButton(onPressed: ()=>{}, child: const Text("Reorder Pdf Pages")),
+              )
           ],) ,
             ),
       ));

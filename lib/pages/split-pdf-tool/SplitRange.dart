@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
@@ -9,6 +10,7 @@ import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
@@ -70,83 +72,83 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   Widget build(BuildContext context) {
     final md=MediaQuery.of(context);
 
-    return FutureBuilder(future: _pdfController.document, builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.hasError || snapshot.data == null) {
-          return Center(
-            child: const Center(child: Icon(Icons.error, color: Colors.red)),
-          );
-        }
-        return BlocListener<PdfBloc,PdfState>(
-            listenWhen: (previous, current) => previous.httpStates[HttpStates.REORDER_PDF]!=current.httpStates[HttpStates.REORDER_PDF],
-            listener: (context, state) {
-              final httpState=state.httpStates[HttpStates.REORDER_PDF];
-              if(httpState?.done==true){
-                NotificationService.showSnackbar(text: "Reorder Successfull",color: Colors.green);
-                if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
-              }else if(httpState?.error!=null){
-                NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-              }else if(httpState?.loading==true){
-                NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
+    return Expanded(
+      child: FutureBuilder(future: _pdfController.document, builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: const Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError || snapshot.data == null) {
+            return Center(
+              child: const Center(child: Icon(Icons.error, color: Colors.red)),
+            );
+          }
+          return BlocListener<PdfBloc,PdfState>(
+              listenWhen: (previous, current) => previous.httpStates[HttpStates.REORDER_PDF]!=current.httpStates[HttpStates.REORDER_PDF],
+              listener: (context, state) {
+                final httpState=state.httpStates[HttpStates.REORDER_PDF];
+                if(httpState?.done==true){
+                  NotificationService.showSnackbar(text: "Reorder Successfull",color: Colors.green);
+                  if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
+                }else if(httpState?.error!=null){
+                  NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
+                }else if(httpState?.loading==true){
+                  NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
+                }
               }
-            }
-            ,child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            if(widget.type==SplitType.FIXED_RANGE) Row(
-                mainAxisSize: MainAxisSize.min,
+              ,child: Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              if(widget.type==SplitType.FIXED_RANGE) Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: 'Range',border: OutlineInputBorder()),
+                    onChanged: _onFixedRangeChange,
+                    validator: (value){
+                      return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                    }),
+              )
+              else Column(
                 children: [
-                  Text("Fixed range",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                  SizedBox(width: 12),
-                  Flexible(
-                    child: TextFormField(keyboardType: TextInputType.number,
-                        decoration: InputDecoration(border: OutlineInputBorder()),
-                        onChanged: (value) => setState(()=>fixedRange=int.tryParse(value) ?? 1),
-                        validator: (value){
-                          return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
-                        }),
+                  Row(
+                    children: [
+                      TextFormField(keyboardType: TextInputType.number,
+                          decoration: InputDecoration(label: Text("from"),border: OutlineInputBorder()),
+                          controller: rangeStart,
+                          validator: (value){
+                            return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                          }),
+                      SizedBox(width: 12,),
+                      TextFormField(keyboardType: TextInputType.number,
+                          decoration: InputDecoration(label: Text("To"),border: OutlineInputBorder()),
+                          controller: rangeEnd,
+                          validator: (value){
+                            return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                          }),
+                    ],
                   ),
-                ])
-            else Column(
-              children: [
-                Row(
-                  children: [
-                    TextFormField(keyboardType: TextInputType.number,
-                        decoration: InputDecoration(label: Text("from"),border: OutlineInputBorder()),
-                        controller: rangeStart,
-                        validator: (value){
-                          return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
-                        }),
-                    SizedBox(width: 12,),
-                    TextFormField(keyboardType: TextInputType.number,
-                        decoration: InputDecoration(label: Text("To"),border: OutlineInputBorder()),
-                        controller: rangeEnd,
-                        validator: (value){
-                          return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
-                        }),
-                  ],
-                ),
-                FilledButton(onPressed: ()=>_addRange(RangeModel(from: int.parse(rangeStart.text), to: int.parse(rangeEnd.text))), child: Text("Add Range")),
-              ],
-            ),
-            SizedBox(height: 16),
-            Expanded(child: ListView.builder(itemCount: _pageRanges.length,
-              itemBuilder: (context, index){
-                final range=_pageRanges[index];
-                return SplitItem(startThumbnail: _thumbnailsCache[range.from]!,endThumbnail: _thumbnailsCache[range.to],);
-              })),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16.0),
-              child: FilledButton(onPressed: _onReorderPages, child: const Text("Reorder Pdf Pages")),
-            )
-          ],
-        ));
-      }
+                  FilledButton(onPressed: ()=>_addRange(RangeModel(from: int.parse(rangeStart.text), to: int.parse(rangeEnd.text))), child: Text("Add Range")),
+                ],
+              ),
+              SizedBox(height: 16),
+              Expanded(
+                  child: ListView.builder(
+                itemCount: _pageRanges.length,
+                controller:controller ,
+                itemBuilder: (context, index){
+                  final range=_pageRanges[index];
+
+                  if(_thumbnailsCache[range.from+1]==null) return SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SplitItem(range:range,startThumbnail: _thumbnailsCache[range.from+1]!,endThumbnail: range.from==range.to ? null : _thumbnailsCache[range.to+1],),
+                  );
+                })),
+            ],
+          ));
+        }
+      ),
     );
   }
 
@@ -155,20 +157,25 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     if(!mounted) return;
 
     //reset ranges if fixed-range changed
-    if(_pageRanges.isNotEmpty && (_pageRanges.first.to-_pageRanges.first.from)!=fixedRange) setState(()=>_pageRanges.clear());
+    if(_pageRanges.isNotEmpty && (_pageRanges.first.to-_pageRanges.first.from+1)!=fixedRange){
+      await _removeErrorThumbnails();
+      setState(()=>_pageRanges.clear());
+    }
 
     await _reloadErroredThumbnails(document!);
     var stats=_thumbnailsStats();
-    if(stats.loadingCount/(stats.loadingCount+stats.fetchedCount+stats.errorCount)>0.8) return;
+    if(stats.loadingCount!=0 || stats.errorCount!=0) return;
 
-    int nextPageRangeIndex=_pageRanges.length+1;
+    int nextPageRangeIndex=_pageRanges.length;
     for(int rangeStart=nextPageRangeIndex;rangeStart<nextPageRangeIndex+pageSize;rangeStart++){
-      int from=rangeStart*pageSize;
-      int to=min(from+pageSize, document!.pagesCount)-1;
+      int from=rangeStart*fixedRange;
+      int to=min((from+fixedRange).toInt(), (document!.pagesCount).toInt())-1;
+      if(from>=document!.pagesCount){
+        return;
+      }
+      await _loadThumbnail(document: document!, pageNo: from+1);
+      if(from!=to) await _loadThumbnail(document: document!, pageNo: to+1);
       _pageRanges.add(RangeModel(from: from, to: to));
-      await _loadThumbnail(document: document!, pageNo: from);
-      if(from!=to) await _loadThumbnail(document: document!, pageNo: to);
-      if(from>=document!.pagesCount) return;
     }
   }
 
@@ -179,7 +186,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     final maxScroll=controller.position.maxScrollExtent;
     final scrollPixels=controller.position.pixels;
     final percentScroll= (scrollPixels/maxScroll)*100;
-    if(percentScroll<90) return;
+    if(percentScroll<90 && _errorThumbnails().length==0) return;
     await initNextRanges();
   }
 
@@ -189,17 +196,25 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     }
   }
 
+  _removeErrorThumbnails() async{
+    for(final thumbnail in _thumbnailsCache.clone().entries){
+      if(thumbnail.value.error!=null) _thumbnailsCache.remove(thumbnail.key);
+    }
+  }
+
   ThumbnailStats _thumbnailsStats(){
     var thumbnailStats=ThumbnailStats(loadingCount: 0, errorCount: 0, fetchedCount: 0);
 
     for(var range in _pageRanges){
-      if(_thumbnailsCache[range.from]?.isLoading==true) thumbnailStats.loadingCount++;
-      else if(_thumbnailsCache[range.from]?.error!=null) thumbnailStats.errorCount++;
-      else if(_thumbnailsCache[range.from]?.image!=null) thumbnailStats.fetchedCount++;
+      final pageFrom=range.from+1;
+      final pageTo=range.to+1;
+      if(_thumbnailsCache[pageFrom]?.isLoading==true) thumbnailStats.loadingCount++;
+      else if(_thumbnailsCache[pageFrom]?.error!=null) thumbnailStats.errorCount++;
+      else if(_thumbnailsCache[pageFrom]?.image!=null) thumbnailStats.fetchedCount++;
 
-      if(range.from!=range.to && _thumbnailsCache[range.to]?.isLoading==true) thumbnailStats.loadingCount++;
-      if(range.from!=range.to && _thumbnailsCache[range.to]?.error!=null) thumbnailStats.errorCount++;
-      if(range.from!=range.to && _thumbnailsCache[range.to]?.image!=null) thumbnailStats.fetchedCount++;
+      if(range.from!=range.to && _thumbnailsCache[pageTo]?.isLoading==true) thumbnailStats.loadingCount++;
+      if(range.from!=range.to && _thumbnailsCache[pageTo]?.error!=null) thumbnailStats.errorCount++;
+      if(range.from!=range.to && _thumbnailsCache[pageTo]?.image!=null) thumbnailStats.fetchedCount++;
     }
     return thumbnailStats;
   }
@@ -207,14 +222,18 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   List<MapEntry<int,Thumbnail>> _errorThumbnails(){
     List<MapEntry<int,Thumbnail>> errorThumbnails=[];
     for(var range in _pageRanges){
-      if(_thumbnailsCache[range.from]?.error!=null) errorThumbnails.add(MapEntry(range.from,_thumbnailsCache[range.from]!));
-      if(range.from!=range.to && _thumbnailsCache[range.to]?.error!=null) errorThumbnails.add(MapEntry(range.to,_thumbnailsCache[range.to]!));
+      final pageFrom=range.from+1;
+      final pageTo=range.to+1;
+
+      if(_thumbnailsCache[pageFrom]?.error!=null) errorThumbnails.add(MapEntry(pageFrom,_thumbnailsCache[pageFrom]!));
+      if(range.from!=range.to && _thumbnailsCache[pageTo]?.error!=null) errorThumbnails.add(MapEntry(pageTo,_thumbnailsCache[pageTo]!));
     }
     return errorThumbnails;
   }
 
   _loadThumbnail({required PdfDocument document,required int pageNo}) async{
     if(_thumbnailsCache[pageNo]?.image!=null || _thumbnailsCache[pageNo]?.isLoading==true) return;
+    // LoggerSingleton().logger.i("Loading thumbnail for pageNo : $pageNo");
     try{
       setState((){
         if(mounted) _thumbnailsCache.put(pageNo, Thumbnail(isLoading: true));
@@ -239,7 +258,6 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
       final PdfPageImage? image = await page.render(
         width: page.width,
         height: page.height,
-        format: PdfPageImageFormat.jpeg,  // Adjust the format if needed
       );
       await page.close();
       return image;
@@ -277,41 +295,54 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     _pdfController.dispose();
     super.dispose();
   }
+
+  void _onFixedRangeChange(String? value) {
+    if(value==null || int.parse(value)<1) return;
+    Timer.run(() => setState((){
+      fixedRange=int.tryParse(value) ?? 1;
+      initNextRanges();
+    }));
+  }
 }
 
 class SplitItem extends StatelessWidget {
+  final pageWidth=150.0;
+  final RangeModel range;
   final Thumbnail startThumbnail;
   final Thumbnail? endThumbnail;
 
   const SplitItem({
     super.key,
+    required this.range,
     required this.startThumbnail,
     required this.endThumbnail
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
-      child: Flex(
-        direction: Axis.horizontal,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 200*1.14,
-            width: 200,
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
-            child: (startThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
-          ),
-          if(endThumbnail!=null) Text("..."),
-          if(endThumbnail!=null) Container(
-            height: 200*1.14,
-            width: 200,
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
-            child: (startThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
-          )
-        ],
-      ),
+    return Flex(
+      direction: Axis.horizontal,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          height: pageWidth*1.4,
+          width: pageWidth,
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
+          child: (startThumbnail.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
+        ),
+        if(endThumbnail!=null) Column(
+          children: [
+            Text("${range.from+1}-${range.to+1}"),
+            SizedBox(width: 50,child: Container(height: 2,decoration: BoxDecoration(color: Colors.white),),)
+          ],
+        ),
+        if(endThumbnail!=null) Container(
+          height: pageWidth*1.4,
+          width: pageWidth,
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
+          child: (endThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (endThumbnail!.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(endThumbnail!.image!.bytes,fit: BoxFit.fitWidth,)),
+        )
+      ],
     );;
   }
 }
