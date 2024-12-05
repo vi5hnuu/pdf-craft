@@ -1,16 +1,26 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
+import 'package:pdf_craft/models/request/split-pdf.dart';
+import 'package:pdf_craft/pages/split-pdf-tool/SplitConfig.dart';
+import 'package:pdf_craft/pages/split-pdf-tool/SplitRange.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/utils/utility.dart';
 
 class SplitPdfView extends StatefulWidget {
   final File file;
   final String? outFileName;
 
-  // const MergePdfView({super.key,required this.files,this.outFileName}):assert(files.length>1);
   SplitPdfView({super.key, required this.file,this.outFileName});
 
   @override
@@ -18,6 +28,11 @@ class SplitPdfView extends StatefulWidget {
 }
 
 class _SplitPdfViewState extends State<SplitPdfView> {
+  late GoRouter router=GoRouter.of(context);
+  late PdfBloc bloc=BlocProvider.of(context);
+  SplitType? type=SplitType.EXTRACT_ALL_PAGES;
+  int? fixed;
+  List<RangeModel> ranges=[];
 
   @override
   void initState() {
@@ -34,14 +49,34 @@ class _SplitPdfViewState extends State<SplitPdfView> {
         title: Text('Split Pdf'),
         elevation: 5,
       ),
-      body: Column(
-        children: [
-          ListTile(onTap: ()=>router.pushNamed(AppRoutes.splitByTypePdfRoute.name,pathParameters: {'splitType':SplitType.SPLIT_BY_RANGE.type}),title: Text("Split by ranges"),subtitle: Text("Add custom ranges"),),
-          ListTile(onTap: ()=>router.pushNamed(AppRoutes.splitByTypePdfRoute.name,pathParameters: {'splitType':SplitType.FIXED_RANGE.type}),title: Text("Fixed ranges"),subtitle: Text("Assign a fixed range"),),
-          ListTile(onTap: ()=>router.pushNamed(AppRoutes.splitByTypePdfRoute.name,pathParameters: {'splitType':SplitType.DELETE_PAGES.type}),title: Text("Delete pages"),subtitle: Text("Remove individual pages or range of pages"),),
-          ListTile(trailing: Checkbox(value: true, onChanged: (value) {}),title: Text("Extract all pages"),subtitle: Text("Every page will be converted to a seperate PDF file, a total of 19 PDF will be generated"),),
-        ],
-      ) ,
-    );
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if(type!=null) setState(()=>type=null);
+          else router.pop();
+        },
+        child: BlocListener<PdfBloc,PdfState>(listenWhen: (previous, current) => previous.httpStates[HttpStates.SPLIT_PDF]!=current.httpStates[HttpStates.SPLIT_PDF],
+            listener: (context, state) {
+              final httpState=state.httpStates[HttpStates.SPLIT_PDF];
+              if(httpState?.done==true){
+                final file=httpState?.extras?['savedFile'];
+                NotificationService.showSnackbar(text: "Splitting Pdf Successfull",color: Colors.green);
+                if(file is File) OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]);
+              }else if(httpState?.error!=null){
+                NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
+              }else if(httpState?.loading==true){
+                NotificationService.showSnackbar(text: "Started Splitting",color: Colors.lightBlue);
+              }
+            },child: Flex(direction: Axis.vertical,children: [
+            if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(onSplitSelect: (splitType) => setState(()=>type=splitType))
+            else SplitPdfRange(file: widget.file, type: type!)
+          ],) ,
+            ),
+      ));
+  }
+
+  _onExtractAllPages() async{
+    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(out_file_name: "out_file_name", type: type!, fixed: fixed, ranges: ranges, file: await MultipartFile.fromFile(widget.file.path))));
   }
 }
+
