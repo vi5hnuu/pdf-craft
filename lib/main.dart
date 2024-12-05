@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdf_craft/models/enums/listing-type.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
-import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/pages/ErrorPage.dart';
 import 'package:pdf_craft/pages/ImageToPdfView.dart';
 import 'package:pdf_craft/pages/MainScreen.dart';
@@ -19,7 +17,6 @@ import 'package:pdf_craft/pages/ReorderPdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
-import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfTypeView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
 import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/HomeScreen.dart';
@@ -171,19 +168,15 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         builder: (BuildContext context, GoRouterState state) => PageNumberPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        // The screen to display as the root in the first tab of the
-        // bottom navigation bar.
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.splitPdfRoute.path,
         name: AppRoutes.splitPdfRoute.name,
-        builder: (BuildContext context, GoRouterState state) => SplitPdfView(file: File("xy/y/temporaryPdf.pdf")),
-        routes: [
-          GoRoute(
-              path: AppRoutes.splitByTypePdfRoute.path,
-              name: AppRoutes.splitByTypePdfRoute.name,
-              builder: (BuildContext context, GoRouterState state) => SplitPdfTypeView(file: File("xy/y/temporaryPdf.pdf"),outFileName: state.uri.queryParameters['outFileName']!,type:SplitType.fromJson(state.pathParameters['splitType']!)),
-          ),
-        ]
+        builder: (BuildContext context, GoRouterState state) => SplitPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         redirect: (context, state) {

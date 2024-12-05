@@ -18,10 +18,7 @@ class AppRoutes{
   static AppRoute pdfToJpgRoute=AppRoute(name: 'pdf-to-jpg-tool', path: '/pdf-to-jpg-tool');
   static AppRoute imageToPdfRoute=AppRoute(name: 'image-to-pdf-tool', path: '/image-to-pdf-tool');
   static AppRoute pageNumbersRoute=AppRoute(name: 'page-numbers-tool', path: '/page-numbers-tool');
-
   static AppRoute splitPdfRoute=AppRoute(name: 'split-pdf-tool', path: '/split-pdf-tool');
-  static AppRoute splitByTypePdfRoute=AppRoute(name: 'split-pdf-by-type', path: ':splitType');
-
   static AppRoute unprotectPdfRoute=AppRoute(name: 'unprotect-pdf-tool', path: '/unprotect-pdf-tool');
   static AppRoute protectPdfRoute=AppRoute(name: 'protect-pdf-tool', path: '/protect-pdf-tool');
   static AppRoute rotatePdfRoute=AppRoute(name: 'rotate-pdf-tool', path: '/rotate-pdf-tool');
