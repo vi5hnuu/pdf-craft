@@ -92,6 +92,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
                       //on delete we add to deleted files but we are not sure if delete operation was successfull or not
                       //may be user cancelled deletion or it might have failed...
+                      //also dont show file if delete or move is in loading
                       if(deletedFiles.contains(file)){
                         if(state.isLoading(forr: HttpStates.DELETE_FILE) || state.isLoading(forr: HttpStates.MOVE_FILE_TO) || !file.existsSync()) return SizedBox.shrink();
                         deletedFiles.remove(file);
