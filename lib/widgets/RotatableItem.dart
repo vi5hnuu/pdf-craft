@@ -51,15 +51,13 @@ class RotatablePageWidget extends StatelessWidget {
     }
 
     //bring it within bounds
-    if(maintainAspectRatio){
-      //scale down
-      final hInc= (height-originalHeight)/originalHeight;
-      if(hInc>0) height=height-height*(hInc);
+    //scale down
+    final hInc= (height-originalHeight)/originalHeight;
+    if(hInc>0) height=height-height*(hInc);
 
-      //scale down
-      final wInc= (width-originalWidth)/originalWidth;
-      if(wInc>0) width=width-width*(wInc);
-    }
+    //scale down
+    final wInc= (width-originalWidth)/originalWidth;
+    if(wInc>0) width=width-width*(wInc);
 
     return Container(
       width: width,

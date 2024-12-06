@@ -100,9 +100,14 @@ class _RotatePdfViewState extends State<RotatePdfView> {
           children: [
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: TextFormField(keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: "All page angle",border: OutlineInputBorder()),
-                  onChanged: (value) => setState(()=>file_angle=int.tryParse(value) ?? 0)),
+              child: Column(
+                children: [
+                  TextFormField(keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: "All page angle",border: OutlineInputBorder()),
+                      onChanged: (value) => setState(()=>file_angle=int.tryParse(value) ?? 0)),
+                  Text("All pages will be rotate at this angle, to change angle for specific pages add range below",style: TextStyle(color: Colors.grey)),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
@@ -114,6 +119,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                 ],
               ),
             ),
+            Text("All pages with render without overlap, below view is not exactly correct"),
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -156,6 +162,24 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                     pageNo.clear();
                     pageAngle.clear();
                   }, child: Text("Add Range")),
+                  SizedBox(height: 18,),
+              Wrap(
+                spacing: 8.0, // Space between chips horizontally
+                runSpacing: 8.0, // Space between chips vertically
+                children: page_angles.entries.map((range) {
+                  return Flexible(
+                    child: Chip(
+                      label: Text(
+                        "Page ${range.key} : ${range.value}°",
+                        style: TextStyle(color: Colors.black),
+                        overflow: TextOverflow.ellipsis, // Ensure text truncates if too long
+                        maxLines: 1, // Ensure text remains on one line
+                      ),
+                      backgroundColor: Colors.white,
+                    ),
+                  );
+                }).toList(),
+              ),
                 ],
               ),
             ),
@@ -189,7 +213,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16.0),
-              child: FilledButton(onPressed: _onReorderPages, child: const Text("Reorder Pdf Pages")),
+              child: FilledButton(onPressed: _onRotatePages, child: const Text("Rotate Pdf Pages")),
             )
           ],
         ));
@@ -286,7 +310,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     }
   }
 
-  void _onReorderPages() async {
+  void _onRotatePages() async {
     bloc.add(ReorderPdfEvent(reorderPdf: ReorderPdf(out_file_name: "out_file_name", order: _pageIndexes, file: await MultipartFile.fromFile(widget.file.path))));
   }
 
