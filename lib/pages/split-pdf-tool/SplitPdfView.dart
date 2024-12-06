@@ -10,7 +10,6 @@ import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitConfig.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitRange.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -33,6 +32,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
   SplitType? type=SplitType.EXTRACT_ALL_PAGES;
   int? fixed;
   List<RangeModel> ranges=[];
+  final TextEditingController outFileNameC=TextEditingController();
 
   @override
   void initState() {
@@ -68,12 +68,18 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                 NotificationService.showSnackbar(text: "Started Splitting",color: Colors.lightBlue);
               }
             },child: Flex(direction: Axis.vertical,children: [
+              Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(keyboardType: TextInputType.text,
+                decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                controller: outFileNameC,style: TextStyle(color: Colors.black),),
+            ),
             if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
             else SplitPdfRange(file: widget.file, type: type!,onRangeChange:(rgs)=>setState(()=>ranges=rgs)),
             Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
-                child: FilledButton(onPressed: _onExtractAllPages, child: const Text("Split Pdf Pages")),
+                child: FilledButton(onPressed: type==null || (type!=SplitType.EXTRACT_ALL_PAGES && ranges.isEmpty)  ? null : _onExtractAllPages, child: const Text("Split Pdf Pages")),
               )
           ],) ,
             ),
@@ -81,7 +87,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
   }
 
   _onExtractAllPages() async{
-    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(out_file_name: "out_file_name", type: type!, fixed: type==SplitType.FIXED_RANGE ? ranges.first.from : null, ranges: [SplitType.FIXED_RANGE,SplitType.EXTRACT_ALL_PAGES].contains(type) ? null : ranges, file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(out_file_name: outFileNameC.text.isEmpty ? "splitted_file" : outFileNameC.text, type: type!, fixed: type==SplitType.FIXED_RANGE ? ranges.first.from : null, ranges: [SplitType.FIXED_RANGE,SplitType.EXTRACT_ALL_PAGES].contains(type) ? null : ranges, file: await MultipartFile.fromFile(widget.file.path))));
   }
 }
 

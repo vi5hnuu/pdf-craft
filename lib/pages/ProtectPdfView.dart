@@ -27,7 +27,7 @@ class ProtectPdfView extends StatefulWidget {
 
 class _ProtectPdfViewState extends State<ProtectPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
-  final TextEditingController nameC=TextEditingController();
+  final TextEditingController outFileNameC=TextEditingController();
   String ownerPassword="";
   String userPassword="";
   final List<UserAccessPermission> userPermissions=[];
@@ -67,47 +67,23 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
               Expanded(
                 child: SingleChildScrollView(child: Column(
                             children: [
-                Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("File name",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                      SizedBox(width: 12),
-                      Flexible(
-                        child: TextFormField(keyboardType: TextInputType.text,
-                            decoration: InputDecoration(border: OutlineInputBorder()),
-                            controller: nameC),
-                      ),
-                    ]),
+                TextFormField(keyboardType: TextInputType.text,
+                    decoration: InputDecoration(labelText: "File name",border: OutlineInputBorder()),
+                    controller: outFileNameC),
                 SizedBox(height: 16,),
-                Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("Owner Password",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                      SizedBox(width: 12),
-                      Flexible(
-                        child: TextFormField(keyboardType: TextInputType.number,
-                            decoration: InputDecoration(border: OutlineInputBorder()),
-                        onChanged:(value) => setState(()=>ownerPassword=value),
-                        validator:(value) {
-                          return value!=null && value.length>=10 ? null : "Min 10 character required";
-                        } ,),
-                      ),
-                    ]),
+                TextFormField(keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: "Owner Password",border: OutlineInputBorder()),
+                onChanged:(value) => setState(()=>ownerPassword=value),
+                validator:(value) {
+                  return value!=null && value.length>=10 ? null : "Min 10 character required";
+                } ,),
                 SizedBox(height: 16,),
-                Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("User password",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                      SizedBox(width: 12),
-                      Flexible(
-                        child: TextFormField(keyboardType: TextInputType.number,
-                            decoration: InputDecoration(border: OutlineInputBorder()),
-                             onChanged:(value) => setState(()=>userPassword=value),
-                        validator:(value) {
-                          return value!=null && value.length>=10 ? null : "Min 10 character required";
-                        } ,),
-                      ),
-                    ]),
+                TextFormField(keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: "User password",border: OutlineInputBorder()),
+                     onChanged:(value) => setState(()=>userPassword=value),
+                validator:(value) {
+                  return value!=null && value.length>=10 ? null : "Min 10 character required";
+                } ,),
                 Padding(padding: EdgeInsets.symmetric(horizontal: 12,vertical: 16).copyWith(bottom: 10),
                 child: Flex(
                   direction: Axis.vertical,
@@ -146,6 +122,6 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   }
 
   void _onProtectPdf() async{
-    bloc.add(ProtectPdfEvent(protectPdf: ProtectPdf(out_file_name: nameC.text.isNotEmpty ? nameC.text : "protected_file", owner_password: ownerPassword, user_password: userPassword, user_access_permissions: userPermissions.toSet(), file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(ProtectPdfEvent(protectPdf: ProtectPdf(out_file_name: outFileNameC.text.isNotEmpty ? outFileNameC.text : "protected_file", owner_password: ownerPassword, user_password: userPassword, user_access_permissions: userPermissions.toSet(), file: await MultipartFile.fromFile(widget.file.path))));
   }
 }

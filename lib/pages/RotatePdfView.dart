@@ -48,6 +48,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   int file_angle=0; // angle at which all pages will be rotated
   Map<int,int> page_angles={}; // if a page do not have angle, file angle is used else no rotation [0 index]
   bool maintain_ratio=true;//default true
+  final TextEditingController outFileNameC=TextEditingController();
 
   @override
   void initState() {
@@ -69,7 +70,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Reorder Pdf Pages'),
+        title: Text('Rotate Pdf Pages'),
         elevation: 5,
       ),
       body: FutureBuilder(future: _pdfController.document, builder: (context, snapshot) {
@@ -100,6 +101,12 @@ class _RotatePdfViewState extends State<RotatePdfView> {
           mainAxisSize: MainAxisSize.max,
           children: [
             Padding(
+              padding: const EdgeInsets.all(12.0).copyWith(bottom: 0),
+              child: TextFormField(keyboardType: TextInputType.text,
+                decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                controller: outFileNameC,style: TextStyle(color: Colors.black),),
+            ),
+            Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 children: [
@@ -120,7 +127,10 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                 ],
               ),
             ),
-            Text("All pages with render without overlap, below view is not exactly correct"),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Text("All pages will render without overlap, below view is not exactly correct",style: TextStyle(color: Colors.yellow),),
+            ),
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -215,7 +225,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16.0),
-              child: FilledButton(onPressed: _onRotatePages, child: const Text("Rotate Pdf Pages")),
+              child: FilledButton(onPressed: file_angle==0 && page_angles.isEmpty ? null : _onRotatePages, child: const Text("Rotate Pdf Pages")),
             )
           ],
         ));
@@ -313,7 +323,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   }
 
   void _onRotatePages() async {
-    bloc.add(RotatePdfEvent(rotatePdf: RotatePdf(out_file_name: "out_file_name", file_angle: file_angle,maintain_ratio: maintain_ratio,page_angles: page_angles, file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(RotatePdfEvent(rotatePdf: RotatePdf(out_file_name: outFileNameC.text.isEmpty ? "reordered_file" : outFileNameC.text, file_angle: file_angle,maintain_ratio: maintain_ratio,page_angles: page_angles, file: await MultipartFile.fromFile(widget.file.path))));
   }
 
   @override

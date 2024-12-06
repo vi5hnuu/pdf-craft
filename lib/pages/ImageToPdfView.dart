@@ -25,6 +25,7 @@ class ImageToPdfView extends StatefulWidget {
 
 class _ImageToPdfViewState extends State<ImageToPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
+  final TextEditingController outFileNameC=TextEditingController();
 
   @override
   void initState() {
@@ -56,6 +57,12 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
       },child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextFormField(keyboardType: TextInputType.text,
+              decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+              controller: outFileNameC,style: TextStyle(color: Colors.black),),
+          ),
           Expanded(child: ReorderableListView.builder(
             padding: EdgeInsets.symmetric(vertical: 8),
             onReorder: _reorder,
@@ -118,6 +125,6 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
   }
 
   void _onConvertToPdf() async {
-    bloc.add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: "out_file_name", files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
+    bloc.add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text, files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
   }
 }

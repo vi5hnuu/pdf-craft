@@ -23,6 +23,7 @@ class UnProtectPdfView extends StatefulWidget {
 
 class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
+  TextEditingController outputFileNameC=TextEditingController();
   String password="";
 
   @override
@@ -55,6 +56,10 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
             mainAxisSize: MainAxisSize.max,
             children:[
               TextFormField(keyboardType: TextInputType.text,
+                  decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                  controller: outputFileNameC,),
+              SizedBox(height: 12,),
+              TextFormField(keyboardType: TextInputType.text,
                           decoration: InputDecoration(labelText: "password",border: OutlineInputBorder()),
                           onChanged: (value) => setState(()=>password=value)),
               SizedBox(height: 16,),
@@ -66,6 +71,6 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   }
 
   void _onUnProtectPdf() async{
-    bloc.add(UnprotectPdfEvent(unlockPdf: UnProtectPdf(out_file_name: "out_file_name", password: password, file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(UnprotectPdfEvent(unlockPdf: UnProtectPdf(out_file_name: outputFileNameC.text.isEmpty ? "protected" : outputFileNameC.text, password: password, file: await MultipartFile.fromFile(widget.file.path))));
   }
 }

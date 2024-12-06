@@ -12,16 +12,16 @@ import 'package:pdf_craft/utils/utility.dart';
 
 class MergePdfView extends StatefulWidget {
   final List<File> files;
-  final String? outFileName;
 
   // const MergePdfView({super.key,required this.files,this.outFileName}):assert(files.length>1);
-  const MergePdfView({super.key, required this.files, this.outFileName});
+  const MergePdfView({super.key, required this.files});
 
   @override
   State<MergePdfView> createState() => _MergePdfViewState();
 }
 
 class _MergePdfViewState extends State<MergePdfView> {
+  final TextEditingController outFileNameC=TextEditingController();
   int? draggingItemIndex;
 
   @override
@@ -55,6 +55,13 @@ class _MergePdfViewState extends State<MergePdfView> {
         return Column(
           mainAxisSize: MainAxisSize.max,
           children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(keyboardType: TextInputType.text,
+                  decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                  controller: outFileNameC,style: TextStyle(color: Colors.black),),
+            ),
+            SizedBox(height: 12,),
             Expanded(child: ReorderableListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
               onReorder: _reorder,
@@ -113,6 +120,6 @@ class _MergePdfViewState extends State<MergePdfView> {
   }
 
   void _startMerge() async {
-    BlocProvider.of<PdfBloc>(context).add(MergePdfEvent(mergePdf: MergePdf(out_file_name: "out_file_name", files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
+    BlocProvider.of<PdfBloc>(context).add(MergePdfEvent(mergePdf: MergePdf(out_file_name: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
   }
 }

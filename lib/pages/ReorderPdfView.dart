@@ -41,7 +41,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   late final PdfDocument? document;
   late PdfController _pdfController;
   List<int> _pageIndexes=[];
-  int? draggingItemIndex;
+  final TextEditingController outFileNameC=TextEditingController();
 
   @override
   void initState() {
@@ -93,6 +93,12 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
             ,child: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(keyboardType: TextInputType.text,
+                decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                controller: outFileNameC,style: TextStyle(color: Colors.black),),
+            ),
             Expanded(child: ReorderableListView.builder(
               padding: EdgeInsets.symmetric(vertical: 8),
               onReorder: _reorder,
@@ -250,7 +256,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   }
 
   void _onReorderPages() async {
-    bloc.add(ReorderPdfEvent(reorderPdf: ReorderPdf(out_file_name: "out_file_name", order: _pageIndexes, file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(ReorderPdfEvent(reorderPdf: ReorderPdf(out_file_name: outFileNameC.text.isEmpty ? "reordered_file" : outFileNameC.text, order: _pageIndexes, file: await MultipartFile.fromFile(widget.file.path))));
   }
 
   @override

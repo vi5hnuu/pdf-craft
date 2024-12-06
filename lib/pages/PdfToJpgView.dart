@@ -4,13 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/direction.dart';
 import 'package:pdf_craft/models/enums/quality.dart';
 import 'package:pdf_craft/models/request/pdf-to-jpg.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -34,6 +32,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   int qualityDpi=Quality.LOW.dpi;
   bool isSingle=false;
   String? direction=Direction.VERTICAL.direction;
+  final TextEditingController outFileNameC=TextEditingController();
 
   @override
   void initState() {
@@ -65,6 +64,12 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
         padding: const EdgeInsets.all(12.0),
         child: Flex(direction: Axis.vertical,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: TextFormField(keyboardType: TextInputType.text,
+              decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+              controller: outFileNameC,style: TextStyle(color: Colors.black),),
+          ),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -145,7 +150,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   }
 
   void _onPdfToJpf() async {
-    bloc.add(PdfToJpgEvent(pdfToJpg: PdfToJpg(file: await MultipartFile.fromFile(widget.file.path), meta: PdfToJpgMeta(out_file_name: "out_file_name", quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null))));
+    bloc.add(PdfToJpgEvent(pdfToJpg: PdfToJpg(file: await MultipartFile.fromFile(widget.file.path), meta: PdfToJpgMeta(out_file_name: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null))));
   }
 
   void _openFile(File file) {

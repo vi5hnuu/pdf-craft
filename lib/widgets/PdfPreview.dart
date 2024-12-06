@@ -74,33 +74,31 @@ class _PdfPreviewState extends State<PdfPreview> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: pdfController==null ? Center(child: askPassError,) : PdfViewPinch(
-          controller: pdfController!,
-          padding: 16,
-          minScale: 1,
-          maxScale:10,
-          scrollDirection: Axis.vertical,
-          onDocumentError: (error) => _askForPasswordAndRetry(context),
-          onDocumentLoaded: (document) {
-            setState(()=>docTitle=document.sourceName.split('/').last);
-          },
-          builders:  PdfViewPinchBuilders<DefaultBuilderOptions>(
-            options: DefaultBuilderOptions(
-              loaderSwitchDuration: const Duration(seconds: 1),
-              transitionBuilder: (Widget child, Animation<double> animation) =>
-                  FadeTransition(opacity: animation, child: child),
-            ),
-            documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
-            pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
-            errorBuilder: (_, error){
-              return Center(child:askPassError);
-            },
+      body: pdfController==null ? Center(child: askPassError,) : PdfViewPinch(
+        controller: pdfController!,
+        padding: 16,
+        minScale: 1,
+        maxScale:10,
+        scrollDirection: Axis.vertical,
+        onDocumentError: (error) => _askForPasswordAndRetry(context),
+        onDocumentLoaded: (document) {
+          setState(()=>docTitle=document.sourceName.split('/').last);
+        },
+        builders:  PdfViewPinchBuilders<DefaultBuilderOptions>(
+          options: DefaultBuilderOptions(
+            loaderSwitchDuration: const Duration(seconds: 1),
+            transitionBuilder: (Widget child, Animation<double> animation) =>
+                FadeTransition(opacity: animation, child: child),
           ),
-          onPageChanged: (page) {
-            print('Current page: ${page}');
+          documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
+          pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
+          errorBuilder: (_, error){
+            return Center(child:askPassError);
           },
         ),
+        onPageChanged: (page) {
+          print('Current page: ${page}');
+        },
       ),
     );
   }

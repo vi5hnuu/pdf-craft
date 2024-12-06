@@ -43,6 +43,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
   int from_page=0;
   int? to_page;
   FontName font_name=FontName.TIMES_BOLD;
+  final TextEditingController outFileNameC=TextEditingController();
 
   @override
   void initState() {
@@ -77,6 +78,12 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0).copyWith(bottom: 12),
+                          child: TextFormField(keyboardType: TextInputType.text,
+                            decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                            controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                        ),
                         Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -270,7 +277,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
   }
 
   void _onPageNumbersPages() async {
-    bloc.add(PageNumbersEvent(pageNumber: PageNumbers(out_file_name: "out_file_name", page_no_type: page_no_type, size: int.parse(fontSizeC.text), fill_color: fill_color, vertical_position: vertical_position, horizontal_position: horizontal_position, padding: padding, from_page: from_page, to_page: to_page, file: await MultipartFile.fromFile(widget.file.path), font_name: font_name)));
+    bloc.add(PageNumbersEvent(pageNumber: PageNumbers(out_file_name: outFileNameC.text.isEmpty ? "pageNumbers_file" : outFileNameC.text, page_no_type: page_no_type, size: int.parse(fontSizeC.text), fill_color: fill_color, vertical_position: vertical_position, horizontal_position: horizontal_position, padding: padding, from_page: from_page, to_page: to_page, file: await MultipartFile.fromFile(widget.file.path), font_name: font_name)));
   }
 
   Alignment _getPageAlignment(PositionInfo horizontal_position, PositionInfo vertical_position) {
