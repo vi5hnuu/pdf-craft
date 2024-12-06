@@ -5,6 +5,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lottie/lottie.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   goToHome(){
-    GoRouter.of(context).goNamed('home');
+    GoRouter.of(context).goNamed(AppRoutes.filesRoute.name);
   }
 
   @override

@@ -1,4 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -10,6 +11,16 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
-    return const SafeArea(child: Text("Scanner screen"));
+    return SafeArea(child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          LottieBuilder.asset("assets/lottie/scanner.json",fit: BoxFit.fitWidth,animate: true,backgroundLoading: true,),
+          Text("Comming Soon",style: TextStyle(fontSize: 36,color: Colors.white,fontWeight: FontWeight.w100),)
+        ],
+      ),
+    ));
   }
 }

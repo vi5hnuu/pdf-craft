@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -42,10 +43,10 @@ class _MainScreenState extends State<MainScreen> {
         leadingWidth: 112,
         actions: [
           IconButton(onPressed: () => GoRouter.of(context).pushNamed(AppRoutes.searchRoute.name), icon: const Icon(Icons.search)),
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0, left: 16),
-            child: CircleAvatar(child: Icon(Icons.person)),
-          )
+          // Padding(
+          //   padding: const EdgeInsets.only(right: 8.0, left: 16),
+          //   child: CircleAvatar(child: Icon(Icons.person)),
+          // )
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -94,6 +95,10 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _onTap(int index) {
+    if(index==0 || index==4){
+     NotificationService.showSnackbar(text: "Comming soon",color: Colors.green);
+     return;
+    }
     widget.navigationShell.goBranch(index,
         initialLocation: index == widget.navigationShell.currentIndex);
   }
