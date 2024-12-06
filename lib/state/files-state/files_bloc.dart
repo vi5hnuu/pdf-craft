@@ -28,6 +28,14 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       // await Future.delayed(Duration(seconds: 5));
       try {
         final files = await _loadDirectoryFiles(event.path);
+        files.sort((fileA, fileB){
+          if((fileA is Directory && fileB is Directory)) {
+            return fileA.path.compareTo(fileB.path);
+          } else if(fileA is Directory && fileB is File){
+            return -1;
+          }
+          return 1;
+        });
         emit(state.copyWith(files: files, httpStates: state.httpStates.clone()
           ..put(HttpStates.LOAD_DIRECTORY_FILES,const HttpState.done())));
       } catch (e) {
@@ -76,7 +84,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       if (directory.existsSync() == false) {
         throw Exception("Invalid directory path");
       }
-      return directory.listSync();
+      return directory.listSync(followLinks: false);
     } catch (e) {
       throw Exception("Failed to load directory files");
     }

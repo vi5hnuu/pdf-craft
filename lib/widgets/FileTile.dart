@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 
 class FileTile extends StatelessWidget {
@@ -15,15 +16,17 @@ class FileTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fileIcon=Constants.fileIcons[file is Directory ? 'folder' : file.path.split('.').last];
+
     return ListTile(
         enabled: enabled,
         selected: selected,
         selectedTileColor: Colors.green.withOpacity(0.15),
         selectedColor: Colors.green,
         leading: file is Directory
-            ? const Icon(FontAwesomeIcons.solidFolder,
+            ? fileIcon!=null ? Image.asset(fileIcon,width: 24,fit: BoxFit.fitWidth,) : const Icon(FontAwesomeIcons.solidFolder,
             color: Colors.yellowAccent)
-            : const Icon(FontAwesomeIcons.file,
+            : fileIcon!=null ? Image.asset(fileIcon,width: 24,fit: BoxFit.fitWidth,) : const Icon(FontAwesomeIcons.file,
             color: Colors.orange),
         title: Text(file.path.split('/').last),
         subtitle: (file is! Directory) ? Text(Utility.bytesToSize(File(file.path).lengthSync())) : null,

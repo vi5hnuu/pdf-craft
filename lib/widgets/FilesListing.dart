@@ -1,12 +1,8 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdf_craft/models/enums/listing-type.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
-import 'package:pdf_craft/utils/Constants.dart';
-import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 
 class FilesManagement extends StatefulWidget {
