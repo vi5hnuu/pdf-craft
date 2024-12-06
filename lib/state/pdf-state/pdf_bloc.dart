@@ -114,12 +114,14 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<RotatePdfEvent>((event,emit)async{
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ROTATE_PDF,const HttpState.loading())));
       try {
-        await pdfService.rotatePdf(rotatePdf: event.rotatePdf,cancelToken: event.cancelToken);
-        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.ROTATE_PDF,const HttpState.done())));
+        Response<Uint8List> fileRes =await pdfService.rotatePdf(rotatePdf:event.rotatePdf,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception();
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.ROTATE_PDF,HttpState.done(extras: {'savedFile':saveFile}))));
       }  on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ROTATE_PDF, HttpState.error(error:e.message))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ROTATE_PDF, HttpState.error(error:"Failed to Rotate page/s"))));
       } catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ROTATE_PDF, HttpState.error(error: e.toString()))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ROTATE_PDF, HttpState.error(error: "Failed to Rotate page/s"))));
       }
     });
 

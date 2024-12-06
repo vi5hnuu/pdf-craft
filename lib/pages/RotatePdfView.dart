@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
+import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -169,6 +170,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                 children: page_angles.entries.map((range) {
                   return Flexible(
                     child: Chip(
+                      onDeleted: () => setState(()=>page_angles.remove(range.key)),
                       label: Text(
                         "Page ${range.key} : ${range.value}°",
                         style: TextStyle(color: Colors.black),
@@ -311,7 +313,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   }
 
   void _onRotatePages() async {
-    bloc.add(ReorderPdfEvent(reorderPdf: ReorderPdf(out_file_name: "out_file_name", order: _pageIndexes, file: await MultipartFile.fromFile(widget.file.path))));
+    bloc.add(RotatePdfEvent(rotatePdf: RotatePdf(out_file_name: "out_file_name", file_angle: file_angle,maintain_ratio: maintain_ratio,page_angles: page_angles, file: await MultipartFile.fromFile(widget.file.path))));
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 class RotatePdf {
@@ -15,10 +17,12 @@ class RotatePdf {
 
   Map<String,dynamic> toJson() {
     return {
-      "out_file_name":out_file_name,
-      "file_angle":file_angle,
-      "page_angles":page_angles,
-      "maintain_ratio":maintain_ratio,
+      "rotate-pdf-info":MultipartFile.fromString(jsonEncode({
+        "out_file_name":out_file_name,
+        "file_angle":file_angle,
+        "page_angles":Map.fromEntries(page_angles.entries.map((entry)=>MapEntry(entry.key.toString(), entry.value))),
+        "maintain_ratio":maintain_ratio,
+      }),contentType: DioMediaType.parse("application/json")),
       "file":file,
     };
   }
