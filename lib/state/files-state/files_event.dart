@@ -19,3 +19,16 @@ class SearchFile extends FilesEvent{
 class ResetSearch extends FilesEvent{
   const ResetSearch();
 }
+
+class MoveFileTo extends FilesEvent{
+  final File file;
+  final String to;
+
+  const MoveFileTo({required this.to,required this.file});
+}
+
+
+class DeleteFile extends FilesEvent{
+  final File file;
+  const DeleteFile({required this.file});
+}

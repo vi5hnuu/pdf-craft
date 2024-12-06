@@ -67,6 +67,26 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       _searchSubscription=null;
       emit(state.copyWith(searchStream: null));
     });
+
+    on<MoveFileTo>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, const HttpState.loading())));
+      try{
+        await _moveFile(file:event.file,toDirectoryPath:event.to);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, const HttpState.done())));
+      }catch(e){
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, HttpState.error(error: e.toString()))));
+      }
+    });
+
+    on<DeleteFile>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, const HttpState.loading())));
+      try{
+        await _deleteFile(file:event.file);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, const HttpState.done())));
+      }catch(e){
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, HttpState.error(error: e.toString()))));
+      }
+    });
   }
 
 
@@ -84,7 +104,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       if (directory.existsSync() == false) {
         throw Exception("Invalid directory path");
       }
-      return directory.listSync(followLinks: false);
+      return directory.listSync(followLinks: false)..removeWhere((fileEntity)=>(fileEntity is Directory) && Constants.excludedPaths.contains(fileEntity.path));
     } catch (e) {
       throw Exception("Failed to load directory files");
     }
@@ -120,6 +140,40 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       }
     } else {
       LoggerSingleton().logger.w("Directory does not exist: $directoryPath");
+    }
+  }
+
+  _moveFile({required File file, required String toDirectoryPath}) {
+    Directory directoryTo=Directory(toDirectoryPath);
+
+    if(!directoryTo.existsSync()){
+      throw Exception("No such directory exists");
+    }
+
+    if (!file.existsSync()) {
+      throw Exception("File does not exist in the source directory");
+    }
+
+    // Construct the new file path
+    String newFilePath = "${directoryTo.path}/${file.path.split('/').last}";
+
+    // Move the file
+    try {
+      file.renameSync(newFilePath);
+    } catch (e) {
+      throw Exception("Failed to move file: $e");
+    }
+  }
+
+  Future<void> _deleteFile({required File file}) async {
+    if (!file.existsSync()) {
+      throw Exception("File does not exist");
+    }
+
+    try {
+      await file.delete(); // Permanently deletes the file
+    } catch (e) {
+      throw Exception("Failed to delete the file: $e");
     }
   }
 

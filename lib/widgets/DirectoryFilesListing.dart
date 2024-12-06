@@ -23,8 +23,10 @@ class DirectoryFilesListing extends StatefulWidget {
   final List<String> limitSelectionToExtensions;
   final int? minSelection;
   final Function(List<File>)? onDoneSelection;
+  final Function(File)? onDelete;
+  final List<String>? excludeShowingDirsPath;
 
-  DirectoryFilesListing({super.key, required this.directoryPath,this.multiSelect,this.limitSelectionToExtensions=const [],this.onDoneSelection,this.minSelection}){
+  DirectoryFilesListing({super.key, required this.directoryPath,this.multiSelect,this.limitSelectionToExtensions=const [],this.onDoneSelection,this.minSelection,this.onDelete,this.excludeShowingDirsPath}){
     if(multiSelect==null && (onDoneSelection!=null || minSelection!=null)) throw Exception("multiSelect is disabled but onDownSelection/minSelection is not null");
     if(multiSelect!=null && onDoneSelection==null) throw Exception("OnDoneSelection is required");
   }
@@ -37,6 +39,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   late final FilesBloc bloc;
   final List<File> selectedFiles=[];
   List<String> pathToDirectory = [];
+  List<File> deletedFiles=[];
 
   @override
   void initState() {
@@ -84,9 +87,22 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                     itemCount: state.files.length,
                     itemBuilder: (context, index) {
                       final file = state.files[index];
+
+                      if((file is Directory) && widget.excludeShowingDirsPath?.contains(file.path)==true) return SizedBox.shrink();
+
+                      //on delete we add to deleted files but we are not sure if delete operation was successfull or not
+                      //may be user cancelled deletion or it might have failed...
+                      if(deletedFiles.contains(file)){
+                        if(state.isLoading(forr: HttpStates.DELETE_FILE) || state.isLoading(forr: HttpStates.MOVE_FILE_TO) || !file.existsSync()) return SizedBox.shrink();
+                        deletedFiles.remove(file);
+                      }
                       return FileTile(file: file,
                           selected:  _isFileSelected(file),
                           onPress: ()=> _onItemClick(file: file),
+                          onDelete:widget.onDelete!=null && file is File ?  (){
+                            widget.onDelete!(file);
+                            deletedFiles.add(file);
+                          } : null,
                           enabled: file is Directory || widget.limitSelectionToExtensions.isEmpty || widget.limitSelectionToExtensions.contains(Utility.fileExtension(file as File)));
                     })),
                 AnimatedOpacity(opacity:selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: selectedFiles.isNotEmpty ? Container(
@@ -121,7 +137,6 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     if(bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
     bloc.add(LoadDirectoryFiles(path: pathToDirectory.last));
   }
-
 
   @override
   void dispose() {

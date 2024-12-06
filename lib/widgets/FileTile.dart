@@ -12,7 +12,8 @@ class FileTile extends StatelessWidget {
   final bool enabled;
   final bool selected;
   final VoidCallback? onPress;
-  const FileTile({super.key,required this.file,this.enabled=true,this.selected=false,this.onPress});
+  final VoidCallback? onDelete;
+  const FileTile({super.key,required this.file,this.enabled=true,this.selected=false,this.onPress,this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +30,7 @@ class FileTile extends StatelessWidget {
             : fileIcon!=null ? Image.asset(fileIcon,width: 24,fit: BoxFit.fitWidth,) : const Icon(FontAwesomeIcons.file,
             color: Colors.orange),
         title: Text(file.path.split('/').last),
+        trailing: file is File ? IconButton(onPressed: onDelete, icon: Icon(Icons.delete,color: onDelete!=null? Colors.red:Colors.grey)) : null,
         subtitle: (file is! Directory) ? Text(Utility.bytesToSize(File(file.path).lengthSync())) : null,
         onTap:onPress
     );

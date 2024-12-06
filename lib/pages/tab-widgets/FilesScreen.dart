@@ -10,6 +10,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
+import 'package:pdf_craft/widgets/StorageTile.dart';
 import 'package:rxdart/rxdart.dart';
 
 class StorageStats{
@@ -80,10 +81,10 @@ class _FilesScreenState extends State<FilesScreen> {
                 final stats=snapshot.data;
                 return Column(
                   children: [
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.rootStoragePath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInRoot.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/hard-disk.svg",title: "Internal Storage",),
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.downloadsStoragePath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDownloads.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/downloads.svg",title: "Downloads",),
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.documentsStoragePath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDocuments.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/documents.svg",title: "Documents",),
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.processedDirPath)),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalProcessedFiles.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/folder-management.svg",title: "Processed Files",),
+                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.rootStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInRoot.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/hard-disk.svg",title: "Internal Storage",),
+                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.downloadsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDownloads.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/downloads.svg",title: "Downloads",),
+                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.documentsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDocuments.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/documents.svg",title: "Documents",),
+                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.processedDirPath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalProcessedFiles.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/folder-management.svg",title: "Processed Files",),
                   ],
                 );
               },)
@@ -119,7 +120,7 @@ class _FilesScreenState extends State<FilesScreen> {
                 final stats=snapshot.data;
                 return Column(
                   children: [
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.binDirPath)),trailing:stats==null || stats.isLoading ?  SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalFileInBin.toString(),style: TextStyle(fontSize: 16),),
+                    StorageTile(onTap:_goToBin,trailing:stats==null || stats.isLoading ?  SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalFileInBin.toString(),style: TextStyle(fontSize: 16),),
                       leadingIconSvgPath: "assets/icons/recycle-bin.svg",title: "Bin",),
                   ],
                 );
@@ -157,34 +158,11 @@ class _FilesScreenState extends State<FilesScreen> {
       }
     }
   }
-}
 
-class StorageTile extends StatelessWidget {
-  final String leadingIconSvgPath;
-  final String title;
-  final Widget trailing;
-  final VoidCallback? onTap;
-  final EdgeInsets? padding;
-
-  const StorageTile({
-    super.key,
-    this.onTap,
-    this.padding,
-    required this.leadingIconSvgPath,
-    required this.title,
-    required this.trailing
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: padding ?? EdgeInsets.only(left: 16),
-      child: ListTile(
-        onTap:onTap,
-        leading: SvgPicture.asset(leadingIconSvgPath,fit: BoxFit.contain,height: 28,),
-        title: Text(title,style: TextStyle(fontSize: 18),),
-        trailing: trailing,
-      ),
-    );
+  void _goToBin() {
+    GoRouter.of(context)
+        .pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.binDirPath))
+        .then((value)=>_loadStats());
   }
 }
+
