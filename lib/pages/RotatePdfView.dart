@@ -13,6 +13,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/RotatableItem.dart';
 import 'package:pdfx/pdfx.dart';
 
 class Thumbnail{
@@ -34,6 +35,8 @@ class RotatePdfView extends StatefulWidget {
 }
 
 class _RotatePdfViewState extends State<RotatePdfView> {
+  TextEditingController pageNo=TextEditingController();
+  TextEditingController pageAngle=TextEditingController();
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   final int pageSize=10;
   final ScrollController controller=ScrollController();
@@ -41,7 +44,9 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   late final PdfDocument? document;
   late PdfController _pdfController;
   List<int> _pageIndexes=[];
-  int? draggingItemIndex;
+  int file_angle=0; // angle at which all pages will be rotated
+  Map<int,int> page_angles={}; // if a page do not have angle, file angle is used else no rotation [0 index]
+  bool maintain_ratio=true;//default true
 
   @override
   void initState() {
@@ -61,7 +66,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     final md=MediaQuery.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text('Reorder Pdf Pages'),
         elevation: 5,
@@ -78,21 +83,82 @@ class _RotatePdfViewState extends State<RotatePdfView> {
           );
         }
         return BlocListener<PdfBloc,PdfState>(
-            listenWhen: (previous, current) => previous.httpStates[HttpStates.REORDER_PDF]!=current.httpStates[HttpStates.REORDER_PDF],
+            listenWhen: (previous, current) => previous.httpStates[HttpStates.ROTATE_PDF]!=current.httpStates[HttpStates.ROTATE_PDF],
             listener: (context, state) {
-              final httpState=state.httpStates[HttpStates.REORDER_PDF];
+              final httpState=state.httpStates[HttpStates.ROTATE_PDF];
               if(httpState?.done==true){
-                NotificationService.showSnackbar(text: "Reorder Successfull",color: Colors.green);
+                NotificationService.showSnackbar(text: "Rotate Successfull",color: Colors.green);
                 if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
               }else if(httpState?.error!=null){
                 NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
               }else if(httpState?.loading==true){
-                NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
+                NotificationService.showSnackbar(text: "Started Rotating",color: Colors.lightBlue);
               }
             }
             ,child: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: TextFormField(keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: "All page angle",border: OutlineInputBorder()),
+                  onChanged: (value) => setState(()=>file_angle=int.tryParse(value) ?? 0)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  Text("Maintain Aspect Ratio ",style: TextStyle(fontSize: 20),),
+                  SizedBox(width: 16,),
+                  Switch(value: maintain_ratio, onChanged: (value)=>setState(() =>maintain_ratio=value))
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Flexible(
+                        child: TextFormField(keyboardType: TextInputType.number,
+                            decoration: InputDecoration(label: Text("PageNo"),border: OutlineInputBorder()),
+                            controller: pageNo,
+                            validator: (value){
+                              return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                            }),
+                      ),
+                      SizedBox(width: 12,),
+                      Flexible(
+                        child: TextFormField(keyboardType: TextInputType.number,
+                            decoration: InputDecoration(label: Text("Angle(0,360)"),border: OutlineInputBorder()),
+                            controller: pageAngle,
+                            validator: (value){
+                              return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                            }),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12,),
+                  FilledButton(onPressed: document==null ? null : (){
+                    final pNo= int.tryParse(pageNo.text);
+                    final anglr=int.tryParse(pageAngle.text);
+                    if(pNo==null || pNo<=0 || pNo>document!.pagesCount){
+                      NotificationService.showSnackbar(text: "Invalid pageNo",color: Colors.red);
+                      return;
+                    }
+                    if(anglr==null || anglr<=0 || anglr>360){
+                      NotificationService.showSnackbar(text: "Invalid angle (0,360)",color: Colors.red);
+                      return;
+                    }
+                    setState(()=>page_angles.put(pNo,anglr));
+                    pageNo.clear();
+                    pageAngle.clear();
+                  }, child: Text("Add Range")),
+                ],
+              ),
+            ),
             Expanded(child: ListView.builder(
               padding: EdgeInsets.symmetric(vertical: 8),
               scrollDirection: Axis.vertical,
@@ -100,33 +166,21 @@ class _RotatePdfViewState extends State<RotatePdfView> {
               itemBuilder: (context, index) {
                 final pageNo=_pageIndexes[index]+1;
                 final thumbnail=thumbnails[pageNo];
-                final thumbnailWidth=md.size.width*0.25;
-                final thumbnailHeight=thumbnailWidth*1.404;
+                final thumbnailWidth=md.size.width*0.45;
+                final thumbnailHeight=thumbnailWidth*1.37;
                 return Padding(
                   key: ValueKey('page-$pageNo'),
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 8),
                   child: Flex(
                     direction: Axis.horizontal,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
+                      RotatablePageWidget(originalWidth: thumbnailWidth, originalHeight: thumbnailHeight, maintainAspectRatio: maintain_ratio, rotationAngle: (page_angles[index+1] ?? file_angle).toDouble(), child: Container(
                         height: thumbnailHeight,
                         width: thumbnailWidth,
-                        decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
-                        child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
-                      ),
-                      Flexible(child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(textAlign: TextAlign.justify,softWrap: true,maxLines: 3,Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold,fontSize: 18,)),
-                            Text('Page No ${pageNo}',style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500,fontStyle: FontStyle.italic),)
-                          ],
-                        ),
-                      )),
+                        child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.contain,)),
+                      ))
                     ],
                   ),
                 );

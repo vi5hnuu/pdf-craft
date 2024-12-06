@@ -14,6 +14,7 @@ import 'package:pdf_craft/pages/PageNumbersPdfView.dart';
 import 'package:pdf_craft/pages/PdfToJpgView.dart';
 import 'package:pdf_craft/pages/ProtectPdfView.dart';
 import 'package:pdf_craft/pages/ReorderPdfView.dart';
+import 'package:pdf_craft/pages/RotatePdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
@@ -201,13 +202,16 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        // The screen to display as the root in the first tab of the
-        // bottom navigation bar.
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.rotatePdfRoute.path,
         name: AppRoutes.rotatePdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
-        builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: File("temporary.pdf")),
+        builder: (BuildContext context, GoRouterState state) => RotatePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         // The screen to display as the root in the first tab of the

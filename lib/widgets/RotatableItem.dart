@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:flutter/rendering.dart';
+
 class RotatablePageWidget extends StatelessWidget {
   final double originalWidth;
   final double originalHeight;
@@ -48,20 +50,39 @@ class RotatablePageWidget extends StatelessWidget {
       }
     }
 
+    //bring it within bounds
+    if(maintainAspectRatio){
+      //scale down
+      final hInc= (height-originalHeight)/originalHeight;
+      if(hInc>0) height=height-height*(hInc);
 
-    return Transform.rotate(
-      angle: rotationAngle * pi / 180, // Convert to radians
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: Colors.grey, // Background color for the page
-          border: Border.all(color: Colors.black), // Border for the page
-        ),
-        child: Center(
-          child: child,
-        ),
+      //scale down
+      final wInc= (width-originalWidth)/originalWidth;
+      if(wInc>0) width=width-width*(wInc);
+    }
+
+    return Container(
+      width: width,
+      height: height,
+      // decoration: BoxDecoration(color: Colors.red),
+      child: Transform.rotate(
+        origin: Offset(0, 0),
+        angle: rotationAngle * pi / 180, // Convert to radians
+        child: child
       ),
     );
+  }
+
+  double calculateScaleFactor({
+    required double xWidth,
+    required double xHeight,
+  }) {
+    double scale = originalHeight / xHeight;
+
+    if ((xWidth * scale) > originalWidth) {
+      scale *= originalWidth / (xWidth * scale);
+    }
+
+    return scale.clamp(0, 1)-0.15; // Ensure the scale is between 0 and 1
   }
 }
