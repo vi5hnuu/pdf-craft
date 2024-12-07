@@ -174,7 +174,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     Directory directory=Directory(Constants.processedDirPath);
     if(!directory.existsSync()) await directory.create(recursive: true);
     String? contentDisposition = fileRes.headers.value('content-disposition');
-    final dummyFileName='file_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final dummyFileName='file_${DateTime.now().millisecondsSinceEpoch}.${contentDisposition?.split('.').last ?? '.pdf'}';
     String filename = contentDisposition?.split('=').last ?? dummyFileName;
     final filePath='${directory.path}/$filename';
     var file = File(filePath);

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
@@ -14,7 +15,9 @@ import 'package:pdf_craft/models/thumbnail.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/SplitItem.dart';
 import 'package:pdfx/pdfx.dart';
 
@@ -76,12 +79,14 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
               listener: (context, state) {
                 final httpState=state.httpStates[HttpStates.REORDER_PDF];
                 if(httpState?.done==true){
-                  NotificationService.showSnackbar(text: "Reorder Successfull",color: Colors.green);
-                  if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
+                  NotificationService.showSnackbar(text: "Split Successfull",color: Colors.green);
+                  final file=httpState?.extras?['savedFile'];
+                  if(file is! File) return;
+                  OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]??'*/*');
                 }else if(httpState?.error!=null){
                   NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
                 }else if(httpState?.loading==true){
-                  NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
+                  NotificationService.showSnackbar(text: "Started Splitting",color: Colors.lightBlue);
                 }
               }
               ,child: Column(
@@ -261,6 +266,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
       final PdfPageImage? image = await page.render(
         width: page.width,
         height: page.height,
+        format: PdfPageImageFormat.jpeg
       );
       await page.close();
       return image;
@@ -292,7 +298,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   }
 
   void _onFixedRangeChange(String? value) {
-    if(value==null || int.parse(value)<1) return;
+    if(value==null || (int.tryParse(value) ?? 0)<1) return;
     Timer.run(() => setState((){
       fixedRange=int.tryParse(value) ?? 1;
       widget.onRangeChange([RangeModel(from: fixedRange, to: fixedRange)]);

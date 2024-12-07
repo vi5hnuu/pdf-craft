@@ -113,7 +113,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                   TextFormField(keyboardType: TextInputType.number,
                       decoration: InputDecoration(labelText: "All page angle",border: OutlineInputBorder()),
                       onChanged: (value) => setState(()=>file_angle=int.tryParse(value) ?? 0)),
-                  Text("All pages will be rotate at this angle, to change angle for specific pages add range below",style: TextStyle(color: Colors.grey)),
+                  Text("All pages will be rotate at this angle, to change angle for specific pages add page angle below",style: TextStyle(color: Colors.grey)),
                 ],
               ),
             ),
@@ -161,7 +161,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                   FilledButton(onPressed: document==null ? null : (){
                     final pNo= int.tryParse(pageNo.text);
                     final anglr=int.tryParse(pageAngle.text);
-                    if(pNo==null || pNo<=0 || pNo>document!.pagesCount){
+                    if(pNo==null || pNo<0 || pNo>document!.pagesCount){
                       NotificationService.showSnackbar(text: "Invalid pageNo",color: Colors.red);
                       return;
                     }
@@ -172,7 +172,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                     setState(()=>page_angles.put(pNo,anglr));
                     pageNo.clear();
                     pageAngle.clear();
-                  }, child: Text("Add Range")),
+                  }, child: Text("Add Page angle")),
                   SizedBox(height: 18,),
               Wrap(
                 spacing: 8.0, // Space between chips horizontally
