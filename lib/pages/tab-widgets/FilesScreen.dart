@@ -135,7 +135,7 @@ class _FilesScreenState extends State<FilesScreen> {
 
   _loadStats() async{
     try{
-      if(await StoragePermissions.requestPermissions()){
+      if(await StoragePermissions.requestStoragePermissions()){
         await _createMainDirs();
         storageStats.sink.add(storageStats.value.copyWith(isLoading: true));
         // await Future.delayed(Duration(minutes: 5));

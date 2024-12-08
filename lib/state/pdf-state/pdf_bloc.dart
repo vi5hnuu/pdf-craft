@@ -168,7 +168,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
   }
 
   Future<File> _saveFileToProcessed(Response<Uint8List> fileRes) async {
-    if (!await StoragePermissions.requestPermissions()) {
+    if (!await StoragePermissions.requestStoragePermissions()) {
     throw Exception("Failed to save, Permission denied");
     }
     Directory directory=Directory(Constants.processedDirPath);

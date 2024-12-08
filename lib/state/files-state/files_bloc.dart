@@ -92,7 +92,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
   Future<List<FileSystemEntity>> _loadDirectoryFiles(String path) async {
     try {
-      if (!await StoragePermissions.requestPermissions()) {
+      if (!await StoragePermissions.requestStoragePermissions()) {
         throw Exception("Permission denied");
       }
       if (Constants.isHiddenFileOrDir(path) ||
@@ -111,7 +111,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Stream<File> searchFiles(String directoryPath, String userInput) async* {
-    if (!await StoragePermissions.requestPermissions()) {
+    if (!await StoragePermissions.requestStoragePermissions()) {
       return;
     }
     if (Constants.isHiddenFileOrDir(directoryPath) ||

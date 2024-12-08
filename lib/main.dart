@@ -29,10 +29,12 @@ import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
 import 'package:pdf_craft/widgets/FilesManagement.dart';
 import 'package:pdf_craft/widgets/PdfPreview.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -68,6 +70,11 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
     debugLogDiagnostics: true,
     navigatorKey: _rootNavigatorKey, //navigator = 1
     initialLocation: AppRoutes.splashRoute.path,
+    redirect: (context, state) async {
+      final granted=await StoragePermissions.isStoragePermissionGranted();
+      if(granted) return null;
+      return AppRoutes.errorRoute.path;
+    },
     routes: [
       GoRoute(
         name: AppRoutes.splashRoute.name,
@@ -80,11 +87,12 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         ),
       ),
       GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
         name: AppRoutes.errorRoute.name,
         path: AppRoutes.errorRoute.path,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: const Errorpage(),
+          child: Errorpage(reason: state.extra is Map<String,Object> ? ((state.extra as Map)['reason'] ?? ErrorReason.STORAGE_PERMISSION_DENIED) : ErrorReason.STORAGE_PERMISSION_DENIED,),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
