@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
@@ -84,7 +85,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
             child: const Center(child: Icon(Icons.error, color: Colors.red)),
           );
         }
-        return BlocListener<PdfBloc,PdfState>(
+        return BlocConsumer<PdfBloc,PdfState>(
+            buildWhen: (previous, current) => previous.httpStates[HttpStates.ROTATE_PDF]!=current.httpStates[HttpStates.ROTATE_PDF],
             listenWhen: (previous, current) => previous.httpStates[HttpStates.ROTATE_PDF]!=current.httpStates[HttpStates.ROTATE_PDF],
             listener: (context, state) {
               final httpState=state.httpStates[HttpStates.ROTATE_PDF];
@@ -97,138 +99,146 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                 NotificationService.showSnackbar(text: "Started Rotating",color: Colors.lightBlue);
               }
             }
-            ,child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12.0).copyWith(bottom: 0),
-              child: TextFormField(keyboardType: TextInputType.text,
-                decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                controller: outFileNameC,style: TextStyle(color: Colors.white),),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
+            ,
+        builder: (context, state) {
+          return Stack(
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  TextFormField(keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: "All page angle",border: OutlineInputBorder()),
-                      onChanged: (value) => setState(()=>file_angle=int.tryParse(value) ?? 0)),
-                  Text("All pages will be rotate at this angle, to change angle for specific pages add page angle below",style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  Text("Maintain Aspect Ratio ",style: TextStyle(fontSize: 20),),
-                  SizedBox(width: 16,),
-                  Switch(value: maintain_ratio, onChanged: (value)=>setState(() =>maintain_ratio=value))
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Text("All pages will render without overlap, below view is not exactly correct",style: TextStyle(color: Colors.yellow),),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Flexible(
-                        child: TextFormField(keyboardType: TextInputType.number,
-                            decoration: InputDecoration(label: Text("PageNo"),border: OutlineInputBorder()),
-                            controller: pageNo,
-                            validator: (value){
-                              return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
-                            }),
-                      ),
-                      SizedBox(width: 12,),
-                      Flexible(
-                        child: TextFormField(keyboardType: TextInputType.number,
-                            decoration: InputDecoration(label: Text("Angle(0,360)"),border: OutlineInputBorder()),
-                            controller: pageAngle,
-                            validator: (value){
-                              return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
-                            }),
-                      ),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.all(12.0).copyWith(bottom: 0),
+                    child: TextFormField(keyboardType: TextInputType.text,
+                      decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                      controller: outFileNameC,style: TextStyle(color: Colors.white),),
                   ),
-                  SizedBox(height: 12,),
-                  FilledButton(onPressed: document==null ? null : (){
-                    final pNo= int.tryParse(pageNo.text);
-                    final anglr=int.tryParse(pageAngle.text);
-                    if(pNo==null || pNo<0 || pNo>document!.pagesCount){
-                      NotificationService.showSnackbar(text: "Invalid pageNo",color: Colors.red);
-                      return;
-                    }
-                    if(anglr==null || anglr<=0 || anglr>360){
-                      NotificationService.showSnackbar(text: "Invalid angle (0,360)",color: Colors.red);
-                      return;
-                    }
-                    setState(()=>page_angles.put(pNo,anglr));
-                    pageNo.clear();
-                    pageAngle.clear();
-                  }, child: Text("Add Page angle")),
-                  SizedBox(height: 18,),
-              Wrap(
-                spacing: 8.0, // Space between chips horizontally
-                runSpacing: 8.0, // Space between chips vertically
-                children: page_angles.entries.map((range) {
-                  return Flexible(
-                    child: Chip(
-                      onDeleted: () => setState(()=>page_angles.remove(range.key)),
-                      label: Text(
-                        "Page ${range.key} : ${range.value}°",
-                        style: TextStyle(color: Colors.black),
-                        overflow: TextOverflow.ellipsis, // Ensure text truncates if too long
-                        maxLines: 1, // Ensure text remains on one line
-                      ),
-                      backgroundColor: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        TextFormField(keyboardType: TextInputType.number,
+                            decoration: InputDecoration(labelText: "All page angle",border: OutlineInputBorder()),
+                            onChanged: (value) => setState(()=>file_angle=int.tryParse(value) ?? 0)),
+                        Text("All pages will be rotate at this angle, to change angle for specific pages add page angle below",style: TextStyle(color: Colors.grey)),
+                      ],
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        Text("Maintain Aspect Ratio ",style: TextStyle(fontSize: 20),),
+                        SizedBox(width: 16,),
+                        Switch(value: maintain_ratio, onChanged: (value)=>setState(() =>maintain_ratio=value))
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Text("All pages will render without overlap, below view is not exactly correct",style: TextStyle(color: Colors.yellow),),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Flexible(
+                              child: TextFormField(keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(label: Text("PageNo"),border: OutlineInputBorder()),
+                                  controller: pageNo,
+                                  validator: (value){
+                                    return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                                  }),
+                            ),
+                            SizedBox(width: 12,),
+                            Flexible(
+                              child: TextFormField(keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(label: Text("Angle(0,360)"),border: OutlineInputBorder()),
+                                  controller: pageAngle,
+                                  validator: (value){
+                                    return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                                  }),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12,),
+                        FilledButton(onPressed: document==null ? null : (){
+                          final pNo= int.tryParse(pageNo.text);
+                          final anglr=int.tryParse(pageAngle.text);
+                          if(pNo==null || pNo<0 || pNo>document!.pagesCount){
+                            NotificationService.showSnackbar(text: "Invalid pageNo",color: Colors.red);
+                            return;
+                          }
+                          if(anglr==null || anglr<=0 || anglr>360){
+                            NotificationService.showSnackbar(text: "Invalid angle (0,360)",color: Colors.red);
+                            return;
+                          }
+                          setState(()=>page_angles.put(pNo,anglr));
+                          pageNo.clear();
+                          pageAngle.clear();
+                        }, child: Text("Add Page angle")),
+                        SizedBox(height: 18,),
+                        Wrap(
+                          spacing: 8.0, // Space between chips horizontally
+                          runSpacing: 8.0, // Space between chips vertically
+                          children: page_angles.entries.map((range) {
+                            return Flexible(
+                              child: Chip(
+                                onDeleted: () => setState(()=>page_angles.remove(range.key)),
+                                label: Text(
+                                  "Page ${range.key} : ${range.value}°",
+                                  style: TextStyle(color: Colors.black),
+                                  overflow: TextOverflow.ellipsis, // Ensure text truncates if too long
+                                  maxLines: 1, // Ensure text remains on one line
+                                ),
+                                backgroundColor: Colors.white,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: ListView.builder(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    scrollDirection: Axis.vertical,
+                    itemCount: thumbnails.length,
+                    itemBuilder: (context, index) {
+                      final pageNo=_pageIndexes[index]+1;
+                      final thumbnail=thumbnails[pageNo];
+                      final thumbnailWidth=md.size.width*0.45;
+                      final thumbnailHeight=thumbnailWidth*1.37;
+                      return Padding(
+                        key: ValueKey('page-$pageNo'),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 8),
+                        child: Flex(
+                          direction: Axis.horizontal,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            RotatablePageWidget(originalWidth: thumbnailWidth, originalHeight: thumbnailHeight, maintainAspectRatio: maintain_ratio, rotationAngle: (page_angles[index+1] ?? file_angle).toDouble(), child: Container(
+                              height: thumbnailHeight,
+                              width: thumbnailWidth,
+                              child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.contain,)),
+                            ))
+                          ],
+                        ),
+                      );
+                    },
+                  )),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16.0),
+                    child: FilledButton(onPressed: file_angle==0 && page_angles.isEmpty ? null : _onRotatePages, child: const Text("Rotate Pdf Pages")),
+                  )
                 ],
               ),
-            ),
-            Expanded(child: ListView.builder(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              scrollDirection: Axis.vertical,
-              itemCount: thumbnails.length,
-              itemBuilder: (context, index) {
-                final pageNo=_pageIndexes[index]+1;
-                final thumbnail=thumbnails[pageNo];
-                final thumbnailWidth=md.size.width*0.45;
-                final thumbnailHeight=thumbnailWidth*1.37;
-                return Padding(
-                  key: ValueKey('page-$pageNo'),
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 8),
-                  child: Flex(
-                    direction: Axis.horizontal,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RotatablePageWidget(originalWidth: thumbnailWidth, originalHeight: thumbnailHeight, maintainAspectRatio: maintain_ratio, rotationAngle: (page_angles[index+1] ?? file_angle).toDouble(), child: Container(
-                        height: thumbnailHeight,
-                        width: thumbnailWidth,
-                        child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.contain,)),
-                      ))
-                    ],
-                  ),
-                );
-              },
-            )),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16.0),
-              child: FilledButton(onPressed: file_angle==0 && page_angles.isEmpty ? null : _onRotatePages, child: const Text("Rotate Pdf Pages")),
-            )
-          ],
-        ));
+              if(state.isLoading(forr: HttpStates.ROTATE_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+            ],
+          );
+        },);
       },) ,
     );
   }

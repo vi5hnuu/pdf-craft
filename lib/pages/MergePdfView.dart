@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/routes.dart';
@@ -52,57 +53,62 @@ class _MergePdfViewState extends State<MergePdfView> {
           }
         },
         builder: (context, state) {
-        return Column(
-          mainAxisSize: MainAxisSize.max,
+        return Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(keyboardType: TextInputType.text,
-                  decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                  controller: outFileNameC,style: TextStyle(color: Colors.black),),
-            ),
-            SizedBox(height: 12,),
-            Expanded(child: ReorderableListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              onReorder: _reorder,
-              scrollDirection: Axis.vertical,
-              itemCount: widget.files.length,
-              header: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: RichText(
-                  text: const TextSpan(
-                    text: 'Reorder File ',
-                    style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
-                    children: [
-                      TextSpan(
-                        text: '( long press to drag )',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
+            Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(keyboardType: TextInputType.text,
+                    decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                    controller: outFileNameC,style: TextStyle(color: Colors.black),),
                 ),
-              ),
-              onReorderStart: (index)=>setState(()=>draggingItemIndex=index),
-              onReorderEnd: (index)=>setState(()=>draggingItemIndex=null),
-              itemBuilder: (context, index) {
-                final file = widget.files[index];
-                return Padding(
-                  key: ValueKey(file.path),
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6),side: const BorderSide(color: Colors.grey)),
-                    title: Text(
-                      Utility.fileName(file: file),
-                      style: const TextStyle(overflow: TextOverflow.ellipsis, color: Colors.black),
+                SizedBox(height: 12,),
+                Expanded(child: ReorderableListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  onReorder: _reorder,
+                  scrollDirection: Axis.vertical,
+                  itemCount: widget.files.length,
+                  header: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: RichText(
+                      text: const TextSpan(
+                        text: 'Reorder File ',
+                        style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                        children: [
+                          TextSpan(
+                            text: '( long press to drag )',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
-                    leading: const Icon(Icons.drag_indicator, color: Colors.grey),
-                    tileColor: Colors.white,
                   ),
-                );
-              },
-            )),
-            Container(decoration: const BoxDecoration(color: Colors.white),width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge Pdf's")),)
+                  onReorderStart: (index)=>setState(()=>draggingItemIndex=index),
+                  onReorderEnd: (index)=>setState(()=>draggingItemIndex=null),
+                  itemBuilder: (context, index) {
+                    final file = widget.files[index];
+                    return Padding(
+                      key: ValueKey(file.path),
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6),side: const BorderSide(color: Colors.grey)),
+                        title: Text(
+                          Utility.fileName(file: file),
+                          style: const TextStyle(overflow: TextOverflow.ellipsis, color: Colors.black),
+                        ),
+                        leading: const Icon(Icons.drag_indicator, color: Colors.grey),
+                        tileColor: Colors.white,
+                      ),
+                    );
+                  },
+                )),
+                Container(decoration: const BoxDecoration(color: Colors.white),width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge Pdf's")),)
+              ],
+            ),
+            if(state.isLoading(forr: HttpStates.MERGE_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
           ],
         );
       },),

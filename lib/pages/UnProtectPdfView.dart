@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/routes.dart';
@@ -39,7 +40,9 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
         title: Text('UnProtect Pdf'),
         elevation: 5,
       ),
-      body:BlocListener<PdfBloc,PdfState>(listenWhen: (previous, current) => previous.httpStates[HttpStates.UNPROTECT_PDF]!=current.httpStates[HttpStates.UNPROTECT_PDF],
+      body:BlocConsumer<PdfBloc,PdfState>(
+        buildWhen: (previous, current) => previous.httpStates[HttpStates.UNPROTECT_PDF]!=current.httpStates[HttpStates.UNPROTECT_PDF],
+        listenWhen: (previous, current) => previous.httpStates[HttpStates.UNPROTECT_PDF]!=current.httpStates[HttpStates.UNPROTECT_PDF],
           listener: (context, state) {
             final httpState=state.httpStates[HttpStates.UNPROTECT_PDF];
             if(httpState?.done==true){
@@ -50,23 +53,31 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
             }else if(httpState?.loading==true){
               NotificationService.showSnackbar(text: "Started file un-protection",color: Colors.lightBlue);
             }
-          },child: Padding(
-          padding: EdgeInsets.all(12),
-            child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children:[
-              TextFormField(keyboardType: TextInputType.text,
-                  decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                  controller: outputFileNameC,),
-              SizedBox(height: 12,),
-              TextFormField(keyboardType: TextInputType.text,
-                          decoration: InputDecoration(labelText: "password",border: OutlineInputBorder()),
-                          onChanged: (value) => setState(()=>password=value)),
-              SizedBox(height: 16,),
-              FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text("Remove password"))
-            ],
-                    ),
-          ),),
+          },
+          builder: (context, state) {
+           return Stack(
+             children:[
+               Padding(
+                 padding: EdgeInsets.all(12),
+                 child: Column(
+                   mainAxisSize: MainAxisSize.max,
+                   children:[
+                     TextFormField(keyboardType: TextInputType.text,
+                       decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                       controller: outputFileNameC,),
+                     SizedBox(height: 12,),
+                     TextFormField(keyboardType: TextInputType.text,
+                         decoration: InputDecoration(labelText: "password",border: OutlineInputBorder()),
+                         onChanged: (value) => setState(()=>password=value)),
+                     SizedBox(height: 16,),
+                     FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text("Remove password"))
+                   ],
+                 ),
+               ),
+               if(state.isLoading(forr: HttpStates.UNPROTECT_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+             ],
+           );
+          },),
     );
   }
 

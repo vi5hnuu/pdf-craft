@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/user-access-permission.dart';
@@ -45,7 +46,8 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
         title: Text('Protect Pdf'),
         elevation: 5,
       ),
-      body: BlocListener<PdfBloc,PdfState>(
+      body: BlocConsumer<PdfBloc,PdfState>(
+        buildWhen: (previous, current) => previous.httpStates[HttpStates.PROTECT_PDF]!=current.httpStates[HttpStates.PROTECT_PDF],
         listenWhen: (previous, current) => previous.httpStates[HttpStates.PROTECT_PDF]!=current.httpStates[HttpStates.PROTECT_PDF],
           listener: (context, state) {
             final httpState=state.httpStates[HttpStates.PROTECT_PDF];
@@ -57,67 +59,75 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
             }else if(httpState?.loading==true){
               NotificationService.showSnackbar(text: "Started file protection",color: Colors.lightBlue);
             }
-          },child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Flex(
-              direction: Axis.vertical,
-            mainAxisSize: MainAxisSize.max,
-            children:[
-              // final Set<UserAccessPermission> user_access_permissions;//empty means user has owner permission
-              Expanded(
-                child: SingleChildScrollView(child: Column(
+          },
+          builder: (context, state) {
+            return Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Flex(
+                    direction: Axis.vertical,
+                    mainAxisSize: MainAxisSize.max,
+                    children:[
+                      // final Set<UserAccessPermission> user_access_permissions;//empty means user has owner permission
+                      Expanded(
+                        child: SingleChildScrollView(child: Column(
                             children: [
-                TextFormField(keyboardType: TextInputType.text,
-                    decoration: InputDecoration(labelText: "File name",border: OutlineInputBorder()),
-                    controller: outFileNameC),
-                SizedBox(height: 16,),
-                TextFormField(keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: "Owner Password",border: OutlineInputBorder()),
-                onChanged:(value) => setState(()=>ownerPassword=value),
-                validator:(value) {
-                  return value!=null && value.length>=10 ? null : "Min 10 character required";
-                } ,),
-                SizedBox(height: 16,),
-                TextFormField(keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: "User password",border: OutlineInputBorder()),
-                     onChanged:(value) => setState(()=>userPassword=value),
-                validator:(value) {
-                  return value!=null && value.length>=10 ? null : "Min 10 character required";
-                } ,),
-                Padding(padding: EdgeInsets.symmetric(horizontal: 12,vertical: 16).copyWith(bottom: 10),
-                child: Flex(
-                  direction: Axis.vertical,
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    ...[Text("User permissions",textAlign: TextAlign.center,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,decoration: TextDecoration.underline),),
-                    if(userPermissions.isEmpty) Text("⚠️ Will have owner permissions ⚠️")],
-                    ...UserAccessPermission.values.map((permission)=>Row(
-                            children: [
-                              Checkbox(tristate: false,value: userPermissions.contains(permission), onChanged: (hasPermission){
-                                setState(() {
-                                  if(hasPermission==true) {
-                                    userPermissions.add(permission);
-                                  } else {
-                                    userPermissions.removeWhere((permissionBit)=>permissionBit==permission);
-                                  }
-                                });
-                              }),
-                              SizedBox(width: 12,),
-                              Text(permission.name.capitalize()),
-                            ],
-                          )),
-                  ],
-                ),)])),
-              ),
-              Container(
-                padding: EdgeInsets.all(16),
-                width: double.infinity,
-                child: FilledButton(onPressed: ownerPassword.length<10 || userPassword.length<10 ? null : _onProtectPdf, child: Text("Protect pdf")),
-              )
-            ],
-                    ),
-          ),)
+                              TextFormField(keyboardType: TextInputType.text,
+                                  decoration: InputDecoration(labelText: "File name",border: OutlineInputBorder()),
+                                  controller: outFileNameC),
+                              SizedBox(height: 16,),
+                              TextFormField(keyboardType: TextInputType.number,
+                                decoration: InputDecoration(labelText: "Owner Password",border: OutlineInputBorder()),
+                                onChanged:(value) => setState(()=>ownerPassword=value),
+                                validator:(value) {
+                                  return value!=null && value.length>=10 ? null : "Min 10 character required";
+                                } ,),
+                              SizedBox(height: 16,),
+                              TextFormField(keyboardType: TextInputType.number,
+                                decoration: InputDecoration(labelText: "User password",border: OutlineInputBorder()),
+                                onChanged:(value) => setState(()=>userPassword=value),
+                                validator:(value) {
+                                  return value!=null && value.length>=10 ? null : "Min 10 character required";
+                                } ,),
+                              Padding(padding: EdgeInsets.symmetric(horizontal: 12,vertical: 16).copyWith(bottom: 10),
+                                child: Flex(
+                                  direction: Axis.vertical,
+                                  mainAxisSize: MainAxisSize.max,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    ...[Text("User permissions",textAlign: TextAlign.center,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,decoration: TextDecoration.underline),),
+                                      if(userPermissions.isEmpty) Text("⚠️ Will have owner permissions ⚠️")],
+                                    ...UserAccessPermission.values.map((permission)=>Row(
+                                      children: [
+                                        Checkbox(tristate: false,value: userPermissions.contains(permission), onChanged: (hasPermission){
+                                          setState(() {
+                                            if(hasPermission==true) {
+                                              userPermissions.add(permission);
+                                            } else {
+                                              userPermissions.removeWhere((permissionBit)=>permissionBit==permission);
+                                            }
+                                          });
+                                        }),
+                                        SizedBox(width: 12,),
+                                        Text(permission.name.capitalize()),
+                                      ],
+                                    )),
+                                  ],
+                                ),)])),
+                      ),
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        width: double.infinity,
+                        child: FilledButton(onPressed: ownerPassword.length<10 || userPassword.length<10 ? null : _onProtectPdf, child: Text("Protect pdf")),
+                      )
+                    ],
+                  ),
+                ),
+                if(state.isLoading(forr: HttpStates.PROTECT_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+              ],
+            );
+          },)
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
@@ -77,8 +78,9 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
             child: const Center(child: Icon(Icons.error, color: Colors.red)),
           );
         }
-        return BlocListener<PdfBloc,PdfState>(
+        return BlocConsumer<PdfBloc,PdfState>(
             listenWhen: (previous, current) => previous.httpStates[HttpStates.REORDER_PDF]!=current.httpStates[HttpStates.REORDER_PDF],
+            buildWhen: (previous, current) => previous.httpStates[HttpStates.REORDER_PDF]!=current.httpStates[HttpStates.REORDER_PDF],
             listener: (context, state) {
               final httpState=state.httpStates[HttpStates.REORDER_PDF];
               if(httpState?.done==true){
@@ -90,78 +92,85 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                 NotificationService.showSnackbar(text: "Started reordering",color: Colors.lightBlue);
               }
             }
-            ,child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(keyboardType: TextInputType.text,
-                decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                controller: outFileNameC,style: TextStyle(color: Colors.black),),
-            ),
-            Expanded(child: ReorderableListView.builder(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              onReorder: _reorder,
-              scrollDirection: Axis.vertical,
-              itemCount: thumbnails.length,
-              header: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: RichText(
-                  text: const TextSpan(
-                    text: 'Reorder Pages ',
-                    style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+            ,builder: (context, state) {
+              return Stack(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.max,
                     children: [
-                      TextSpan(
-                        text: '( long press to drag )',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              scrollController: controller,
-              itemBuilder: (context, index) {
-                final pageNo=_pageIndexes[index]+1;
-                final thumbnail=thumbnails[pageNo];
-                final thumbnailWidth=md.size.width*0.25;
-                final thumbnailHeight=thumbnailWidth*1.404;
-                return Padding(
-                  key: ValueKey('page-$pageNo'),
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
-                  child: Flex(
-                    direction: Axis.horizontal,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: thumbnailHeight,
-                        width: thumbnailWidth,
-                        decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
-                        child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
-                      ),
-                      Flexible(child: Padding(
+                      Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(textAlign: TextAlign.justify,softWrap: true,maxLines: 3,Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold,fontSize: 18,)),
-                            Text('Page No ${pageNo}',style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500,fontStyle: FontStyle.italic),)
-                          ],
+                        child: TextFormField(keyboardType: TextInputType.text,
+                          decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                          controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                      ),
+                      Expanded(child: ReorderableListView.builder(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        onReorder: _reorder,
+                        scrollDirection: Axis.vertical,
+                        itemCount: thumbnails.length,
+                        header: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: RichText(
+                            text: const TextSpan(
+                              text: 'Reorder Pages ',
+                              style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                              children: [
+                                TextSpan(
+                                  text: '( long press to drag )',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
+                        scrollController: controller,
+                        itemBuilder: (context, index) {
+                          final pageNo=_pageIndexes[index]+1;
+                          final thumbnail=thumbnails[pageNo];
+                          final thumbnailWidth=md.size.width*0.25;
+                          final thumbnailHeight=thumbnailWidth*1.404;
+                          return Padding(
+                            key: ValueKey('page-$pageNo'),
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
+                            child: Flex(
+                              direction: Axis.horizontal,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  height: thumbnailHeight,
+                                  width: thumbnailWidth,
+                                  decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
+                                  child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
+                                ),
+                                Flexible(child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(textAlign: TextAlign.justify,softWrap: true,maxLines: 3,Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold,fontSize: 18,)),
+                                      Text('Page No ${pageNo}',style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500,fontStyle: FontStyle.italic),)
+                                    ],
+                                  ),
+                                )),
+                              ],
+                            ),
+                          );
+                        },
                       )),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16.0),
+                        child: FilledButton(onPressed: _onReorderPages, child: const Text("Reorder Pdf Pages")),
+                      )
                     ],
                   ),
-                );
-              },
-            )),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16.0),
-              child: FilledButton(onPressed: _onReorderPages, child: const Text("Reorder Pdf Pages")),
-            )
-          ],
-        ));
+                  if(state.isLoading(forr: HttpStates.REORDER_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+                ],
+              );
+            },);
       },) ,
     );
   }

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
@@ -55,7 +56,9 @@ class _SplitPdfViewState extends State<SplitPdfView> {
           if(type!=null) setState(()=>type=null);
           else router.pop();
         },
-        child: BlocListener<PdfBloc,PdfState>(listenWhen: (previous, current) => previous.httpStates[HttpStates.SPLIT_PDF]!=current.httpStates[HttpStates.SPLIT_PDF],
+        child: BlocConsumer<PdfBloc,PdfState>(
+          buildWhen: (previous, current) => previous.httpStates[HttpStates.SPLIT_PDF]!=current.httpStates[HttpStates.SPLIT_PDF],
+          listenWhen: (previous, current) => previous.httpStates[HttpStates.SPLIT_PDF]!=current.httpStates[HttpStates.SPLIT_PDF],
             listener: (context, state) {
               final httpState=state.httpStates[HttpStates.SPLIT_PDF];
               if(httpState?.done==true){
@@ -67,22 +70,30 @@ class _SplitPdfViewState extends State<SplitPdfView> {
               }else if(httpState?.loading==true){
                 NotificationService.showSnackbar(text: "Started Splitting",color: Colors.lightBlue);
               }
-            },child: Flex(direction: Axis.vertical,children: [
-              Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(keyboardType: TextInputType.text,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
-                controller: outFileNameC),
-            ),
-            if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
-            else SplitPdfRange(file: widget.file, type: type!,onRangeChange:(rgs)=>setState(()=>ranges=rgs)),
-            Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                child: FilledButton(onPressed: type==null || (type!=SplitType.EXTRACT_ALL_PAGES && ranges.isEmpty)  ? null : _onExtractAllPages, child: const Text("Split Pdf Pages")),
-              )
-          ],) ,
+            },
+          builder: (context, state) {
+            return Stack(
+              children: [
+                Flex(direction: Axis.vertical,children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(keyboardType: TextInputType.text,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
+                        controller: outFileNameC),
+                  ),
+                  if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
+                  else SplitPdfRange(file: widget.file, type: type!,onRangeChange:(rgs)=>setState(()=>ranges=rgs)),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16.0),
+                    child: FilledButton(onPressed: type==null || (type!=SplitType.EXTRACT_ALL_PAGES && ranges.isEmpty)  ? null : _onExtractAllPages, child: const Text("Split Pdf Pages")),
+                  )
+                ],),
+                if(state.isLoading(forr: HttpStates.SPLIT_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+              ],
+            );
+          },
             ),
       ));
   }
