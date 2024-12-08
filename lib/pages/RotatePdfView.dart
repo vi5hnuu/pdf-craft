@@ -104,7 +104,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
               padding: const EdgeInsets.all(12.0).copyWith(bottom: 0),
               child: TextFormField(keyboardType: TextInputType.text,
                 decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                controller: outFileNameC,style: TextStyle(color: Colors.white),),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),

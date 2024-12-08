@@ -68,7 +68,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
             padding: const EdgeInsets.only(bottom: 12.0),
             child: TextFormField(keyboardType: TextInputType.text,
               decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-              controller: outFileNameC,style: TextStyle(color: Colors.black),),
+              controller: outFileNameC,style: TextStyle(color: Colors.white),),
           ),
           Expanded(
             child: SingleChildScrollView(

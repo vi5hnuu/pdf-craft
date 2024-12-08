@@ -71,8 +71,9 @@ class _SplitPdfViewState extends State<SplitPdfView> {
               Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextFormField(keyboardType: TextInputType.text,
-                decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
+                controller: outFileNameC),
             ),
             if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
             else SplitPdfRange(file: widget.file, type: type!,onRangeChange:(rgs)=>setState(()=>ranges=rgs)),

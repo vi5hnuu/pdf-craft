@@ -82,7 +82,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           padding: const EdgeInsets.all(8.0).copyWith(bottom: 12),
                           child: TextFormField(keyboardType: TextInputType.text,
                             decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                            controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                            controller: outFileNameC,style: TextStyle(color: Colors.white),),
                         ),
                         Row(
                             mainAxisSize: MainAxisSize.min,
