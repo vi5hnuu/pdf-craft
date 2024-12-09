@@ -8,12 +8,14 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
+import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/utils/utility.dart';
 
 class ScannerScreen extends StatefulWidget {
   @override
@@ -33,7 +35,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
         listener: (context, state) {
           final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
           if(httpState?.done==true){
-            NotificationService.showSnackbar(text: "Image to pdf successfull",color: Colors.green);
+            final savedFile=httpState?.extras?['savedFile'];
+            NotificationService.showSnackbar(text: "Image to pdf Successfull",color: Colors.green);
+            if(savedFile is File){
+              OpenFile.open(savedFile.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(savedFile)] ?? '*/*');
+            }
             setState(()=>_result=null);
           }else if(httpState?.error!=null){
             NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -185,6 +191,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         text: 'File saved at: ${targetFile.path}',
         color: Colors.green,
       );
+      OpenFile.open(sourceFile.path,type: Constants.extrnalOpenSupportedFiles['.pdf']);
     } catch (e) {
       NotificationService.showSnackbar(
         text: 'Failed to save the file: $e',
