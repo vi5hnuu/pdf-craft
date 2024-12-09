@@ -16,6 +16,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/PdfPreview.dart';
 
 class ScannerScreen extends StatefulWidget {
   @override
@@ -106,23 +107,24 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ),
                 if (_result?.pdf != null) ...[
                   Container(
-                    constraints: BoxConstraints(maxHeight: md.size.height),
+                    height: 400,
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: PDFView(
                         filePath: _result!.pdf!.uri,
                         enableSwipe: true,
-                        swipeHorizontal: false,
+                        swipeHorizontal: true,
                         autoSpacing: true,
-                        pageFling: false,
+                        pageFling: true,
                         fitEachPage: true,
+                        defaultPage: 1,
                         backgroundColor: Colors.white,
                       ),
                     ),
                   )
                 ],
-                Container(
-                  constraints: BoxConstraints(maxHeight: md.size.height),
+                if(_result?.images.isNotEmpty==true)SizedBox(
+                  height: md.size.height*0.6,
                   child: ListView.builder(itemCount: _result?.images.length ?? 0,itemBuilder: (context, index) {
                     final img=_result!.images[index];
                     return Padding(
