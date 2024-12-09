@@ -1,9 +1,19 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
+import 'package:pdf_craft/models/request/image-to-pdf.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/httpStates.dart';
 
 class ScannerScreen extends StatefulWidget {
   @override
@@ -11,83 +21,117 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
+  late GoRouter router=GoRouter.of(context);
   DocumentScanner? _documentScanner;
   DocumentScanningResult? _result;
   late MediaQueryData md=MediaQuery.of(context);
+  TextEditingController outFileNameC=TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0,vertical: 36),
-        child: Center(
-          child: Flex(
-            direction: Axis.vertical,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: ()=>startScan(DocumentFormat.pdf),
-                    child: Column(
-                      children: [
-                        Image.asset('assets/icons/scan_document.webp',width: 80,fit: BoxFit.cover,),
-                        const SizedBox(height: 8),
-                        const Text("Scan PDF",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),)
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 24,),
-                  GestureDetector(
-                    onTap: ()=>startScan(DocumentFormat.jpeg),
-                    child: Column(
-                      children: [
-                        Image.asset('assets/icons/scan_image.webp',width: 80,fit: BoxFit.cover,),
-                        const SizedBox(height: 8),
-                        const Text("Scan JPEG",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),)
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(thickness: 2,height: 64,endIndent: 16,indent: 16,),
-              if(_result?.pdf!=null || _result?.images!=null)Padding(
-                padding: EdgeInsets.only(
-                    top: 16, bottom: 8, right: 8, left: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BlocConsumer<PdfBloc,PdfState>(
+        listener: (context, state) {
+          final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
+          if(httpState?.done==true){
+            NotificationService.showSnackbar(text: "Image to pdf successfull",color: Colors.green);
+            setState(()=>_result=null);
+          }else if(httpState?.error!=null){
+            NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
+          }else if(httpState?.loading==true){
+            NotificationService.showSnackbar(text: "Merging image/s to pdf",color: Colors.lightBlue);
+          }
+        },
+        listenWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
+        buildWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
+        builder: (context, state) {
+      return Stack(children: [
+        SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0,vertical: 36),
+            child: Flex(
+              direction: Axis.vertical,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text( _result!.pdf!=null ? 'Scanned PDF Document:':'Scanned Image/s:',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
-                    FilledButton(onPressed: ()=>{},style: FilledButton.styleFrom(backgroundColor: Colors.green) ,child: Text( _result!.pdf!=null ? 'Save PDF:':'Merge to PDF',style: TextStyle(color: Colors.white),))
+                    GestureDetector(
+                      onTap: ()=>startScan(DocumentFormat.pdf),
+                      child: Column(
+                        children: [
+                          Image.asset('assets/icons/scan_document.webp',width: 80,fit: BoxFit.cover,),
+                          const SizedBox(height: 8),
+                          const Text("Scan PDF",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),)
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24,),
+                    GestureDetector(
+                      onTap: ()=>startScan(DocumentFormat.jpeg),
+                      child: Column(
+                        children: [
+                          Image.asset('assets/icons/scan_image.webp',width: 80,fit: BoxFit.cover,),
+                          const SizedBox(height: 8),
+                          const Text("Scan JPEG",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),)
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              if (_result?.pdf != null) ...[
-                SizedBox(
-                  height: MediaQuery.of(context).size.height,
-                  child: PDFView(
-                    filePath: _result!.pdf!.uri,
-                    enableSwipe: true,
-                    swipeHorizontal: false,
-                    autoSpacing: true,
-                    pageFling: false,
-                    fitEachPage: true,
-                    backgroundColor: Colors.white,
+                const Divider(thickness: 2,height: 64,endIndent: 16,indent: 16,),
+                if(_result?.pdf!=null || _result?.images!=null)Padding(
+                  padding: EdgeInsets.only(
+                      top: 16, bottom: 8, right: 8, left: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text( _result!.pdf!=null ? 'Scanned PDF Document:':'Scanned Image/s:',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+                      FilledButton(onPressed: _result!=null ? ()=>_saveResult(_result!) : null,style: FilledButton.styleFrom(backgroundColor: Colors.green) ,child: Text( _result!.pdf!=null ? 'Save PDF:':'Merge to PDF',style: TextStyle(color: Colors.white),))
+                    ],
                   ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0).copyWith(bottom: 12),
+                  child: TextFormField(keyboardType: TextInputType.text,
+                    decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                    controller: outFileNameC,style: TextStyle(color: Colors.white),),
+                ),
+                if (_result?.pdf != null) ...[
+                  Container(
+                    constraints: BoxConstraints(maxHeight: md.size.height),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: PDFView(
+                        filePath: _result!.pdf!.uri,
+                        enableSwipe: true,
+                        swipeHorizontal: false,
+                        autoSpacing: true,
+                        pageFling: false,
+                        fitEachPage: true,
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  )
+                ],
+                Container(
+                  constraints: BoxConstraints(maxHeight: md.size.height),
+                  child: ListView.builder(itemCount: _result?.images.length ?? 0,itemBuilder: (context, index) {
+                    final img=_result!.images[index];
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: (Image.file(File(img),fit: BoxFit.fitHeight,)),
+                    );
+                  },),
                 )
               ],
-              ...(_result?.images ?? []).map((image)=>Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: (Image.file(File(_result!.images.first),fit: BoxFit.fitWidth)),
-              ))
-            ],
+            ),
           ),
         ),
-      ),
-    );
+        if(state.isLoading(forr: HttpStates.IMAGE_TO_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+      ],) ;
+    });
   }
 
   void startScan(DocumentFormat format) async {
@@ -114,5 +158,38 @@ class _ScannerScreenState extends State<ScannerScreen> {
   void dispose() {
     _documentScanner?.close();
     super.dispose();
+  }
+
+  void _saveResult(DocumentScanningResult result) async {
+    final fileName=outFileNameC.text.isEmpty ? "scanned-${DateTime.now().millisecondsSinceEpoch}" : outFileNameC.text;
+    if(result.pdf!=null) {
+      await _savePdf(result.pdf!,fileName);
+      setState(()=>_result=null);
+    } else {
+      BlocProvider.of<PdfBloc>(context).add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: fileName, files: await Future.wait(result.images.map((imagePath)=>MultipartFile.fromFile(imagePath))))));
+    }
+  }
+
+  Future<void> _savePdf(DocumentScanningResultPdf pdf,String fileName) async {
+    try {
+      final Directory rootDir = Directory(Constants.processedDirPath);
+      if (!await rootDir.exists()) {
+        await rootDir.create(
+            recursive: true); // Create the directory if it doesn't exist
+      }
+      // Copy the scanned PDF to the target directory
+      final File sourceFile = File.fromUri(Uri.file(pdf.uri));
+      final File targetFile = await sourceFile.copy('${Constants.processedDirPath}/${fileName}.pdf');
+
+      NotificationService.showSnackbar(
+        text: 'File saved at: ${targetFile.path}',
+        color: Colors.green,
+      );
+    } catch (e) {
+      NotificationService.showSnackbar(
+        text: 'Failed to save the file: $e',
+        color: Colors.red,
+      );
+    }
   }
 }
