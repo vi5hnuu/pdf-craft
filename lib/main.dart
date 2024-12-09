@@ -302,8 +302,7 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                   // bottom navigation bar.
                   path: AppRoutes.scannerRoute.path,
                   name: AppRoutes.scannerRoute.name,
-                  builder: (BuildContext context, GoRouterState state) =>
-                      const ScannerScreen(),
+                  builder: (BuildContext context, GoRouterState state) => ScannerScreen(),
                 ),
               ]),
           StatefulShellBranch(
