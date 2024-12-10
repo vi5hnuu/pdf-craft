@@ -242,19 +242,19 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
           return MainScreen(navigationShell: navigationShell);
         },
         branches: <StatefulShellBranch>[
-          StatefulShellBranch(
-            navigatorKey: _homeNavigatorKey,
-            routes: <RouteBase>[
-              GoRoute(
-                // The screen to display as the root in the first tab of the
-                // bottom navigation bar.
-                path: AppRoutes.homeRoute.path,
-                name: AppRoutes.homeRoute.name,
-                builder: (BuildContext context, GoRouterState state) =>
-                    const HomeScreen(),
-              ),
-            ],
-          ),
+          // StatefulShellBranch(
+          //   navigatorKey: _homeNavigatorKey,
+          //   routes: <RouteBase>[
+          //     GoRoute(
+          //       // The screen to display as the root in the first tab of the
+          //       // bottom navigation bar.
+          //       path: AppRoutes.homeRoute.path,
+          //       name: AppRoutes.homeRoute.name,
+          //       builder: (BuildContext context, GoRouterState state) =>
+          //           const HomeScreen(),
+          //     ),
+          //   ],
+          // ),
           StatefulShellBranch(
             navigatorKey: _filesNavigatorKey,
             initialLocation: AppRoutes.filesRoute.path,
@@ -305,19 +305,19 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
                   builder: (BuildContext context, GoRouterState state) => ScannerScreen(),
                 ),
               ]),
-          StatefulShellBranch(
-              navigatorKey: _settingsNavigatorKey,
-              initialLocation: AppRoutes.settingsRoute.path,
-              routes: [
-                GoRoute(
-                  // The screen to display as the root in the first tab of the
-                  // bottom navigation bar.
-                  path: AppRoutes.settingsRoute.path,
-                  name: AppRoutes.settingsRoute.name,
-                  builder: (BuildContext context, GoRouterState state) =>
-                      const SettingScreen(),
-                ),
-              ]),
+          // StatefulShellBranch(
+          //     navigatorKey: _settingsNavigatorKey,
+          //     initialLocation: AppRoutes.settingsRoute.path,
+          //     routes: [
+          //       GoRoute(
+          //         // The screen to display as the root in the first tab of the
+          //         // bottom navigation bar.
+          //         path: AppRoutes.settingsRoute.path,
+          //         name: AppRoutes.settingsRoute.name,
+          //         builder: (BuildContext context, GoRouterState state) =>
+          //             const SettingScreen(),
+          //       ),
+          //     ]),
         ],
       ),
     ],
