@@ -156,7 +156,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                                 ),
                               ]),
                           SizedBox(height: 16),
-                          Row(
+                          Flex(
+                            direction: Axis.horizontal,
                               mainAxisSize: MainAxisSize.max,
                               children: [
                                 Text("Padding",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
@@ -282,7 +283,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                 ],
               ),
             ),
-            if(state.isLoading(forr: HttpStates.PAGE_NUMBERS)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+            if(state.isLoading(forr: HttpStates.PAGE_NUMBERS)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
           ],
         );
       },),

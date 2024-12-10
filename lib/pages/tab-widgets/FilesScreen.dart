@@ -100,10 +100,10 @@ class _FilesScreenState extends State<FilesScreen> {
               ),
               Column(
                 children: [
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Commin Soon")),leadingIconSvgPath: "assets/icons/google-drive.svg",title: "Google Drive",),
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Commin Soon")),leadingIconSvgPath: "assets/icons/drop-box.svg",title: "DropBox",),
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Commin Soon")),leadingIconSvgPath: "assets/icons/one-drive.svg",title: "OneDrive",),
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Commin Soon")),leadingIconSvgPath: "assets/icons/share-point.svg",title: "SharePoint",),
+                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/google-drive.svg",title: "Google Drive",),
+                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/drop-box.svg",title: "DropBox",),
+                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/one-drive.svg",title: "OneDrive",),
+                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/share-point.svg",title: "SharePoint",),
                 ],
               )
             ],

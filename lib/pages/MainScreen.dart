@@ -96,7 +96,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onTap(int index) {
     if(index==0 || index==4){
-     NotificationService.showSnackbar(text: "Comming soon",color: Colors.green);
+     NotificationService.showSnackbar(text: "Coming soon",color: Colors.green);
      return;
     }
     widget.navigationShell.goBranch(index,initialLocation: index == widget.navigationShell.currentIndex);
