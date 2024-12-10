@@ -23,4 +23,8 @@ class NotificationService {
     return _scaffoldMessengerKey.currentState?.showSnackBar(snackbar);
   }
 
+  static hideSnacks(){
+    _scaffoldMessengerKey.currentState?.clearSnackBars();
+  }
+
 }

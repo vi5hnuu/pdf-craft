@@ -99,6 +99,7 @@ class _MainScreenState extends State<MainScreen> {
      NotificationService.showSnackbar(text: "Coming soon",color: Colors.green);
      return;
     }
+    NotificationService.hideSnacks();
     widget.navigationShell.goBranch(index,initialLocation: index == widget.navigationShell.currentIndex);
   }
 }
