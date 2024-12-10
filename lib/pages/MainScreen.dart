@@ -50,19 +50,19 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.shifting,
         elevation: 5,
         iconSize: 24,
+        backgroundColor: Colors.black,
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
-              activeIcon: Icon(Icons.home),
-              tooltip: 'Home',
-              backgroundColor: Colors.black),
+          // BottomNavigationBarItem(
+          //     icon: Icon(Icons.home_outlined),
+          //     label: 'Home',
+          //     activeIcon: Icon(Icons.home),
+          //     tooltip: 'Home',
+          //     backgroundColor: Colors.black),
           BottomNavigationBarItem(
               icon: Icon(Icons.folder_copy_outlined),
               label: 'Files',
@@ -81,12 +81,12 @@ class _MainScreenState extends State<MainScreen> {
               activeIcon: Icon(Icons.document_scanner),
               tooltip: 'Scanner',
               backgroundColor: Colors.black),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              label: 'Settings',
-              activeIcon: Icon(Icons.settings),
-              tooltip: 'Settings',
-              backgroundColor: Colors.black),
+          // BottomNavigationBarItem(
+          //     icon: Icon(Icons.settings_outlined),
+          //     label: 'Settings',
+          //     activeIcon: Icon(Icons.settings),
+          //     tooltip: 'Settings',
+          //     backgroundColor: Colors.black),
         ],
         currentIndex: widget.navigationShell.currentIndex,
         onTap: _onTap,
@@ -95,11 +95,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _onTap(int index) {
-    if(index==0 || index==4){
-     NotificationService.showSnackbar(text: "Coming soon",color: Colors.green);
-     return;
-    }
-    NotificationService.hideSnacks();
     widget.navigationShell.goBranch(index,initialLocation: index == widget.navigationShell.currentIndex);
   }
 }
