@@ -31,8 +31,8 @@ class _SearchScreenState extends State<SearchScreen> {
         .debounceTime(const Duration(milliseconds: 500))
         .listen((value) {
       if (!mounted) return;
-      if(!value.isEmpty) bloc.add(SearchFile(path: Constants.rootStoragePath, nameLike: value));
-      else bloc.add(const ResetSearch());
+      if(!value.isEmpty) bloc.add(SearchFileEvent(path: Constants.rootStoragePath, nameLike: value));
+      else bloc.add(const ResetSearchEvent());
       }, cancelOnError: false);
     super.initState();
   }
@@ -92,7 +92,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
-    bloc.add(const ResetSearch());
+    bloc.add(const ResetSearchEvent());
     super.dispose();
   }
 }

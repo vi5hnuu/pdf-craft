@@ -5,30 +5,30 @@ abstract class FilesEvent {
   const FilesEvent();
 }
 
-class LoadDirectoryFiles extends FilesEvent{
+class LoadDirectoryFilesEvent extends FilesEvent{
   final String path;
-  const LoadDirectoryFiles({required this.path});
+  const LoadDirectoryFilesEvent({required this.path});
 }
 
-class SearchFile extends FilesEvent{
+class SearchFileEvent extends FilesEvent{
   final String path;
   final String nameLike;
-  const SearchFile({required this.path,required this.nameLike});
+  const SearchFileEvent({required this.path,required this.nameLike});
 }
 
-class ResetSearch extends FilesEvent{
-  const ResetSearch();
+class ResetSearchEvent extends FilesEvent{
+  const ResetSearchEvent();
 }
 
-class MoveFileTo extends FilesEvent{
+class MoveFileToEvent extends FilesEvent{
   final File file;
   final String to;
 
-  const MoveFileTo({required this.to,required this.file});
+  const MoveFileToEvent({required this.to,required this.file});
 }
 
 
-class DeleteFile extends FilesEvent{
+class DeleteFileEvent extends FilesEvent{
   final File file;
-  const DeleteFile({required this.file});
+  const DeleteFileEvent({required this.file});
 }

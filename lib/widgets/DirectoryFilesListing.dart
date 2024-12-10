@@ -136,7 +136,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   _loadDirectoryFiles(String path){
     if(bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
-    bloc.add(LoadDirectoryFiles(path: pathToDirectory.last));
+    bloc.add(LoadDirectoryFilesEvent(path: pathToDirectory.last));
   }
 
   @override
