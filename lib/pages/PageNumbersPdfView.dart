@@ -78,7 +78,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
+              child: Flex(
+                direction: Axis.vertical,
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   Expanded(
@@ -240,7 +241,6 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                               ]),
                           SizedBox(height: 16),
                           ColorPicker(
-                            colorPickerWidth: 100,
                             pickerColor: Color.fromARGB(fill_color.a ?? 1, fill_color.r, fill_color.g, fill_color.b),
                             onColorChanged: (color) {
                               setState(()=>fill_color=ColorInfo(r: color.red, g: color.green, b: color.blue, a: color.alpha));
@@ -255,7 +255,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                                   height: MediaQuery.of(context).size.width*1.26,
                                   decoration: BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(12)),
                                 ),
-                                Container(
+                                SizedBox(
                                   width: double.infinity,
                                   height: MediaQuery.of(context).size.width*1.26,
                                   child: Align(

@@ -90,7 +90,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                     child: FilledButton(onPressed: type==null || (type!=SplitType.EXTRACT_ALL_PAGES && ranges.isEmpty)  ? null : _onExtractAllPages, child: const Text("Split Pdf Pages")),
                   )
                 ],),
-                if(state.isLoading(forr: HttpStates.SPLIT_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+                if(state.isLoading(forr: HttpStates.SPLIT_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
               ],
             );
           },
