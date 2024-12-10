@@ -8,6 +8,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 
 class FilesListing extends StatelessWidget {
@@ -28,7 +29,10 @@ class FilesListing extends StatelessWidget {
           }else if(httpState?.loading==true){
             NotificationService.showSnackbar(text: "Deleting file...",color: Colors.lightBlue);
           }
-        },child:DirectoryFilesListing(excludeShowingDirsPath: config.excludeShowingDirsPath,directoryPath: config.path,onDelete: (file)=> _onDeleteFile(context,file))
+        },child:Flex(direction: Axis.vertical,children: [
+      Expanded(child: DirectoryFilesListing(excludeShowingDirsPath: config.excludeShowingDirsPath,directoryPath: config.path,onDelete: (file)=> _onDeleteFile(context,file))),
+      const BannerAdd(),
+    ],)
     );
   }
 
@@ -63,7 +67,7 @@ class FilesListing extends StatelessWidget {
         ],
       );
     });
-    if(deleteApproved==-1) BlocProvider.of<FilesBloc>(context).add(MoveFileTo(to: Constants.binDirPath, file: file));
-    if(deleteApproved==1) BlocProvider.of<FilesBloc>(context).add(DeleteFile(file: file));
+    if(deleteApproved==-1) BlocProvider.of<FilesBloc>(context).add(MoveFileToEvent(to: Constants.binDirPath, file: file));
+    if(deleteApproved==1) BlocProvider.of<FilesBloc>(context).add(DeleteFileEvent(file: file));
   }
 }

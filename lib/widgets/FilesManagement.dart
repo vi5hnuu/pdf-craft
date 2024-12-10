@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 
 class FilesManagement extends StatefulWidget {
@@ -30,14 +31,18 @@ class _FilesManagementState extends State<FilesManagement> {
         title: Text("File Management"),
       ),
       body: SafeArea(
-        child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files){
-          final result={'files':files};
-          if(widget.config.redirectPath==null) {
-            router.pop(result);
-          } else {
-            router.push(widget.config.redirectPath!,extra: result);
-          }
-        } ,directoryPath: widget.config.path,multiSelect: widget.config.multiSelect,limitSelectionToExtensions: widget.config.limitToExtensions),
+        child: Flex(direction: Axis.vertical,
+        children: [
+          Expanded(child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files){
+            final result={'files':files};
+            if(widget.config.redirectPath==null) {
+              router.pop(result);
+            } else {
+              router.push(widget.config.redirectPath!,extra: result);
+            }
+          } ,directoryPath: widget.config.path,multiSelect: widget.config.multiSelect,limitSelectionToExtensions: widget.config.limitToExtensions)),
+          const BannerAdd(),
+        ],),
       ),
     );
   }

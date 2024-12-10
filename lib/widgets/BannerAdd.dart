@@ -28,7 +28,8 @@ class _BannerAddState extends State<BannerAdd> {
     final bannerAd = BannerAd(
       size: AdSize.banner,
       adUnitId: 'ca-app-pub-4715945578201106/3610792197',
-      request: const AdRequest(keywords: ['gfg','geeksforgeeks','leetcode','codingninja','codechef','codeforces','naukri']),
+      // adUnitId: 'ca-app-pub-3940256099942544/9214589741', //test
+      request: const AdRequest(keywords: ['gfg','geeksforgeeks','leetcode','codingninja','codechef','codeforces','naukri','pdf','ilovepdf','file management']),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           if (!mounted) {

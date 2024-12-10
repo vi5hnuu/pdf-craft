@@ -11,6 +11,7 @@ import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitConfig.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitRange.dart';
+import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -37,6 +38,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
 
   @override
   void initState() {
+    AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
   }
 

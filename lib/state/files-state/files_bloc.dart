@@ -22,20 +22,30 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   StreamController<List<File>>? _searchController;
 
   FilesBloc() : super(FilesState.initial()) {
-    on<LoadDirectoryFiles>((event, emit) async {
+    on<LoadDirectoryFilesEvent>((event, emit) async {
       emit(state.copyWith(httpStates: state.httpStates.clone()
         ..put(HttpStates.LOAD_DIRECTORY_FILES, const HttpState.loading())));
       // await Future.delayed(Duration(seconds: 5));
       try {
         final files = await _loadDirectoryFiles(event.path);
+
+        final fileStats = Map.fromEntries(await Future.wait(
+          files.whereType<File>().map((file) async => MapEntry(file.path,await file.stat())),
+        ));
+
         files.sort((fileA, fileB){
           if((fileA is Directory && fileB is Directory)) {
             return fileA.path.compareTo(fileB.path);
           } else if(fileA is Directory && fileB is File){
             return -1;
+          }else if(fileB is Directory && fileA is File){
+            return 1;
+          }else{
+            return fileStats[fileB.path]!.modified.compareTo(fileStats[fileA.path]!.modified);
           }
-          return 1;
+
         });
+        // await Future.delayed(Duration(seconds: 10));
         emit(state.copyWith(files: files, httpStates: state.httpStates.clone()
           ..put(HttpStates.LOAD_DIRECTORY_FILES,const HttpState.done())));
       } catch (e) {
@@ -45,9 +55,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       }
     });
 
-    on<SearchFile>((event, emit) async {
+    on<SearchFileEvent>((event, emit) async {
       if (_searchSubscription != null) await _searchSubscription?.cancel();
-      if (_searchController == null) _searchController=StreamController<List<File>>.broadcast();
+      _searchController ??= StreamController<List<File>>.broadcast();
 
       List<File> files = [];
       _searchSubscription = searchFiles(event.path, event.nameLike).listen(
@@ -60,7 +70,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       emit(state.copyWith(searchStream: _searchController!.stream));
     });
 
-    on<ResetSearch>((event, emit) async {
+    on<ResetSearchEvent>((event, emit) async {
       if (_searchSubscription != null) await _searchSubscription!.cancel();
       if (_searchController != null) await _searchController!.close();
       _searchController=null;
@@ -68,7 +78,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       emit(state.copyWith(searchStream: null));
     });
 
-    on<MoveFileTo>((event, emit) async {
+    on<MoveFileToEvent>((event, emit) async {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, const HttpState.loading())));
       try{
         await _moveFile(file:event.file,toDirectoryPath:event.to);
@@ -78,7 +88,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       }
     });
 
-    on<DeleteFile>((event, emit) async {
+    on<DeleteFileEvent>((event, emit) async {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, const HttpState.loading())));
       try{
         await _deleteFile(file:event.file);

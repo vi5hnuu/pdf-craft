@@ -8,6 +8,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
@@ -29,6 +30,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
 
   @override
   void initState() {
+    AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
   }
 

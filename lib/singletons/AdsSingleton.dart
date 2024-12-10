@@ -19,7 +19,8 @@ class AdsSingleton {
   _loadInterstitialAd(){
     InterstitialAd.load(
         adUnitId: 'ca-app-pub-4715945578201106/9362646476',
-        request: const AdRequest(keywords: ['gfg','geeksforgeeks','leetcode','codingninja','codechef','codeforces','naukri']),
+        // adUnitId: 'ca-app-pub-3940256099942544/1033173712',//test
+        request: const AdRequest(keywords: ['gfg','geeksforgeeks','leetcode','codingninja','codechef','codeforces','naukri','pdf','ilovepdf','file management']),
         adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
           ad.show();
         }, onAdFailedToLoad: (error) {

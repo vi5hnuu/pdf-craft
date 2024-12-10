@@ -11,6 +11,7 @@ import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
@@ -53,6 +54,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
 
   @override
   void initState() {
+    AdsSingleton().dispatch(LoadInterstitialAd());
     _pdfController = PdfController(document: PdfDocument.openFile(widget.file.path),initialPage: 1);
     _pdfController.document.then((doc)=>setState((){
       if(!mounted) return;

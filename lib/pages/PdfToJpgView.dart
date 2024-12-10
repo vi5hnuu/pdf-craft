@@ -10,6 +10,7 @@ import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/direction.dart';
 import 'package:pdf_craft/models/enums/quality.dart';
 import 'package:pdf_craft/models/request/pdf-to-jpg.dart';
+import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -37,6 +38,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
 
   @override
   void initState() {
+    AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
   }
 

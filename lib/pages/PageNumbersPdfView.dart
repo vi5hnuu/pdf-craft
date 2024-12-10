@@ -15,6 +15,7 @@ import 'package:pdf_craft/models/enums/position-info.dart';
 import 'package:pdf_craft/models/padding-info.dart';
 import 'package:pdf_craft/models/request/page-numbers.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
@@ -48,6 +49,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
 
   @override
   void initState() {
+    AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
   }
 

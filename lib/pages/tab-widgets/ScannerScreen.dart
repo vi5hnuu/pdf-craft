@@ -11,6 +11,7 @@ import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -156,6 +157,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ),
       );
       _result = await _documentScanner?.scanDocument();
+      AdsSingleton().dispatch(LoadInterstitialAd());
       setState(() {});
     } catch (e) {
       NotificationService.showSnackbar(text: "Failed to scan",color: Colors.red);
