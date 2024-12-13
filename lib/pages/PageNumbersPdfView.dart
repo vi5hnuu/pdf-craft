@@ -283,7 +283,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                 ],
               ),
             ),
-            if(state.isLoading(forr: HttpStates.PAGE_NUMBERS)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+            if(state.isLoading(forr: HttpStates.PAGE_NUMBERS)) const Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),)
           ],
         );
       },),

@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,14 +7,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
-import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
-import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/RotatableItem.dart';
 import 'package:pdfx/pdfx.dart';
 
@@ -186,17 +183,15 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                           spacing: 8.0, // Space between chips horizontally
                           runSpacing: 8.0, // Space between chips vertically
                           children: page_angles.entries.map((range) {
-                            return Flexible(
-                              child: Chip(
-                                onDeleted: () => setState(()=>page_angles.remove(range.key)),
-                                label: Text(
-                                  "Page ${range.key} : ${range.value}°",
-                                  style: TextStyle(color: Colors.black),
-                                  overflow: TextOverflow.ellipsis, // Ensure text truncates if too long
-                                  maxLines: 1, // Ensure text remains on one line
-                                ),
-                                backgroundColor: Colors.white,
+                            return Chip(
+                              onDeleted: () => setState(()=>page_angles.remove(range.key)),
+                              label: Text(
+                                "Page ${range.key} : ${range.value}°",
+                                style: TextStyle(color: Colors.black),
+                                overflow: TextOverflow.ellipsis, // Ensure text truncates if too long
+                                maxLines: 1, // Ensure text remains on one line
                               ),
+                              backgroundColor: Colors.white,
                             );
                           }).toList(),
                         ),
@@ -238,7 +233,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                   )
                 ],
               ),
-              if(state.isLoading(forr: HttpStates.ROTATE_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+              if(state.isLoading(forr: HttpStates.ROTATE_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
             ],
           );
         },);

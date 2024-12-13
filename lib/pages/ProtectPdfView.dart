@@ -126,7 +126,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                     ],
                   ),
                 ),
-                if(state.isLoading(forr: HttpStates.PROTECT_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+                if(state.isLoading(forr: HttpStates.PROTECT_PDF)) Container(decoration: const BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
               ],
             );
           },)

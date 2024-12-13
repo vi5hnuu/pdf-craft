@@ -154,7 +154,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   )
                 ],),
             ),
-            if(state.isLoading(forr: HttpStates.PDF_TO_JPG)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+            if(state.isLoading(forr: HttpStates.PDF_TO_JPG)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
           ],
         );
       },),

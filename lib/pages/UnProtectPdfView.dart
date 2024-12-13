@@ -76,7 +76,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                    ],
                  ),
                ),
-               if(state.isLoading(forr: HttpStates.UNPROTECT_PDF)) Expanded(child: Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),))
+               if(state.isLoading(forr: HttpStates.UNPROTECT_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
              ],
            );
           },),
