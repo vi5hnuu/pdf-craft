@@ -67,68 +67,70 @@ class _FilesScreenState extends State<FilesScreen> {
     final router=GoRouter.of(context);
 
     return SafeArea(
-      child: Column(
-        children: [
-          Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 18.0,top: 24.0),
-                child: Row(children: [
-                  Text("My Storage",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
-                ],),
-              ),
-              StreamBuilder<StorageStats>(stream: storageStats.stream, builder: (context, snapshot) {
-                final stats=snapshot.data;
-                return Column(
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 18.0,top: 24.0),
+                  child: Row(children: [
+                    Text("My Storage",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
+                  ],),
+                ),
+                StreamBuilder<StorageStats>(stream: storageStats.stream, builder: (context, snapshot) {
+                  final stats=snapshot.data;
+                  return Column(
+                    children: [
+                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.rootStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInRoot.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/hard-disk.svg",title: "Internal Storage",),
+                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.downloadsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDownloads.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/downloads.svg",title: "Downloads",),
+                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.documentsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDocuments.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/documents.svg",title: "Documents",),
+                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.processedDirPath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalProcessedFiles.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/folder-management.svg",title: "Processed Files",),
+                    ],
+                  );
+                },)
+              ],
+            ),
+            const Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 18.0,top: 12.0),
+                  child: Row(children: [
+                    Text("Cloud Storage",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
+                  ],),
+                ),
+                Column(
                   children: [
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.rootStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInRoot.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/hard-disk.svg",title: "Internal Storage",),
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.downloadsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDownloads.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/downloads.svg",title: "Downloads",),
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.documentsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDocuments.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/documents.svg",title: "Documents",),
-                    StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.processedDirPath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalProcessedFiles.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/folder-management.svg",title: "Processed Files",),
+                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/google-drive.svg",title: "Google Drive",),
+                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/drop-box.svg",title: "DropBox",),
+                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/one-drive.svg",title: "OneDrive",),
+                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/share-point.svg",title: "SharePoint",),
                   ],
-                );
-              },)
-            ],
-          ),
-          Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 18.0,top: 12.0),
-                child: Row(children: [
-                  Text("Cloud Storage",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
-                ],),
-              ),
-              Column(
-                children: [
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/google-drive.svg",title: "Google Drive",),
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/drop-box.svg",title: "DropBox",),
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/one-drive.svg",title: "OneDrive",),
-                  StorageTile(trailing: TextButton(onPressed:null,child: const Text("Coming Soon")),leadingIconSvgPath: "assets/icons/share-point.svg",title: "SharePoint",),
-                ],
-              )
-            ],
-          ),
-          Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 18.0,top: 12.0),
-                child: Row(children: [
-                  Text("Others",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
-                ],),
-              ),
-              StreamBuilder<StorageStats>(stream: storageStats.stream, builder: (context, snapshot) {
-                final stats=snapshot.data;
-                return Column(
-                  children: [
-                    StorageTile(onTap:_goToBin,trailing:stats==null || stats.isLoading ?  SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalFileInBin.toString(),style: TextStyle(fontSize: 16),),
-                      leadingIconSvgPath: "assets/icons/recycle-bin.svg",title: "Bin",),
-                  ],
-                );
-              },)
-
-            ],
-          ),
-        ],
+                )
+              ],
+            ),
+            Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 18.0,top: 12.0),
+                  child: Row(children: [
+                    Text("Others",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
+                  ],),
+                ),
+                StreamBuilder<StorageStats>(stream: storageStats.stream, builder: (context, snapshot) {
+                  final stats=snapshot.data;
+                  return Column(
+                    children: [
+                      StorageTile(onTap:_goToBin,trailing:stats==null || stats.isLoading ?  SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalFileInBin.toString(),style: TextStyle(fontSize: 16),),
+                        leadingIconSvgPath: "assets/icons/recycle-bin.svg",title: "Bin",),
+                    ],
+                  );
+                },)
+        
+              ],
+            ),
+          ],
+        ),
       ),
   );
   }

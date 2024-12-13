@@ -8,6 +8,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -64,22 +65,26 @@ class _SearchScreenState extends State<SearchScreen> {
           builder: (context, state) {
             final searchStream = state.searchStream;
             //searchStream will never be null as initial it is null but blockBuilder won't run initially it run only on state change
-            return searchStream==null ? Text("Try seaching something",style: TextStyle(color: Colors.white)) :
-            StreamBuilder(stream: searchStream, builder: (context, snapshot) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0,vertical: 8),
-                    child: Text("Total ${snapshot.data?.length ?? 0} files found.",style: TextStyle(fontWeight: FontWeight.bold),),
-                  ),
-                  Expanded(child: ListView.builder(itemCount: snapshot.data?.length ?? 0,itemBuilder: (context, index) {
-                    final File file=snapshot.data![index];
-                    return FileTile(file: file,onPress: () => _openFile(file));
-                  },))
-                ],
-              );
-            },);
+            return Flex(direction: Axis.vertical,
+            children: [
+              Expanded(child: searchStream==null ? Text("Try seaching something",style: TextStyle(color: Colors.white)) :
+              StreamBuilder(stream: searchStream, builder: (context, snapshot) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0,vertical: 8),
+                      child: Text("Total ${snapshot.data?.length ?? 0} files found.",style: TextStyle(fontWeight: FontWeight.bold),),
+                    ),
+                    Expanded(child: ListView.builder(itemCount: snapshot.data?.length ?? 0,itemBuilder: (context, index) {
+                      final File file=snapshot.data![index];
+                      return FileTile(file: file,onPress: () => _openFile(file));
+                    },))
+                  ],
+                );
+              },)),
+              const BannerAdd()
+            ],);
           }),
 
     );

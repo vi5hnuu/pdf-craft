@@ -204,6 +204,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                     ),
                   ),
                   Expanded(child: ListView.builder(
+                    controller: controller,
                     padding: EdgeInsets.symmetric(vertical: 8),
                     scrollDirection: Axis.vertical,
                     itemCount: thumbnails.length,
