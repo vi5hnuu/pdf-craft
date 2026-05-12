@@ -20,6 +20,15 @@ class _PdfPreviewState extends State<PdfPreview> {
   PdfControllerPinch? _controller;
   String? _password;
   bool _loadError = false;
+  bool _nightMode = false;
+
+  // Inverts RGB channels while keeping alpha — turns white pages dark for night reading
+  static const _invertMatrix = <double>[
+    -1,  0,  0,  0, 255,
+     0, -1,  0,  0, 255,
+     0,  0, -1,  0, 255,
+     0,  0,  0,  1,   0,
+  ];
 
   String get _fileName => widget.pdfFilePath.split('/').last;
 
@@ -80,6 +89,11 @@ class _PdfPreviewState extends State<PdfPreview> {
               },
             ),
           IconButton(
+            icon: Icon(_nightMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+            tooltip: _nightMode ? 'Day mode' : 'Night mode',
+            onPressed: () => setState(() => _nightMode = !_nightMode),
+          ),
+          IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share',
             onPressed: () => Share.shareXFiles([XFile(widget.pdfFilePath)]),
@@ -104,12 +118,15 @@ class _PdfPreviewState extends State<PdfPreview> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return PdfViewPinch(
+    final viewer = PdfViewPinch(
       controller: _controller!,
       padding: 16,
       minScale: 1,
       maxScale: 10,
       scrollDirection: Axis.vertical,
+      backgroundDecoration: BoxDecoration(
+        color: _nightMode ? Colors.black : const Color(0xFFEEEEEE),
+      ),
       onDocumentError: (_) => _askForPasswordAndRetry(context),
       builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
         options: DefaultBuilderOptions(
@@ -124,6 +141,12 @@ class _PdfPreviewState extends State<PdfPreview> {
           onRetryWithPassword: () => _askForPasswordAndRetry(context),
         ),
       ),
+    );
+
+    if (!_nightMode) return viewer;
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix(_invertMatrix),
+      child: viewer,
     );
   }
 
