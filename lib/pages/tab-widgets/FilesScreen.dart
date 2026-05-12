@@ -5,6 +5,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/FavoritesService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -70,6 +71,7 @@ class _FilesScreenState extends State<FilesScreen> {
   BehaviorSubject<StorageStats> storageStats =
       BehaviorSubject.seeded(StorageStats.zero());
   List<File> _recentPdfs = [];
+  List<File> _favoritePdfs = [];
 
   @override
   void initState() {
@@ -123,6 +125,57 @@ class _FilesScreenState extends State<FilesScreen> {
                               children: [
                                 Icon(Icons.picture_as_pdf,
                                     color: primary, size: 36),
+                                const SizedBox(height: 8),
+                                Text(
+                                  name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            if (_favoritePdfs.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8),
+                child: Text(
+                  'Favorites',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+              SizedBox(
+                height: 130,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: _favoritePdfs.length,
+                  itemBuilder: (context, index) {
+                    final pdf = _favoritePdfs[index];
+                    final name = pdf.path.split('/').last;
+                    return GestureDetector(
+                      onTap: () => router.pushNamed(
+                          AppRoutes.pdfFilePreviewRoute.name,
+                          pathParameters: {'pdfFilePath': pdf.path}),
+                      child: Card(
+                        elevation: 0,
+                        color: theme.cardColor,
+                        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: SizedBox(
+                          width: 90,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.star, color: Colors.amber, size: 36),
                                 const SizedBox(height: 8),
                                 Text(
                                   name,
@@ -321,7 +374,11 @@ class _FilesScreenState extends State<FilesScreen> {
             totalFileInBin: stats[4]));
 
         final recents = await RecentFilesService().getRecentFiles(limit: 10);
-        if (mounted) setState(() => _recentPdfs = recents);
+        final favorites = await FavoritesService().getFavorites();
+        if (mounted) setState(() {
+          _recentPdfs = recents;
+          _favoritePdfs = favorites;
+        });
       } else {
         NotificationService.showSnackbar(
             text: 'Storage permission denied', color: Colors.red);

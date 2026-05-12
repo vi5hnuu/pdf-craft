@@ -2,10 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:pdf_craft/singletons/FavoritesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 
-class FileTile extends StatelessWidget {
+class FileTile extends StatefulWidget {
   final FileSystemEntity file;
   final bool enabled;
   final bool selected;
@@ -13,33 +14,82 @@ class FileTile extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onLongPress;
 
-  const FileTile(
-      {super.key,
-      required this.file,
-      this.enabled = true,
-      this.selected = false,
-      this.onPress,
-      this.onDelete,
-      this.onLongPress});
+  const FileTile({
+    super.key,
+    required this.file,
+    this.enabled = true,
+    this.selected = false,
+    this.onPress,
+    this.onDelete,
+    this.onLongPress,
+  });
+
+  @override
+  State<FileTile> createState() => _FileTileState();
+}
+
+class _FileTileState extends State<FileTile> {
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.file is File) _checkFavorite();
+  }
+
+  Future<void> _checkFavorite() async {
+    final fav = await FavoritesService().isFavorite(widget.file.path);
+    if (mounted) setState(() => _isFavorite = fav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    await FavoritesService().toggle(widget.file.path);
+    if (mounted) setState(() => _isFavorite = !_isFavorite);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final fileIcon = Constants.fileIcons[
-        file is Directory ? 'folder' : file.path.split('.').last];
+        widget.file is Directory ? 'folder' : widget.file.path.split('.').last];
 
     final months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     String? dateStr;
     String? sizeStr;
-    if (file is File) {
-      final stat = File(file.path).statSync();
+    if (widget.file is File) {
+      final stat = File(widget.file.path).statSync();
       final d = stat.modified;
       dateStr = '${d.day} ${months[d.month - 1]} ${d.year}';
-      sizeStr = Utility.bytesToSize(File(file.path).lengthSync());
+      sizeStr = Utility.bytesToSize(File(widget.file.path).lengthSync());
+    }
+
+    Widget? trailing;
+    if (widget.file is File) {
+      trailing = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: _toggleFavorite,
+            icon: Icon(
+              _isFavorite ? Icons.star : Icons.star_border,
+              color: _isFavorite ? Colors.amber : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+            tooltip: _isFavorite ? 'Remove from favorites' : 'Add to favorites',
+          ),
+          if (widget.onDelete != null)
+            IconButton(
+              onPressed: widget.onDelete,
+              icon: Icon(Icons.delete_outline, color: Colors.red.shade300),
+            ),
+        ],
+      );
+    } else {
+      trailing = Icon(Icons.chevron_right,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5));
     }
 
     return Card(
@@ -48,12 +98,11 @@ class FileTile extends StatelessWidget {
       color: theme.cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
-        enabled: enabled,
-        selected: selected,
+        enabled: widget.enabled,
+        selected: widget.selected,
         selectedTileColor: primary.withValues(alpha: 0.12),
         selectedColor: primary,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: Container(
           width: 40,
           height: 40,
@@ -67,7 +116,7 @@ class FileTile extends StatelessWidget {
                   child: Image.asset(fileIcon, fit: BoxFit.contain),
                 )
               : Icon(
-                  file is Directory
+                  widget.file is Directory
                       ? FontAwesomeIcons.solidFolder
                       : FontAwesomeIcons.file,
                   color: primary,
@@ -75,11 +124,11 @@ class FileTile extends StatelessWidget {
                 ),
         ),
         title: Text(
-          file.path.split('/').last,
+          widget.file.path.split('/').last,
           style: const TextStyle(fontWeight: FontWeight.w600),
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: file is File && sizeStr != null && dateStr != null
+        subtitle: widget.file is File && sizeStr != null && dateStr != null
             ? Text(
                 '$sizeStr  •  $dateStr',
                 style: TextStyle(
@@ -88,19 +137,9 @@ class FileTile extends StatelessWidget {
                 ),
               )
             : null,
-        trailing: file is File
-            ? (onDelete != null
-                ? IconButton(
-                    onPressed: onDelete,
-                    icon: Icon(Icons.delete_outline,
-                        color: Colors.red.shade300),
-                    splashRadius: 20,
-                  )
-                : null)
-            : Icon(Icons.chevron_right,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-        onTap: onPress,
-        onLongPress: onLongPress,
+        trailing: trailing,
+        onTap: widget.onPress,
+        onLongPress: widget.onLongPress,
       ),
     );
   }
