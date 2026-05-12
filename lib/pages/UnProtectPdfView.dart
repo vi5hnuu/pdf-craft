@@ -37,7 +37,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // theme-aware
       appBar: AppBar(
         title: Text('UnProtect Pdf'),
         elevation: 5,

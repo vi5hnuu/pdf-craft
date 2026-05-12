@@ -47,7 +47,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
     final router=GoRouter.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      // theme-aware
       appBar: AppBar(
         title: Text('Split Pdf'),
         elevation: 5,
@@ -80,7 +80,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(keyboardType: TextInputType.text,
-                        style: TextStyle(color: Colors.white),
+                        // theme text
                         decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
                         controller: outFileNameC),
                   ),
@@ -92,7 +92,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                     child: FilledButton(onPressed: type==null || (type!=SplitType.EXTRACT_ALL_PAGES && ranges.isEmpty)  ? null : _onExtractAllPages, child: const Text("Split Pdf Pages")),
                   )
                 ],),
-                if(state.isLoading(forr: HttpStates.SPLIT_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+                if(state.isLoading(forr: HttpStates.SPLIT_PDF)) Container(decoration: BoxDecoration(color: Colors.black54.withValues(alpha: 0.6)),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
               ],
             );
           },

@@ -61,7 +61,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                   children: [
                     const Text(
                       'Extract all text content from your PDF into a text file.',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -77,7 +77,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                 ),
               ),
               if (state.isLoading(forr: HttpStates.EXTRACT_TEXT))
-                Container(color: Colors.black54, child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45))),
+                Container(color: Colors.black54.withValues(alpha: 0.6), child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45))),
             ],
           );
         },

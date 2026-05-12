@@ -114,7 +114,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 )
               ],
             ),
-            if(state.isLoading(forr: HttpStates.IMAGE_TO_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+            if(state.isLoading(forr: HttpStates.IMAGE_TO_PDF)) Container(decoration: BoxDecoration(color: Colors.black54.withValues(alpha: 0.6)),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
           ],
         );
       },)

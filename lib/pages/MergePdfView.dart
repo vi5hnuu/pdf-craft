@@ -105,7 +105,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge PDFs")),)
               ],
             ),
-            if(state.isLoading(forr: HttpStates.MERGE_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+            if(state.isLoading(forr: HttpStates.MERGE_PDF)) Container(decoration: BoxDecoration(color: Colors.black54.withValues(alpha: 0.6)),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
           ],
         );
       },),

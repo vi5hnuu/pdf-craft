@@ -105,7 +105,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
               ),
               if (state.isLoading(forr: HttpStates.REPAIR_PDF))
                 Container(
-                  color: Colors.black54,
+                  color: Colors.black54.withValues(alpha: 0.6),
                   child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45)),
                 ),
             ],

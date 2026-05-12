@@ -165,7 +165,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                       )
                     ],
                   ),
-                  if(state.isLoading(forr: HttpStates.REORDER_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+                  if(state.isLoading(forr: HttpStates.REORDER_PDF)) Container(decoration: BoxDecoration(color: Colors.black54.withValues(alpha: 0.6)),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
                 ],
               );
             },);

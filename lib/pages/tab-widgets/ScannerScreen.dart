@@ -98,7 +98,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text( _result!.pdf!=null ? 'Scanned PDF Document:':'Scanned Image/s:',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
-                      FilledButton(onPressed: _result!=null ? ()=>_saveResult(_result!) : null,style: FilledButton.styleFrom(backgroundColor: Colors.green) ,child: Text( _result!.pdf!=null ? 'Save PDF:':'Merge to PDF',style: TextStyle(color: Colors.white),))
+                      FilledButton(onPressed: _result!=null ? ()=>_saveResult(_result!) : null,style: FilledButton.styleFrom(backgroundColor: Colors.green) ,child: Text( _result!.pdf!=null ? 'Save PDF:':'Merge to PDF'))
                     ],
                   ),
                 ),
@@ -106,7 +106,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   padding: const EdgeInsets.all(8.0).copyWith(bottom: 12),
                   child: TextFormField(keyboardType: TextInputType.text,
                     decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                    controller: outFileNameC,style: TextStyle(color: Colors.white),),
+                    controller: outFileNameC),
                 ),
                 if (_result?.pdf != null) ...[
                   Container(

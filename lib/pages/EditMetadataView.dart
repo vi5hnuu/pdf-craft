@@ -103,7 +103,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                 ),
               ),
               if (state.isLoading(forr: HttpStates.EDIT_METADATA))
-                Container(color: Colors.black54, child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45))),
+                Container(color: Colors.black54.withValues(alpha: 0.6), child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45))),
             ],
           );
         },

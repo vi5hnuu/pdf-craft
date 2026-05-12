@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -20,14 +19,11 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
-import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
-import 'package:pdfx/pdfx.dart';
 
 class PageNumberPdfView extends StatefulWidget {
   final File file;
   final String? outFileName;
 
-  // const MergePdfView({super.key,required this.files,this.outFileName}):assert(files.length>1);
   PageNumberPdfView({super.key, required this.file, this.outFileName});
 
   @override
@@ -35,274 +31,377 @@ class PageNumberPdfView extends StatefulWidget {
 }
 
 class _PageNumberPdfViewState extends State<PageNumberPdfView> {
-  late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
-  PageNoType page_no_type=PageNoType.PAGE_X_OF_Y;
-  TextEditingController fontSizeC=TextEditingController(text: "20");
-  ColorInfo fill_color=ColorInfo(r: 255, g: 0, b: 0, a: 255);
-  PositionInfo vertical_position=PositionInfo.START;
-  PositionInfo horizontal_position=PositionInfo.CENTER;
-  PaddingInfo padding=PaddingInfo(top: 10, left: 0, bottom: 0, right: 0);
-  int from_page=0;
-  int? to_page;
-  FontName font_name=FontName.TIMES_BOLD;
-  final TextEditingController outFileNameC=TextEditingController();
+  late final PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
+
+  PageNoType _pageNoType = PageNoType.PAGE_X_OF_Y;
+  final TextEditingController _fontSizeC = TextEditingController(text: '20');
+  ColorInfo _fillColor = ColorInfo(r: 255, g: 0, b: 0, a: 255);
+  PositionInfo _verticalPosition = PositionInfo.START;
+  PositionInfo _horizontalPosition = PositionInfo.CENTER;
+  PaddingInfo _padding = PaddingInfo(top: 10, left: 0, bottom: 0, right: 0);
+  int _fromPage = 0;
+  int? _toPage;
+  FontName _fontName = FontName.TIMES_BOLD;
+  final TextEditingController _outFileNameC = TextEditingController();
 
   @override
   void initState() {
-    AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    AdsSingleton().dispatch(LoadInterstitialAd());
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Pdf Page Number'),
-        elevation: 5,
+        title: const Text('Add Page Numbers'),
+        elevation: 2,
       ),
-      body: BlocConsumer<PdfBloc,PdfState>(
-          buildWhen: (previous, current) => previous.httpStates[HttpStates.PAGE_NUMBERS]!=current.httpStates[HttpStates.PAGE_NUMBERS],
-          listenWhen: (previous, current) => previous.httpStates[HttpStates.PAGE_NUMBERS]!=current.httpStates[HttpStates.PAGE_NUMBERS],
-          listener: (context, state) {
-            final httpState=state.httpStates[HttpStates.PAGE_NUMBERS];
-            if(httpState?.done==true){
-              NotificationService.showSnackbar(text: "Page Number Write Successfull",color: Colors.green);
-              if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
-            }else if(httpState?.error!=null){
-              NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-            }else if(httpState?.loading==true){
-              NotificationService.showSnackbar(text: "Page Number Write Started",color: Colors.lightBlue);
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (prev, curr) =>
+            prev.httpStates[HttpStates.PAGE_NUMBERS] != curr.httpStates[HttpStates.PAGE_NUMBERS],
+        listenWhen: (prev, curr) =>
+            prev.httpStates[HttpStates.PAGE_NUMBERS] != curr.httpStates[HttpStates.PAGE_NUMBERS],
+        listener: (context, state) {
+          final httpState = state.httpStates[HttpStates.PAGE_NUMBERS];
+          if (httpState?.done == true) {
+            AdsSingleton().dispatch(ShowInterstitialAd());
+            NotificationService.showSnackbar(text: 'Page numbers added successfully', color: Colors.green);
+            if (httpState?.extras?['savedFile'] is File) {
+              GoRouter.of(context).pushNamed(
+                AppRoutes.pdfFilePreviewRoute.name,
+                pathParameters: {'pdfFilePath': (httpState!.extras!['savedFile'] as File).path},
+              );
             }
-          },
-      builder: (context, state) {
-        return Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Flex(
-                direction: Axis.vertical,
-                mainAxisSize: MainAxisSize.max,
+          } else if (httpState?.error != null) {
+            NotificationService.showSnackbar(text: httpState!.error!, color: Colors.red);
+          }
+        },
+        builder: (context, state) {
+          return Stack(
+            children: [
+              Column(
                 children: [
                   Expanded(
                     child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0).copyWith(bottom: 12),
-                            child: TextFormField(keyboardType: TextInputType.text,
-                              decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                              controller: outFileNameC,style: TextStyle(color: Colors.white),),
+                          // Output filename
+                          TextFormField(
+                            controller: _outFileNameC,
+                            decoration: const InputDecoration(
+                              labelText: 'Output File Name',
+                              border: OutlineInputBorder(),
+                            ),
                           ),
-                          Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Page View Type",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Flexible(
-                                  child: DropdownButtonFormField(
-                                      dropdownColor: Colors.black,
-                                      decoration: InputDecoration(border: OutlineInputBorder()),value: page_no_type,
-                                      items: PageNoType.values.map((pageNoType)=>DropdownMenuItem(value: pageNoType,child: Text(pageNoType.name.split('_').join(' ').capitalize()),)).toList(),
-                                      onChanged: (value){
-                                        if(value!=null) setState(() =>page_no_type=value);
-                                      }),
-                                ),
-                              ]),
-                          SizedBox(height: 16),
-                          Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Font Size",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Flexible(
-                                  child: TextFormField(keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(border: OutlineInputBorder()),
-                                      controller: fontSizeC,
-                                      validator: (value){
-                                        final val=int.tryParse(fontSizeC.value.text);
-                                        return val!=null && (val<5) ? null : "Invalid font-size";
-                                      }),
-                                ),
-                              ]),
-                          SizedBox(height: 16),
-                          Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Vertical Position",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Flexible(
-                                  child: DropdownButtonFormField(
-                                      dropdownColor: Colors.black,
-                                      decoration: InputDecoration(border: OutlineInputBorder()),value: vertical_position,
-                                      items: PositionInfo.values.map((positionInfo)=>DropdownMenuItem(child: Text(positionInfo.name.capitalize()),value: positionInfo)).toList(), onChanged: (value){
-                                    if(value!=null) setState(() =>vertical_position=value as PositionInfo);
-                                  }),
-                                ),
-                              ]),
-                          SizedBox(height: 16),
-                          Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Horizontal Position",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Flexible(
-                                  child: DropdownButtonFormField(
-                                      dropdownColor: Colors.black,
-                                      decoration: InputDecoration(border: OutlineInputBorder()),value: horizontal_position,
-                                      items: PositionInfo.values.map((positionInfo)=>DropdownMenuItem(child: Text(positionInfo.name.capitalize()),value: positionInfo)).toList(), onChanged: (value){
-                                    if(value!=null) setState(() =>horizontal_position=value as PositionInfo);
-                                  }),
-                                ),
-                              ]),
-                          SizedBox(height: 16),
-                          Flex(
-                            direction: Axis.horizontal,
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Text("Padding",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Expanded(
-                                    child: Flex(
-                                      direction: Axis.horizontal,
-                                      children: [
-                                        Flexible(
-                                          child: TextFormField(keyboardType: TextInputType.number,
-                                              decoration: InputDecoration(labelText: "Top",border: OutlineInputBorder()),
-                                              initialValue: padding.top.toString(),
-                                              onChanged: (value) => setState(()=>padding.top=double.parse(value))),
-                                        ),
-                                        SizedBox(width: 8,),
-                                        Flexible(
-                                          child: TextFormField(keyboardType: TextInputType.number,
-                                              decoration: InputDecoration(labelText: "Right",border: OutlineInputBorder()),
-                                              initialValue: padding.right.toString(),
-                                              onChanged: (value) => setState(()=>padding.right=double.parse(value))),
-                                        ),
-                                        SizedBox(width: 8,),
-                                        Flexible(
-                                          child: TextFormField(keyboardType: TextInputType.number,
-                                              decoration: InputDecoration(labelText: "Bottom",border: OutlineInputBorder()),
-                                              initialValue: padding.bottom.toString(),
-                                              onChanged: (value) => setState(()=>padding.bottom=double.parse(value))),
-                                        ),
-                                        SizedBox(width: 8,),
-                                        Flexible(
-                                          child: TextFormField(keyboardType: TextInputType.number,
-                                              decoration: InputDecoration(labelText: "Left",border: OutlineInputBorder()),
-                                              initialValue: padding.left.toString(),
-                                              onChanged: (value) => setState(()=>padding.left=double.parse(value))),
-                                        ),
+                          const SizedBox(height: 20),
 
-                                      ],)
-                                ),
-                              ]),
-                          SizedBox(height: 16),
-                          Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("From Page",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Flexible(
-                                  child: TextFormField(keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(border: OutlineInputBorder()),
-                                      initialValue: from_page.toString(),
-                                      onChanged: (value) => setState(()=>from_page=int.parse(value)),
-                                      validator: (value){
-                                        final val=int.tryParse(fontSizeC.value.text);
-                                        return val!=null && val>=0 ? null : "Invalid from page";
-                                      }),
-                                ),
-                                SizedBox(width: 16),
-                                Text("To Page",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Flexible(
-                                  child: TextFormField(keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(border: OutlineInputBorder()),
-                                      onChanged: (value) => setState(()=>from_page=int.parse(value)),
-                                      validator: (value){
-                                        final val=int.tryParse(fontSizeC.value.text);
-                                        return val!=null && val>=0 ? null : "Invalid to page";
-                                      }),
-                                ),
-                              ]),
-                          SizedBox(height: 16),
-                          Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Font Name",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                SizedBox(width: 12),
-                                Flexible(
-                                  child: DropdownButtonFormField(
-                                      dropdownColor: Colors.black,
-                                      menuMaxHeight: 300,
-                                      decoration: InputDecoration(border: OutlineInputBorder()),value: font_name,
-                                      items: FontName.values.map((fontName)=>DropdownMenuItem(child: Text(fontName.name.split('_').join(' ').capitalize()),value: fontName)).toList(), onChanged: (value){
-                                    if(value!=null) setState(() =>font_name=value as FontName);
-                                  }),
-                                ),
-                              ]),
-                          SizedBox(height: 16),
-                          ColorPicker(
-                            pickerColor: Color.fromARGB(fill_color.a ?? 1, fill_color.r, fill_color.g, fill_color.b),
-                            onColorChanged: (color) {
-                              setState(()=>fill_color=ColorInfo(r: color.red, g: color.green, b: color.blue, a: color.alpha));
+                          // Page number format
+                          _sectionLabel(theme, 'Page Number Format'),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<PageNoType>(
+                            decoration: const InputDecoration(border: OutlineInputBorder()),
+                            value: _pageNoType,
+                            items: PageNoType.values
+                                .map((t) => DropdownMenuItem(
+                                      value: t,
+                                      child: Text(t.name.split('_').join(' ').capitalize()),
+                                    ))
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) setState(() => _pageNoType = v);
                             },
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Stack(
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  height: MediaQuery.of(context).size.width*1.26,
-                                  decoration: BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(12)),
-                                ),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: MediaQuery.of(context).size.width*1.26,
-                                  child: Align(
-                                    alignment: _getPageAlignment(horizontal_position, vertical_position),
-                                    child: Padding(
-                                      padding: EdgeInsets.only(left: padding.left,top: padding.top,right: padding.right,bottom: padding.bottom),
-                                      child: Text(page_no_type.type.split("_").join(" "),style: TextStyle(fontSize: double.parse(fontSizeC.text),color: Color.fromARGB(fill_color.a ?? 1, fill_color.r, fill_color.g, fill_color.b)),),
-                                    ),
+                          const SizedBox(height: 20),
+
+                          // Font
+                          _sectionLabel(theme, 'Font'),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<FontName>(
+                            decoration: const InputDecoration(border: OutlineInputBorder()),
+                            menuMaxHeight: 300,
+                            value: _fontName,
+                            items: FontName.values
+                                .map((f) => DropdownMenuItem(
+                                      value: f,
+                                      child: Text(f.name.split('_').join(' ').capitalize()),
+                                    ))
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) setState(() => _fontName = v);
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Font size
+                          _sectionLabel(theme, 'Font Size'),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _fontSizeC,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              suffixText: 'pt',
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Position
+                          _sectionLabel(theme, 'Position'),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<PositionInfo>(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Vertical',
+                                    border: OutlineInputBorder(),
                                   ),
-                                )
+                                  value: _verticalPosition,
+                                  items: PositionInfo.values
+                                      .map((p) => DropdownMenuItem(
+                                            value: p,
+                                            child: Text(p.name.capitalize()),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) {
+                                    if (v != null) setState(() => _verticalPosition = v);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: DropdownButtonFormField<PositionInfo>(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Horizontal',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  value: _horizontalPosition,
+                                  items: PositionInfo.values
+                                      .map((p) => DropdownMenuItem(
+                                            value: p,
+                                            child: Text(p.name.capitalize()),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) {
+                                    if (v != null) setState(() => _horizontalPosition = v);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Padding
+                          _sectionLabel(theme, 'Padding'),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              _paddingField('Top', _padding.top, (v) => setState(() => _padding.top = v)),
+                              const SizedBox(width: 8),
+                              _paddingField('Right', _padding.right, (v) => setState(() => _padding.right = v)),
+                              const SizedBox(width: 8),
+                              _paddingField('Bottom', _padding.bottom, (v) => setState(() => _padding.bottom = v)),
+                              const SizedBox(width: 8),
+                              _paddingField('Left', _padding.left, (v) => setState(() => _padding.left = v)),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Page range
+                          _sectionLabel(theme, 'Page Range'),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'From page',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  initialValue: _fromPage.toString(),
+                                  onChanged: (v) => setState(() => _fromPage = int.tryParse(v) ?? 0),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'To page (optional)',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  // Fixed: was incorrectly updating _fromPage
+                                  onChanged: (v) => setState(() => _toPage = int.tryParse(v)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Color picker
+                          _sectionLabel(theme, 'Text Color'),
+                          const SizedBox(height: 8),
+                          ColorPicker(
+                            pickerColor: Color.fromARGB(
+                              _fillColor.a ?? 255,
+                              _fillColor.r,
+                              _fillColor.g,
+                              _fillColor.b,
+                            ),
+                            onColorChanged: (color) {
+                              setState(() => _fillColor = ColorInfo(
+                                    r: color.red,
+                                    g: color.green,
+                                    b: color.blue,
+                                    a: color.alpha,
+                                  ));
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Preview
+                          _sectionLabel(theme, 'Preview'),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.width * 1.26,
+                            decoration: BoxDecoration(
+                              // White because it simulates a paper page
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: theme.dividerColor),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
                               ],
                             ),
-                          )
+                            child: Align(
+                              alignment: _getAlignment(_horizontalPosition, _verticalPosition),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: _padding.left,
+                                  top: _padding.top,
+                                  right: _padding.right,
+                                  bottom: _padding.bottom,
+                                ),
+                                child: Text(
+                                  _pageNoType.type.split('_').join(' '),
+                                  style: TextStyle(
+                                    fontSize: double.tryParse(_fontSizeC.text) ?? 20,
+                                    color: Color.fromARGB(
+                                      _fillColor.a ?? 255,
+                                      _fillColor.r,
+                                      _fillColor.g,
+                                      _fillColor.b,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
                   ),
+
                   Container(
-                      padding: EdgeInsets.all(12),
-                      width: double.infinity,
-                      child: FilledButton(onPressed: _onPageNumbersPages, child: const Text("Confirm changes")))
+                    padding: const EdgeInsets.all(16),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor,
+                      border: Border(top: BorderSide(color: theme.dividerColor)),
+                    ),
+                    child: FilledButton(
+                      onPressed: _onSubmit,
+                      child: const Text('Apply Page Numbers'),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            if(state.isLoading(forr: HttpStates.PAGE_NUMBERS)) const Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),)
-          ],
-        );
-      },),
+
+              if (state.isLoading(forr: HttpStates.PAGE_NUMBERS))
+                Container(
+                  color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+                  child: Center(child: SpinKitThreeBounce(color: primary, size: 45)),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
-  void _onPageNumbersPages() async {
-    bloc.add(PageNumbersEvent(pageNumber: PageNumbers(out_file_name: outFileNameC.text.isEmpty ? "pageNumbers_file" : outFileNameC.text, page_no_type: page_no_type, size: int.parse(fontSizeC.text), fill_color: fill_color, vertical_position: vertical_position, horizontal_position: horizontal_position, padding: padding, from_page: from_page, to_page: to_page, file: await MultipartFile.fromFile(widget.file.path), font_name: font_name)));
+  Widget _sectionLabel(ThemeData theme, String label) {
+    return Text(
+      label,
+      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+    );
   }
 
-  Alignment _getPageAlignment(PositionInfo horizontal_position, PositionInfo vertical_position) {
-    if(horizontal_position==PositionInfo.START && vertical_position==PositionInfo.START) return Alignment.topLeft;
-    else if(horizontal_position==PositionInfo.CENTER && vertical_position==PositionInfo.START) return Alignment.topCenter;
-    else if(horizontal_position==PositionInfo.END && vertical_position==PositionInfo.START) return Alignment.topRight;
-    else if(horizontal_position==PositionInfo.START && vertical_position==PositionInfo.CENTER) return Alignment.centerLeft;
-    else if(horizontal_position==PositionInfo.CENTER && vertical_position==PositionInfo.CENTER) return Alignment.center;
-    else if(horizontal_position==PositionInfo.END && vertical_position==PositionInfo.CENTER) return Alignment.centerRight;
-    else if(horizontal_position==PositionInfo.START && vertical_position==PositionInfo.END) return Alignment.bottomLeft;
-    else if(horizontal_position==PositionInfo.CENTER && vertical_position==PositionInfo.END) return Alignment.bottomCenter;
-    else return Alignment.bottomRight;
+  Widget _paddingField(String label, double value, void Function(double) onChanged) {
+    return Expanded(
+      child: TextFormField(
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+        initialValue: value.toStringAsFixed(0),
+        onChanged: (v) => onChanged(double.tryParse(v) ?? value),
+      ),
+    );
+  }
+
+  Alignment _getAlignment(PositionInfo h, PositionInfo v) {
+    final hMap = {
+      PositionInfo.START: -1.0,
+      PositionInfo.CENTER: 0.0,
+      PositionInfo.END: 1.0,
+    };
+    final vMap = {
+      PositionInfo.START: -1.0,
+      PositionInfo.CENTER: 0.0,
+      PositionInfo.END: 1.0,
+    };
+    return Alignment(hMap[h] ?? 0, vMap[v] ?? 0);
+  }
+
+  void _onSubmit() async {
+    final fontSize = int.tryParse(_fontSizeC.text);
+    if (fontSize == null || fontSize < 4) {
+      NotificationService.showSnackbar(text: 'Invalid font size (min 4)', color: Colors.red);
+      return;
+    }
+    bloc.add(PageNumbersEvent(
+      pageNumber: PageNumbers(
+        out_file_name: _outFileNameC.text.isEmpty ? 'page_numbers' : _outFileNameC.text,
+        page_no_type: _pageNoType,
+        size: fontSize,
+        fill_color: _fillColor,
+        vertical_position: _verticalPosition,
+        horizontal_position: _horizontalPosition,
+        padding: _padding,
+        from_page: _fromPage,
+        to_page: _toPage,
+        font_name: _fontName,
+        file: await MultipartFile.fromFile(widget.file.path),
+      ),
+    ));
+  }
+
+  @override
+  void dispose() {
+    _fontSizeC.dispose();
+    _outFileNameC.dispose();
+    super.dispose();
   }
 }

@@ -62,7 +62,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
                   children: [
                     const Text(
                       'Convert all pages of your PDF to grayscale to reduce file size and ink usage when printing.',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -78,7 +78,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
                 ),
               ),
               if (state.isLoading(forr: HttpStates.GRAYSCALE_PDF))
-                Container(color: Colors.black54, child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45))),
+                Container(color: Colors.black54.withValues(alpha: 0.6), child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45))),
             ],
           );
         },

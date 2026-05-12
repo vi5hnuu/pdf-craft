@@ -52,7 +52,7 @@ class _SearchScreenState extends State<SearchScreen> {
             width: 124,
           ),
         ),
-        backgroundColor: Colors.black,
+        // theme-aware
         leadingWidth: 112,
         bottom: PreferredSize(preferredSize: const Size(double.infinity,  60),
             child: Padding(
@@ -67,7 +67,7 @@ class _SearchScreenState extends State<SearchScreen> {
             //searchStream will never be null as initial it is null but blockBuilder won't run initially it run only on state change
             return Flex(direction: Axis.vertical,
             children: [
-              Expanded(child: searchStream==null ? Text("Try seaching something",style: TextStyle(color: Colors.white)) :
+              Expanded(child: searchStream==null ? const Text("Try searching something") :
               StreamBuilder(stream: searchStream, builder: (context, snapshot) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
