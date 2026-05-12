@@ -99,16 +99,16 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                 ),
               ),
             ],
-            if (_result?.images.isNotEmpty == true) ...[
+            if (_result?.images?.isNotEmpty == true) ...[
               Padding(
                 padding: const EdgeInsets.only(
                     top: 16, bottom: 8, right: 8, left: 8),
                 child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Images [0]:')),
+                    child: const Text('Images [0]:')),
               ),
               SizedBox(
-                  height: 400, child: Image.file(File(_result!.images.first))),
+                  height: 400, child: Image.file(File(_result!.images!.first))),
             ],
           ],
         ),
@@ -123,7 +123,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
       _documentScanner?.close();
       _documentScanner = DocumentScanner(
         options: DocumentScannerOptions(
-          documentFormat: format,
+          documentFormats: {format},
           mode: ScannerMode.full,
           isGalleryImport: false,
           pageLimit: 1,
