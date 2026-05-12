@@ -46,21 +46,26 @@ class _SplashScreenState extends State<SplashScreen> {
     final theme=Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
         body: Column(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 75,vertical: 125),
-              child:LottieBuilder.asset("assets/lottie/files.json",fit: BoxFit.fitWidth,animate: true,backgroundLoading: true,),
+              margin: const EdgeInsets.symmetric(horizontal: 75, vertical: 100),
+              child: LottieBuilder.asset("assets/lottie/files.json",
+                  fit: BoxFit.fitWidth, animate: true, backgroundLoading: true),
             ),
-            Column(
-              children: [
-                SpinKitPulse(color: theme.primaryColor)
-              ],
+            Text(
+              'PDF Craft',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
             ),
+            const SizedBox(height: 24),
+            SpinKitPulse(color: theme.primaryColor),
           ],
         ));
   }

@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/theme/app_theme.dart';
+import 'package:pdf_craft/theme/theme_manager.dart';
 import 'package:pdf_craft/pages/ErrorPage.dart';
 import 'package:pdf_craft/pages/CompressPdfView.dart';
 import 'package:pdf_craft/pages/CropPdfView.dart';
@@ -45,18 +47,21 @@ final GlobalKey<NavigatorState> _toolsNavigatorKey =
 final GlobalKey<NavigatorState> _scannerNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'scanner');
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ThemeManager().init();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: Colors.black, // Change to your desired color
-    systemNavigationBarIconBrightness:
-        Brightness.light, // Adjust icons if needed
+    systemNavigationBarColor: Colors.black,
+    systemNavigationBarIconBrightness: Brightness.light,
   ));
-  runApp(NestedTabNavigationExampleApp());
+  runApp(ListenableBuilder(
+    listenable: ThemeManager(),
+    builder: (context, _) => NestedTabNavigationExampleApp(),
+  ));
 }
 
 class NestedTabNavigationExampleApp extends StatelessWidget {
@@ -383,65 +388,9 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
       scaffoldMessengerKey: NotificationService.messengerKey,
       title: 'Pdf craft',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFE53935),
-          onPrimary: Colors.white,
-          secondary: Color(0xFFE53935),
-          onSecondary: Colors.white,
-          surface: Color(0xFF1A1A1A),
-          onSurface: Colors.white,
-          error: Color(0xFFCF6679),
-        ),
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-        canvasColor: const Color(0xFF1A1A1A),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0D0D0D),
-          elevation: 0,
-          centerTitle: false,
-          titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: 0.3),
-          iconTheme: IconThemeData(color: Colors.white),
-          surfaceTintColor: Colors.transparent,
-        ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: Color(0xFF0D0D0D),
-          selectedItemColor: Color(0xFFE53935),
-          unselectedItemColor: Color(0xFF888888),
-          type: BottomNavigationBarType.fixed,
-          elevation: 8,
-        ),
-        textTheme: const TextTheme(
-          bodySmall: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white),
-          bodyLarge: TextStyle(color: Colors.white),
-          titleMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF333333))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF333333))),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5)),
-          labelStyle: const TextStyle(color: Color(0xFF888888)),
-          fillColor: const Color(0xFF1A1A1A),
-          filled: true,
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFE53935),
-            foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(52),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.5),
-          ),
-        ),
-        sliderTheme: const SliderThemeData(activeTrackColor: Color(0xFFE53935), thumbColor: Color(0xFFE53935), inactiveTrackColor: Color(0xFF333333)),
-        radioTheme: RadioThemeData(fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? const Color(0xFFE53935) : const Color(0xFF888888))),
-        checkboxTheme: CheckboxThemeData(fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? const Color(0xFFE53935) : Colors.transparent), side: const BorderSide(color: Color(0xFF888888))),
-        dividerColor: const Color(0xFF2A2A2A),
-        cardColor: const Color(0xFF1A1A1A),
-      ),
+      themeMode: ThemeManager().mode,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: _router,
     ));
   }

@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
@@ -14,21 +11,36 @@ import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
 
+enum _SortMode { name, date, size }
 
 class DirectoryFilesListing extends StatefulWidget {
   final String directoryPath;
-  final bool? multiSelect;//on null no selection allow
+  final bool? multiSelect;
   final List<String> limitSelectionToExtensions;
   final int? minSelection;
   final Function(List<File>)? onDoneSelection;
   final Function(File)? onDelete;
   final List<String>? excludeShowingDirsPath;
 
-  DirectoryFilesListing({super.key, required this.directoryPath,this.multiSelect,this.limitSelectionToExtensions=const [],this.onDoneSelection,this.minSelection,this.onDelete,this.excludeShowingDirsPath}){
-    if(multiSelect==null && (onDoneSelection!=null || minSelection!=null)) throw Exception("multiSelect is disabled but onDownSelection/minSelection is not null");
-    if(multiSelect!=null && onDoneSelection==null) throw Exception("OnDoneSelection is required");
+  DirectoryFilesListing(
+      {super.key,
+      required this.directoryPath,
+      this.multiSelect,
+      this.limitSelectionToExtensions = const [],
+      this.onDoneSelection,
+      this.minSelection,
+      this.onDelete,
+      this.excludeShowingDirsPath}) {
+    if (multiSelect == null &&
+        (onDoneSelection != null || minSelection != null)) {
+      throw Exception(
+          "multiSelect is disabled but onDownSelection/minSelection is not null");
+    }
+    if (multiSelect != null && onDoneSelection == null) {
+      throw Exception("OnDoneSelection is required");
+    }
   }
 
   @override
@@ -37,21 +49,53 @@ class DirectoryFilesListing extends StatefulWidget {
 
 class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   late final FilesBloc bloc;
-  final List<File> selectedFiles=[];
+  final List<File> selectedFiles = [];
   List<String> pathToDirectory = [];
-  List<File> deletedFiles=[];
+  List<File> deletedFiles = [];
+  _SortMode _sortMode = _SortMode.name;
 
   @override
   void initState() {
-    bloc=BlocProvider.of<FilesBloc>(context);
+    bloc = BlocProvider.of<FilesBloc>(context);
     pathToDirectory = [widget.directoryPath];
     _loadDirectoryFiles(pathToDirectory.last);
     super.initState();
   }
 
+  List<FileSystemEntity> _sortedFiles(List<FileSystemEntity> files) {
+    final dirs = files.whereType<Directory>().toList();
+    final regularFiles = files.whereType<File>().toList();
+
+    switch (_sortMode) {
+      case _SortMode.name:
+        dirs.sort((a, b) => a.path
+            .split('/')
+            .last
+            .toLowerCase()
+            .compareTo(b.path.split('/').last.toLowerCase()));
+        regularFiles.sort((a, b) => a.path
+            .split('/')
+            .last
+            .toLowerCase()
+            .compareTo(b.path.split('/').last.toLowerCase()));
+      case _SortMode.date:
+        dirs.sort((a, b) =>
+            b.statSync().modified.compareTo(a.statSync().modified));
+        regularFiles.sort((a, b) =>
+            b.statSync().modified.compareTo(a.statSync().modified));
+      case _SortMode.size:
+        dirs.sort((a, b) => 0);
+        regularFiles.sort((a, b) => b.lengthSync().compareTo(a.lengthSync()));
+    }
+
+    return [...dirs, ...regularFiles];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final router=GoRouter.of(context);
+    final router = GoRouter.of(context);
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
 
     return PopScope(
       canPop: false,
@@ -66,76 +110,230 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           });
         }
       },
-      child:  BlocConsumer<FilesBloc,FilesState>(listener: (context, state) {
-        final error=state.getError(forr: HttpStates.LOAD_DIRECTORY_FILES);
-        if(error!=null){
-          NotificationService.showSnackbar(text: error,color: Colors.red);
-          setState(()=>pathToDirectory.removeLast());
-          if(pathToDirectory.isEmpty) router.pop();
-        }
-      },
-        buildWhen: (previous, current) => previous!=current,
-        listenWhen: (previous, current) => previous!=current,
+      child: BlocConsumer<FilesBloc, FilesState>(
+        listener: (context, state) {
+          final error = state.getError(forr: HttpStates.LOAD_DIRECTORY_FILES);
+          if (error != null) {
+            NotificationService.showSnackbar(
+                text: error, color: Colors.red);
+            setState(() => pathToDirectory.removeLast());
+            if (pathToDirectory.isEmpty) router.pop();
+          }
+        },
+        buildWhen: (previous, current) => previous != current,
+        listenWhen: (previous, current) => previous != current,
         builder: (context, state) {
           return Stack(children: [
-            if(!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))(state.files.isEmpty
-                ? const Center(child: Text('No files found'))
-                : Flex(
-              direction: Axis.vertical,
-              children: [
-                Flexible(fit: FlexFit.tight,child: ListView.builder(
-                    itemCount: state.files.length,
-                    itemBuilder: (context, index) {
-                      final file = state.files[index];
+            if (!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
+              (state.files.isEmpty
+                  ? const Center(child: Text('No files found'))
+                  : Flex(
+                      direction: Axis.vertical,
+                      children: [
+                        _buildBreadcrumbAndSort(theme, primary),
+                        Flexible(
+                          fit: FlexFit.tight,
+                          child: ListView.builder(
+                            itemCount:
+                                _sortedFiles(state.files).length,
+                            itemBuilder: (context, index) {
+                              final file =
+                                  _sortedFiles(state.files)[index];
 
-                      if((file is Directory) && widget.excludeShowingDirsPath?.contains(file.path)==true) return SizedBox.shrink();
+                              if ((file is Directory) &&
+                                  widget.excludeShowingDirsPath
+                                          ?.contains(file.path) ==
+                                      true) {
+                                return const SizedBox.shrink();
+                              }
 
-                      //on delete we add to deleted files but we are not sure if delete operation was successfull or not
-                      //may be user cancelled deletion or it might have failed...
-                      //also dont show file if delete or move is in loading
-                      if(deletedFiles.contains(file)){
-                        if(state.isLoading(forr: HttpStates.DELETE_FILE) || state.isLoading(forr: HttpStates.MOVE_FILE_TO) || !file.existsSync()) return SizedBox.shrink();
-                        deletedFiles.remove(file);
-                      }
-                      return FileTile(file: file,
-                          selected:  _isFileSelected(file),
-                          onPress: ()=> _onItemClick(file: file),
-                          onDelete:widget.onDelete!=null && file is File ?  (){
-                            widget.onDelete!(file);
-                            deletedFiles.add(file);
-                          } : null,
-                          enabled: file is Directory || widget.limitSelectionToExtensions.isEmpty || widget.limitSelectionToExtensions.contains(Utility.fileExtension(file as File)));
-                    })),
-                AnimatedOpacity(opacity:selectedFiles.isNotEmpty ? 1 : 0, duration: Duration(milliseconds: 300),child: selectedFiles.isNotEmpty ? Container(
-                  padding: const EdgeInsets.all(16),
-                  width: double.infinity,
-                  decoration: BoxDecoration(color: Colors.black87),
-                  child: FilledButton(onPressed:widget.onDoneSelection==null || (widget.minSelection!=null && selectedFiles.length<widget.minSelection!) ? null : ()=>widget.onDoneSelection!(selectedFiles),
-                      child: Text("Complete Selection")),
-                ):null)
-              ],
-            )),
+                              if (deletedFiles.contains(file)) {
+                                if (state.isLoading(
+                                        forr: HttpStates.DELETE_FILE) ||
+                                    state.isLoading(
+                                        forr: HttpStates.MOVE_FILE_TO) ||
+                                    !file.existsSync()) {
+                                  return const SizedBox.shrink();
+                                }
+                                deletedFiles.remove(file);
+                              }
+                              return FileTile(
+                                file: file,
+                                selected: _isFileSelected(file),
+                                onPress: () => _onItemClick(file: file),
+                                onDelete: widget.onDelete != null &&
+                                        file is File
+                                    ? () {
+                                        widget.onDelete!(file);
+                                        deletedFiles.add(file);
+                                      }
+                                    : null,
+                                enabled: file is Directory ||
+                                    widget.limitSelectionToExtensions
+                                        .isEmpty ||
+                                    widget.limitSelectionToExtensions.contains(
+                                        Utility.fileExtension(file as File)),
+                              );
+                            },
+                          ),
+                        ),
+                        AnimatedOpacity(
+                          opacity: selectedFiles.isNotEmpty ? 1 : 0,
+                          duration: const Duration(milliseconds: 300),
+                          child: selectedFiles.isNotEmpty
+                              ? Container(
+                                  padding: const EdgeInsets.all(16),
+                                  width: double.infinity,
+                                  color: theme.scaffoldBackgroundColor,
+                                  child: FilledButton(
+                                    onPressed: widget.onDoneSelection == null ||
+                                            (widget.minSelection != null &&
+                                                selectedFiles.length <
+                                                    widget.minSelection!)
+                                        ? null
+                                        : () => widget
+                                            .onDoneSelection!(selectedFiles),
+                                    child:
+                                        const Text('Complete Selection'),
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ],
+                    )),
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
               Container(
-                decoration:BoxDecoration(color: Colors.black.withOpacity(0.8)),
-                child: const Align(alignment: Alignment.center, child: SpinKitRipple(size: 72, color: Colors.green)),
+                decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor.withOpacity(0.8)),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: SpinKitRipple(size: 72, color: primary),
+                ),
               ),
           ]);
-        },),
+        },
+      ),
     );
   }
 
-  bool _isFileSelected(FileSystemEntity file){
-    if(file is Directory) return false;
-    try{
-      return selectedFiles.firstWhere((selectedFile)=>selectedFile.path==file.path)!=null;
-    }catch(e){
-     return false;
+  Widget _buildBreadcrumbAndSort(ThemeData theme, Color primary) {
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (int i = 0; i < pathToDirectory.length; i++) ...[
+                  if (i > 0)
+                    Icon(Icons.chevron_right,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                  GestureDetector(
+                    onTap: i < pathToDirectory.length - 1
+                        ? () {
+                            setState(() {
+                              pathToDirectory =
+                                  pathToDirectory.sublist(0, i + 1);
+                              _loadDirectoryFiles(pathToDirectory.last);
+                            });
+                          }
+                        : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: i == pathToDirectory.length - 1
+                            ? primary.withOpacity(0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        pathToDirectory[i].split('/').last.isEmpty
+                            ? 'Root'
+                            : pathToDirectory[i].split('/').last,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: i == pathToDirectory.length - 1
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: i == pathToDirectory.length - 1
+                              ? primary
+                              : theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                  ),
+                ]
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text('Sort:',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5))),
+              const SizedBox(width: 4),
+              ..._SortMode.values.map((mode) => Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _sortMode = mode),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _sortMode == mode
+                              ? primary.withOpacity(0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _sortMode == mode
+                                ? primary
+                                : theme.dividerColor,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          mode.name[0].toUpperCase() +
+                              mode.name.substring(1),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: _sortMode == mode
+                                ? primary
+                                : theme.colorScheme.onSurface
+                                    .withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+
+  bool _isFileSelected(FileSystemEntity file) {
+    if (file is Directory) return false;
+    try {
+      return selectedFiles
+              .firstWhere((selectedFile) => selectedFile.path == file.path) !=
+          null;
+    } catch (e) {
+      return false;
     }
   }
 
-  _loadDirectoryFiles(String path){
-    if(bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
+  _loadDirectoryFiles(String path) {
+    if (bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
     bloc.add(LoadDirectoryFilesEvent(path: pathToDirectory.last));
   }
 
@@ -145,33 +343,38 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   }
 
   _onItemClick({required FileSystemEntity file}) async {
-    try{
-      if(file is Directory){
+    try {
+      if (file is Directory) {
         _loadDirectoryFiles((pathToDirectory..add(file.path)).last);
         return;
       }
 
-      if(widget.multiSelect==null){//allow opening file only
-        if(Utility.isPdf(file.path)) {
-          GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':file.path});
+      if (widget.multiSelect == null) {
+        if (Utility.isPdf(file.path)) {
+          GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
+              pathParameters: {'pdfFilePath': file.path});
         } else {
-          OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file as File)] ?? '*/*');
+          OpenFile.open(file.path,
+              type: Constants.extrnalOpenSupportedFiles[
+                      Utility.fileExtension(file as File)] ??
+                  '*/*');
         }
-      }else{
-        if(_isFileSelected(file)){
-         setState(()=>selectedFiles.removeWhere((selectedFile)=>selectedFile.path==file.path));
+      } else {
+        if (_isFileSelected(file)) {
+          setState(() => selectedFiles
+              .removeWhere((selectedFile) => selectedFile.path == file.path));
           return;
         }
-        if(widget.multiSelect==false){
+        if (widget.multiSelect == false) {
           selectedFiles.clear();
         }
-        setState(()=>selectedFiles.add(file as File));
+        setState(() => selectedFiles.add(file as File));
       }
-    }catch(e){
-      NotificationService.showSnackbar(text: "Something went wrong",color: Colors.red,showCloseIcon: true);
+    } catch (e) {
+      NotificationService.showSnackbar(
+          text: "Something went wrong",
+          color: Colors.red,
+          showCloseIcon: true);
     }
   }
 }
-
-
-

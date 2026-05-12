@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,7 +13,7 @@ import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/StorageTile.dart';
 import 'package:rxdart/rxdart.dart';
 
-class StorageStats{
+class StorageStats {
   final int totalItemsInRoot;
   final int totalItemsInDownloads;
   final int totalItemsInDocuments;
@@ -22,9 +21,13 @@ class StorageStats{
   final int totalFileInBin;
   final bool isLoading;
 
-  StorageStats({required this.totalItemsInRoot,required this.totalItemsInDownloads,
-    this.isLoading=false,
-    required this.totalItemsInDocuments, required this.totalProcessedFiles, required this.totalFileInBin});
+  StorageStats(
+      {required this.totalItemsInRoot,
+      required this.totalItemsInDownloads,
+      this.isLoading = false,
+      required this.totalItemsInDocuments,
+      required this.totalProcessedFiles,
+      required this.totalFileInBin});
 
   StorageStats copyWith({
     int? totalItemsInRoot,
@@ -33,17 +36,26 @@ class StorageStats{
     int? totalProcessedFiles,
     int? totalFileInBin,
     bool? isLoading,
-}){
-    return StorageStats(totalItemsInRoot: totalItemsInRoot ?? this.totalItemsInRoot,
-        totalItemsInDownloads: totalItemsInDownloads ?? this.totalItemsInDownloads,
+  }) {
+    return StorageStats(
+        totalItemsInRoot: totalItemsInRoot ?? this.totalItemsInRoot,
+        totalItemsInDownloads:
+            totalItemsInDownloads ?? this.totalItemsInDownloads,
         isLoading: isLoading ?? this.isLoading,
-        totalItemsInDocuments: totalItemsInDocuments ?? this.totalItemsInDocuments,
+        totalItemsInDocuments:
+            totalItemsInDocuments ?? this.totalItemsInDocuments,
         totalProcessedFiles: totalProcessedFiles ?? this.totalProcessedFiles,
         totalFileInBin: totalFileInBin ?? this.totalFileInBin);
   }
 
-  static zero(){
-    return StorageStats(isLoading: true,totalItemsInRoot: 0, totalItemsInDownloads: 0, totalItemsInDocuments: 0, totalProcessedFiles: 0, totalFileInBin: 0);
+  static StorageStats zero() {
+    return StorageStats(
+        isLoading: true,
+        totalItemsInRoot: 0,
+        totalItemsInDownloads: 0,
+        totalItemsInDocuments: 0,
+        totalProcessedFiles: 0,
+        totalFileInBin: 0);
   }
 }
 
@@ -55,7 +67,9 @@ class FilesScreen extends StatefulWidget {
 }
 
 class _FilesScreenState extends State<FilesScreen> {
-  BehaviorSubject<StorageStats> storageStats=BehaviorSubject.seeded(StorageStats.zero());
+  BehaviorSubject<StorageStats> storageStats =
+      BehaviorSubject.seeded(StorageStats.zero());
+  List<File> _recentPdfs = [];
 
   @override
   void initState() {
@@ -65,99 +79,280 @@ class _FilesScreenState extends State<FilesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final router=GoRouter.of(context);
+    final router = GoRouter.of(context);
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
 
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 18.0,top: 24.0),
-                  child: Row(children: [
-                    Text("My Storage",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
-                  ],),
+            if (_recentPdfs.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8),
+                child: Text(
+                  'Recent Files',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
-                StreamBuilder<StorageStats>(stream: storageStats.stream, builder: (context, snapshot) {
-                  final stats=snapshot.data;
-                  return Column(
-                    children: [
-                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.rootStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInRoot.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/hard-disk.svg",title: "Internal Storage",),
-                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.downloadsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDownloads.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/downloads.svg",title: "Downloads",),
-                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(excludeShowingDirsPath: [Constants.binDirPath],path: Constants.documentsStoragePath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalItemsInDocuments.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/documents.svg",title: "Documents",),
-                      StorageTile(onTap: () => router.pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.processedDirPath)).then((value) => _loadStats()),trailing: stats==null || stats.isLoading ? SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalProcessedFiles.toString(),style: const TextStyle(fontSize: 16),),leadingIconSvgPath: "assets/icons/folder-management.svg",title: "Processed Files",),
-                    ],
-                  );
-                },)
-              ],
+              ),
+              SizedBox(
+                height: 130,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: _recentPdfs.length,
+                  itemBuilder: (context, index) {
+                    final pdf = _recentPdfs[index];
+                    final name = pdf.path.split('/').last;
+                    return GestureDetector(
+                      onTap: () => router.pushNamed(
+                          AppRoutes.pdfFilePreviewRoute.name,
+                          pathParameters: {'pdfFilePath': pdf.path}),
+                      child: Card(
+                        elevation: 0,
+                        color: theme.cardColor,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
+                        child: SizedBox(
+                          width: 90,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.picture_as_pdf,
+                                    color: primary, size: 36),
+                                const SizedBox(height: 8),
+                                Text(
+                                  name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            const Padding(
+              padding: EdgeInsets.only(left: 18.0, top: 24.0),
+              child: Row(
+                children: [
+                  Text(
+                    'My Storage',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            StreamBuilder<StorageStats>(
+              stream: storageStats.stream,
+              builder: (context, snapshot) {
+                final stats = snapshot.data;
+                final loadingWidget = SizedBox(
+                  width: 16,
+                  child: SpinKitThreeBounce(
+                      color: theme.colorScheme.onSurface, size: 8),
+                );
+                return Column(
+                  children: [
+                    StorageTile(
+                      onTap: () => router
+                          .pushNamed(AppRoutes.filesListingRoute.name,
+                              extra: FileSelectionConfig(
+                                  excludeShowingDirsPath: [
+                                    Constants.binDirPath
+                                  ],
+                                  path: Constants.rootStoragePath))
+                          .then((value) => _loadStats()),
+                      trailing: stats == null || stats.isLoading
+                          ? loadingWidget
+                          : Text(stats.totalItemsInRoot.toString(),
+                              style: const TextStyle(fontSize: 16)),
+                      leadingIconSvgPath: 'assets/icons/hard-disk.svg',
+                      title: 'Internal Storage',
+                    ),
+                    StorageTile(
+                      onTap: () => router
+                          .pushNamed(AppRoutes.filesListingRoute.name,
+                              extra: FileSelectionConfig(
+                                  excludeShowingDirsPath: [
+                                    Constants.binDirPath
+                                  ],
+                                  path: Constants.downloadsStoragePath))
+                          .then((value) => _loadStats()),
+                      trailing: stats == null || stats.isLoading
+                          ? loadingWidget
+                          : Text(stats.totalItemsInDownloads.toString(),
+                              style: const TextStyle(fontSize: 16)),
+                      leadingIconSvgPath: 'assets/icons/downloads.svg',
+                      title: 'Downloads',
+                    ),
+                    StorageTile(
+                      onTap: () => router
+                          .pushNamed(AppRoutes.filesListingRoute.name,
+                              extra: FileSelectionConfig(
+                                  excludeShowingDirsPath: [
+                                    Constants.binDirPath
+                                  ],
+                                  path: Constants.documentsStoragePath))
+                          .then((value) => _loadStats()),
+                      trailing: stats == null || stats.isLoading
+                          ? loadingWidget
+                          : Text(stats.totalItemsInDocuments.toString(),
+                              style: const TextStyle(fontSize: 16)),
+                      leadingIconSvgPath: 'assets/icons/documents.svg',
+                      title: 'Documents',
+                    ),
+                    StorageTile(
+                      onTap: () => router
+                          .pushNamed(AppRoutes.filesListingRoute.name,
+                              extra: FileSelectionConfig(
+                                  path: Constants.processedDirPath))
+                          .then((value) => _loadStats()),
+                      trailing: stats == null || stats.isLoading
+                          ? loadingWidget
+                          : Text(stats.totalProcessedFiles.toString(),
+                              style: const TextStyle(fontSize: 16)),
+                      leadingIconSvgPath: 'assets/icons/folder-management.svg',
+                      title: 'Processed Files',
+                    ),
+                  ],
+                );
+              },
             ),
             const BannerAdd(),
-            const Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 18.0,top: 12.0),
-                  child: Row(children: [
-                    Text("Cloud Storage",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
-                  ],),
-                ),
-                Column(
-                  children: [
-                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/google-drive.svg",title: "Google Drive",),
-                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/drop-box.svg",title: "DropBox",),
-                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/one-drive.svg",title: "OneDrive",),
-                    StorageTile(trailing: TextButton(onPressed:null,child: Text("Coming Soon")),leadingIconSvgPath: "assets/icons/share-point.svg",title: "SharePoint",),
-                  ],
-                )
-              ],
+            const Padding(
+              padding: EdgeInsets.only(left: 18.0, top: 12.0),
+              child: Row(
+                children: [
+                  Text(
+                    'Cloud Storage',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
             ),
-            Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 18.0,top: 12.0),
-                  child: Row(children: [
-                    Text("Others",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold),),
-                  ],),
-                ),
-                StreamBuilder<StorageStats>(stream: storageStats.stream, builder: (context, snapshot) {
-                  final stats=snapshot.data;
-                  return Column(
-                    children: [
-                      StorageTile(onTap:_goToBin,trailing:stats==null || stats.isLoading ?  SizedBox(width: 16,child: SpinKitThreeBounce(color: Colors.white,size: 8,),) : Text(stats.totalFileInBin.toString(),style: TextStyle(fontSize: 16),),
-                        leadingIconSvgPath: "assets/icons/recycle-bin.svg",title: "Bin",),
-                    ],
-                  );
-                },)
-        
-              ],
+            const StorageTile(
+                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
+                leadingIconSvgPath: 'assets/icons/google-drive.svg',
+                title: 'Google Drive'),
+            const StorageTile(
+                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
+                leadingIconSvgPath: 'assets/icons/drop-box.svg',
+                title: 'DropBox'),
+            const StorageTile(
+                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
+                leadingIconSvgPath: 'assets/icons/one-drive.svg',
+                title: 'OneDrive'),
+            const StorageTile(
+                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
+                leadingIconSvgPath: 'assets/icons/share-point.svg',
+                title: 'SharePoint'),
+            const Padding(
+              padding: EdgeInsets.only(left: 18.0, top: 12.0),
+              child: Row(
+                children: [
+                  Text(
+                    'Others',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
             ),
+            StreamBuilder<StorageStats>(
+              stream: storageStats.stream,
+              builder: (context, snapshot) {
+                final stats = snapshot.data;
+                final loadingWidget = SizedBox(
+                  width: 16,
+                  child: SpinKitThreeBounce(
+                      color: theme.colorScheme.onSurface, size: 8),
+                );
+                return StorageTile(
+                  onTap: _goToBin,
+                  trailing: stats == null || stats.isLoading
+                      ? loadingWidget
+                      : Text(stats.totalFileInBin.toString(),
+                          style: const TextStyle(fontSize: 16)),
+                  leadingIconSvgPath: 'assets/icons/recycle-bin.svg',
+                  title: 'Bin',
+                );
+              },
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
-  );
+    );
   }
 
-  _loadStats() async{
-    try{
-      if(await StoragePermissions.requestStoragePermissions()){
+  _loadStats() async {
+    try {
+      if (await StoragePermissions.requestStoragePermissions()) {
         await _createMainDirs();
         storageStats.sink.add(storageStats.value.copyWith(isLoading: true));
-        // await Future.delayed(Duration(minutes: 5));
-        final stats=await Future.wait([Directory(Constants.rootStoragePath).list(followLinks: false).length,Directory(Constants.downloadsStoragePath).list(followLinks: false).length,Directory(Constants.documentsStoragePath).list(followLinks: false).length,Directory(Constants.processedDirPath).list(followLinks: false).length,Directory(Constants.binDirPath).list(followLinks: false).length]);
-        storageStats.sink.add(StorageStats(totalItemsInRoot: stats[0], totalItemsInDownloads: stats[1], totalItemsInDocuments: stats[2], totalProcessedFiles: stats[3], totalFileInBin: stats[4]));
-      }else{
-        NotificationService.showSnackbar(text: "Storage permission denied",color: Colors.red);
+        final stats = await Future.wait([
+          Directory(Constants.rootStoragePath).list(followLinks: false).length,
+          Directory(Constants.downloadsStoragePath)
+              .list(followLinks: false)
+              .length,
+          Directory(Constants.documentsStoragePath)
+              .list(followLinks: false)
+              .length,
+          Directory(Constants.processedDirPath).list(followLinks: false).length,
+          Directory(Constants.binDirPath).list(followLinks: false).length,
+        ]);
+        storageStats.sink.add(StorageStats(
+            totalItemsInRoot: stats[0],
+            totalItemsInDownloads: stats[1],
+            totalItemsInDocuments: stats[2],
+            totalProcessedFiles: stats[3],
+            totalFileInBin: stats[4]));
+
+        final processedDir = Directory(Constants.processedDirPath);
+        if (await processedDir.exists()) {
+          final allFiles = await processedDir
+              .list(recursive: false, followLinks: false)
+              .where((e) => e is File && e.path.toLowerCase().endsWith('.pdf'))
+              .cast<File>()
+              .toList();
+          allFiles.sort((a, b) =>
+              b.statSync().modified.compareTo(a.statSync().modified));
+          if (mounted) {
+            setState(() => _recentPdfs = allFiles.take(5).toList());
+          }
+        }
+      } else {
+        NotificationService.showSnackbar(
+            text: 'Storage permission denied', color: Colors.red);
       }
-    }catch(e){
-      NotificationService.showSnackbar(text: "Something went wrong",color: Colors.red);
+    } catch (e) {
+      NotificationService.showSnackbar(
+          text: 'Something went wrong', color: Colors.red);
     }
   }
 
   Future<void> _createMainDirs() async {
-    final mainDirs=[Constants.downloadsStoragePath,Constants.documentsStoragePath,Constants.processedDirPath,Constants.binDirPath];
+    final mainDirs = [
+      Constants.downloadsStoragePath,
+      Constants.documentsStoragePath,
+      Constants.processedDirPath,
+      Constants.binDirPath
+    ];
     for (var dirPath in mainDirs) {
-      final dir=Directory(dirPath);
-      if(!(await dir.exists())){
+      final dir = Directory(dirPath);
+      if (!(await dir.exists())) {
         dir.create(recursive: true);
       }
     }
@@ -165,8 +360,8 @@ class _FilesScreenState extends State<FilesScreen> {
 
   void _goToBin() {
     GoRouter.of(context)
-        .pushNamed(AppRoutes.filesListingRoute.name,extra: FileSelectionConfig(path: Constants.binDirPath))
-        .then((value)=>_loadStats());
+        .pushNamed(AppRoutes.filesListingRoute.name,
+            extra: FileSelectionConfig(path: Constants.binDirPath))
+        .then((value) => _loadStats());
   }
 }
-
