@@ -1,86 +1,42 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 
-import 'package:flutter/rendering.dart';
-
+// Displays a child widget with a rotation applied for preview purposes.
+// Uses RotatedBox (layout-aware) + FittedBox so the rotated content always
+// fits within the originalWidth × originalHeight bounding box without overflow.
 class RotatablePageWidget extends StatelessWidget {
   final double originalWidth;
   final double originalHeight;
-  final bool maintainAspectRatio;
-  final double rotationAngle; // in degrees (0 to 360)
+  final bool maintainAspectRatio; // kept for API compatibility, not used in rendering
+  final double rotationAngle; // degrees; must be 0, 90, 180 or 270
   final Widget child;
 
-  RotatablePageWidget({
+  const RotatablePageWidget({
+    super.key,
     required this.originalWidth,
     required this.originalHeight,
     required this.maintainAspectRatio,
     required this.rotationAngle,
     required this.child,
-  }):assert(rotationAngle>=0 && rotationAngle<=360);
+  }) : assert(rotationAngle >= 0 && rotationAngle <= 360);
 
   @override
   Widget build(BuildContext context) {
-    double width = originalWidth;
-    double height = originalHeight;
+    final quarterTurns = (rotationAngle / 90).round() % 4;
 
-    if (rotationAngle == 90 || rotationAngle == 270) {
-      // When rotated 90 or 270 degrees, width and height are swapped
-      if (!maintainAspectRatio) {
-        // Only rotate the content, no change in width and height
-        width = originalWidth;
-        height = originalHeight;
-      } else {
-        // Maintain aspect ratio, swap width and height
-        width = originalHeight;
-        height = originalWidth;
-      }
-    }
-    else if (rotationAngle == 180 || rotationAngle == 0) {
-      width = originalWidth;
-      height = originalHeight;
-    } else{
-      // For angles between 0 and 90 degrees, calculate the width/height based on rotation
-      if (maintainAspectRatio) {
-        double aspectRatio = originalWidth / originalHeight;
-        width = originalHeight * sin(rotationAngle * pi / 180) + originalWidth * cos(rotationAngle * pi / 180);
-        height = width / aspectRatio;
-      } else {
-        width = originalWidth;
-        height = originalHeight;
-      }
-    }
-
-    //bring it within bounds
-    //scale down
-    final hInc= (height-originalHeight)/originalHeight;
-    if(hInc>0) height=height-height*(hInc);
-
-    //scale down
-    final wInc= (width-originalWidth)/originalWidth;
-    if(wInc>0) width=width-width*(wInc);
-
-    return Container(
-      width: width,
-      height: height,
-      // decoration: BoxDecoration(color: Colors.red),
-      child: Transform.rotate(
-        origin: Offset(0, 0),
-        angle: rotationAngle * pi / 180, // Convert to radians
-        child: child
+    return SizedBox(
+      width: originalWidth,
+      height: originalHeight,
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: RotatedBox(
+          quarterTurns: quarterTurns,
+          child: SizedBox(
+            width: originalWidth,
+            height: originalHeight,
+            child: child,
+          ),
+        ),
       ),
     );
-  }
-
-  double calculateScaleFactor({
-    required double xWidth,
-    required double xHeight,
-  }) {
-    double scale = originalHeight / xHeight;
-
-    if ((xWidth * scale) > originalWidth) {
-      scale *= originalWidth / (xWidth * scale);
-    }
-
-    return scale.clamp(0, 1)-0.15; // Ensure the scale is between 0 and 1
   }
 }

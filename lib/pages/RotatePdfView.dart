@@ -40,7 +40,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
 
   // Allowed PDF rotation angles (multiples of 90 per PDF spec)
   static const _angles = [0, 90, 180, 270];
-  int _fileAngle = 90;
+  int _fileAngle = 0;
   final Map<int, int> _pageAngles = {};
   // maintain_ratio == true → swap page dimensions to fit rotated content
   bool _maintainRatio = true;
@@ -228,7 +228,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                                     labelText: 'Angle',
                                     border: OutlineInputBorder(),
                                   ),
-                                  value: _selectedPageAngle,
+                                  initialValue: _selectedPageAngle,
                                   items: _angles
                                       .where((a) => a > 0)
                                       .map((a) => DropdownMenuItem(
