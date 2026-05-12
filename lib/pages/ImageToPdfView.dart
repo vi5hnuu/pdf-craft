@@ -13,6 +13,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 
 class ImageToPdfView extends StatefulWidget {
   final List<File> files;
@@ -114,7 +115,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 )
               ],
             ),
-            if(state.isLoading(forr: HttpStates.IMAGE_TO_PDF)) Container(decoration: BoxDecoration(color: Colors.black54.withValues(alpha: 0.6)),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF]),
           ],
         );
       },)

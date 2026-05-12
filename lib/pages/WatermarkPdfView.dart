@@ -14,6 +14,7 @@ import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 
 class WatermarkPdfView extends StatefulWidget {
   final File file;
@@ -125,8 +126,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                   ],
                 ),
               ),
-              if (state.isLoading(forr: HttpStates.WATERMARK_PDF))
-                Container(color: Colors.black54.withValues(alpha: 0.6), child: const Center(child: SpinKitThreeBounce(color: Colors.green, size: 45))),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.WATERMARK_PDF]),
             ],
           );
         },

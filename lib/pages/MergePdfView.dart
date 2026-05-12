@@ -11,6 +11,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 
 class MergePdfView extends StatefulWidget {
   final List<File> files;
@@ -106,7 +107,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge PDFs")),)
               ],
             ),
-            if(state.isLoading(forr: HttpStates.MERGE_PDF)) Container(decoration: BoxDecoration(color: Colors.black54.withValues(alpha: 0.6)),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+            LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF]),
           ],
         );
       },),

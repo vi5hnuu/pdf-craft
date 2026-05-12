@@ -14,6 +14,7 @@ import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 
 class ProtectPdfView extends StatefulWidget {
   final File file;
@@ -126,7 +127,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                     ],
                   ),
                 ),
-                if(state.isLoading(forr: HttpStates.PROTECT_PDF)) Container(decoration: const BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
+                LoadingOverlay(httpState: state.httpStates[HttpStates.PROTECT_PDF]),
               ],
             );
           },)

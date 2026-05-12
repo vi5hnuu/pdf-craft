@@ -19,6 +19,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 
 class PageNumberPdfView extends StatefulWidget {
   final File file;
@@ -331,11 +332,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                 ],
               ),
 
-              if (state.isLoading(forr: HttpStates.PAGE_NUMBERS))
-                Container(
-                  color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
-                  child: Center(child: SpinKitThreeBounce(color: primary, size: 45)),
-                ),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.PAGE_NUMBERS]),
             ],
           );
         },

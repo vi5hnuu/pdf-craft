@@ -13,6 +13,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/RotatableItem.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 
 class _Thumbnail {
   bool isLoading;
@@ -349,11 +350,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                 ],
               ),
 
-              if (state.isLoading(forr: HttpStates.ROTATE_PDF))
-                Container(
-                  color: theme.scaffoldBackgroundColor.withValues(alpha: 0.85),
-                  child: Center(child: SpinKitThreeBounce(color: primary, size: 45)),
-                ),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.ROTATE_PDF]),
             ],
           );
         },
