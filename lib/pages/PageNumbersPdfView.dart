@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/color-info.dart';
@@ -18,7 +17,6 @@ import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
-import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 
 class PageNumberPdfView extends StatefulWidget {
@@ -54,7 +52,6 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(

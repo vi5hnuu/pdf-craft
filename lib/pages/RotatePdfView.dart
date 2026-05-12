@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
@@ -121,7 +120,6 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rotate PDF Pages')),
