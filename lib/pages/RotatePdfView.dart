@@ -146,7 +146,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
         builder: (context, state) {
           return Stack(
             children: [
-              Column(
+              Positioned.fill(child: Column(
                 children: [
                   Expanded(
                     child: SingleChildScrollView(
@@ -346,7 +346,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                     ),
                   ),
                 ],
-              ),
+              )),
 
               LoadingOverlay(httpState: state.httpStates[HttpStates.ROTATE_PDF]),
             ],

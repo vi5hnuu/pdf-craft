@@ -30,6 +30,14 @@ class _PdfPreviewState extends State<PdfPreview> {
      0,  0,  0,  1,   0,
   ];
 
+  // Identity — no-op filter used so PdfViewPinch stays in the widget tree when night mode is off
+  static const _identityMatrix = <double>[
+    1, 0, 0, 0, 0,
+    0, 1, 0, 0, 0,
+    0, 0, 1, 0, 0,
+    0, 0, 0, 1, 0,
+  ];
+
   String get _fileName => widget.pdfFilePath.split('/').last;
 
   @override
@@ -143,9 +151,9 @@ class _PdfPreviewState extends State<PdfPreview> {
       ),
     );
 
-    if (!_nightMode) return viewer;
+    // Always wrap in ColorFiltered so PdfViewPinch is never disposed/recreated on toggle
     return ColorFiltered(
-      colorFilter: const ColorFilter.matrix(_invertMatrix),
+      colorFilter: ColorFilter.matrix(_nightMode ? _invertMatrix : _identityMatrix),
       child: viewer,
     );
   }
