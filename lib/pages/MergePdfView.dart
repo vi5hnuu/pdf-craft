@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -36,11 +35,7 @@ class _MergePdfViewState extends State<MergePdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Merge Pdf'),
-        elevation: 5,
-      ),
+      appBar: AppBar(title: const Text('Merge PDF'), elevation: 5),
       body: BlocConsumer<PdfBloc,PdfState>(
         listenWhen: (previous, current) => previous.httpStates[HttpStates.MERGE_PDF]!=current.httpStates[HttpStates.MERGE_PDF],
         buildWhen: (previous, current) => previous.httpStates[HttpStates.MERGE_PDF]!=current.httpStates[HttpStates.MERGE_PDF],
@@ -65,7 +60,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(keyboardType: TextInputType.text,
                     decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                    controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                    controller: outFileNameC),
                 ),
                 SizedBox(height: 12,),
                 Expanded(child: ReorderableListView.builder(
@@ -78,7 +73,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                     child: RichText(
                       text: const TextSpan(
                         text: 'Reorder File ',
-                        style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
                             text: '( long press to drag )',
@@ -100,15 +95,14 @@ class _MergePdfViewState extends State<MergePdfView> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6),side: const BorderSide(color: Colors.grey)),
                         title: Text(
                           Utility.fileName(file: file),
-                          style: const TextStyle(overflow: TextOverflow.ellipsis, color: Colors.black),
+                          style: const TextStyle(overflow: TextOverflow.ellipsis),
                         ),
                         leading: const Icon(Icons.drag_indicator, color: Colors.grey),
-                        tileColor: Colors.white,
                       ),
                     );
                   },
                 )),
-                Container(decoration: const BoxDecoration(color: Colors.white),width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge Pdf's")),)
+                Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge PDFs")),)
               ],
             ),
             if(state.isLoading(forr: HttpStates.MERGE_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)

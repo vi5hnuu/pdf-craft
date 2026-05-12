@@ -64,11 +64,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     final md=MediaQuery.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text('Reorder Pdf Pages'),
-        elevation: 5,
-      ),
+      appBar: AppBar(title: const Text('Reorder PDF Pages'), elevation: 5),
       body: FutureBuilder(future: _pdfController.document, builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
@@ -104,7 +100,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(keyboardType: TextInputType.text,
                           decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                          controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                          controller: outFileNameC),
                       ),
                       Expanded(child: ReorderableListView.builder(
                         padding: EdgeInsets.symmetric(vertical: 8),
@@ -116,7 +112,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                           child: RichText(
                             text: const TextSpan(
                               text: 'Reorder Pages ',
-                              style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                               children: [
                                 TextSpan(
                                   text: '( long press to drag )',
@@ -152,8 +148,8 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(textAlign: TextAlign.justify,softWrap: true,maxLines: 3,Utility.fileName(file: widget.file),style: TextStyle(color: Colors.black,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold,fontSize: 18,)),
-                                      Text('Page No ${pageNo}',style: TextStyle(color: Colors.black,fontWeight: FontWeight.w500,fontStyle: FontStyle.italic),)
+                                      Text(textAlign: TextAlign.justify,softWrap: true,maxLines: 3,Utility.fileName(file: widget.file),style: const TextStyle(overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold,fontSize: 18)),
+                                      Text('Page $pageNo',style: const TextStyle(fontWeight: FontWeight.w500,fontStyle: FontStyle.italic))
                                     ],
                                   ),
                                 )),

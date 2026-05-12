@@ -40,11 +40,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
     final md=MediaQuery.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text('Image to Pdf'),
-        elevation: 5,
-      ),
+      appBar: AppBar(title: const Text('Image to PDF'), elevation: 5),
       body: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
@@ -68,7 +64,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(keyboardType: TextInputType.text,
                     decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
-                    controller: outFileNameC,style: TextStyle(color: Colors.black),),
+                    controller: outFileNameC),
                 ),
                 Expanded(child: ReorderableListView.builder(
                   padding: EdgeInsets.symmetric(vertical: 8),
@@ -80,7 +76,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                     child: RichText(
                       text: const TextSpan(
                         text: 'Reorder File ',
-                        style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
                             text: '( long press to drag )',
@@ -102,7 +98,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                             Flexible(child: Padding(
                               padding: const EdgeInsets.all(12.0),
                               child: Row(children: [
-                                Expanded(child: Text(Utility.fileName(file: file),style: const TextStyle(overflow: TextOverflow.ellipsis, color: Colors.black,fontWeight: FontWeight.bold))),
+                                Expanded(child: Text(Utility.fileName(file: file),style: const TextStyle(overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold))),
                                 const Icon(Icons.drag_indicator, color: Colors.grey),
                               ],),
                             ))

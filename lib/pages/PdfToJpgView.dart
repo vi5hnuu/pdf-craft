@@ -150,7 +150,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   Container(
                     padding: EdgeInsets.all(16),
                     width: double.infinity,
-                    child: FilledButton(onPressed: (isSingle && direction==null) || (!isSingle &&  gapController.value.text.isEmpty) ? null :  _onPdfToJpf, child: const Text("Convert to Jpg")),
+                    child: FilledButton(onPressed: (isSingle && direction==null) ? null : _onPdfToJpf, child: const Text("Convert to JPG")),
                   )
                 ],),
             ),

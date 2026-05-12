@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/pages/ErrorPage.dart';
 import 'package:pdf_craft/pages/CompressPdfView.dart';
@@ -25,9 +24,7 @@ import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
 import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
-import 'package:pdf_craft/pages/tab-widgets/HomeScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
-import 'package:pdf_craft/pages/tab-widgets/SettingScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -35,24 +32,18 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
-import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 import 'package:pdf_craft/widgets/FilesListing.dart';
 import 'package:pdf_craft/widgets/FilesManagement.dart';
 import 'package:pdf_craft/widgets/PdfPreview.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
-final GlobalKey<NavigatorState> _homeNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'home');
 final GlobalKey<NavigatorState> _filesNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'files');
 final GlobalKey<NavigatorState> _toolsNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'tools');
 final GlobalKey<NavigatorState> _scannerNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'scanner');
-final GlobalKey<NavigatorState> _settingsNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'settings');
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -116,6 +107,7 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
       GoRoute(
         redirect: (context, state) {
           if(state.extra is! FileSelectionConfig) return AppRoutes.errorRoute.path;
+          return null;
         },
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.fileManagement.path,

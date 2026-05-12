@@ -126,10 +126,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     ),
                   )
                 ],
-                if(_result?.images.isNotEmpty==true)SizedBox(
+                if(_result?.images?.isNotEmpty==true)SizedBox(
                   height: md.size.height*0.6,
-                  child: ListView.builder(itemCount: _result?.images.length ?? 0,itemBuilder: (context, index) {
-                    final img=_result!.images[index];
+                  child: ListView.builder(itemCount: _result?.images?.length ?? 0,itemBuilder: (context, index) {
+                    final img=_result!.images![index];
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: (Image.file(File(img),fit: BoxFit.fitHeight,)),
@@ -154,10 +154,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _documentScanner?.close();
       _documentScanner = DocumentScanner(
         options: DocumentScannerOptions(
-          documentFormat: format,
+          documentFormats: {format},
           mode: ScannerMode.full,
           isGalleryImport: true,
-          pageLimit: 10
+          pageLimit: 10,
         ),
       );
       _result = await _documentScanner?.scanDocument();
@@ -180,7 +180,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       await _savePdf(result.pdf!,fileName);
       setState(()=>_result=null);
     } else {
-      BlocProvider.of<PdfBloc>(context).add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: fileName, files: await Future.wait(result.images.map((imagePath)=>MultipartFile.fromFile(imagePath))))));
+      BlocProvider.of<PdfBloc>(context).add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: fileName, files: await Future.wait((result.images ?? []).map((imagePath)=>MultipartFile.fromFile(imagePath))))));
     }
   }
 
