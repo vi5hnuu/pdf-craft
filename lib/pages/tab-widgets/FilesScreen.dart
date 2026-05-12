@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
@@ -320,19 +320,8 @@ class _FilesScreenState extends State<FilesScreen> {
             totalProcessedFiles: stats[3],
             totalFileInBin: stats[4]));
 
-        final processedDir = Directory(Constants.processedDirPath);
-        if (await processedDir.exists()) {
-          final allFiles = await processedDir
-              .list(recursive: false, followLinks: false)
-              .where((e) => e is File && e.path.toLowerCase().endsWith('.pdf'))
-              .cast<File>()
-              .toList();
-          allFiles.sort((a, b) =>
-              b.statSync().modified.compareTo(a.statSync().modified));
-          if (mounted) {
-            setState(() => _recentPdfs = allFiles.take(5).toList());
-          }
-        }
+        final recents = await RecentFilesService().getRecentFiles(limit: 10);
+        if (mounted) setState(() => _recentPdfs = recents);
       } else {
         NotificationService.showSnackbar(
             text: 'Storage permission denied', color: Colors.red);
