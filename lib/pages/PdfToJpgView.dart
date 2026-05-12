@@ -57,6 +57,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
           listener: (context, state) {
         final httpState=state.httpStates[HttpStates.PDF_TO_JPG];
         if(httpState?.done==true){
+          AdsSingleton().dispatch(ShowInterstitialAd());
           final file=httpState?.extras?['savedFile'];
           NotificationService.showSnackbar(text: "Page to Jpeg Successfull",color: Colors.green);
           if(file is File) _openFile(file);

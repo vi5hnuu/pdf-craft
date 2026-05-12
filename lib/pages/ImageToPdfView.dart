@@ -48,6 +48,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
           listener: (context, state) {
         final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
         if(httpState?.done==true){
+          AdsSingleton().dispatch(ShowInterstitialAd());
           NotificationService.showSnackbar(text: "Image to pdf successfull",color: Colors.green);
           if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
         }else if(httpState?.error!=null){

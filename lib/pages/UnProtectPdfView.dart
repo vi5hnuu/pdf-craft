@@ -49,6 +49,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
           listener: (context, state) {
             final httpState=state.httpStates[HttpStates.UNPROTECT_PDF];
             if(httpState?.done==true){
+              AdsSingleton().dispatch(ShowInterstitialAd());
               NotificationService.showSnackbar(text: "UnProtected file successfully",color: Colors.green);
               if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
             }else if(httpState?.error!=null){
