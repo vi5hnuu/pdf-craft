@@ -15,7 +15,7 @@ import 'package:pdf_craft/utils/utility.dart';
 
 enum _Tool {
   grayscale('Grayscale', Icons.invert_colors, HttpStates.GRAYSCALE_PDF),
-  compress('Compress (medium quality)', Icons.compress, HttpStates.COMPRESS_PDF),
+  compress('Compress (recommended)', Icons.compress, HttpStates.COMPRESS_PDF),
   repair('Repair', Icons.build_outlined, HttpStates.REPAIR_PDF),
   flatten('Flatten', Icons.layers_clear_outlined, HttpStates.FLATTEN_PDF);
 
@@ -97,7 +97,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
           _bloc.add(CompressPdfEvent(
             compressPdf: CompressPdf(
               outFileName: outName,
-              level: CompressionLevel.MEDIUM,
+              level: CompressionLevel.RECOMMENDED,
               file: multipart,
             ),
           ));

@@ -204,7 +204,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
               Container(
                 decoration: BoxDecoration(
-                    color: theme.scaffoldBackgroundColor.withValues(alpha: \1)),
+                    color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8)),
                 child: Align(
                   alignment: Alignment.center,
                   child: SpinKitRipple(size: 72, color: primary),
@@ -231,7 +231,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   if (i > 0)
                     Icon(Icons.chevron_right,
                         size: 14,
-                        color: theme.colorScheme.onSurface.withValues(alpha: \1)),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
                   GestureDetector(
                     onTap: i < pathToDirectory.length - 1
                         ? () {
@@ -247,7 +247,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: i == pathToDirectory.length - 1
-                            ? primary.withValues(alpha: \1)
+                            ? primary.withValues(alpha: 0.12)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -262,7 +262,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                               : FontWeight.normal,
                           color: i == pathToDirectory.length - 1
                               ? primary
-                              : theme.colorScheme.onSurface.withValues(alpha: \1),
+                              : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ),
@@ -277,7 +277,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               Text('Sort:',
                   style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(alpha: \1))),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
               const SizedBox(width: 4),
               ..._SortMode.values.map((mode) => Padding(
                     padding: const EdgeInsets.only(right: 4),
@@ -288,7 +288,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: _sortMode == mode
-                              ? primary.withValues(alpha: \1)
+                              ? primary.withValues(alpha: 0.15)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
@@ -307,7 +307,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                             color: _sortMode == mode
                                 ? primary
                                 : theme.colorScheme.onSurface
-                                    .withValues(alpha: \1),
+                                    .withValues(alpha: 0.6),
                           ),
                         ),
                       ),
