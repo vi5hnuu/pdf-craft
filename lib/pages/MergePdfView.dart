@@ -42,6 +42,7 @@ class _MergePdfViewState extends State<MergePdfView> {
         listener: (context, state) {
           final httpState=state.httpStates[HttpStates.MERGE_PDF];
           if(httpState?.done==true){
+            AdsSingleton().dispatch(ShowInterstitialAd());
             NotificationService.showSnackbar(text: "Merge Successfull",color: Colors.green);
             if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
           }else if(httpState?.error!=null){
@@ -77,7 +78,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                         children: [
                           TextSpan(
                             text: '( long press to drag )',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(fontSize: 12),
                           ),
                         ],
                       ),
@@ -92,12 +93,12 @@ class _MergePdfViewState extends State<MergePdfView> {
                       padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6),side: const BorderSide(color: Colors.grey)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6),side: BorderSide(color: Theme.of(context).dividerColor)),
                         title: Text(
                           Utility.fileName(file: file),
                           style: const TextStyle(overflow: TextOverflow.ellipsis),
                         ),
-                        leading: const Icon(Icons.drag_indicator, color: Colors.grey),
+                        leading: Icon(Icons.drag_indicator, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                       ),
                     );
                   },

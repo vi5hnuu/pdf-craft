@@ -50,7 +50,7 @@ class FileTile extends StatelessWidget {
       child: ListTile(
         enabled: enabled,
         selected: selected,
-        selectedTileColor: primary.withOpacity(0.12),
+        selectedTileColor: primary.withValues(alpha: 0.12),
         selectedColor: primary,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -58,7 +58,7 @@ class FileTile extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: primary.withOpacity(0.1),
+            color: primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: fileIcon != null
@@ -84,7 +84,7 @@ class FileTile extends StatelessWidget {
                 '$sizeStr  •  $dateStr',
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.colorScheme.onSurface.withOpacity(0.55),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
                 ),
               )
             : null,
@@ -98,7 +98,7 @@ class FileTile extends StatelessWidget {
                   )
                 : null)
             : Icon(Icons.chevron_right,
-                color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
         onTap: onPress,
         onLongPress: onLongPress,
       ),

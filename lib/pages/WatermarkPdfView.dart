@@ -98,7 +98,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                                   onTap: _pickColor,
                                   child: Container(
                                     width: 40, height: 40,
-                                    decoration: BoxDecoration(color: _pickedColor, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white30)),
+                                    decoration: BoxDecoration(color: _pickedColor, borderRadius: BorderRadius.circular(8), border: Border.all(color: Theme.of(context).dividerColor)),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
