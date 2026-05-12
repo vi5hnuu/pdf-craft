@@ -371,10 +371,77 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                 _renameFile(file);
               },
             ),
+            if (!isDir)
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('File Info'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showFileInfo(file as File);
+                },
+              ),
             const SizedBox(height: 8),
           ],
         ),
       ),
+    );
+  }
+
+  void _showFileInfo(File file) {
+    final stat = file.statSync();
+    final name = file.path.split('/').last;
+    final size = Utility.bytesToSize(file.lengthSync());
+    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    String fmt(DateTime d) => '${d.day} ${months[d.month - 1]} ${d.year}  ${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}';
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36, height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
+              const Divider(height: 24),
+              _infoRow(Icons.folder_outlined, 'Path', file.path),
+              const SizedBox(height: 12),
+              _infoRow(Icons.data_usage_outlined, 'Size', size),
+              const SizedBox(height: 12),
+              _infoRow(Icons.schedule_outlined, 'Modified', fmt(stat.modified)),
+              const SizedBox(height: 12),
+              _infoRow(Icons.add_circle_outline, 'Created', fmt(stat.changed)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: Colors.grey),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 2),
+            Text(value, style: const TextStyle(fontSize: 13)),
+          ],
+        ),
+      ],
     );
   }
 
