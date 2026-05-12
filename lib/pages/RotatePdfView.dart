@@ -65,8 +65,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
       setState(() {
         _document = doc;
         _pageIndexes = List.generate(doc.pagesCount, (i) => i);
-        _loadNextBatch();
       });
+      _loadNextBatch(); // must be outside setState — _loadThumbnail calls setState before its first await
     });
     _scroll.addListener(_onScroll);
   }
