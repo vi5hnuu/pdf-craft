@@ -30,16 +30,42 @@ class FileTile extends StatefulWidget {
 
 class _FileTileState extends State<FileTile> {
   bool _isFavorite = false;
+  // Loaded asynchronously to avoid blocking main thread on every build
+  String? _sizeStr;
+  String? _dateStr;
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
 
   @override
   void initState() {
     super.initState();
-    if (widget.file is File) _checkFavorite();
+    if (widget.file is File) {
+      _checkFavorite();
+      _loadFileMeta();
+    }
   }
 
   Future<void> _checkFavorite() async {
     final fav = await FavoritesService().isFavorite(widget.file.path);
     if (mounted) setState(() => _isFavorite = fav);
+  }
+
+  /// Loads size and date asynchronously so build() does no sync IO.
+  Future<void> _loadFileMeta() async {
+    try {
+      final f = widget.file as File;
+      final stat = await f.stat();
+      final len = await f.length();
+      if (!mounted) return;
+      final d = stat.modified;
+      setState(() {
+        _dateStr = '${d.day} ${_months[d.month - 1]} ${d.year}';
+        _sizeStr = Utility.bytesToSize(len);
+      });
+    } catch (_) {}
   }
 
   Future<void> _toggleFavorite() async {
@@ -53,19 +79,6 @@ class _FileTileState extends State<FileTile> {
     final primary = theme.colorScheme.primary;
     final fileIcon = Constants.fileIcons[
         widget.file is Directory ? 'folder' : widget.file.path.split('.').last];
-
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    String? dateStr;
-    String? sizeStr;
-    if (widget.file is File) {
-      final stat = File(widget.file.path).statSync();
-      final d = stat.modified;
-      dateStr = '${d.day} ${months[d.month - 1]} ${d.year}';
-      sizeStr = Utility.bytesToSize(File(widget.file.path).lengthSync());
-    }
 
     Widget? trailing;
     if (widget.file is File) {
@@ -128,9 +141,9 @@ class _FileTileState extends State<FileTile> {
           style: const TextStyle(fontWeight: FontWeight.w600),
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: widget.file is File && sizeStr != null && dateStr != null
+        subtitle: widget.file is File && _sizeStr != null && _dateStr != null
             ? Text(
-                '$sizeStr  •  $dateStr',
+                '$_sizeStr  •  $_dateStr',
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.55),

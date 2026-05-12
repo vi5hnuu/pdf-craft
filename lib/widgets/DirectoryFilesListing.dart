@@ -61,30 +61,36 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     super.initState();
   }
 
+  /// Sorts files by the current mode. Stats and lengths are pre-cached before
+  /// sorting so the comparator never calls sync IO repeatedly (O(N) instead of O(N log N)).
   List<FileSystemEntity> _sortedFiles(List<FileSystemEntity> files) {
     final dirs = files.whereType<Directory>().toList();
     final regularFiles = files.whereType<File>().toList();
 
     switch (_sortMode) {
       case _SortMode.name:
-        dirs.sort((a, b) => a.path
-            .split('/')
-            .last
-            .toLowerCase()
+        dirs.sort((a, b) => a.path.split('/').last.toLowerCase()
             .compareTo(b.path.split('/').last.toLowerCase()));
-        regularFiles.sort((a, b) => a.path
-            .split('/')
-            .last
-            .toLowerCase()
+        regularFiles.sort((a, b) => a.path.split('/').last.toLowerCase()
             .compareTo(b.path.split('/').last.toLowerCase()));
       case _SortMode.date:
-        dirs.sort((a, b) =>
-            b.statSync().modified.compareTo(a.statSync().modified));
-        regularFiles.sort((a, b) =>
-            b.statSync().modified.compareTo(a.statSync().modified));
+        // Pre-cache modified times — avoids statSync inside comparator (O(N log N) → O(N))
+        final modTimes = <String, DateTime>{};
+        for (final f in [...dirs, ...regularFiles]) {
+          try { modTimes[f.path] = f.statSync().modified; } catch (_) {}
+        }
+        dirs.sort((a, b) => (modTimes[b.path] ?? DateTime(0))
+            .compareTo(modTimes[a.path] ?? DateTime(0)));
+        regularFiles.sort((a, b) => (modTimes[b.path] ?? DateTime(0))
+            .compareTo(modTimes[a.path] ?? DateTime(0)));
       case _SortMode.size:
-        dirs.sort((a, b) => 0);
-        regularFiles.sort((a, b) => b.lengthSync().compareTo(a.lengthSync()));
+        // Pre-cache file sizes — avoids lengthSync inside comparator (O(N log N) → O(N))
+        final sizes = <String, int>{};
+        for (final f in regularFiles) {
+          try { sizes[f.path] = (f as File).lengthSync(); } catch (_) {}
+        }
+        regularFiles.sort((a, b) =>
+            (sizes[b.path] ?? 0).compareTo(sizes[a.path] ?? 0));
     }
 
     return [...dirs, ...regularFiles];
@@ -122,6 +128,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         buildWhen: (previous, current) => previous != current,
         listenWhen: (previous, current) => previous != current,
         builder: (context, state) {
+          // Compute sorted list once per build — avoids re-sorting for every item in ListView
+          final sortedFiles = _sortedFiles(state.files);
+
           return Stack(children: [
             if (!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
               (state.files.isEmpty
@@ -133,11 +142,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                         Flexible(
                           fit: FlexFit.tight,
                           child: ListView.builder(
-                            itemCount:
-                                _sortedFiles(state.files).length,
+                            itemCount: sortedFiles.length,
                             itemBuilder: (context, index) {
-                              final file =
-                                  _sortedFiles(state.files)[index];
+                              final file = sortedFiles[index];
 
                               if ((file is Directory) &&
                                   widget.excludeShowingDirsPath
@@ -147,11 +154,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                               }
 
                               if (deletedFiles.contains(file)) {
-                                if (state.isLoading(
-                                        forr: HttpStates.DELETE_FILE) ||
-                                    state.isLoading(
-                                        forr: HttpStates.MOVE_FILE_TO) ||
-                                    !file.existsSync()) {
+                                // Hide while deletion/move is in progress; bloc will refresh list on success
+                                if (state.isLoading(forr: HttpStates.DELETE_FILE) ||
+                                    state.isLoading(forr: HttpStates.MOVE_FILE_TO)) {
                                   return const SizedBox.shrink();
                                 }
                                 deletedFiles.remove(file);

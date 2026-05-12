@@ -46,6 +46,8 @@ class BatchProcessView extends StatefulWidget {
 class _BatchProcessViewState extends State<BatchProcessView> {
   late final PdfBloc _bloc;
   late final List<_FileItem> _items;
+  // Pre-cached file sizes so itemBuilder never calls lengthSync()
+  final Map<String, String> _fileSizes = {};
   _Tool _tool = _Tool.grayscale;
   int _currentIndex = -1; // -1 = not started
   bool _running = false;
@@ -56,6 +58,16 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     super.initState();
     _bloc = BlocProvider.of<PdfBloc>(context);
     _items = widget.files.map((f) => _FileItem(f)).toList();
+    _preloadFileSizes();
+  }
+
+  Future<void> _preloadFileSizes() async {
+    for (final f in widget.files) {
+      try {
+        final len = await f.length();
+        if (mounted) setState(() => _fileSizes[f.path] = Utility.bytesToSize(len));
+      } catch (_) {}
+    }
   }
 
   Future<void> _startBatch() async {
@@ -199,7 +211,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                     subtitle: item.errorMsg != null
                         ? Text(item.errorMsg!, style: const TextStyle(color: Colors.red, fontSize: 11))
                         : Text(
-                            Utility.bytesToSize(item.file.lengthSync()),
+                            _fileSizes[item.file.path] ?? '',
                             style: TextStyle(
                               fontSize: 11,
                               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
