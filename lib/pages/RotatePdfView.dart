@@ -14,11 +14,11 @@ import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/widgets/RotatableItem.dart';
 import 'package:pdfx/pdfx.dart';
 
-class _Thumb {
-  bool isLoading;
+class Thumbnail {
+  bool? isLoading;
   String? error;
   PdfPageImage? image;
-  _Thumb({this.isLoading = false, this.error, this.image});
+  Thumbnail({this.isLoading, this.error, this.image});
 }
 
 class RotatePdfView extends StatefulWidget {
@@ -31,89 +31,51 @@ class RotatePdfView extends StatefulWidget {
 }
 
 class _RotatePdfViewState extends State<RotatePdfView> {
-  // same pattern as original: PdfController + FutureBuilder
-  late PdfController _pdfController;
-  PdfDocument? _document;
+  final TextEditingController pageNo = TextEditingController();
+  final TextEditingController pageAngle = TextEditingController();
+  final TextEditingController outFileNameC = TextEditingController();
+  late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
 
-  final ScrollController _scroll = ScrollController();
-  final Map<int, _Thumb> _thumbnails = {};
+  final int pageSize = 10;
+  final ScrollController controller = ScrollController();
+  final Map<int, Thumbnail> thumbnails = {};
+
+  late PdfDocument? document;
+  late PdfController _pdfController;
   List<int> _pageIndexes = [];
 
-  // Valid PDF rotation angles per spec
-  static const _angles = [0, 90, 180, 270];
-  int _fileAngle = 0;
-  // Keys are 1-indexed (user-facing); subtract 1 before sending to backend
-  final Map<int, int> _pageAngles = {};
-  bool _maintainRatio = true;
+  // Angle applied to all pages; per-page overrides use page_angles map
+  static const _fileAngles = [0, 90, 180, 270];
+  int file_angle = 0;
 
-  final TextEditingController _outFileNameC = TextEditingController();
-  final TextEditingController _pageNoC = TextEditingController();
-  int _selectedPageAngle = 90;
-
-  static const _pageSize = 10;
+  // Keys are 1-indexed (user-facing); converted to 0-indexed on submit
+  Map<int, int> page_angles = {};
+  bool maintain_ratio = true;
 
   @override
   void initState() {
-    super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     _pdfController = PdfController(
       document: PdfDocument.openFile(widget.file.path),
       initialPage: 1,
     );
-    _pdfController.document.then((doc) {
-      if (!mounted) return;
-      setState(() {
-        _document = doc;
-        _pageIndexes = List.generate(doc.pagesCount, (i) => i);
-      });
-      _loadNextBatch(); // must be outside setState — _loadThumbnail calls setState before its first await
-    });
-    _scroll.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    if (!_scroll.hasClients) return;
-    final max = _scroll.position.maxScrollExtent;
-    if (max > 0 && _scroll.position.pixels / max >= 0.9) _loadNextBatch();
-  }
-
-  void _loadNextBatch() {
-    if (_document == null) return;
-    final loading = _thumbnails.values.where((t) => t.isLoading).length;
-    if ((loading / _pageSize) * 100 > 80) return;
-
-    final start = _thumbnails.length;
-    for (var i = start; i < start + _pageSize && i < _document!.pagesCount; i++) {
-      _loadThumbnail(i + 1);
-    }
-    for (final e in _thumbnails.entries.where((e) => e.value.error != null).toList()) {
-      _loadThumbnail(e.key);
-    }
-  }
-
-  Future<void> _loadThumbnail(int pageNo) async {
-    if (_thumbnails[pageNo]?.image != null || _thumbnails[pageNo]?.isLoading == true) return;
-    setState(() => _thumbnails.put(pageNo, _Thumb(isLoading: true)));
-    try {
-      final page = await _document!.getPage(pageNo);
-      final image = await page.render(
-        width: page.width,
-        height: page.height,
-        format: PdfPageImageFormat.jpeg,
-      );
-      await page.close();
-      if (!mounted) return;
-      if (image == null) throw Exception();
-      setState(() => _thumbnails.put(pageNo, _Thumb(image: image)));
-    } catch (_) {
-      if (mounted) setState(() => _thumbnails.put(pageNo, _Thumb(error: 'failed')));
-    }
+    _pdfController.document.then((doc) => setState(() {
+          if (!mounted) return;
+          document = doc;
+          _pageIndexes = List.generate(doc.pagesCount, (index) => index);
+          _tryRenderingNextThumbnails();
+        }));
+    controller.addListener(() => _tryRenderingNextThumbnails());
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    final md = MediaQuery.of(context);
     final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(title: const Text('Rotate PDF Pages')),
       body: FutureBuilder(
         future: _pdfController.document,
@@ -122,216 +84,252 @@ class _RotatePdfViewState extends State<RotatePdfView> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || snapshot.data == null) {
-            return const Center(child: Icon(Icons.error_outline, color: Colors.red, size: 48));
+            return const Center(child: Icon(Icons.error, color: Colors.red));
           }
           return BlocConsumer<PdfBloc, PdfState>(
-            buildWhen: (p, c) =>
-                p.httpStates[HttpStates.ROTATE_PDF] != c.httpStates[HttpStates.ROTATE_PDF],
-            listenWhen: (p, c) =>
-                p.httpStates[HttpStates.ROTATE_PDF] != c.httpStates[HttpStates.ROTATE_PDF],
+            buildWhen: (previous, current) =>
+                previous.httpStates[HttpStates.ROTATE_PDF] !=
+                current.httpStates[HttpStates.ROTATE_PDF],
+            listenWhen: (previous, current) =>
+                previous.httpStates[HttpStates.ROTATE_PDF] !=
+                current.httpStates[HttpStates.ROTATE_PDF],
             listener: (context, state) {
-              final s = state.httpStates[HttpStates.ROTATE_PDF];
-              if (s?.done == true) {
+              final httpState = state.httpStates[HttpStates.ROTATE_PDF];
+              if (httpState?.done == true) {
                 AdsSingleton().dispatch(ShowInterstitialAd());
-                NotificationService.showSnackbar(text: 'Rotated successfully', color: Colors.green);
-                if (s?.extras?['savedFile'] is File) {
+                NotificationService.showSnackbar(
+                    text: 'Rotate Successful', color: Colors.green);
+                if (httpState?.extras?['savedFile'] is File) {
                   GoRouter.of(context).pushNamed(
                     AppRoutes.pdfFilePreviewRoute.name,
-                    pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
+                    pathParameters: {
+                      'pdfFilePath':
+                          (httpState!.extras!['savedFile'] as File).path
+                    },
                   );
                 }
-              } else if (s?.loading == true) {
-                NotificationService.showSnackbar(text: 'Rotating…', color: Colors.blue);
-              } else if (s?.error != null) {
-                NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
+              } else if (httpState?.error != null) {
+                NotificationService.showSnackbar(
+                    text: httpState!.error!, color: Colors.red);
+              } else if (httpState?.loading == true) {
+                NotificationService.showSnackbar(
+                    text: 'Started Rotating', color: Colors.lightBlue);
               }
             },
             builder: (context, state) {
-              // Identical structure to original: fixed form at top, Expanded ListView for thumbnails
-              return Stack(children: [
-                Column(children: [
-                  // ── Form area ────────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                    child: TextFormField(
-                      controller: _outFileNameC,
-                      decoration: const InputDecoration(
-                        labelText: 'Output File Name',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-
-                  // All-pages angle chips
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('All Pages Angle',
-                            style: theme.textTheme.labelLarge
-                                ?.copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 8,
-                          children: _angles.map((a) => ChoiceChip(
-                            label: Text(a == 0 ? 'None' : '$a°'),
-                            selected: _fileAngle == a,
-                            onSelected: (_) => setState(() => _fileAngle = a),
-                          )).toList(),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Applies to all pages unless overridden per-page below.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.55)),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Maintain ratio toggle
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                    child: SwitchListTile(
-                      dense: true,
-                      title: const Text('Swap page dimensions'),
-                      subtitle: Text(
-                        _maintainRatio
-                            ? 'Width and height swap to fit the rotated content.'
-                            : 'Page size stays the same; content rotates within it.',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      value: _maintainRatio,
-                      onChanged: (v) => setState(() => _maintainRatio = v),
-                    ),
-                  ),
-
-                  // Per-page overrides
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _pageNoC,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Page No.',
-                                border: OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                            ),
+              return Stack(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      // Output file name
+                      Padding(
+                        padding:
+                            const EdgeInsets.all(12.0).copyWith(bottom: 0),
+                        child: TextFormField(
+                          keyboardType: TextInputType.text,
+                          decoration: const InputDecoration(
+                            labelText: 'Output File Name',
+                            border: OutlineInputBorder(),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: DropdownButtonFormField<int>(
-                              initialValue: _selectedPageAngle,
-                              decoration: const InputDecoration(
-                                labelText: 'Angle',
-                                border: OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              items: _angles
-                                  .where((a) => a > 0)
-                                  .map((a) => DropdownMenuItem(value: a, child: Text('$a°')))
+                          controller: outFileNameC,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+
+                      // All-pages rotation angle chips
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'All Pages Angle',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 8,
+                              children: _fileAngles
+                                  .map((a) => ChoiceChip(
+                                        label: Text(a == 0 ? 'None' : '$a°'),
+                                        selected: file_angle == a,
+                                        onSelected: (_) =>
+                                            setState(() => file_angle = a),
+                                      ))
                                   .toList(),
-                              onChanged: (v) {
-                                if (v != null) setState(() => _selectedPageAngle = v);
-                              },
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton.tonal(
-                            onPressed: _addPageAngle,
-                            child: const Text('Add'),
-                          ),
-                        ]),
-                        if (_pageAngles.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            children: _pageAngles.entries.map((e) => Chip(
-                              label: Text('p${e.key}: ${e.value}°',
-                                  style: const TextStyle(fontSize: 12)),
-                              onDeleted: () => setState(() => _pageAngles.remove(e.key)),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            )).toList(),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'All pages rotate at this angle; override per page below.',
+                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: Text(
-                      'Preview is approximate — actual PDF may differ.',
-                      style: TextStyle(color: Colors.amber, fontSize: 12),
-                    ),
-                  ),
+                      // Maintain aspect ratio toggle
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          children: [
+                            const Text(
+                              'Maintain Aspect Ratio ',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.white70),
+                            ),
+                            const SizedBox(width: 16),
+                            Switch(
+                              value: maintain_ratio,
+                              onChanged: (value) =>
+                                  setState(() => maintain_ratio = value),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                  // ── Thumbnail list (identical to original: Expanded + ListView.builder) ──
-                  Expanded(
-                    child: ListView.builder(
-                      controller: _scroll,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: _thumbnails.length,
-                      itemBuilder: (context, index) {
-                        final pageNo = _pageIndexes[index] + 1;
-                        final thumb = _thumbnails[pageNo];
-                        final w = MediaQuery.of(context).size.width * 0.45;
-                        final h = w * 1.37;
-                        return Padding(
-                          key: ValueKey('page-$pageNo'),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          child: Center(
-                            child: RotatablePageWidget(
-                              originalWidth: w,
-                              originalHeight: h,
-                              maintainAspectRatio: _maintainRatio,
-                              rotationAngle: (_pageAngles[pageNo] ?? _fileAngle).toDouble(),
-                              child: Container(
-                                width: w,
-                                height: h,
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHighest,
-                                  border: Border.all(color: theme.dividerColor),
+                      // Preview disclaimer
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12.0),
+                        child: Text(
+                          'All pages render without overlap; preview is approximate.',
+                          style:
+                              TextStyle(color: Colors.yellow, fontSize: 12),
+                        ),
+                      ),
+
+                      // Per-page angle overrides
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Flexible(
+                                  child: TextFormField(
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      label: Text('Page No.'),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    controller: pageNo,
+                                  ),
                                 ),
-                                child: thumb?.isLoading == true
-                                    ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
-                                    : thumb?.error != null
-                                        ? const Center(child: Icon(Icons.broken_image_outlined))
-                                        : thumb?.image != null
-                                            ? Image.memory(thumb!.image!.bytes, fit: BoxFit.contain)
-                                            : const SizedBox.shrink(),
-                              ),
+                                const SizedBox(width: 12),
+                                Flexible(
+                                  child: TextFormField(
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      label: Text('Angle (0–360)'),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    controller: pageAngle,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                            const SizedBox(height: 12),
+                            FilledButton(
+                              onPressed:
+                                  document == null ? null : _addPageAngle,
+                              child: const Text('Add Page Angle'),
+                            ),
+                            const SizedBox(height: 18),
+                            Wrap(
+                              spacing: 8.0,
+                              runSpacing: 8.0,
+                              children: page_angles.entries.map((entry) {
+                                return Chip(
+                                  onDeleted: () => setState(
+                                      () => page_angles.remove(entry.key)),
+                                  label: Text(
+                                    'Page ${entry.key}: ${entry.value}°',
+                                    style:
+                                        const TextStyle(color: Colors.black),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                  // ── Submit bar ───────────────────────────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: theme.scaffoldBackgroundColor,
-                      border: Border(top: BorderSide(color: theme.dividerColor)),
-                    ),
-                    child: FilledButton(
-                      onPressed: (_fileAngle == 0 && _pageAngles.isEmpty) ? null : _onSubmit,
-                      child: const Text('Rotate PDF Pages'),
-                    ),
+                      // Thumbnail list
+                      Expanded(
+                        child: ListView.builder(
+                          controller: controller,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 8),
+                          scrollDirection: Axis.vertical,
+                          itemCount: thumbnails.length,
+                          itemBuilder: (context, index) {
+                            final pNo = _pageIndexes[index] + 1;
+                            final thumbnail = thumbnails[pNo];
+                            final thumbW = md.size.width * 0.45;
+                            final thumbH = thumbW * 1.37;
+                            return Padding(
+                              key: ValueKey('page-$pNo'),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 8),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  RotatablePageWidget(
+                                    originalWidth: thumbW,
+                                    originalHeight: thumbH,
+                                    maintainAspectRatio: maintain_ratio,
+                                    // preview uses 1-indexed key — same as stored
+                                    rotationAngle:
+                                        (page_angles[pNo] ?? file_angle)
+                                            .toDouble(),
+                                    child: Container(
+                                      height: thumbH,
+                                      width: thumbW,
+                                      child: thumbnail?.isLoading == true
+                                          ? const Center(
+                                              child:
+                                                  CircularProgressIndicator())
+                                          : thumbnail?.error != null
+                                              ? const Center(
+                                                  child: Icon(Icons.error))
+                                              : thumbnail?.image != null
+                                                  ? Image.memory(
+                                                      thumbnail!.image!.bytes,
+                                                      fit: BoxFit.contain)
+                                                  : const SizedBox.shrink(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Submit button
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16.0),
+                        child: FilledButton(
+                          onPressed: file_angle == 0 && page_angles.isEmpty
+                              ? null
+                              : _onRotatePages,
+                          child: const Text('Rotate PDF Pages'),
+                        ),
+                      ),
+                    ],
                   ),
-                ]),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.ROTATE_PDF]),
-              ]);
+                  LoadingOverlay(
+                      httpState: state.httpStates[HttpStates.ROTATE_PDF]),
+                ],
+              );
             },
           );
         },
@@ -340,39 +338,127 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   }
 
   void _addPageAngle() {
-    if (_document == null) return;
-    final pNo = int.tryParse(_pageNoC.text);
-    if (pNo == null || pNo < 1 || pNo > _document!.pagesCount) {
-      NotificationService.showSnackbar(text: 'Invalid page number', color: Colors.red);
+    final pNo = int.tryParse(pageNo.text);
+    final angle = int.tryParse(pageAngle.text);
+    if (pNo == null || pNo < 1 || pNo > (document?.pagesCount ?? 0)) {
+      NotificationService.showSnackbar(
+          text: 'Invalid page number', color: Colors.red);
       return;
     }
-    setState(() => _pageAngles.put(pNo, _selectedPageAngle));
-    _pageNoC.clear();
+    if (angle == null || angle <= 0 || angle > 360) {
+      NotificationService.showSnackbar(
+          text: 'Invalid angle (1–360)', color: Colors.red);
+      return;
+    }
+    setState(() => page_angles.put(pNo, angle));
+    pageNo.clear();
+    pageAngle.clear();
   }
 
-  Future<void> _onSubmit() async {
-    // Convert 1-indexed user page numbers → 0-indexed for backend
+  Future<void> _onRotatePages() async {
+    // Convert 1-indexed user keys → 0-indexed for backend
     final zeroIndexed = Map.fromEntries(
-      _pageAngles.entries.map((e) => MapEntry(e.key - 1, e.value)),
+      page_angles.entries.map((e) => MapEntry(e.key - 1, e.value)),
     );
-    BlocProvider.of<PdfBloc>(context).add(RotatePdfEvent(
+    bloc.add(RotatePdfEvent(
       rotatePdf: RotatePdf(
-        out_file_name: _outFileNameC.text.trim().isEmpty ? 'rotated_file' : _outFileNameC.text.trim(),
-        file_angle: _fileAngle,
-        maintain_ratio: _maintainRatio,
+        out_file_name: outFileNameC.text.trim().isEmpty
+            ? 'rotated_file'
+            : outFileNameC.text.trim(),
+        file_angle: file_angle,
+        maintain_ratio: maintain_ratio,
         page_angles: zeroIndexed,
         file: await MultipartFile.fromFile(widget.file.path),
       ),
     ));
   }
 
+  _tryRenderingNextThumbnails() async {
+    if (document == null) return;
+
+    await _reloadErroredThumbnails(document!);
+
+    if (thumbnails.isEmpty) {
+      await _loadThumbnails();
+      return;
+    }
+    if (!controller.hasClients) return;
+    final maxScroll = controller.position.maxScrollExtent;
+    final scrollPixels = controller.position.pixels;
+    final percentScroll = (scrollPixels / maxScroll) * 100;
+    if (percentScroll < 90) return;
+    await _loadThumbnails();
+  }
+
+  _reloadErroredThumbnails(PdfDocument doc) async {
+    for (final entry in _errorThumbnails()) {
+      await _loadThumbnail(document: doc, pageNo: entry.key);
+    }
+  }
+
+  _loadThumbnails() async {
+    if (document == null) throw Exception('Document not yet initialized');
+    final loadingCount = _loadingCount();
+    if ((loadingCount / pageSize) * 100 > 80) return;
+
+    final total = thumbnails.length;
+    for (var i = total;
+        i < total + pageSize && i < document!.pagesCount;
+        i++) {
+      await _loadThumbnail(document: document!, pageNo: i + 1);
+    }
+  }
+
+  int _loadingCount() =>
+      thumbnails.entries.where((t) => t.value.isLoading == true).length;
+
+  List<MapEntry<int, Thumbnail>> _errorThumbnails() =>
+      thumbnails.entries.where((t) => t.value.error != null).toList();
+
+  _loadThumbnail({required PdfDocument document, required int pageNo}) async {
+    if (thumbnails[pageNo]?.image != null ||
+        thumbnails[pageNo]?.isLoading == true) return;
+    try {
+      setState(() {
+        if (mounted) thumbnails.put(pageNo, Thumbnail(isLoading: true));
+      });
+      final image = await _loadPageImage(document: document, pageNumber: pageNo);
+      if (image == null) throw Exception();
+      setState(() {
+        if (mounted) thumbnails.put(pageNo, Thumbnail(image: image));
+      });
+    } catch (_) {
+      setState(() {
+        if (mounted)
+          thumbnails.put(pageNo, Thumbnail(error: 'failed to render thumbnail'));
+      });
+    }
+  }
+
+  Future<PdfPageImage?> _loadPageImage(
+      {required PdfDocument document, required int pageNumber}) async {
+    assert(pageNumber > 0);
+    try {
+      final page = await document.getPage(pageNumber);
+      final image = await page.render(
+        width: page.width,
+        height: page.height,
+        format: PdfPageImageFormat.jpeg,
+      );
+      await page.close();
+      return image;
+    } catch (_) {
+      throw Exception('Failed to load pdf page');
+    }
+  }
+
   @override
   void dispose() {
-    _scroll.removeListener(_onScroll);
-    _scroll.dispose();
+    controller.dispose();
     _pdfController.dispose();
-    _outFileNameC.dispose();
-    _pageNoC.dispose();
+    outFileNameC.dispose();
+    pageNo.dispose();
+    pageAngle.dispose();
     super.dispose();
   }
 }
