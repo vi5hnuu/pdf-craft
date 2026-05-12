@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
@@ -38,7 +36,8 @@ class _FilesManagementState extends State<FilesManagement> {
             if(widget.config.redirectPath==null) {
               router.pop(result);
             } else {
-              router.push(widget.config.redirectPath!,extra: result);
+              // replace so tool route sits directly on Tools screen — no stale file picker in back stack
+              router.replace(widget.config.redirectPath!,extra: result);
             }
           } ,directoryPath: widget.config.path,multiSelect: widget.config.multiSelect,limitSelectionToExtensions: widget.config.limitToExtensions)),
           const BannerAdd(),

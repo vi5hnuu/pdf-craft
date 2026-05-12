@@ -1,43 +1,32 @@
 import 'dart:io';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 
-/// Persists a list of recently opened PDF paths across app restarts.
+/// Returns recently modified PDF files by scanning device storage.
+/// No SharedPreferences dependency — purely derived from filesystem timestamps.
 class RecentFilesService {
   static final RecentFilesService _instance = RecentFilesService._();
   RecentFilesService._();
   factory RecentFilesService() => _instance;
 
-  static const _key = 'recent_file_paths';
-  static const _maxEntries = 15;
+  static const _dirsToScan = [
+    Constants.processedDirPath,
+    Constants.downloadsStoragePath,
+    Constants.documentsStoragePath,
+  ];
 
-  /// Records a file as recently opened. Moves it to the front if already present.
-  Future<void> addFile(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    final paths = List<String>.from(prefs.getStringList(_key) ?? []);
-    paths.remove(path);
-    paths.insert(0, path);
-    if (paths.length > _maxEntries) paths.removeRange(_maxEntries, paths.length);
-    await prefs.setStringList(_key, paths);
-  }
-
-  /// Returns recently opened files that still exist on disk (up to [limit]).
+  /// Scans common directories and returns the [limit] most recently modified PDFs.
   Future<List<File>> getRecentFiles({int limit = 10}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final paths = prefs.getStringList(_key) ?? [];
-    final existing = <File>[];
-    for (final p in paths) {
-      final f = File(p);
-      if (await f.exists()) existing.add(f);
-      if (existing.length >= limit) break;
+    final files = <File>[];
+    for (final dirPath in _dirsToScan) {
+      final dir = Directory(dirPath);
+      if (!await dir.exists()) continue;
+      await for (final entity in dir.list(followLinks: false)) {
+        if (entity is File && entity.path.toLowerCase().endsWith('.pdf')) {
+          files.add(entity);
+        }
+      }
     }
-    return existing;
-  }
-
-  /// Removes a path from the list (e.g. when file is deleted).
-  Future<void> removeFile(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    final paths = List<String>.from(prefs.getStringList(_key) ?? []);
-    paths.remove(path);
-    await prefs.setStringList(_key, paths);
+    files.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+    return files.take(limit).toList();
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:open_file/open_file.dart';
-import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
@@ -45,7 +44,6 @@ class _PdfPreviewState extends State<PdfPreview> {
     super.initState();
     _password = widget.password;
     _loadDocument();
-    RecentFilesService().addFile(widget.pdfFilePath);
   }
 
   Future<void> _loadDocument() async {
