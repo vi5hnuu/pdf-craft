@@ -6,6 +6,7 @@ class AppRoute{
 
 class AppRoutes{
   static AppRoute splashRoute=AppRoute(name: 'splash', path: '/splash');
+  static AppRoute onboardingRoute=AppRoute(name: 'onboarding', path: '/onboarding');
 
   static AppRoute errorRoute=AppRoute(name: 'error', path: '/error');
 

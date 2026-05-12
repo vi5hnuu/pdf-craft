@@ -7,6 +7,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -70,8 +71,15 @@ class _SplashScreenState extends State<SplashScreen> {
         ));
   }
 
-  goToHome(){
-    GoRouter.of(context).goNamed(AppRoutes.filesRoute.name);
+  Future<void> goToHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
+    if (!mounted) return;
+    if (onboardingDone) {
+      GoRouter.of(context).goNamed(AppRoutes.filesRoute.name);
+    } else {
+      GoRouter.of(context).goNamed(AppRoutes.onboardingRoute.name);
+    }
   }
 
   @override
