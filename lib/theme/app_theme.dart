@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
 
   static const _primary = Color(0xFFE53935);
+
+  static TextTheme _poppinsDark() => GoogleFonts.poppinsTextTheme(const TextTheme(
+        bodySmall: TextStyle(color: Colors.white),
+        bodyMedium: TextStyle(color: Colors.white),
+        bodyLarge: TextStyle(color: Colors.white),
+        titleMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ));
+
+  static TextTheme _poppinsLight() => GoogleFonts.poppinsTextTheme(const TextTheme(
+        bodySmall: TextStyle(color: Color(0xFF111111)),
+        bodyMedium: TextStyle(color: Color(0xFF111111)),
+        bodyLarge: TextStyle(color: Color(0xFF111111)),
+        titleMedium: TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.w600),
+        titleLarge: TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.bold),
+      ));
 
   static ThemeData get dark => ThemeData(
         useMaterial3: true,
@@ -19,16 +36,16 @@ class AppTheme {
         ),
         scaffoldBackgroundColor: const Color(0xFF0D0D0D),
         canvasColor: const Color(0xFF1A1A1A),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0D0D0D),
+        appBarTheme: AppBarTheme(
+          backgroundColor: const Color(0xFF0D0D0D),
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: TextStyle(
+          titleTextStyle: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3),
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: Colors.white),
           surfaceTintColor: Colors.transparent,
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -38,15 +55,7 @@ class AppTheme {
           type: BottomNavigationBarType.fixed,
           elevation: 8,
         ),
-        textTheme: const TextTheme(
-          bodySmall: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white),
-          bodyLarge: TextStyle(color: Colors.white),
-          titleMedium:
-              TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          titleLarge:
-              TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        textTheme: _poppinsDark(),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -107,18 +116,18 @@ class AppTheme {
         ),
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),
         canvasColor: Colors.white,
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           backgroundColor: Colors.white,
           elevation: 0,
           scrolledUnderElevation: 0,
           surfaceTintColor: Colors.transparent,
           centerTitle: false,
-          titleTextStyle: TextStyle(
-              color: Color(0xFF111111),
+          titleTextStyle: GoogleFonts.poppins(
+              color: const Color(0xFF111111),
               fontSize: 20,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3),
-          iconTheme: IconThemeData(color: Color(0xFF111111)),
+          iconTheme: const IconThemeData(color: Color(0xFF111111)),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Colors.white,
@@ -127,15 +136,7 @@ class AppTheme {
           type: BottomNavigationBarType.fixed,
           elevation: 8,
         ),
-        textTheme: const TextTheme(
-          bodySmall: TextStyle(color: Color(0xFF111111)),
-          bodyMedium: TextStyle(color: Color(0xFF111111)),
-          bodyLarge: TextStyle(color: Color(0xFF111111)),
-          titleMedium: TextStyle(
-              color: Color(0xFF111111), fontWeight: FontWeight.w600),
-          titleLarge: TextStyle(
-              color: Color(0xFF111111), fontWeight: FontWeight.bold),
-        ),
+        textTheme: _poppinsLight(),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
