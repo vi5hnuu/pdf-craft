@@ -27,6 +27,7 @@ import 'package:pdf_craft/pages/RepairPdfView.dart';
 import 'package:pdf_craft/pages/ReorderPdfView.dart';
 import 'package:pdf_craft/pages/RotatePdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
+import 'package:pdf_craft/pages/BatchProcessView.dart';
 import 'package:pdf_craft/pages/OnboardingScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/StampPdfView.dart';
@@ -366,6 +367,15 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         path: AppRoutes.stampPdfRoute.path,
         name: AppRoutes.stampPdfRoute.name,
         builder: (context, state) => StampPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.batchProcessRoute.path,
+        name: AppRoutes.batchProcessRoute.name,
+        builder: (context, state) {
+          final files = (state.extra as Map)['files'] as List<File>;
+          return BatchProcessView(files: files);
+        },
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

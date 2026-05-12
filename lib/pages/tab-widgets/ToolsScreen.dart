@@ -64,6 +64,27 @@ class ToolsScreen extends StatelessWidget {
           _ToolItem(name: 'Flatten PDF', icon: Icons.layers_clear, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.flattenPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
         ],
       ),
+      _ToolCategory(
+        name: 'Batch',
+        icon: Icons.dynamic_feed,
+        color: const Color(0xFF6D4C41),
+        tools: [
+          _ToolItem(
+            name: 'Batch Process',
+            icon: Icons.layers,
+            onTap: () => router.pushNamed(
+              AppRoutes.fileManagement.name,
+              extra: FileSelectionConfig(
+                path: Constants.rootStoragePath,
+                redirectPath: AppRoutes.batchProcessRoute.path,
+                multiSelect: true,
+                minSelection: 2,
+                limitToExtensions: pdf,
+              ),
+            ),
+          ),
+        ],
+      ),
     ];
 
     return SafeArea(
