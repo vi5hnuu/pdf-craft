@@ -73,8 +73,8 @@ class _StampPdfViewState extends State<StampPdfView> {
                           children: [
                             _field(_outFileNameC, 'Output File Name (optional)'),
                             const SizedBox(height: 20),
-                            // Stamp image picker
-                            const Text('Stamp Image', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            // Stamp PDF picker
+                            const Text('Stamp PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                             const SizedBox(height: 8),
                             GestureDetector(
                               onTap: _pickStamp,
@@ -86,16 +86,20 @@ class _StampPdfViewState extends State<StampPdfView> {
                                   border: Border.all(color: theme.dividerColor),
                                 ),
                                 child: _stampFile != null
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.file(_stampFile!, fit: BoxFit.contain),
+                                    ? Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.picture_as_pdf, size: 32, color: theme.colorScheme.primary),
+                                          const SizedBox(width: 10),
+                                          Flexible(child: Text(_stampFile!.path.split('/').last, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                                        ],
                                       )
                                     : Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Icon(Icons.add_photo_alternate_outlined, size: 36, color: theme.colorScheme.primary),
+                                          Icon(Icons.picture_as_pdf_outlined, size: 36, color: theme.colorScheme.primary),
                                           const SizedBox(height: 6),
-                                          const Text('Tap to select stamp image', style: TextStyle(fontSize: 13)),
+                                          const Text('Tap to select stamp PDF', style: TextStyle(fontSize: 13)),
                                         ],
                                       ),
                               ),
@@ -142,9 +146,10 @@ class _StampPdfViewState extends State<StampPdfView> {
       );
 
   void _pickStamp() async {
+    // Backend stamps PDF-on-PDF; image support not yet implemented server-side
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png'],
+      allowedExtensions: ['pdf'],
     );
     if (result != null && result.files.single.path != null) {
       setState(() => _stampFile = File(result.files.single.path!));
