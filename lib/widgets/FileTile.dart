@@ -11,6 +11,7 @@ class FileTile extends StatelessWidget {
   final bool selected;
   final VoidCallback? onPress;
   final VoidCallback? onDelete;
+  final VoidCallback? onLongPress;
 
   const FileTile(
       {super.key,
@@ -18,7 +19,8 @@ class FileTile extends StatelessWidget {
       this.enabled = true,
       this.selected = false,
       this.onPress,
-      this.onDelete});
+      this.onDelete,
+      this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +100,7 @@ class FileTile extends StatelessWidget {
             : Icon(Icons.chevron_right,
                 color: theme.colorScheme.onSurface.withOpacity(0.5)),
         onTap: onPress,
+        onLongPress: onLongPress,
       ),
     );
   }

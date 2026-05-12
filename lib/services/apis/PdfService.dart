@@ -58,88 +58,88 @@ class PdfService {
     return _instance;
   }
 
-  Future<Response<Uint8List>> mergePdf({required MergePdf mergePdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_mergePdf,data:FormData.fromMap(mergePdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> mergePdf({required MergePdf mergePdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_mergePdf,data:FormData.fromMap(mergePdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> reorderPdf({required ReorderPdf reorderPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_reorderPdf,data:FormData.fromMap(reorderPdf.toJson()),options: Options( contentType: 'multipart/form-data', responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> reorderPdf({required ReorderPdf reorderPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_reorderPdf,data:FormData.fromMap(reorderPdf.toJson()),options: Options( contentType: 'multipart/form-data', responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> splitPdf({required SplitPdf splitPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_splitPdf,data:FormData.fromMap(splitPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> splitPdf({required SplitPdf splitPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_splitPdf,data:FormData.fromMap(splitPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> pdfToJpg({required PdfToJpg pdfToJpg, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_pdfToJpg,data:FormData.fromMap(pdfToJpg.toJson()),options: Options(contentType: 'multipart/form-data',responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> pdfToJpg({required PdfToJpg pdfToJpg, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_pdfToJpg,data:FormData.fromMap(pdfToJpg.toJson()),options: Options(contentType: 'multipart/form-data',responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> imageToPdf({required ImageToPdf imageToPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_imageToPdf,data:FormData.fromMap(imageToPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> imageToPdf({required ImageToPdf imageToPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_imageToPdf,data:FormData.fromMap(imageToPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> pageNumbers({required PageNumbers pageNumber, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_pageNumbers,data:FormData.fromMap(pageNumber.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> pageNumbers({required PageNumbers pageNumber, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_pageNumbers,data:FormData.fromMap(pageNumber.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> rotatePdf({required RotatePdf rotatePdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_rotatePdf,data:FormData.fromMap(rotatePdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> rotatePdf({required RotatePdf rotatePdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_rotatePdf,data:FormData.fromMap(rotatePdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> unprotectPdf({required UnProtectPdf unlockOdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_unprotectPdf,data:FormData.fromMap(unlockOdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> unprotectPdf({required UnProtectPdf unlockOdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_unprotectPdf,data:FormData.fromMap(unlockOdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> protectpdf({required ProtectPdf protectPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_protectpdf,data:FormData.fromMap(protectPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> protectpdf({required ProtectPdf protectPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_protectpdf,data:FormData.fromMap(protectPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> compressPdf({required CompressPdf compressPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_compressPdf,data:FormData.fromMap(compressPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> compressPdf({required CompressPdf compressPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_compressPdf,data:FormData.fromMap(compressPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> watermarkPdf({required WatermarkPdf watermarkPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_watermarkPdf,data:FormData.fromMap(watermarkPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> watermarkPdf({required WatermarkPdf watermarkPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_watermarkPdf,data:FormData.fromMap(watermarkPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> extractText({required ExtractText extractText, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_extractText,data:FormData.fromMap(extractText.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> extractText({required ExtractText extractText, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_extractText,data:FormData.fromMap(extractText.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> grayscalePdf({required GrayscalePdf grayscalePdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_grayscalePdf,data:FormData.fromMap(grayscalePdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> grayscalePdf({required GrayscalePdf grayscalePdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_grayscalePdf,data:FormData.fromMap(grayscalePdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> cropPdf({required CropPdf cropPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_cropPdf,data:FormData.fromMap(cropPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  Future<Response<Uint8List>> cropPdf({required CropPdf cropPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_cropPdf,data:FormData.fromMap(cropPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
   /// Returns JSON metadata (title, author, subject, etc.) — not a file download.
-  Future<Response<dynamic>> getMetadata({required GetMetadata getMetadata, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_getMetadata, data: FormData.fromMap(getMetadata.toJson()), cancelToken: cancelToken);
+  Future<Response<dynamic>> getMetadata({required GetMetadata getMetadata, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_getMetadata, data: FormData.fromMap(getMetadata.toJson()), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> editMetadata({required EditMetadata editMetadata, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_editMetadata, data: FormData.fromMap(editMetadata.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  Future<Response<Uint8List>> editMetadata({required EditMetadata editMetadata, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_editMetadata, data: FormData.fromMap(editMetadata.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> headerFooter({required HeaderFooter headerFooter, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_headerFooter, data: FormData.fromMap(headerFooter.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  Future<Response<Uint8List>> headerFooter({required HeaderFooter headerFooter, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_headerFooter, data: FormData.fromMap(headerFooter.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> repairPdf({required RepairPdf repairPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_repairPdf, data: FormData.fromMap(repairPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  Future<Response<Uint8List>> repairPdf({required RepairPdf repairPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_repairPdf, data: FormData.fromMap(repairPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> flattenPdf({required FlattenPdf flattenPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_flattenPdf, data: FormData.fromMap(flattenPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  Future<Response<Uint8List>> flattenPdf({required FlattenPdf flattenPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_flattenPdf, data: FormData.fromMap(flattenPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> addBlankPages({required AddBlankPages addBlankPages, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_addBlankPages, data: FormData.fromMap(addBlankPages.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  Future<Response<Uint8List>> addBlankPages({required AddBlankPages addBlankPages, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_addBlankPages, data: FormData.fromMap(addBlankPages.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
-  Future<Response<Uint8List>> stampPdf({required StampPdf stampPdf, CancelToken? cancelToken}) async {
-    return await DioSingleton().dio.post(_stampPdf, data: FormData.fromMap(stampPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  Future<Response<Uint8List>> stampPdf({required StampPdf stampPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_stampPdf, data: FormData.fromMap(stampPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 }

@@ -40,6 +40,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
         listener: (context, state) {
           final s = state.httpStates[HttpStates.FLATTEN_PDF];
           if (s?.done == true) {
+          AdsSingleton().dispatch(ShowInterstitialAd());
             NotificationService.showSnackbar(text: 'PDF flattened successfully', color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});

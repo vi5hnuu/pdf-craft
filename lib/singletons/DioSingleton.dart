@@ -1,5 +1,6 @@
-import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/utils/NetworkUtils.dart';
 
 class DioSingleton {
   final Dio dio = Dio();
@@ -8,6 +9,14 @@ class DioSingleton {
   DioSingleton._() {
     dio.interceptors.add(
         InterceptorsWrapper(onRequest: (options, handler) async {
+          // Reject immediately if device has no internet — avoids confusing timeout errors
+          if (!await NetworkUtils.isOnline()) {
+            return handler.reject(DioException(
+              requestOptions: options,
+              message: 'No internet connection. Please check your network.',
+              type: DioExceptionType.connectionError,
+            ));
+          }
           LoggerSingleton().logger.i('REQUEST [${options.method}] => PATH: ${options.path}');
           return handler.next(options);
         },
@@ -16,8 +25,7 @@ class DioSingleton {
               return handler.next(response);
             },
             onError: (DioException e, handler) {
-              print(e.error);
-              LoggerSingleton().logger.i('ERROR [${e.response?.statusCode}] => PATH: ${e.requestOptions.path}');
+              LoggerSingleton().logger.e('ERROR [${e.response?.statusCode}] => PATH: ${e.requestOptions.path}', error: e.error);
               return handler.next(e);
             }));
   }

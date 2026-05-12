@@ -40,6 +40,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
         listener: (context, state) {
           final s = state.httpStates[HttpStates.EXTRACT_TEXT];
           if (s?.done == true) {
+          AdsSingleton().dispatch(ShowInterstitialAd());
             NotificationService.showSnackbar(text: 'Text extracted successfully', color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               OpenFile.open((s!.extras!['savedFile'] as File).path);

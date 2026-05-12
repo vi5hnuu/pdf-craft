@@ -1,10 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PdfPreview extends StatefulWidget {
   final String pdfFilePath;
@@ -48,7 +48,6 @@ class _PdfPreviewState extends State<PdfPreview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title:  Text(
           docTitle ?? "Pdf View",
@@ -73,6 +72,12 @@ class _PdfPreviewState extends State<PdfPreview> {
             },
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        mini: true,
+        tooltip: 'Share',
+        onPressed: () => Share.shareXFiles([XFile(widget.pdfFilePath)]),
+        child: const Icon(Icons.share),
       ),
       body: pdfController==null ? Center(child: askPassError,) : PdfViewPinch(
         controller: pdfController!,

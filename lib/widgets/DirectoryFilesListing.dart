@@ -161,6 +161,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                                 file: file,
                                 selected: _isFileSelected(file),
                                 onPress: () => _onItemClick(file: file),
+                                onLongPress: () => _showContextMenu(file),
                                 onDelete: widget.onDelete != null &&
                                         file is File
                                     ? () {
@@ -335,6 +336,94 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   _loadDirectoryFiles(String path) {
     if (bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
     bloc.add(LoadDirectoryFilesEvent(path: pathToDirectory.last));
+  }
+
+  // Shows a bottom sheet with rename (and future actions) for long-pressed items
+  void _showContextMenu(FileSystemEntity file) {
+    final isDir = file is Directory;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                file.path.split('/').last,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text('Rename ${isDir ? 'Folder' : 'File'}'),
+              onTap: () {
+                Navigator.pop(context);
+                _renameFile(file);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Shows rename dialog and renames the file/directory on the filesystem
+  void _renameFile(FileSystemEntity entity) async {
+    final currentName = entity.path.split('/').last;
+    // Strip extension so user edits just the base name for files
+    final isFile = entity is File;
+    final ext = isFile ? '.${currentName.split('.').last}' : '';
+    final baseName = isFile && currentName.contains('.') ? currentName.substring(0, currentName.lastIndexOf('.')) : currentName;
+
+    final controller = TextEditingController(text: baseName);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Rename ${isFile ? 'File' : 'Folder'}'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: 'New name',
+            suffixText: ext,
+            border: const OutlineInputBorder(),
+          ),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (newName == null || newName.isEmpty || newName == baseName) return;
+
+    try {
+      final dir = entity.parent.path;
+      final newPath = '$dir/$newName$ext';
+      await entity.rename(newPath);
+      // Refresh listing
+      _loadDirectoryFiles(pathToDirectory.last);
+      NotificationService.showSnackbar(text: 'Renamed successfully', color: Colors.green);
+    } catch (e) {
+      NotificationService.showSnackbar(text: 'Failed to rename', color: Colors.red);
+    }
   }
 
   @override

@@ -46,6 +46,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
         listener: (context, state) {
           final s = state.httpStates[HttpStates.EDIT_METADATA];
           if (s?.done == true) {
+          AdsSingleton().dispatch(ShowInterstitialAd());
             NotificationService.showSnackbar(text: 'Metadata updated successfully', color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});

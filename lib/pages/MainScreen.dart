@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/RateAppService.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
 
 class MainScreen extends StatefulWidget {
@@ -25,7 +28,16 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return BlocListener<PdfBloc, PdfState>(
+      // Fire when any httpState key newly transitions to done
+      listenWhen: (prev, curr) => curr.httpStates.entries.any(
+        (e) => e.value.done == true && prev.httpStates[e.key]?.done != true,
+      ),
+      listener: (context, state) async {
+        final should = await RateAppService().recordSuccess();
+        if (should && mounted) _showRateDialog(context);
+      },
+      child: Scaffold(
       body: widget.navigationShell,
       appBar: AppBar(
         leading: Padding(
@@ -80,6 +92,38 @@ class _MainScreenState extends State<MainScreen> {
         ],
         currentIndex: widget.navigationShell.currentIndex,
         onTap: _onTap,
+      ),
+    ),
+    );
+  }
+
+  void _showRateDialog(BuildContext ctx) {
+    showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('Enjoying PDF Craft?'),
+        content: const Text(
+          'You\'ve processed several files! If you find this app useful, please take a moment to rate it — it helps a lot.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              RateAppService().markRated();
+              Navigator.pop(ctx);
+            },
+            child: const Text('Later'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await RateAppService().markRated();
+              await RateAppService().openPlayStore();
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Rate Now'),
+          ),
+        ],
       ),
     );
   }

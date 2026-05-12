@@ -55,6 +55,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
         listener: (context, state) {
           final s = state.httpStates[HttpStates.HEADER_FOOTER];
           if (s?.done == true) {
+          AdsSingleton().dispatch(ShowInterstitialAd());
             NotificationService.showSnackbar(text: 'Header/footer added successfully', color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
