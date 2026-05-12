@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/direction.dart';
@@ -46,7 +45,6 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // theme-aware
       appBar: AppBar(
         title: Text('Pdf To Jpg'),
         elevation: 5,

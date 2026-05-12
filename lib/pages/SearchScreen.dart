@@ -52,7 +52,6 @@ class _SearchScreenState extends State<SearchScreen> {
             width: 124,
           ),
         ),
-        // theme-aware
         leadingWidth: 112,
         bottom: PreferredSize(preferredSize: const Size(double.infinity,  60),
             child: Padding(

@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
@@ -48,7 +47,6 @@ class _SplitPdfViewState extends State<SplitPdfView> {
     final router=GoRouter.of(context);
 
     return Scaffold(
-      // theme-aware
       appBar: AppBar(
         title: Text('Split Pdf'),
         elevation: 5,
@@ -81,7 +79,6 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(keyboardType: TextInputType.text,
-                        // theme text
                         decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
                         controller: outFileNameC),
                   ),

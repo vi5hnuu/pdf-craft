@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/user-access-permission.dart';
@@ -44,7 +43,6 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // theme-aware
       appBar: AppBar(
         title: Text('Protect Pdf'),
         elevation: 5,
