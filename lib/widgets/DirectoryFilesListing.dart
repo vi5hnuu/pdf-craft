@@ -370,7 +370,23 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                 _renameFile(file);
               },
             ),
-            if (!isDir)
+            if (!isDir) ...[
+              ListTile(
+                leading: const Icon(Icons.copy_outlined),
+                title: const Text('Copy to…'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _copyOrMove(file as File, move: false);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.drive_file_move_outlined),
+                title: const Text('Move to…'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _copyOrMove(file as File, move: true);
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('File Info'),
@@ -379,6 +395,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   _showFileInfo(file as File);
                 },
               ),
+            ],
             const SizedBox(height: 8),
           ],
         ),
@@ -442,6 +459,31 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         ),
       ],
     );
+  }
+
+  // Opens a folder picker and then copies or moves [file] to the chosen directory.
+  Future<void> _copyOrMove(File file, {required bool move}) async {
+    final destDir = await showDialog<String>(
+      context: context,
+      builder: (_) => _FolderPickerDialog(startPath: Constants.rootStoragePath),
+    );
+    if (destDir == null || !mounted) return;
+
+    final fileName = file.path.split('/').last;
+    final destPath = '$destDir/$fileName';
+
+    try {
+      if (move) {
+        await file.rename(destPath);
+        NotificationService.showSnackbar(text: 'Moved to $destDir', color: Colors.green);
+      } else {
+        await file.copy(destPath);
+        NotificationService.showSnackbar(text: 'Copied to $destDir', color: Colors.green);
+      }
+      _loadDirectoryFiles(pathToDirectory.last);
+    } catch (e) {
+      NotificationService.showSnackbar(text: 'Operation failed', color: Colors.red);
+    }
   }
 
   // Shows rename dialog and renames the file/directory on the filesystem
@@ -531,5 +573,132 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           color: Colors.red,
           showCloseIcon: true);
     }
+  }
+}
+
+// Folder picker dialog — lets the user browse directories and select a destination.
+class _FolderPickerDialog extends StatefulWidget {
+  final String startPath;
+  const _FolderPickerDialog({required this.startPath});
+
+  @override
+  State<_FolderPickerDialog> createState() => _FolderPickerDialogState();
+}
+
+class _FolderPickerDialogState extends State<_FolderPickerDialog> {
+  late String _currentPath;
+  List<Directory> _dirs = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPath = widget.startPath;
+    _loadDirs(_currentPath);
+  }
+
+  Future<void> _loadDirs(String path) async {
+    setState(() => _loading = true);
+    try {
+      final dir = Directory(path);
+      final entries = await dir.list(followLinks: false).where((e) => e is Directory).cast<Directory>().toList();
+      entries.sort((a, b) => a.path.split('/').last.compareTo(b.path.split('/').last));
+      if (mounted) setState(() { _dirs = entries; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() { _dirs = []; _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final folderName = _currentPath.split('/').last.isEmpty ? 'Root' : _currentPath.split('/').last;
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 0),
+            child: Row(
+              children: [
+                if (_currentPath != widget.startPath)
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      final parent = Directory(_currentPath).parent.path;
+                      setState(() => _currentPath = parent);
+                      _loadDirs(parent);
+                    },
+                  ),
+                Expanded(
+                  child: Text(
+                    folderName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          // Directory list
+          SizedBox(
+            height: 300,
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _dirs.isEmpty
+                    ? Center(
+                        child: Text('No sub-folders',
+                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                      )
+                    : ListView.builder(
+                        itemCount: _dirs.length,
+                        itemBuilder: (ctx, i) {
+                          final name = _dirs[i].path.split('/').last;
+                          return ListTile(
+                            leading: Icon(Icons.folder_outlined, color: primary),
+                            title: Text(name, overflow: TextOverflow.ellipsis),
+                            trailing: const Icon(Icons.chevron_right, size: 18),
+                            onTap: () {
+                              setState(() => _currentPath = _dirs[i].path);
+                              _loadDirs(_dirs[i].path);
+                            },
+                          );
+                        },
+                      ),
+          ),
+          const Divider(height: 1),
+          // Action row
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _currentPath.replaceFirst(widget.startPath, '…'),
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, _currentPath),
+                  child: const Text('Select'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
