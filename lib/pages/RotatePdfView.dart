@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
-import 'package:pdf_craft/models/HttpState.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -121,237 +120,238 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Reactive read: only rebuilds this widget when ROTATE_PDF state changes
-    final httpState = context.select<PdfBloc, HttpState?>(
-      (b) => b.state.httpStates[HttpStates.ROTATE_PDF],
-    );
 
-    return BlocListener<PdfBloc, PdfState>(
-      listenWhen: (p, c) =>
-          p.httpStates[HttpStates.ROTATE_PDF] != c.httpStates[HttpStates.ROTATE_PDF],
-      listener: (context, state) {
-        final s = state.httpStates[HttpStates.ROTATE_PDF];
-        if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-          NotificationService.showSnackbar(text: 'Rotated successfully', color: Colors.green);
-          if (s?.extras?['savedFile'] is File) {
-            GoRouter.of(context).pushNamed(
-              AppRoutes.pdfFilePreviewRoute.name,
-              pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-            );
+    return Scaffold(
+      appBar: AppBar(title: const Text('Rotate PDF Pages')),
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) =>
+            p.httpStates[HttpStates.ROTATE_PDF] != c.httpStates[HttpStates.ROTATE_PDF],
+        listenWhen: (p, c) =>
+            p.httpStates[HttpStates.ROTATE_PDF] != c.httpStates[HttpStates.ROTATE_PDF],
+        listener: (context, state) {
+          final s = state.httpStates[HttpStates.ROTATE_PDF];
+          if (s?.done == true) {
+            AdsSingleton().dispatch(ShowInterstitialAd());
+            NotificationService.showSnackbar(text: 'Rotated successfully', color: Colors.green);
+            if (s?.extras?['savedFile'] is File) {
+              GoRouter.of(context).pushNamed(
+                AppRoutes.pdfFilePreviewRoute.name,
+                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
+              );
+            }
+          } else if (s?.error != null) {
+            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
           }
-        } else if (s?.error != null) {
-          NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Rotate PDF Pages')),
-        body: Stack(
-          children: [
-            // Main content — rebuilt by setState; not gated behind buildWhen
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _outerScroll,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextFormField(
-                          controller: _outFileNameC,
-                          decoration: const InputDecoration(
-                            labelText: 'Output File Name',
-                            border: OutlineInputBorder(),
+        },
+        builder: (context, state) {
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _outerScroll, // scroll listener here
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: _outFileNameC,
+                            decoration: const InputDecoration(
+                              labelText: 'Output File Name',
+                              border: OutlineInputBorder(),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 20),
 
-                        // All-pages rotation angle
-                        Text('Rotate All Pages',
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Applies to all pages. Override individual pages below.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          children: _angles.map((angle) {
-                            return ChoiceChip(
-                              label: Text(angle == 0 ? 'None' : '$angle°'),
-                              selected: _fileAngle == angle,
-                              onSelected: (_) => setState(() => _fileAngle = angle),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Dimension behaviour toggle
-                        Card(
-                          margin: EdgeInsets.zero,
-                          child: SwitchListTile(
-                            title: const Text('Swap page dimensions'),
-                            subtitle: Text(
-                              _maintainRatio
-                                  ? 'Width and height will swap to match the rotated orientation.'
-                                  : 'Page size stays unchanged; content rotates within existing dimensions.',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            value: _maintainRatio,
-                            onChanged: (v) => setState(() => _maintainRatio = v),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Per-page overrides
-                        Text('Per-Page Overrides',
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _pageNoC,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  labelText: 'Page number',
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: DropdownButtonFormField<int>(
-                                decoration: const InputDecoration(
-                                  labelText: 'Angle',
-                                  border: OutlineInputBorder(),
-                                ),
-                                initialValue: _selectedPageAngle,
-                                items: _angles
-                                    .where((a) => a > 0)
-                                    .map((a) => DropdownMenuItem(
-                                          value: a,
-                                          child: Text('$a°'),
-                                        ))
-                                    .toList(),
-                                onChanged: (v) {
-                                  if (v != null) setState(() => _selectedPageAngle = v);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton.tonal(
-                              onPressed: _addPageAngle,
-                              child: const Text('Add'),
-                            ),
-                          ],
-                        ),
-                        if (_pageAngles.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _pageAngles.entries.map((e) {
-                              return Chip(
-                                label: Text('Page ${e.key}: ${e.value}°'),
-                                onDeleted: () =>
-                                    setState(() => _pageAngles.remove(e.key)),
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-
-                        // Page thumbnails
-                        if (_docError)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Text('Failed to load PDF preview',
-                                  style: TextStyle(color: Colors.red)),
-                            ),
-                          )
-                        else if (_document == null)
-                          const Center(child: CircularProgressIndicator())
-                        else ...[
-                          Text('Page Preview',
+                          // All-pages rotation angle
+                          Text('Rotate All Pages',
                               style: theme.textTheme.titleSmall
                                   ?.copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
                           Text(
-                            'Preview is approximate.',
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(color: Colors.amber.shade700),
+                            'Applies to all pages. Override individual pages below.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                           ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            children: _angles.map((angle) {
+                              return ChoiceChip(
+                                label: Text(angle == 0 ? 'None' : '$angle°'),
+                                selected: _fileAngle == angle,
+                                onSelected: (_) => setState(() => _fileAngle = angle),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Dimension behaviour toggle
+                          Card(
+                            margin: EdgeInsets.zero,
+                            child: SwitchListTile(
+                              title: const Text('Swap page dimensions'),
+                              subtitle: Text(
+                                _maintainRatio
+                                    ? 'Width and height will swap to match the rotated orientation.'
+                                    : 'Page size stays unchanged; content rotates within existing dimensions.',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              value: _maintainRatio,
+                              onChanged: (v) => setState(() => _maintainRatio = v),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Per-page overrides
+                          Text('Per-Page Overrides',
+                              style: theme.textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
-                          ...List.generate(_thumbnails.length, (index) {
-                            final pageNo = _pageIndexes[index] + 1;
-                            final thumb = _thumbnails[pageNo];
-                            final w = MediaQuery.of(context).size.width * 0.45;
-                            final h = w * 1.37;
-                            return Padding(
-                              key: ValueKey('page-$pageNo'),
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Center(
-                                child: RotatablePageWidget(
-                                  originalWidth: w,
-                                  originalHeight: h,
-                                  maintainAspectRatio: _maintainRatio,
-                                  rotationAngle:
-                                      (_pageAngles[pageNo] ?? _fileAngle).toDouble(),
-                                  child: Container(
-                                    width: w,
-                                    height: h,
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.surfaceContainerHighest,
-                                      border: Border.all(color: theme.dividerColor),
-                                    ),
-                                    child: thumb?.isLoading == true
-                                        ? const Center(
-                                            child: CircularProgressIndicator(strokeWidth: 2))
-                                        : thumb?.error != null
-                                            ? const Center(
-                                                child: Icon(Icons.broken_image_outlined))
-                                            : thumb?.image != null
-                                                ? Image.memory(thumb!.image!.bytes,
-                                                    fit: BoxFit.contain)
-                                                : const SizedBox.shrink(),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _pageNoC,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Page number',
+                                    border: OutlineInputBorder(),
                                   ),
                                 ),
                               ),
-                            );
-                          }),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: DropdownButtonFormField<int>(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Angle',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  value: _selectedPageAngle,
+                                  items: _angles
+                                      .where((a) => a > 0)
+                                      .map((a) => DropdownMenuItem(
+                                            value: a,
+                                            child: Text('$a°'),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) {
+                                    if (v != null) setState(() => _selectedPageAngle = v);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton.tonal(
+                                onPressed: _addPageAngle,
+                                child: const Text('Add'),
+                              ),
+                            ],
+                          ),
+                          if (_pageAngles.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _pageAngles.entries.map((e) {
+                                return Chip(
+                                  label: Text('Page ${e.key}: ${e.value}°'),
+                                  onDeleted: () =>
+                                      setState(() => _pageAngles.remove(e.key)),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+
+                          // Page thumbnails
+                          if (_docError)
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Text('Failed to load PDF preview',
+                                    style: TextStyle(color: Colors.red)),
+                              ),
+                            )
+                          else if (_document == null)
+                            const Center(child: CircularProgressIndicator())
+                          else ...[
+                            Text('Page Preview',
+                                style: theme.textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Preview is approximate.',
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: Colors.amber.shade700),
+                            ),
+                            const SizedBox(height: 8),
+                            // Non-scrollable list embedded in the outer scroll view
+                            ...List.generate(_thumbnails.length, (index) {
+                              final pageNo = _pageIndexes[index] + 1;
+                              final thumb = _thumbnails[pageNo];
+                              final w = MediaQuery.of(context).size.width * 0.45;
+                              final h = w * 1.37;
+                              return Padding(
+                                key: ValueKey('page-$pageNo'),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: Center(
+                                  child: RotatablePageWidget(
+                                    originalWidth: w,
+                                    originalHeight: h,
+                                    maintainAspectRatio: _maintainRatio,
+                                    rotationAngle:
+                                        (_pageAngles[pageNo] ?? _fileAngle).toDouble(),
+                                    child: Container(
+                                      width: w,
+                                      height: h,
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.surfaceContainerHighest,
+                                        border: Border.all(color: theme.dividerColor),
+                                      ),
+                                      child: thumb?.isLoading == true
+                                          ? const Center(
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2))
+                                          : thumb?.error != null
+                                              ? const Center(
+                                                  child: Icon(Icons.broken_image_outlined))
+                                              : thumb?.image != null
+                                                  ? Image.memory(thumb!.image!.bytes,
+                                                      fit: BoxFit.contain)
+                                                  : const SizedBox.shrink(),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
 
-                // Action bar
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.scaffoldBackgroundColor,
-                    border: Border(top: BorderSide(color: theme.dividerColor)),
+                  // Action bar
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor,
+                      border: Border(top: BorderSide(color: theme.dividerColor)),
+                    ),
+                    child: FilledButton(
+                      onPressed:
+                          (_fileAngle == 0 && _pageAngles.isEmpty) ? null : _onSubmit,
+                      child: const Text('Rotate PDF Pages'),
+                    ),
                   ),
-                  child: FilledButton(
-                    onPressed:
-                        (_fileAngle == 0 && _pageAngles.isEmpty) ? null : _onSubmit,
-                    child: const Text('Rotate PDF Pages'),
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            LoadingOverlay(httpState: httpState),
-          ],
-        ),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.ROTATE_PDF]),
+            ],
+          );
+        },
       ),
     );
   }

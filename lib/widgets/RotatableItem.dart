@@ -59,14 +59,14 @@ class RotatablePageWidget extends StatelessWidget {
     final wInc= (width-originalWidth)/originalWidth;
     if(wInc>0) width=width-width*(wInc);
 
-    return Container(
+    return SizedBox(
       width: width,
       height: height,
-      // decoration: BoxDecoration(color: Colors.red),
       child: Transform.rotate(
-        origin: Offset(0, 0),
-        angle: rotationAngle * pi / 180, // Convert to radians
-        child: child
+        // Rotate around center (default alignment); origin: Offset(0,0) was rotating
+        // around the top-left corner, painting the child completely off-screen
+        angle: rotationAngle * pi / 180,
+        child: child,
       ),
     );
   }
