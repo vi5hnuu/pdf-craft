@@ -35,7 +35,7 @@ class PageNumbers {
 
   Map<String,dynamic> toJson() {
     return {
-      "page-numbers-config":MultipartFile.fromString(
+      "page-numbers-info":MultipartFile.fromString(
         jsonEncode({
           "out_file_name":out_file_name,
           "page_no_type":page_no_type.type,

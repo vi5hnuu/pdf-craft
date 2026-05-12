@@ -14,7 +14,7 @@ class PdfToJpg {
   Map<String,dynamic> toJson() {
     return {
       "file":file,
-      "meta": MultipartFile.fromString(
+      "pdf-to-jpg-info": MultipartFile.fromString(
         jsonEncode(meta.toJson()),
         contentType: DioMediaType.parse("application/json"),
       ),

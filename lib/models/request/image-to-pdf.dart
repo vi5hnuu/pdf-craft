@@ -1,16 +1,19 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 
 class ImageToPdf {
-  final String out_file_name; //zip name/single image name is single=true
+  final String out_file_name;
   final List<MultipartFile> files;
 
-  ImageToPdf({required this.out_file_name,required this.files});
+  ImageToPdf({required this.out_file_name, required this.files});
 
-  Map<String,dynamic> toJson() {
+  Map<String, dynamic> toJson() {
     return {
-      "out_file_name":out_file_name,
-      "files":files,
+      'image-to-pdf-info': MultipartFile.fromString(
+        jsonEncode({'out_file_name': out_file_name}),
+        contentType: DioMediaType.parse('application/json'),
+      ),
+      'files': files,
     };
   }
 }
-
