@@ -110,13 +110,13 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                         header: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: RichText(
-                            text: const TextSpan(
+                            text: TextSpan(
                               text: 'Reorder Pages ',
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                               children: [
                                 TextSpan(
-                                  text: '( long press to drag )',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  text: ' (long press to drag)',
+                                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                                 ),
                               ],
                             ),
@@ -138,7 +138,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                                 Container(
                                   height: thumbnailHeight,
                                   width: thumbnailWidth,
-                                  decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(8)),
+                                  decoration: BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),borderRadius: BorderRadius.circular(8)),
                                   child: (thumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (thumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(thumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
                                 ),
                                 Flexible(child: Padding(
