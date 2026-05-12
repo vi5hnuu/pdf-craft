@@ -31,6 +31,7 @@ import 'package:pdf_craft/pages/BatchProcessView.dart';
 import 'package:pdf_craft/pages/OnboardingScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/StampPdfView.dart';
+import 'package:pdf_craft/pages/QrStampPdfView.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
@@ -367,6 +368,17 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         path: AppRoutes.stampPdfRoute.path,
         name: AppRoutes.stampPdfRoute.name,
         builder: (context, state) => StampPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.qrStampPdfRoute.path,
+        name: AppRoutes.qrStampPdfRoute.name,
+        builder: (context, state) =>
+            QrStampPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

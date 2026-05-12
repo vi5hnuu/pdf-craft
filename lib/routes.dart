@@ -36,6 +36,7 @@ class AppRoutes{
   static AppRoute flattenPdfRoute=AppRoute(name: 'flatten-pdf-tool', path: '/flatten-pdf-tool');
   static AppRoute addBlankPagesRoute=AppRoute(name: 'add-blank-pages-tool', path: '/add-blank-pages-tool');
   static AppRoute stampPdfRoute=AppRoute(name: 'stamp-pdf-tool', path: '/stamp-pdf-tool');
+  static AppRoute qrStampPdfRoute=AppRoute(name: 'qr-stamp-pdf-tool', path: '/qr-stamp-pdf-tool');
   static AppRoute pdfFilePreviewRoute=AppRoute(name: 'pdf-file-preview', path: '/pdf-file-preview/:pdfFilePath');
 
 
