@@ -77,3 +77,38 @@ class CropPdfEvent extends PdfEvent{
   final CropPdf cropPdf;
   const CropPdfEvent({required this.cropPdf, super.cancelToken});
 }
+
+class GetMetadataEvent extends PdfEvent {
+  final GetMetadata getMetadata;
+  const GetMetadataEvent({required this.getMetadata, super.cancelToken});
+}
+
+class EditMetadataEvent extends PdfEvent {
+  final EditMetadata editMetadata;
+  const EditMetadataEvent({required this.editMetadata, super.cancelToken});
+}
+
+class HeaderFooterEvent extends PdfEvent {
+  final HeaderFooter headerFooter;
+  const HeaderFooterEvent({required this.headerFooter, super.cancelToken});
+}
+
+class RepairPdfEvent extends PdfEvent {
+  final RepairPdf repairPdf;
+  const RepairPdfEvent({required this.repairPdf, super.cancelToken});
+}
+
+class FlattenPdfEvent extends PdfEvent {
+  final FlattenPdf flattenPdf;
+  const FlattenPdfEvent({required this.flattenPdf, super.cancelToken});
+}
+
+class AddBlankPagesEvent extends PdfEvent {
+  final AddBlankPages addBlankPages;
+  const AddBlankPagesEvent({required this.addBlankPages, super.cancelToken});
+}
+
+class StampPdfEvent extends PdfEvent {
+  final StampPdf stampPdf;
+  const StampPdfEvent({required this.stampPdf, super.cancelToken});
+}

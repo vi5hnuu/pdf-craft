@@ -7,21 +7,28 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/theme/app_theme.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
+import 'package:pdf_craft/pages/AddBlankPagesView.dart';
+import 'package:pdf_craft/pages/EditMetadataView.dart';
 import 'package:pdf_craft/pages/ErrorPage.dart';
+import 'package:pdf_craft/pages/FlattenPdfView.dart';
 import 'package:pdf_craft/pages/CompressPdfView.dart';
 import 'package:pdf_craft/pages/CropPdfView.dart';
 import 'package:pdf_craft/pages/ExtractTextView.dart';
 import 'package:pdf_craft/pages/GrayscalePdfView.dart';
+import 'package:pdf_craft/pages/HeaderFooterView.dart';
 import 'package:pdf_craft/pages/ImageToPdfView.dart';
 import 'package:pdf_craft/pages/MainScreen.dart';
 import 'package:pdf_craft/pages/MergePdfView.dart';
 import 'package:pdf_craft/pages/PageNumbersPdfView.dart';
+import 'package:pdf_craft/pages/PdfInfoView.dart';
 import 'package:pdf_craft/pages/PdfToJpgView.dart';
 import 'package:pdf_craft/pages/ProtectPdfView.dart';
+import 'package:pdf_craft/pages/RepairPdfView.dart';
 import 'package:pdf_craft/pages/ReorderPdfView.dart';
 import 'package:pdf_craft/pages/RotatePdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
+import 'package:pdf_craft/pages/StampPdfView.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
@@ -279,8 +286,76 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         builder: (BuildContext context, GoRouterState state) => CropPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        // The screen to display as the root in the first tab of the
-        // bottom navigation bar.
+        redirect: (context, state) {
+          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.pdfInfoRoute.path,
+        name: AppRoutes.pdfInfoRoute.name,
+        builder: (context, state) => PdfInfoView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.editMetadataRoute.path,
+        name: AppRoutes.editMetadataRoute.name,
+        builder: (context, state) => EditMetadataView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.headerFooterRoute.path,
+        name: AppRoutes.headerFooterRoute.name,
+        builder: (context, state) => HeaderFooterView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.repairPdfRoute.path,
+        name: AppRoutes.repairPdfRoute.name,
+        builder: (context, state) => RepairPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.flattenPdfRoute.path,
+        name: AppRoutes.flattenPdfRoute.name,
+        builder: (context, state) => FlattenPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.addBlankPagesRoute.path,
+        name: AppRoutes.addBlankPagesRoute.name,
+        builder: (context, state) => AddBlankPagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.stampPdfRoute.path,
+        name: AppRoutes.stampPdfRoute.name,
+        builder: (context, state) => StampPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.pdfFilePreviewRoute.path,
         name: AppRoutes.pdfFilePreviewRoute.name,

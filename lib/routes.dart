@@ -27,6 +27,13 @@ class AppRoutes{
   static AppRoute extractTextRoute=AppRoute(name: 'extract-text-tool', path: '/extract-text-tool');
   static AppRoute grayscalePdfRoute=AppRoute(name: 'grayscale-pdf-tool', path: '/grayscale-pdf-tool');
   static AppRoute cropPdfRoute=AppRoute(name: 'crop-pdf-tool', path: '/crop-pdf-tool');
+  static AppRoute pdfInfoRoute=AppRoute(name: 'pdf-info-tool', path: '/pdf-info-tool');
+  static AppRoute editMetadataRoute=AppRoute(name: 'edit-metadata-tool', path: '/edit-metadata-tool');
+  static AppRoute headerFooterRoute=AppRoute(name: 'header-footer-tool', path: '/header-footer-tool');
+  static AppRoute repairPdfRoute=AppRoute(name: 'repair-pdf-tool', path: '/repair-pdf-tool');
+  static AppRoute flattenPdfRoute=AppRoute(name: 'flatten-pdf-tool', path: '/flatten-pdf-tool');
+  static AppRoute addBlankPagesRoute=AppRoute(name: 'add-blank-pages-tool', path: '/add-blank-pages-tool');
+  static AppRoute stampPdfRoute=AppRoute(name: 'stamp-pdf-tool', path: '/stamp-pdf-tool');
   static AppRoute pdfFilePreviewRoute=AppRoute(name: 'pdf-file-preview', path: '/pdf-file-preview/:pdfFilePath');
 
 

@@ -3,18 +3,25 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/models/request/add-blank-pages.dart';
 import 'package:pdf_craft/models/request/compress-pdf.dart';
 import 'package:pdf_craft/models/request/crop-pdf.dart';
+import 'package:pdf_craft/models/request/edit-metadata.dart';
 import 'package:pdf_craft/models/request/extract-text.dart';
+import 'package:pdf_craft/models/request/flatten-pdf.dart';
+import 'package:pdf_craft/models/request/get-metadata.dart';
 import 'package:pdf_craft/models/request/grayscale-pdf.dart';
+import 'package:pdf_craft/models/request/header-footer.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/models/request/page-numbers.dart';
 import 'package:pdf_craft/models/request/pdf-to-jpg.dart';
 import 'package:pdf_craft/models/request/protect-pdf.dart';
+import 'package:pdf_craft/models/request/repair-pdf.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
+import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -24,6 +31,13 @@ import '../../singletons/DioSingleton.dart';
 class PdfService {
   static final PdfService _instance = PdfService._();
 
+  static String get _getMetadata => "${Constants.baseUrl}/pdf-studio/get-metadata";
+  static String get _editMetadata => "${Constants.baseUrl}/pdf-studio/edit-metadata";
+  static String get _headerFooter => "${Constants.baseUrl}/pdf-studio/header-footer";
+  static String get _repairPdf => "${Constants.baseUrl}/pdf-studio/repair-pdf";
+  static String get _flattenPdf => "${Constants.baseUrl}/pdf-studio/flatten-pdf";
+  static String get _addBlankPages => "${Constants.baseUrl}/pdf-studio/add-blank-pages";
+  static String get _stampPdf => "${Constants.baseUrl}/pdf-studio/stamp-pdf";
   static String get _mergePdf => "${Constants.baseUrl}/pdf-studio/merge-pdf";
   static String get _reorderPdf => "${Constants.baseUrl}/pdf-studio/reorder-pdf";
   static String get _splitPdf => "${Constants.baseUrl}/pdf-studio/split-pdf";
@@ -98,5 +112,34 @@ class PdfService {
 
   Future<Response<Uint8List>> cropPdf({required CropPdf cropPdf, CancelToken? cancelToken}) async {
     return await DioSingleton().dio.post(_cropPdf,data:FormData.fromMap(cropPdf.toJson()),options: Options(responseType: ResponseType.bytes),cancelToken: cancelToken);
+  }
+
+  /// Returns JSON metadata (title, author, subject, etc.) — not a file download.
+  Future<Response<dynamic>> getMetadata({required GetMetadata getMetadata, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_getMetadata, data: FormData.fromMap(getMetadata.toJson()), cancelToken: cancelToken);
+  }
+
+  Future<Response<Uint8List>> editMetadata({required EditMetadata editMetadata, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_editMetadata, data: FormData.fromMap(editMetadata.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  }
+
+  Future<Response<Uint8List>> headerFooter({required HeaderFooter headerFooter, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_headerFooter, data: FormData.fromMap(headerFooter.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  }
+
+  Future<Response<Uint8List>> repairPdf({required RepairPdf repairPdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_repairPdf, data: FormData.fromMap(repairPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  }
+
+  Future<Response<Uint8List>> flattenPdf({required FlattenPdf flattenPdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_flattenPdf, data: FormData.fromMap(flattenPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  }
+
+  Future<Response<Uint8List>> addBlankPages({required AddBlankPages addBlankPages, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_addBlankPages, data: FormData.fromMap(addBlankPages.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+  }
+
+  Future<Response<Uint8List>> stampPdf({required StampPdf stampPdf, CancelToken? cancelToken}) async {
+    return await DioSingleton().dio.post(_stampPdf, data: FormData.fromMap(stampPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
   }
 }

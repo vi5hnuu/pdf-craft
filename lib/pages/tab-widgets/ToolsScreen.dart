@@ -26,6 +26,9 @@ class ToolsScreen extends StatelessWidget {
           _ToolItem(name: 'Rotate PDF', icon: Icons.rotate_right, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.rotatePdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Page Numbers', icon: Icons.format_list_numbered, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pageNumbersRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Crop PDF', icon: Icons.crop, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.cropPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Add Blank Pages', icon: Icons.add_box_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.addBlankPagesRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Stamp PDF', icon: Icons.photo_filter, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.stampPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'PDF Info', icon: Icons.info_outline, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfInfoRoute.path, multiSelect: false, limitToExtensions: pdf))),
         ],
       ),
       _ToolCategory(
@@ -37,6 +40,8 @@ class ToolsScreen extends StatelessWidget {
           _ToolItem(name: 'Watermark', icon: Icons.branding_watermark, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.watermarkPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Grayscale', icon: Icons.invert_colors, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.grayscalePdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Extract Text', icon: Icons.text_snippet, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.extractTextRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Header/Footer', icon: Icons.view_headline, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.headerFooterRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Edit Metadata', icon: Icons.edit_note, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.editMetadataRoute.path, multiSelect: false, limitToExtensions: pdf))),
         ],
       ),
       _ToolCategory(
@@ -55,6 +60,8 @@ class ToolsScreen extends StatelessWidget {
         tools: [
           _ToolItem(name: 'Protect PDF', icon: Icons.lock, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.protectPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Unprotect PDF', icon: Icons.lock_open, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.unprotectPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Repair PDF', icon: Icons.build_circle_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.repairPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Flatten PDF', icon: Icons.layers_clear, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.flattenPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
         ],
       ),
     ];
@@ -120,7 +127,7 @@ class _CategorySection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: category.color.withOpacity(0.15),
+                  color: category.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(category.icon, color: category.color, size: 18),
@@ -156,13 +163,14 @@ class _ToolCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: tool.onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF2A2A2A)),
+          border: Border.all(color: theme.dividerColor),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -171,7 +179,7 @@ class _ToolCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.12),
+                color: accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(tool.icon, color: accentColor, size: 26),
@@ -182,7 +190,7 @@ class _ToolCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white, height: 1.3),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface, height: 1.3),
             ),
           ],
         ),

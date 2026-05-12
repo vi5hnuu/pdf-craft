@@ -7,18 +7,25 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/WithHttpState.dart';
+import 'package:pdf_craft/models/request/add-blank-pages.dart';
 import 'package:pdf_craft/models/request/compress-pdf.dart';
 import 'package:pdf_craft/models/request/crop-pdf.dart';
+import 'package:pdf_craft/models/request/edit-metadata.dart';
 import 'package:pdf_craft/models/request/extract-text.dart';
+import 'package:pdf_craft/models/request/flatten-pdf.dart';
+import 'package:pdf_craft/models/request/get-metadata.dart';
 import 'package:pdf_craft/models/request/grayscale-pdf.dart';
+import 'package:pdf_craft/models/request/header-footer.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/models/request/page-numbers.dart';
 import 'package:pdf_craft/models/request/pdf-to-jpg.dart';
 import 'package:pdf_craft/models/request/protect-pdf.dart';
+import 'package:pdf_craft/models/request/repair-pdf.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
+import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -225,6 +232,103 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.CROP_PDF, HttpState.error(error:"Failed to crop pdf"))));
       } catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.CROP_PDF, HttpState.error(error: "Failed to crop pdf"))));
+      }
+    });
+
+    // Returns JSON metadata in extras['metadata'] — no file saved
+    on<GetMetadataEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, const HttpState.loading())));
+      try {
+        final res = await pdfService.getMetadata(getMetadata: event.getMetadata, cancelToken: event.cancelToken);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.done(extras: {'metadata': res.data}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.error(error: e.message ?? "Failed to get metadata"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.error(error: "Failed to get metadata"))));
+      }
+    });
+
+    on<EditMetadataEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.EDIT_METADATA, const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes = await pdfService.editMetadata(editMetadata: event.editMetadata, cancelToken: event.cancelToken);
+        if (fileRes.data == null) throw Exception("Failed to edit metadata");
+        File saveFile = await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.EDIT_METADATA, HttpState.done(extras: {'savedFile': saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.EDIT_METADATA, HttpState.error(error: "Failed to edit metadata"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.EDIT_METADATA, HttpState.error(error: "Failed to edit metadata"))));
+      }
+    });
+
+    on<HeaderFooterEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.HEADER_FOOTER, const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes = await pdfService.headerFooter(headerFooter: event.headerFooter, cancelToken: event.cancelToken);
+        if (fileRes.data == null) throw Exception("Failed to add header/footer");
+        File saveFile = await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.HEADER_FOOTER, HttpState.done(extras: {'savedFile': saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.HEADER_FOOTER, HttpState.error(error: "Failed to add header/footer"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.HEADER_FOOTER, HttpState.error(error: "Failed to add header/footer"))));
+      }
+    });
+
+    on<RepairPdfEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REPAIR_PDF, const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes = await pdfService.repairPdf(repairPdf: event.repairPdf, cancelToken: event.cancelToken);
+        if (fileRes.data == null) throw Exception("Failed to repair pdf");
+        File saveFile = await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REPAIR_PDF, HttpState.done(extras: {'savedFile': saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REPAIR_PDF, HttpState.error(error: "Failed to repair pdf"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.REPAIR_PDF, HttpState.error(error: "Failed to repair pdf"))));
+      }
+    });
+
+    on<FlattenPdfEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.FLATTEN_PDF, const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes = await pdfService.flattenPdf(flattenPdf: event.flattenPdf, cancelToken: event.cancelToken);
+        if (fileRes.data == null) throw Exception("Failed to flatten pdf");
+        File saveFile = await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.FLATTEN_PDF, HttpState.done(extras: {'savedFile': saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.FLATTEN_PDF, HttpState.error(error: "Failed to flatten pdf"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.FLATTEN_PDF, HttpState.error(error: "Failed to flatten pdf"))));
+      }
+    });
+
+    on<AddBlankPagesEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ADD_BLANK_PAGES, const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes = await pdfService.addBlankPages(addBlankPages: event.addBlankPages, cancelToken: event.cancelToken);
+        if (fileRes.data == null) throw Exception("Failed to add blank pages");
+        File saveFile = await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ADD_BLANK_PAGES, HttpState.done(extras: {'savedFile': saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ADD_BLANK_PAGES, HttpState.error(error: "Failed to add blank pages"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ADD_BLANK_PAGES, HttpState.error(error: "Failed to add blank pages"))));
+      }
+    });
+
+    on<StampPdfEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.STAMP_PDF, const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes = await pdfService.stampPdf(stampPdf: event.stampPdf, cancelToken: event.cancelToken);
+        if (fileRes.data == null) throw Exception("Failed to stamp pdf");
+        File saveFile = await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.STAMP_PDF, HttpState.done(extras: {'savedFile': saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.STAMP_PDF, HttpState.error(error: "Failed to stamp pdf"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.STAMP_PDF, HttpState.error(error: "Failed to stamp pdf"))));
       }
     });
   }

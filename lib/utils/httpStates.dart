@@ -15,6 +15,14 @@ class HttpStates{
   static const String CROP_PDF="CROP_PDF";
 
 
+  static const String GET_METADATA="GET_METADATA";
+  static const String EDIT_METADATA="EDIT_METADATA";
+  static const String HEADER_FOOTER="HEADER_FOOTER";
+  static const String REPAIR_PDF="REPAIR_PDF";
+  static const String FLATTEN_PDF="FLATTEN_PDF";
+  static const String ADD_BLANK_PAGES="ADD_BLANK_PAGES";
+  static const String STAMP_PDF="STAMP_PDF";
+
   static const String LOAD_DIRECTORY_FILES="LOAD_DIRECTORY_FILES";
   static const String MOVE_FILE_TO="MOVE_FILE_TO";
   static const String DELETE_FILE="DELETE_FILE";
