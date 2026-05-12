@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 class Constants {
+  // On Android, localhost = the device itself. Emulator reaches host via 10.0.2.2.
   static String get baseUrl => kDebugMode
-      ? "http://localhost:8082/api/v1"
+      ? "http://10.0.2.2:8082/api/v1"
       : "https://pdf-studio-api.laxmi.solutions/api/v1";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
   static const String binDirPath = "storage/emulated/0/ilvPdfBin";
