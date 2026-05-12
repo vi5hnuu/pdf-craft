@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -205,7 +204,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
               Container(
                 decoration: BoxDecoration(
-                    color: theme.scaffoldBackgroundColor.withOpacity(0.8)),
+                    color: theme.scaffoldBackgroundColor.withValues(alpha: \1)),
                 child: Align(
                   alignment: Alignment.center,
                   child: SpinKitRipple(size: 72, color: primary),
@@ -232,7 +231,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   if (i > 0)
                     Icon(Icons.chevron_right,
                         size: 14,
-                        color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                        color: theme.colorScheme.onSurface.withValues(alpha: \1)),
                   GestureDetector(
                     onTap: i < pathToDirectory.length - 1
                         ? () {
@@ -248,7 +247,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: i == pathToDirectory.length - 1
-                            ? primary.withOpacity(0.12)
+                            ? primary.withValues(alpha: \1)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -263,7 +262,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                               : FontWeight.normal,
                           color: i == pathToDirectory.length - 1
                               ? primary
-                              : theme.colorScheme.onSurface.withOpacity(0.6),
+                              : theme.colorScheme.onSurface.withValues(alpha: \1),
                         ),
                       ),
                     ),
@@ -278,7 +277,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               Text('Sort:',
                   style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                      color: theme.colorScheme.onSurface.withValues(alpha: \1))),
               const SizedBox(width: 4),
               ..._SortMode.values.map((mode) => Padding(
                     padding: const EdgeInsets.only(right: 4),
@@ -289,7 +288,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: _sortMode == mode
-                              ? primary.withOpacity(0.15)
+                              ? primary.withValues(alpha: \1)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
@@ -308,7 +307,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                             color: _sortMode == mode
                                 ? primary
                                 : theme.colorScheme.onSurface
-                                    .withOpacity(0.6),
+                                    .withValues(alpha: \1),
                           ),
                         ),
                       ),
