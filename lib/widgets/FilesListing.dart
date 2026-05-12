@@ -105,7 +105,7 @@ class FilesListing extends StatelessWidget {
                     filename,
                     style: TextStyle(
                       fontSize: 13,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -132,11 +132,11 @@ class FilesListing extends StatelessWidget {
                 onTap: () => Navigator.of(ctx).pop(1),
               ),
               ListTile(
-                leading: Icon(Icons.close, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                leading: Icon(Icons.close, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                 title: Text(
                   'Cancel',
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     fontWeight: FontWeight.w500,
                   ),
                 ),

@@ -60,7 +60,7 @@ class _ErrorpageState extends State<Errorpage> {
                   'PDF Craft needs access to your files to manage, view, and process your documents. Without this permission, the app cannot function.',
                   style: TextStyle(
                     fontSize: 15,
-                    color: theme.colorScheme.onSurface.withOpacity(0.65),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -116,7 +116,7 @@ class _ErrorpageState extends State<Errorpage> {
                   'An unexpected error occurred. Please try going back.',
                   style: TextStyle(
                     fontSize: 15,
-                    color: theme.colorScheme.onSurface.withOpacity(0.65),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
