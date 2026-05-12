@@ -24,20 +24,20 @@ import '../../singletons/DioSingleton.dart';
 class PdfService {
   static final PdfService _instance = PdfService._();
 
-  static const String _mergePdf = "${Constants.baseUrl}/pdf-studio/merge-pdf";
-  static const String _reorderPdf = "${Constants.baseUrl}/pdf-studio/reorder-pdf";
-  static const String _splitPdf = "${Constants.baseUrl}/pdf-studio/split-pdf";
-  static const String _pdfToJpg = "${Constants.baseUrl}/pdf-studio/pdf-to-jpg";
-  static const String _imageToPdf = "${Constants.baseUrl}/pdf-studio/image-to-pdf";
-  static const String _pageNumbers = "${Constants.baseUrl}/pdf-studio/page-numbers";
-  static const String _rotatePdf = "${Constants.baseUrl}/pdf-studio/rotate-pdf";
-  static const String _unprotectPdf = "${Constants.baseUrl}/pdf-studio/unprotect-pdf";
-  static const String _protectpdf = "${Constants.baseUrl}/pdf-studio/protect-pdf";
-  static const String _compressPdf = "${Constants.baseUrl}/pdf-studio/compress-pdf";
-  static const String _watermarkPdf = "${Constants.baseUrl}/pdf-studio/watermark-pdf";
-  static const String _extractText = "${Constants.baseUrl}/pdf-studio/extract-text";
-  static const String _grayscalePdf = "${Constants.baseUrl}/pdf-studio/grayscale-pdf";
-  static const String _cropPdf = "${Constants.baseUrl}/pdf-studio/crop-pdf";
+  static String get _mergePdf => "${Constants.baseUrl}/pdf-studio/merge-pdf";
+  static String get _reorderPdf => "${Constants.baseUrl}/pdf-studio/reorder-pdf";
+  static String get _splitPdf => "${Constants.baseUrl}/pdf-studio/split-pdf";
+  static String get _pdfToJpg => "${Constants.baseUrl}/pdf-studio/pdf-to-jpg";
+  static String get _imageToPdf => "${Constants.baseUrl}/pdf-studio/image-to-pdf";
+  static String get _pageNumbers => "${Constants.baseUrl}/pdf-studio/page-numbers";
+  static String get _rotatePdf => "${Constants.baseUrl}/pdf-studio/rotate-pdf";
+  static String get _unprotectPdf => "${Constants.baseUrl}/pdf-studio/unprotect-pdf";
+  static String get _protectpdf => "${Constants.baseUrl}/pdf-studio/protect-pdf";
+  static String get _compressPdf => "${Constants.baseUrl}/pdf-studio/compress-pdf";
+  static String get _watermarkPdf => "${Constants.baseUrl}/pdf-studio/watermark-pdf";
+  static String get _extractText => "${Constants.baseUrl}/pdf-studio/extract-text";
+  static String get _grayscalePdf => "${Constants.baseUrl}/pdf-studio/grayscale-pdf";
+  static String get _cropPdf => "${Constants.baseUrl}/pdf-studio/crop-pdf";
 
   PdfService._();
   factory PdfService() {

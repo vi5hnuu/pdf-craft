@@ -6,10 +6,10 @@ import '../../singletons/DioSingleton.dart';
 class ImageApi {
   static final ImageApi _instance = ImageApi._();
 
-  static const String _compressImage = "${Constants.baseUrl}/image-studio/compress-image"; //POST
-  static const String _convertToJpg = "${Constants.baseUrl}/image-studio/convert-to-jpg"; //POST
-  static const String _convertFromJpg = "${Constants.baseUrl}/image-studio/convert-from-jpg"; //POST
-  static const String _resizeImage = "${Constants.baseUrl}/image-studio/resize-image"; //POST
+  static String get _compressImage => "${Constants.baseUrl}/image-studio/compress-image";
+  static String get _convertToJpg => "${Constants.baseUrl}/image-studio/convert-to-jpg";
+  static String get _convertFromJpg => "${Constants.baseUrl}/image-studio/convert-from-jpg";
+  static String get _resizeImage => "${Constants.baseUrl}/image-studio/resize-image";
 
   ImageApi._();
   factory ImageApi() {

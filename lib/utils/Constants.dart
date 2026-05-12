@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart';
+
 class Constants {
-  static const String baseUrl = "https://pdf-studio-api.laxmi.solutions/api/v1";
+  static String get baseUrl => kDebugMode
+      ? "http://localhost:8082/api/v1"
+      : "https://pdf-studio-api.laxmi.solutions/api/v1";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
   static const String binDirPath = "storage/emulated/0/ilvPdfBin";
   static const String rootStoragePath = "storage/emulated/0";
