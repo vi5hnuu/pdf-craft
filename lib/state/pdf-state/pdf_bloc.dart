@@ -7,6 +7,10 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/WithHttpState.dart';
+import 'package:pdf_craft/models/request/compress-pdf.dart';
+import 'package:pdf_craft/models/request/crop-pdf.dart';
+import 'package:pdf_craft/models/request/extract-text.dart';
+import 'package:pdf_craft/models/request/grayscale-pdf.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/models/request/page-numbers.dart';
@@ -16,6 +20,7 @@ import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
+import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
@@ -150,6 +155,76 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PROTECT_PDF, HttpState.error(error:"Failed to protect pdf"))));
       } catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.PROTECT_PDF, HttpState.error(error: "Failed to protect pdf"))));
+      }
+    });
+
+    on<CompressPdfEvent>((event,emit)async{
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.COMPRESS_PDF,const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes =await pdfService.compressPdf(compressPdf:event.compressPdf,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to compress pdf");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.COMPRESS_PDF,HttpState.done(extras: {'savedFile':saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.COMPRESS_PDF, HttpState.error(error:"Failed to compress pdf"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.COMPRESS_PDF, HttpState.error(error: "Failed to compress pdf"))));
+      }
+    });
+
+    on<WatermarkPdfEvent>((event,emit)async{
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.WATERMARK_PDF,const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes =await pdfService.watermarkPdf(watermarkPdf:event.watermarkPdf,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to watermark pdf");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.WATERMARK_PDF,HttpState.done(extras: {'savedFile':saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.WATERMARK_PDF, HttpState.error(error:"Failed to watermark pdf"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.WATERMARK_PDF, HttpState.error(error: "Failed to watermark pdf"))));
+      }
+    });
+
+    on<ExtractTextEvent>((event,emit)async{
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.EXTRACT_TEXT,const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes =await pdfService.extractText(extractText:event.extractText,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to extract text");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.EXTRACT_TEXT,HttpState.done(extras: {'savedFile':saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.EXTRACT_TEXT, HttpState.error(error:"Failed to extract text from pdf"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.EXTRACT_TEXT, HttpState.error(error: "Failed to extract text from pdf"))));
+      }
+    });
+
+    on<GrayscalePdfEvent>((event,emit)async{
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GRAYSCALE_PDF,const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes =await pdfService.grayscalePdf(grayscalePdf:event.grayscalePdf,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to convert pdf to grayscale");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.GRAYSCALE_PDF,HttpState.done(extras: {'savedFile':saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GRAYSCALE_PDF, HttpState.error(error:"Failed to convert pdf to grayscale"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GRAYSCALE_PDF, HttpState.error(error: "Failed to convert pdf to grayscale"))));
+      }
+    });
+
+    on<CropPdfEvent>((event,emit)async{
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.CROP_PDF,const HttpState.loading())));
+      try {
+        Response<Uint8List> fileRes =await pdfService.cropPdf(cropPdf:event.cropPdf,cancelToken: event.cancelToken);
+        if(fileRes.data==null) throw Exception("Failed to crop pdf");
+        File saveFile=await _saveFileToProcessed(fileRes);
+        emit(state.copyWith(httpStates:state.httpStates.clone()..put(HttpStates.CROP_PDF,HttpState.done(extras: {'savedFile':saveFile}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.CROP_PDF, HttpState.error(error:"Failed to crop pdf"))));
+      } catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.CROP_PDF, HttpState.error(error: "Failed to crop pdf"))));
       }
     });
   }

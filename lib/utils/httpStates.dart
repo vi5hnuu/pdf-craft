@@ -8,6 +8,11 @@ class HttpStates{
   static const String ROTATE_PDF="ROTATE_PDF";
   static const String UNPROTECT_PDF="UNLOCK_PDF";
   static const String PROTECT_PDF="PROTECT_PDF";
+  static const String COMPRESS_PDF="COMPRESS_PDF";
+  static const String WATERMARK_PDF="WATERMARK_PDF";
+  static const String EXTRACT_TEXT="EXTRACT_TEXT";
+  static const String GRAYSCALE_PDF="GRAYSCALE_PDF";
+  static const String CROP_PDF="CROP_PDF";
 
 
   static const String LOAD_DIRECTORY_FILES="LOAD_DIRECTORY_FILES";

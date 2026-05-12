@@ -30,63 +30,32 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: widget.navigationShell,
       appBar: AppBar(
-        elevation: 5,
         leading: Padding(
           padding: const EdgeInsets.only(left: 16.0),
-          child: Image.asset(
-            "assets/logo.webp",
-            fit: BoxFit.fitWidth,
-            width: 124,
-          ),
+          child: Image.asset("assets/logo.webp", fit: BoxFit.fitWidth, width: 124),
         ),
-        backgroundColor: Colors.black,
         leadingWidth: 112,
         actions: [
-          IconButton(onPressed: () => GoRouter.of(context).pushNamed(AppRoutes.searchRoute.name), icon: const Icon(Icons.search)),
-          // Padding(
-          //   padding: const EdgeInsets.only(right: 8.0, left: 16),
-          //   child: CircleAvatar(child: Icon(Icons.person)),
-          // )
+          IconButton(
+            onPressed: () => GoRouter.of(context).pushNamed(AppRoutes.searchRoute.name),
+            icon: const Icon(Icons.search),
+          ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: const Color(0xFF2A2A2A)),
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        elevation: 5,
         iconSize: 24,
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         items: const <BottomNavigationBarItem>[
-          // BottomNavigationBarItem(
-          //     icon: Icon(Icons.home_outlined),
-          //     label: 'Home',
-          //     activeIcon: Icon(Icons.home),
-          //     tooltip: 'Home',
-          //     backgroundColor: Colors.black),
           BottomNavigationBarItem(
-              icon: Icon(Icons.folder_copy_outlined),
-              label: 'Files',
-              activeIcon: Icon(Icons.folder),
-              tooltip: 'Files',
-              backgroundColor: Colors.black),
+              icon: Icon(Icons.folder_copy_outlined), label: 'Files', activeIcon: Icon(Icons.folder)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.build_outlined),
-              label: 'Tools',
-              activeIcon: Icon(Icons.build),
-              tooltip: 'Tools',
-              backgroundColor: Colors.black),
+              icon: Icon(Icons.auto_fix_high_outlined), label: 'Tools', activeIcon: Icon(Icons.auto_fix_high)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.document_scanner_outlined),
-              label: 'Scanner',
-              activeIcon: Icon(Icons.document_scanner),
-              tooltip: 'Scanner',
-              backgroundColor: Colors.black),
-          // BottomNavigationBarItem(
-          //     icon: Icon(Icons.settings_outlined),
-          //     label: 'Settings',
-          //     activeIcon: Icon(Icons.settings),
-          //     tooltip: 'Settings',
-          //     backgroundColor: Colors.black),
+              icon: Icon(Icons.document_scanner_outlined), label: 'Scanner', activeIcon: Icon(Icons.document_scanner)),
         ],
         currentIndex: widget.navigationShell.currentIndex,
         onTap: _onTap,

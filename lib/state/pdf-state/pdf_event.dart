@@ -6,6 +6,8 @@ abstract class PdfEvent {
   const PdfEvent({this.cancelToken});
 }
 
+
+
 class MergePdfEvent extends PdfEvent{
   final MergePdf mergePdf;
   const MergePdfEvent({required this.mergePdf, super.cancelToken});
@@ -49,4 +51,29 @@ class UnprotectPdfEvent extends PdfEvent{
 class ProtectPdfEvent extends PdfEvent{
   final ProtectPdf protectPdf;
   const ProtectPdfEvent({required this.protectPdf, CancelToken? cancelToken});
+}
+
+class CompressPdfEvent extends PdfEvent{
+  final CompressPdf compressPdf;
+  const CompressPdfEvent({required this.compressPdf, super.cancelToken});
+}
+
+class WatermarkPdfEvent extends PdfEvent{
+  final WatermarkPdf watermarkPdf;
+  const WatermarkPdfEvent({required this.watermarkPdf, super.cancelToken});
+}
+
+class ExtractTextEvent extends PdfEvent{
+  final ExtractText extractText;
+  const ExtractTextEvent({required this.extractText, super.cancelToken});
+}
+
+class GrayscalePdfEvent extends PdfEvent{
+  final GrayscalePdf grayscalePdf;
+  const GrayscalePdfEvent({required this.grayscalePdf, super.cancelToken});
+}
+
+class CropPdfEvent extends PdfEvent{
+  final CropPdf cropPdf;
+  const CropPdfEvent({required this.cropPdf, super.cancelToken});
 }

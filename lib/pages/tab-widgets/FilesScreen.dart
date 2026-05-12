@@ -10,6 +10,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
+import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/StorageTile.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -91,6 +92,7 @@ class _FilesScreenState extends State<FilesScreen> {
                 },)
               ],
             ),
+            const BannerAdd(),
             const Column(
               children: [
                 const Padding(

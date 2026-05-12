@@ -17,6 +17,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/PdfPreview.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -53,7 +54,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
         buildWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
         builder: (context, state) {
       return Stack(children: [
-        SingleChildScrollView(
+        Column(children: [
+        Expanded(child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0,vertical: 36),
             child: Flex(
@@ -137,7 +139,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ],
             ),
           ),
-        ),
+        )),
+        const BannerAdd(),
+        ]),
         if(state.isLoading(forr: HttpStates.IMAGE_TO_PDF)) Container(decoration: BoxDecoration(color: Colors.black54),child: Center(child: SpinKitThreeBounce(color: Colors.green,size: 45,),),)
       ],) ;
     });

@@ -7,6 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/pages/ErrorPage.dart';
+import 'package:pdf_craft/pages/CompressPdfView.dart';
+import 'package:pdf_craft/pages/CropPdfView.dart';
+import 'package:pdf_craft/pages/ExtractTextView.dart';
+import 'package:pdf_craft/pages/GrayscalePdfView.dart';
 import 'package:pdf_craft/pages/ImageToPdfView.dart';
 import 'package:pdf_craft/pages/MainScreen.dart';
 import 'package:pdf_craft/pages/MergePdfView.dart';
@@ -18,6 +22,7 @@ import 'package:pdf_craft/pages/RotatePdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
+import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
 import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/HomeScreen.dart';
@@ -219,8 +224,62 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.rotatePdfRoute.path,
         name: AppRoutes.rotatePdfRoute.name,
-        // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => RotatePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.compressPdfRoute.path,
+        name: AppRoutes.compressPdfRoute.name,
+        builder: (BuildContext context, GoRouterState state) => CompressPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.watermarkPdfRoute.path,
+        name: AppRoutes.watermarkPdfRoute.name,
+        builder: (BuildContext context, GoRouterState state) => WatermarkPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.extractTextRoute.path,
+        name: AppRoutes.extractTextRoute.name,
+        builder: (BuildContext context, GoRouterState state) => ExtractTextView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.grayscalePdfRoute.path,
+        name: AppRoutes.grayscalePdfRoute.name,
+        builder: (BuildContext context, GoRouterState state) => GrayscalePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          final files=(state.extra as Map)['files'];
+          if(files is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.cropPdfRoute.path,
+        name: AppRoutes.cropPdfRoute.name,
+        builder: (BuildContext context, GoRouterState state) => CropPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         // The screen to display as the root in the first tab of the
@@ -334,21 +393,62 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        canvasColor: Colors.white,
         brightness: Brightness.dark,
-        // Ensures dark mode defaults
-        scaffoldBackgroundColor: Colors.black,
-        // Black background
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.black,
-          titleTextStyle: TextStyle(color: Colors.white, fontSize: 20),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFE53935),
+          onPrimary: Colors.white,
+          secondary: Color(0xFFE53935),
+          onSecondary: Colors.white,
+          surface: Color(0xFF1A1A1A),
+          onSurface: Colors.white,
+          error: Color(0xFFCF6679),
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+        canvasColor: const Color(0xFF1A1A1A),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0D0D0D),
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: 0.3),
           iconTheme: IconThemeData(color: Colors.white),
+          surfaceTintColor: Colors.transparent,
         ),
-        textTheme: TextTheme(
-          bodySmall: TextStyle(color: Colors.white), // Primary text color
-          bodyMedium: TextStyle(color: Colors.white), // Secondary text color
-          bodyLarge: TextStyle(color: Colors.white), // AppBar title color
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF0D0D0D),
+          selectedItemColor: Color(0xFFE53935),
+          unselectedItemColor: Color(0xFF888888),
+          type: BottomNavigationBarType.fixed,
+          elevation: 8,
         ),
+        textTheme: const TextTheme(
+          bodySmall: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          bodyLarge: TextStyle(color: Colors.white),
+          titleMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF333333))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF333333))),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5)),
+          labelStyle: const TextStyle(color: Color(0xFF888888)),
+          fillColor: const Color(0xFF1A1A1A),
+          filled: true,
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFE53935),
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(52),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+          ),
+        ),
+        sliderTheme: const SliderThemeData(activeTrackColor: Color(0xFFE53935), thumbColor: Color(0xFFE53935), inactiveTrackColor: Color(0xFF333333)),
+        radioTheme: RadioThemeData(fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? const Color(0xFFE53935) : const Color(0xFF888888))),
+        checkboxTheme: CheckboxThemeData(fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? const Color(0xFFE53935) : Colors.transparent), side: const BorderSide(color: Color(0xFF888888))),
+        dividerColor: const Color(0xFF2A2A2A),
+        cardColor: const Color(0xFF1A1A1A),
       ),
       routerConfig: _router,
     ));

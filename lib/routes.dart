@@ -22,6 +22,11 @@ class AppRoutes{
   static AppRoute unprotectPdfRoute=AppRoute(name: 'unprotect-pdf-tool', path: '/unprotect-pdf-tool');
   static AppRoute protectPdfRoute=AppRoute(name: 'protect-pdf-tool', path: '/protect-pdf-tool');
   static AppRoute rotatePdfRoute=AppRoute(name: 'rotate-pdf-tool', path: '/rotate-pdf-tool');
+  static AppRoute compressPdfRoute=AppRoute(name: 'compress-pdf-tool', path: '/compress-pdf-tool');
+  static AppRoute watermarkPdfRoute=AppRoute(name: 'watermark-pdf-tool', path: '/watermark-pdf-tool');
+  static AppRoute extractTextRoute=AppRoute(name: 'extract-text-tool', path: '/extract-text-tool');
+  static AppRoute grayscalePdfRoute=AppRoute(name: 'grayscale-pdf-tool', path: '/grayscale-pdf-tool');
+  static AppRoute cropPdfRoute=AppRoute(name: 'crop-pdf-tool', path: '/crop-pdf-tool');
   static AppRoute pdfFilePreviewRoute=AppRoute(name: 'pdf-file-preview', path: '/pdf-file-preview/:pdfFilePath');
 
 
