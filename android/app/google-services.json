@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "380531483609",
+    "project_id": "pdf-craft-496203",
+    "storage_bucket": "pdf-craft-496203.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380531483609:android:d9e5f1362e50cc057e2fc8",
+        "android_client_info": {
+          "package_name": "com.vi5hnu.pdf_craft"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCz6VbN62PHfrHsSsQoYNYgMnRPo_WTKM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
