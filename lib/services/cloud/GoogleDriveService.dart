@@ -48,13 +48,16 @@ class GoogleDriveService {
     final folderId = await _ensureFolder(api, 'PDF Craft');
 
     final fileName = file.path.split('/').last;
-    final mimeType = _mimeTypeForFile(fileName);
 
     final driveFile = drive.File()
       ..name = fileName
       ..parents = [folderId];
 
-    final media = drive.Media(file.openRead(), file.lengthSync());
+    final media = drive.Media(
+      file.openRead(),
+      file.lengthSync(),
+      contentType: _mimeTypeForFile(fileName),
+    );
     final result = await api.files.create(driveFile, uploadMedia: media);
 
     authClient.close();

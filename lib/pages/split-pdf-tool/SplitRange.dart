@@ -5,14 +5,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/thumbnail-stats.dart';
 import 'package:pdf_craft/models/thumbnail.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -60,8 +58,6 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
 
   @override
   Widget build(BuildContext context) {
-    final md=MediaQuery.of(context);
-
     return Expanded(
       child: FutureBuilder(future: _pdfController.document, builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -285,9 +281,6 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   _removeRange(RangeModel range){
     setState(()=>_pageRanges.removeWhere((xrange)=>xrange.from==range.from && xrange.to==range.to));
     widget.onRangeChange(_pageRanges);
-  }
-
-  void _onReorderPages() async {
   }
 
   @override

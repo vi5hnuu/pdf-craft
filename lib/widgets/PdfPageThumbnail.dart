@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdfx/pdfx.dart';
 
 class PdfPageThumbnail extends StatelessWidget {

@@ -251,14 +251,6 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     }
   }
 
-  String _extractFilenameFromContentDisposition(String? contentDisposition) {
-    if (contentDisposition != null) {
-      final match = RegExp(r'filename="([^"]+)"').firstMatch(contentDisposition);
-      if (match != null) return match.group(1)!;
-    }
-    return 'default_filename.pdf';
-  }
-
   // Handler for image-studio operations — saves to processed dir with image extension
   Future<void> _handleImage({
     required Emitter<PdfState> emit,

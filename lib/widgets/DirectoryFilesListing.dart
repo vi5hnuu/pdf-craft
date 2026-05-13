@@ -87,7 +87,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         // Pre-cache file sizes — avoids lengthSync inside comparator (O(N log N) → O(N))
         final sizes = <String, int>{};
         for (final f in regularFiles) {
-          try { sizes[f.path] = (f as File).lengthSync(); } catch (_) {}
+          try { sizes[f.path] = f.lengthSync(); } catch (_) {}
         }
         regularFiles.sort((a, b) =>
             (sizes[b.path] ?? 0).compareTo(sizes[a.path] ?? 0));
@@ -328,13 +328,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   bool _isFileSelected(FileSystemEntity file) {
     if (file is Directory) return false;
-    try {
-      return selectedFiles
-              .firstWhere((selectedFile) => selectedFile.path == file.path) !=
-          null;
-    } catch (e) {
-      return false;
-    }
+    return selectedFiles.any((selectedFile) => selectedFile.path == file.path);
   }
 
   _loadDirectoryFiles(String path) {
