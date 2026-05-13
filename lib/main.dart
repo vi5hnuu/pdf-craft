@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,6 +35,7 @@ import 'package:pdf_craft/pages/StampPdfView.dart';
 import 'package:pdf_craft/pages/QrStampPdfView.dart';
 import 'package:pdf_craft/pages/AnnotatePdfView.dart';
 import 'package:pdf_craft/pages/FormPdfView.dart';
+import 'package:pdf_craft/pages/PlaceImageView.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
@@ -403,6 +405,34 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         name: AppRoutes.formPdfRoute.name,
         builder: (context, state) =>
             FormPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Used by QR Stamp: extra is { 'file': File, 'imageBytes': Uint8List, 'title': String }
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.placeImageRoute.path,
+        name: AppRoutes.placeImageRoute.name,
+        builder: (context, state) {
+          final extra = state.extra as Map;
+          return PlaceImageView(
+            pdfFile: extra['file'] as File,
+            preloadedImageBytes: extra['imageBytes'] as Uint8List?,
+            title: extra['title'] as String? ?? 'Place Image',
+          );
+        },
+      ),
+      // Used by Image Overlay tool: extra comes from fileManagement with 'files' key
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.imageOverlayRoute.path,
+        name: AppRoutes.imageOverlayRoute.name,
+        builder: (context, state) => PlaceImageView(
+          pdfFile: ((state.extra as Map)['files'] as List<File>).first,
+          title: 'Image Overlay',
+        ),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

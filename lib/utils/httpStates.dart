@@ -22,6 +22,7 @@ class HttpStates{
   static const String FLATTEN_PDF="FLATTEN_PDF";
   static const String ADD_BLANK_PAGES="ADD_BLANK_PAGES";
   static const String STAMP_PDF="STAMP_PDF";
+  static const String PLACE_IMAGE="PLACE_IMAGE";
 
   static const String LOAD_DIRECTORY_FILES="LOAD_DIRECTORY_FILES";
   static const String MOVE_FILE_TO="MOVE_FILE_TO";

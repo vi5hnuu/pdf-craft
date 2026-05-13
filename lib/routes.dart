@@ -39,6 +39,8 @@ class AppRoutes{
   static AppRoute qrStampPdfRoute=AppRoute(name: 'qr-stamp-pdf-tool', path: '/qr-stamp-pdf-tool');
   static AppRoute annotatePdfRoute=AppRoute(name: 'annotate-pdf-tool', path: '/annotate-pdf-tool');
   static AppRoute formPdfRoute=AppRoute(name: 'form-pdf-tool', path: '/form-pdf-tool');
+  static AppRoute placeImageRoute=AppRoute(name: 'place-image-tool', path: '/place-image-tool');
+  static AppRoute imageOverlayRoute=AppRoute(name: 'image-overlay-tool', path: '/image-overlay-tool');
   static AppRoute pdfFilePreviewRoute=AppRoute(name: 'pdf-file-preview', path: '/pdf-file-preview/:pdfFilePath');
 
 

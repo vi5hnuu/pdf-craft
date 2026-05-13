@@ -22,6 +22,7 @@ import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
+import 'package:pdf_craft/models/request/place-image.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -38,6 +39,7 @@ class PdfService {
   static String get _flattenPdf => "${Constants.baseUrl}/pdf-studio/flatten-pdf";
   static String get _addBlankPages => "${Constants.baseUrl}/pdf-studio/add-blank-pages";
   static String get _stampPdf => "${Constants.baseUrl}/pdf-studio/stamp-pdf";
+  static String get _placeImage => "${Constants.baseUrl}/pdf-studio/place-image";
   static String get _mergePdf => "${Constants.baseUrl}/pdf-studio/merge-pdf";
   static String get _reorderPdf => "${Constants.baseUrl}/pdf-studio/reorder-pdf";
   static String get _splitPdf => "${Constants.baseUrl}/pdf-studio/split-pdf";
@@ -141,5 +143,9 @@ class PdfService {
 
   Future<Response<Uint8List>> stampPdf({required StampPdf stampPdf, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_stampPdf, data: FormData.fromMap(stampPdf.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> placeImage({required PlaceImage placeImage, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_placeImage, data: FormData.fromMap(placeImage.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 }

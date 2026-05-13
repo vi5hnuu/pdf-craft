@@ -112,3 +112,8 @@ class StampPdfEvent extends PdfEvent {
   final StampPdf stampPdf;
   const StampPdfEvent({required this.stampPdf, super.cancelToken});
 }
+
+class PlaceImageEvent extends PdfEvent {
+  final PlaceImage placeImage;
+  const PlaceImageEvent({required this.placeImage, super.cancelToken});
+}

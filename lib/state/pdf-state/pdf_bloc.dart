@@ -26,6 +26,7 @@ import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
+import 'package:pdf_craft/models/request/place-image.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -161,6 +162,12 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit: emit, key: HttpStates.STAMP_PDF,
       call: (p) => _pdfService.stampPdf(stampPdf: e.stampPdf, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to stamp PDF',
+    ));
+
+    on<PlaceImageEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.PLACE_IMAGE,
+      call: (p) => _pdfService.placeImage(placeImage: e.placeImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to place image on PDF',
     ));
 
     // Returns JSON metadata — does not save a file
