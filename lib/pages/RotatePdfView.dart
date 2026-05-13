@@ -42,7 +42,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
   final ScrollController controller = ScrollController();
   final Map<int, Thumbnail> thumbnails = {};
 
-  late PdfDocument? document;
+  PdfDocument? document;
   late PdfController _pdfController;
   List<int> _pageIndexes = [];
 
@@ -61,12 +61,14 @@ class _RotatePdfViewState extends State<RotatePdfView> {
       document: PdfDocument.openFile(widget.file.path),
       initialPage: 1,
     );
-    _pdfController.document.then((doc) => setState(() {
-          if (!mounted) return;
-          document = doc;
-          _pageIndexes = List.generate(doc.pagesCount, (index) => index);
-          _tryRenderingNextThumbnails();
-        }));
+    _pdfController.document.then((doc) {
+      if (!mounted) return;
+      setState(() {
+        document = doc;
+        _pageIndexes = List.generate(doc.pagesCount, (index) => index);
+      });
+      _tryRenderingNextThumbnails();
+    });
     controller.addListener(() => _tryRenderingNextThumbnails());
     fileAngleC.addListener(() {
       final v = int.tryParse(fileAngleC.text) ?? 0;
@@ -447,21 +449,16 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     if (thumbnails[pageNo]?.image != null ||
         thumbnails[pageNo]?.isLoading == true) return;
     try {
-      setState(() {
-        if (mounted) thumbnails.put(pageNo, Thumbnail(isLoading: true));
-      });
+      if (!mounted) return;
+      setState(() => thumbnails.put(pageNo, Thumbnail(isLoading: true)));
       final image =
           await _loadPageImage(document: document, pageNumber: pageNo);
       if (image == null) throw Exception();
-      setState(() {
-        if (mounted) thumbnails.put(pageNo, Thumbnail(image: image));
-      });
+      if (!mounted) return;
+      setState(() => thumbnails.put(pageNo, Thumbnail(image: image)));
     } catch (_) {
-      setState(() {
-        if (mounted)
-          thumbnails.put(
-              pageNo, Thumbnail(error: 'failed to render thumbnail'));
-      });
+      if (!mounted) return;
+      setState(() => thumbnails.put(pageNo, Thumbnail(error: 'failed to render thumbnail')));
     }
   }
 

@@ -16,11 +16,13 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdfx/pdfx.dart';
 
+enum _Mode { place, zoom }
+
 /// Shared view for placing any image at a user-chosen position/size on a PDF page.
-/// Used by QR Stamp (preloaded image bytes) and Image Overlay (user picks image).
+/// Supports pinch-zoom for precision placement, freeform resize with 4 corner handles,
+/// and an aspect-ratio lock toggle in the bottom bar.
 class PlaceImageView extends StatefulWidget {
   final File pdfFile;
-  // preloaded bytes are provided by QR Stamp; null = user picks via file picker (Image Overlay)
   final Uint8List? preloadedImageBytes;
   final String title;
 
@@ -36,7 +38,7 @@ class PlaceImageView extends StatefulWidget {
 }
 
 class _PlaceImageViewState extends State<PlaceImageView> {
-  // PDF state
+  // PDF page
   PdfDocument? _doc;
   int _currentPage = 1;
   int _totalPages = 0;
@@ -45,39 +47,55 @@ class _PlaceImageViewState extends State<PlaceImageView> {
   double _pageHeightPt = 842;
   bool _loadingPage = true;
 
-  // Image overlay state (fractions of canvas/page, 0.0–1.0)
+  // Image overlay — fractions of canvas dimensions (0.0–1.0)
   Uint8List? _imageBytes;
-  double _xFrac = 0.1;
-  double _yFrac = 0.1;
-  double _wFrac = 0.4;
-  double _hFrac = 0.4;
-  double _aspectRatio = 1.0; // imageW / imageH in pixels
+  double _xFrac = 0.25;
+  double _yFrac = 0.25;
+  double _wFrac = 0.5;
+  double _hFrac = 0.5;
+  double _aspectRatio = 1.0; // original image pixelW / pixelH
   bool _lockAspect = true;
 
-  static const double _handleSize = 20.0;
+  // Zoom / placement mode
+  _Mode _mode = _Mode.place;
+  final TransformationController _txCtrl = TransformationController();
+
+  // Cached canvas dimensions from last LayoutBuilder (needed for delta scaling)
+  double _canvasW = 1;
+  double _canvasH = 1;
+
+  static const double _handleSize = 22.0;
+  static const double _minFrac = 0.02;
 
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     if (widget.preloadedImageBytes != null) {
-      _decodeImageSize(widget.preloadedImageBytes!);
+      _decodeAndCenter(widget.preloadedImageBytes!);
     }
     _openDocument();
   }
 
-  Future<void> _decodeImageSize(Uint8List bytes) async {
+  Future<void> _decodeAndCenter(Uint8List bytes) async {
     final codec = await ui.instantiateImageCodec(bytes);
     final frame = await codec.getNextFrame();
     final img = frame.image;
-    if (mounted) {
-      setState(() {
-        _imageBytes = bytes;
-        _aspectRatio = img.width / img.height;
-        // Keep width fixed at 0.4, adjust height to match image aspect
-        _hFrac = _wFrac / _aspectRatio;
-      });
-    }
+    final ar = img.width / img.height;
+    if (!mounted) return;
+    setState(() {
+      _imageBytes = bytes;
+      _aspectRatio = ar;
+      // Default to 50% width; adjust height to maintain aspect
+      _wFrac = 0.5;
+      _hFrac = _canvasW > 1
+          ? _wFrac * _canvasW / (_canvasH * ar)
+          : 0.5 / ar;
+      _hFrac = _hFrac.clamp(_minFrac, 0.9);
+      // Center on the page
+      _xFrac = (1 - _wFrac) / 2;
+      _yFrac = (1 - _hFrac) / 2;
+    });
   }
 
   Future<void> _openDocument() async {
@@ -120,40 +138,9 @@ class _PlaceImageViewState extends State<PlaceImageView> {
       allowMultiple: false,
     );
     if (result == null || result.files.isEmpty) return;
-    final bytes = result.files.first.bytes ?? await File(result.files.first.path!).readAsBytes();
-    await _decodeImageSize(bytes);
-  }
-
-  Future<void> _onConfirm() async {
-    if (_imageBytes == null) {
-      NotificationService.showSnackbar(text: 'Please select an image first', color: Colors.orange);
-      return;
-    }
-
-    // Clamp fractions to valid range
-    final x = _xFrac.clamp(0.0, 1.0);
-    final y = _yFrac.clamp(0.0, 1.0);
-    final w = _wFrac.clamp(0.01, 1.0 - x);
-    final h = _hFrac.clamp(0.01, 1.0 - y);
-
-    final pdfName = widget.pdfFile.path.split('/').last.replaceAll('.pdf', '');
-
-    BlocProvider.of<PdfBloc>(context).add(PlaceImageEvent(
-      placeImage: PlaceImage(
-        outFileName: '${pdfName}_image',
-        page: _currentPage - 1,
-        xFrac: x,
-        yFrac: y,
-        widthFrac: w,
-        heightFrac: h,
-        file: await MultipartFile.fromFile(widget.pdfFile.path),
-        image: MultipartFile.fromBytes(
-          _imageBytes!,
-          filename: 'image.png',
-          contentType: DioMediaType.parse('image/png'),
-        ),
-      ),
-    ));
+    final bytes = result.files.first.bytes ??
+        await File(result.files.first.path!).readAsBytes();
+    await _decodeAndCenter(bytes);
   }
 
   @override
@@ -163,12 +150,20 @@ class _PlaceImageViewState extends State<PlaceImageView> {
       appBar: AppBar(
         title: Text('${widget.title}${_totalPages > 1 ? ' — Page $_currentPage / $_totalPages' : ''}'),
         actions: [
-          // Aspect ratio lock toggle
-          if (_imageBytes != null)
+          // Mode toggle: place ↔ zoom
+          IconButton(
+            icon: Icon(
+              _mode == _Mode.zoom ? Icons.touch_app : Icons.zoom_in,
+            ),
+            tooltip: _mode == _Mode.zoom ? 'Switch to Place mode' : 'Switch to Zoom mode',
+            onPressed: () => setState(() => _mode = _mode == _Mode.place ? _Mode.zoom : _Mode.place),
+          ),
+          // Reset zoom
+          if (_mode == _Mode.zoom)
             IconButton(
-              icon: Icon(_lockAspect ? Icons.lock : Icons.lock_open),
-              tooltip: _lockAspect ? 'Aspect ratio locked' : 'Aspect ratio free',
-              onPressed: () => setState(() => _lockAspect = !_lockAspect),
+              icon: const Icon(Icons.fit_screen),
+              tooltip: 'Reset zoom',
+              onPressed: () => _txCtrl.value = Matrix4.identity(),
             ),
         ],
       ),
@@ -202,15 +197,35 @@ class _PlaceImageViewState extends State<PlaceImageView> {
               // Image picker button (only when no preloaded image)
               if (widget.preloadedImageBytes == null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                   child: OutlinedButton.icon(
                     onPressed: _pickImage,
                     icon: const Icon(Icons.image_outlined),
                     label: Text(_imageBytes == null ? 'Select Image to Place' : 'Change Image'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 44),
-                    ),
+                    style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 44)),
                   ),
+                ),
+
+              // Mode hint chip
+              if (_imageBytes != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                  child: Row(children: [
+                    Chip(
+                      avatar: Icon(
+                        _mode == _Mode.zoom ? Icons.zoom_in : Icons.open_with,
+                        size: 16,
+                      ),
+                      label: Text(
+                        _mode == _Mode.zoom
+                            ? 'Zoom mode — pinch or scroll to zoom'
+                            : 'Place mode — drag image or handles',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                  ]),
                 ),
 
               // Canvas
@@ -223,20 +238,8 @@ class _PlaceImageViewState extends State<PlaceImageView> {
               // Page navigation
               if (_totalPages > 1) _buildPageNav(theme),
 
-              // Confirm bar
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.scaffoldBackgroundColor,
-                  border: Border(top: BorderSide(color: theme.dividerColor)),
-                ),
-                child: FilledButton.icon(
-                  onPressed: _imageBytes == null ? null : _onConfirm,
-                  icon: const Icon(Icons.check),
-                  label: const Text('Confirm Placement'),
-                ),
-              ),
+              // Bottom bar: aspect lock + confirm
+              _buildBottomBar(theme, state),
             ]),
             LoadingOverlay(httpState: state.httpStates[HttpStates.PLACE_IMAGE]),
           ]);
@@ -262,7 +265,11 @@ class _PlaceImageViewState extends State<PlaceImageView> {
         imgW = canvasH * pageAspect;
       }
 
-      // Image overlay pixel positions
+      // Cache canvas dims for use in drag delta scaling
+      _canvasW = imgW;
+      _canvasH = imgH;
+
+      // Pixel positions of overlay image inside the canvas
       final ox = _xFrac * imgW;
       final oy = _yFrac * imgH;
       final ow = _wFrac * imgW;
@@ -272,116 +279,210 @@ class _PlaceImageViewState extends State<PlaceImageView> {
         child: SizedBox(
           width: imgW,
           height: imgH,
-          child: Stack(children: [
-            // PDF page background
-            if (_pageImage != null)
-              Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill))
-            else
-              Positioned.fill(child: Container(color: Colors.white)),
+          child: InteractiveViewer(
+            transformationController: _txCtrl,
+            panEnabled: _mode == _Mode.zoom,
+            scaleEnabled: _mode == _Mode.zoom,
+            minScale: 0.5,
+            maxScale: 8.0,
+            child: SizedBox(
+              width: imgW,
+              height: imgH,
+              child: Stack(clipBehavior: Clip.none, children: [
+                // PDF page background
+                if (_pageImage != null)
+                  Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill))
+                else
+                  Positioned.fill(child: Container(color: Colors.white)),
 
-            // Instruction hint when no image yet
-            if (_imageBytes == null)
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(8),
+                // Instruction when no image yet
+                if (_imageBytes == null)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
+                      child: const Text(
+                        'Select an image above\nto position it on this page',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ),
-                  child: const Text(
-                    'Select an image above to position it on this page',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
 
-            // Draggable image overlay
-            if (_imageBytes != null)
-              Positioned(
-                left: ox,
-                top: oy,
-                width: ow,
-                height: oh,
-                child: GestureDetector(
-                  // Drag whole image to reposition
-                  onPanUpdate: (d) => setState(() {
-                    _xFrac = (_xFrac + d.delta.dx / imgW).clamp(0.0, 1.0 - _wFrac);
-                    _yFrac = (_yFrac + d.delta.dy / imgH).clamp(0.0, 1.0 - _hFrac);
-                  }),
-                  child: Stack(children: [
-                    // Image itself
-                    Positioned.fill(
-                      child: Image.memory(
-                        _imageBytes!,
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                    // Dashed border
-                    Positioned.fill(child: _DashedBorder()),
-                    // Move indicator
-                    const Center(
-                      child: Icon(Icons.open_with, color: Colors.white70, size: 24),
-                    ),
-                    // SE corner resize handle
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: GestureDetector(
-                        onPanUpdate: (d) => setState(() {
-                          _wFrac = (_wFrac + d.delta.dx / imgW).clamp(0.02, 1.0 - _xFrac);
-                          if (_lockAspect) {
-                            _hFrac = _wFrac * imgW / (imgH * _aspectRatio);
-                          } else {
-                            _hFrac = (_hFrac + d.delta.dy / imgH).clamp(0.02, 1.0 - _yFrac);
-                          }
-                        }),
-                        child: Container(
-                          width: _handleSize,
-                          height: _handleSize,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.open_in_full, size: 12, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    // NE corner resize handle
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: GestureDetector(
-                        onPanUpdate: (d) => setState(() {
-                          final newW = (_wFrac + d.delta.dx / imgW).clamp(0.02, 1.0 - _xFrac);
-                          final newH = (_hFrac - d.delta.dy / imgH).clamp(0.02, _yFrac + _hFrac);
-                          if (_lockAspect) {
-                            _wFrac = newW;
-                            _hFrac = _wFrac * imgW / (imgH * _aspectRatio);
-                            _yFrac = (_yFrac + _hFrac - _hFrac).clamp(0.0, 1.0);
-                          } else {
-                            _wFrac = newW;
-                            _yFrac = (_yFrac + (_hFrac - newH)).clamp(0.0, 1.0);
-                            _hFrac = newH;
-                          }
-                        }),
-                        child: Container(
-                          width: _handleSize,
-                          height: _handleSize,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ]),
-                ),
-              ),
-          ]),
+                // Draggable / resizable image overlay
+                if (_imageBytes != null)
+                  Positioned(
+                    left: ox,
+                    top: oy,
+                    width: ow,
+                    height: oh,
+                    child: _buildImageOverlay(imgW, imgH, ow, oh, theme),
+                  ),
+              ]),
+            ),
+          ),
         ),
       );
     });
+  }
+
+  Widget _buildImageOverlay(double imgW, double imgH, double ow, double oh, ThemeData theme) {
+    // In zoom mode, handles are passive (no interaction)
+    final interactive = _mode == _Mode.place;
+
+    return Stack(clipBehavior: Clip.none, children: [
+      // Image body — drag to reposition
+      Positioned.fill(
+        child: GestureDetector(
+          behavior: interactive ? HitTestBehavior.opaque : HitTestBehavior.translucent,
+          onPanUpdate: !interactive ? null : (d) {
+            final scale = _txCtrl.value.getMaxScaleOnAxis();
+            setState(() {
+              _xFrac = (_xFrac + d.delta.dx / (imgW * scale)).clamp(0.0, 1.0 - _wFrac);
+              _yFrac = (_yFrac + d.delta.dy / (imgH * scale)).clamp(0.0, 1.0 - _hFrac);
+            });
+          },
+          child: Stack(children: [
+            Positioned.fill(child: Image.memory(_imageBytes!, fit: BoxFit.fill)),
+            const Positioned.fill(child: _DashedBorder()),
+            // Move icon at center
+            const Center(child: Icon(Icons.open_with, color: Colors.white70, size: 22)),
+          ]),
+        ),
+      ),
+
+      // NW corner handle — move top-left corner
+      if (interactive)
+        Positioned(
+          left: -_handleSize / 2,
+          top: -_handleSize / 2,
+          child: _ResizeHandle(
+            color: theme.colorScheme.primary,
+            onDelta: (dx, dy) {
+              final scale = _txCtrl.value.getMaxScaleOnAxis();
+              final dxF = dx / (imgW * scale);
+              final dyF = dy / (imgH * scale);
+              setState(() {
+                final newW = (_wFrac - dxF).clamp(_minFrac, _xFrac + _wFrac);
+                final newH = _lockAspect
+                    ? newW * imgW / (imgH * _aspectRatio)
+                    : (_hFrac - dyF).clamp(_minFrac, _yFrac + _hFrac);
+                _xFrac = (_xFrac + (_wFrac - newW)).clamp(0.0, 1.0);
+                _yFrac = (_yFrac + (_hFrac - newH)).clamp(0.0, 1.0);
+                _wFrac = newW;
+                _hFrac = newH;
+              });
+            },
+          ),
+        ),
+
+      // NE corner handle — move top-right corner
+      if (interactive)
+        Positioned(
+          right: -_handleSize / 2,
+          top: -_handleSize / 2,
+          child: _ResizeHandle(
+            color: theme.colorScheme.primary,
+            onDelta: (dx, dy) {
+              final scale = _txCtrl.value.getMaxScaleOnAxis();
+              final dxF = dx / (imgW * scale);
+              final dyF = dy / (imgH * scale);
+              setState(() {
+                final newW = (_wFrac + dxF).clamp(_minFrac, 1.0 - _xFrac);
+                final newH = _lockAspect
+                    ? newW * imgW / (imgH * _aspectRatio)
+                    : (_hFrac - dyF).clamp(_minFrac, _yFrac + _hFrac);
+                final newY = _lockAspect
+                    ? (_yFrac + (_hFrac - newH)).clamp(0.0, 1.0)
+                    : (_yFrac + (_hFrac - newH)).clamp(0.0, 1.0);
+                _wFrac = newW;
+                _hFrac = newH;
+                _yFrac = newY;
+              });
+            },
+          ),
+        ),
+
+      // SW corner handle — move bottom-left corner
+      if (interactive)
+        Positioned(
+          left: -_handleSize / 2,
+          bottom: -_handleSize / 2,
+          child: _ResizeHandle(
+            color: theme.colorScheme.primary,
+            onDelta: (dx, dy) {
+              final scale = _txCtrl.value.getMaxScaleOnAxis();
+              final dxF = dx / (imgW * scale);
+              final dyF = dy / (imgH * scale);
+              setState(() {
+                final newW = (_wFrac - dxF).clamp(_minFrac, _xFrac + _wFrac);
+                final newH = _lockAspect
+                    ? newW * imgW / (imgH * _aspectRatio)
+                    : (_hFrac + dyF).clamp(_minFrac, 1.0 - _yFrac);
+                _xFrac = (_xFrac + (_wFrac - newW)).clamp(0.0, 1.0);
+                _wFrac = newW;
+                _hFrac = newH;
+              });
+            },
+          ),
+        ),
+
+      // SE corner handle — move bottom-right corner
+      if (interactive)
+        Positioned(
+          right: -_handleSize / 2,
+          bottom: -_handleSize / 2,
+          child: _ResizeHandle(
+            color: theme.colorScheme.secondary,
+            onDelta: (dx, dy) {
+              final scale = _txCtrl.value.getMaxScaleOnAxis();
+              final dxF = dx / (imgW * scale);
+              final dyF = dy / (imgH * scale);
+              setState(() {
+                final newW = (_wFrac + dxF).clamp(_minFrac, 1.0 - _xFrac);
+                final newH = _lockAspect
+                    ? newW * imgW / (imgH * _aspectRatio)
+                    : (_hFrac + dyF).clamp(_minFrac, 1.0 - _yFrac);
+                _wFrac = newW;
+                _hFrac = newH;
+              });
+            },
+          ),
+        ),
+    ]);
+  }
+
+  Widget _buildBottomBar(ThemeData theme, PdfState state) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+      ),
+      child: Row(children: [
+        // Aspect lock toggle
+        OutlinedButton.icon(
+          onPressed: () => setState(() => _lockAspect = !_lockAspect),
+          icon: Icon(_lockAspect ? Icons.lock : Icons.lock_open, size: 18),
+          label: Text(_lockAspect ? 'Locked' : 'Free'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _lockAspect ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            side: BorderSide(
+              color: _lockAspect ? theme.colorScheme.primary : theme.colorScheme.outline,
+            ),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: _imageBytes == null ? null : _onConfirm,
+            icon: const Icon(Icons.check, size: 18),
+            label: const Text('Confirm Placement'),
+          ),
+        ),
+      ]),
+    );
   }
 
   Widget _buildPageNav(ThemeData theme) {
@@ -405,10 +506,65 @@ class _PlaceImageViewState extends State<PlaceImageView> {
     );
   }
 
+  Future<void> _onConfirm() async {
+    if (_imageBytes == null) return;
+    final x = _xFrac.clamp(0.0, 1.0);
+    final y = _yFrac.clamp(0.0, 1.0);
+    final w = _wFrac.clamp(0.01, 1.0 - x);
+    final h = _hFrac.clamp(0.01, 1.0 - y);
+    final pdfName = widget.pdfFile.path.split('/').last.replaceAll('.pdf', '');
+
+    BlocProvider.of<PdfBloc>(context).add(PlaceImageEvent(
+      placeImage: PlaceImage(
+        outFileName: '${pdfName}_image',
+        page: _currentPage - 1,
+        xFrac: x,
+        yFrac: y,
+        widthFrac: w,
+        heightFrac: h,
+        file: await MultipartFile.fromFile(widget.pdfFile.path),
+        image: MultipartFile.fromBytes(
+          _imageBytes!,
+          filename: 'image.png',
+          contentType: DioMediaType.parse('image/png'),
+        ),
+      ),
+    ));
+  }
+
   @override
   void dispose() {
+    _txCtrl.dispose();
     _doc?.close();
     super.dispose();
+  }
+}
+
+// ── Reusable resize handle widget ─────────────────────────────────────────────
+
+class _ResizeHandle extends StatelessWidget {
+  final Color color;
+  final void Function(double dx, double dy) onDelta;
+
+  const _ResizeHandle({required this.color, required this.onDelta});
+
+  static const double _size = 22.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanUpdate: (d) => onDelta(d.delta.dx, d.delta.dy),
+      child: Container(
+        width: _size,
+        height: _size,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 3)],
+        ),
+      ),
+    );
   }
 }
 
@@ -438,7 +594,7 @@ class _DashedBorderPainter extends CustomPainter {
       final len = (b - a).distance;
       double drawn = 0;
       while (drawn < len) {
-        final end = (drawn + dashLen).clamp(0, len);
+        final end = (drawn + dashLen).clamp(0.0, len);
         canvas.drawLine(
           Offset(a.dx + dx * drawn / len, a.dy + dy * drawn / len),
           Offset(a.dx + dx * end / len, a.dy + dy * end / len),

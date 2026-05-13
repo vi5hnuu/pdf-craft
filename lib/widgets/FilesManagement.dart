@@ -32,7 +32,8 @@ class _FilesManagementState extends State<FilesManagement> {
         child: Flex(direction: Axis.vertical,
         children: [
           Expanded(child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files){
-            final mergedResult = {'files': files, ...?widget.config.extra};
+            final Map<String, dynamic> mergedResult = {'files': files};
+            if (widget.config.extra != null) mergedResult.addAll(widget.config.extra!);
             if(widget.config.redirectPath==null) {
               router.pop(mergedResult);
             } else {

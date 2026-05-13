@@ -17,7 +17,7 @@ class RotatablePageWidget extends StatelessWidget {
     required this.maintainAspectRatio,
     required this.rotationAngle,
     required this.child,
-  }) : assert(rotationAngle >= 0 && rotationAngle <= 360);
+  }) : assert(rotationAngle >= 0);
 
   @override
   Widget build(BuildContext context) {
