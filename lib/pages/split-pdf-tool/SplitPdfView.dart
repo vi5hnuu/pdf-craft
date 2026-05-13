@@ -82,12 +82,16 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                         decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
                         controller: outFileNameC),
                   ),
-                  if(type==null || type==SplitType.EXTRACT_ALL_PAGES) SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
+                  if(type==null || type==SplitType.EXTRACT_ALL_PAGES || type==SplitType.SPLIT_BY_BOOKMARK)
+                    SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
                   else SplitPdfRange(file: widget.file, type: type!,onRangeChange:(rgs)=>setState(()=>ranges=rgs)),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16.0),
-                    child: FilledButton(onPressed: type==null || (type!=SplitType.EXTRACT_ALL_PAGES && ranges.isEmpty)  ? null : _onExtractAllPages, child: const Text("Split Pdf Pages")),
+                    child: FilledButton(
+                      onPressed: type==null || (![SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK].contains(type) && ranges.isEmpty) ? null : _onExtractAllPages,
+                      child: const Text("Split Pdf Pages"),
+                    ),
                   )
                 ],),
                 LoadingOverlay(httpState: state.httpStates[HttpStates.SPLIT_PDF]),
@@ -98,8 +102,15 @@ class _SplitPdfViewState extends State<SplitPdfView> {
       ));
   }
 
-  _onExtractAllPages() async{
-    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(out_file_name: outFileNameC.text.isEmpty ? "splitted_file" : outFileNameC.text, type: type!, fixed: type==SplitType.FIXED_RANGE ? ranges.first.from : null, ranges: [SplitType.FIXED_RANGE,SplitType.EXTRACT_ALL_PAGES].contains(type) ? null : ranges, file: await MultipartFile.fromFile(widget.file.path))));
+  _onExtractAllPages() async {
+    final noRangesTypes = [SplitType.FIXED_RANGE, SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK];
+    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(
+      out_file_name: outFileNameC.text.isEmpty ? 'splitted_file' : outFileNameC.text,
+      type: type!,
+      fixed: type == SplitType.FIXED_RANGE ? ranges.first.from : null,
+      ranges: noRangesTypes.contains(type) ? null : ranges,
+      file: await MultipartFile.fromFile(widget.file.path),
+    )));
   }
 }
 
