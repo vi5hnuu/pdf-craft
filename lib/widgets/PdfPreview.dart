@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
@@ -98,6 +101,14 @@ class _PdfPreviewState extends State<PdfPreview> {
             icon: Icon(_nightMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
             tooltip: _nightMode ? 'Day mode' : 'Night mode',
             onPressed: () => setState(() => _nightMode = !_nightMode),
+          ),
+          IconButton(
+            icon: const Icon(Icons.cloud_upload_outlined),
+            tooltip: 'Upload to Drive',
+            onPressed: () => GoRouter.of(context).pushNamed(
+              AppRoutes.driveRoute.name,
+              extra: {'file': File(widget.pdfFilePath)},
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.share_outlined),

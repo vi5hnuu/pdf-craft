@@ -45,6 +45,7 @@ class AppRoutes{
   static AppRoute pdfToWordRoute=AppRoute(name: 'pdf-to-word-tool', path: '/pdf-to-word-tool');
   static AppRoute pdfToExcelRoute=AppRoute(name: 'pdf-to-excel-tool', path: '/pdf-to-excel-tool');
   static AppRoute pdfToPptxRoute=AppRoute(name: 'pdf-to-pptx-tool', path: '/pdf-to-pptx-tool');
+  static AppRoute driveRoute=AppRoute(name: 'google-drive', path: '/google-drive');
   static AppRoute pdfFilePreviewRoute=AppRoute(name: 'pdf-file-preview', path: '/pdf-file-preview/:pdfFilePath');
 
 

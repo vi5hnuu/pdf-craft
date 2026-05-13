@@ -38,6 +38,7 @@ import 'package:pdf_craft/pages/FormPdfView.dart';
 import 'package:pdf_craft/pages/PlaceImageView.dart';
 import 'package:pdf_craft/pages/ImageStudioView.dart';
 import 'package:pdf_craft/pages/PdfToOfficeView.dart';
+import 'package:pdf_craft/pages/DriveScreen.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/models/request/pdf-to-office.dart' show PdfOfficeFormat;
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
@@ -501,6 +502,18 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         builder: (context, state) {
           final files = (state.extra as Map)['files'] as List<File>;
           return BatchProcessView(files: files);
+        },
+      ),
+      // Google Drive screen — extra may be {'file': File} for direct upload, or null for browse
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.driveRoute.path,
+        name: AppRoutes.driveRoute.name,
+        builder: (context, state) {
+          final file = (state.extra as Map?)?.containsKey('file') == true
+              ? (state.extra as Map)['file'] as File?
+              : null;
+          return DriveScreen(fileToUpload: file);
         },
       ),
       GoRoute(
