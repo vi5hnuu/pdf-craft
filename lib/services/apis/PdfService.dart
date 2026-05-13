@@ -24,6 +24,7 @@ import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/models/request/place-image.dart';
 import 'package:pdf_craft/models/request/image-studio.dart';
+import 'package:pdf_craft/models/request/pdf-to-office.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -41,6 +42,9 @@ class PdfService {
   static String get _addBlankPages => "${Constants.baseUrl}/pdf-studio/add-blank-pages";
   static String get _stampPdf => "${Constants.baseUrl}/pdf-studio/stamp-pdf";
   static String get _placeImage => "${Constants.baseUrl}/pdf-studio/place-image";
+  static String get _pdfToWord => "${Constants.baseUrl}/pdf-studio/pdf-to-word";
+  static String get _pdfToExcel => "${Constants.baseUrl}/pdf-studio/pdf-to-excel";
+  static String get _pdfToPptx => "${Constants.baseUrl}/pdf-studio/pdf-to-pptx";
   static String get _compressImage => "${Constants.baseUrl}/image-studio/compress-image";
   static String get _convertToJpg => "${Constants.baseUrl}/image-studio/convert-to-jpg";
   static String get _convertFromJpg => "${Constants.baseUrl}/image-studio/convert-from-jpg";
@@ -168,5 +172,17 @@ class PdfService {
 
   Future<Response<Uint8List>> resizeImage({required ResizeImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_resizeImage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> pdfToWord({required PdfToOffice req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_pdfToWord, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> pdfToExcel({required PdfToOffice req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_pdfToExcel, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> pdfToPptx({required PdfToOffice req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_pdfToPptx, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 }

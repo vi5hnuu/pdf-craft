@@ -24,6 +24,9 @@ class HttpStates{
   static const String STAMP_PDF="STAMP_PDF";
   static const String PLACE_IMAGE="PLACE_IMAGE";
   static const String IMAGE_STUDIO="IMAGE_STUDIO";
+  static const String PDF_TO_WORD="PDF_TO_WORD";
+  static const String PDF_TO_EXCEL="PDF_TO_EXCEL";
+  static const String PDF_TO_PPTX="PDF_TO_PPTX";
 
   static const String LOAD_DIRECTORY_FILES="LOAD_DIRECTORY_FILES";
   static const String MOVE_FILE_TO="MOVE_FILE_TO";

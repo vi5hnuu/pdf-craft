@@ -28,6 +28,7 @@ import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/models/request/place-image.dart';
 import 'package:pdf_craft/models/request/image-studio.dart';
+import 'package:pdf_craft/models/request/pdf-to-office.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -194,6 +195,23 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       call: (p) => _pdfService.resizeImage(req: e.resizeImage, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to resize image',
     ));
+
+    on<PdfToOfficeEvent>((e, emit) {
+      final key = switch (e.pdfToOffice.format) {
+        PdfOfficeFormat.word => HttpStates.PDF_TO_WORD,
+        PdfOfficeFormat.excel => HttpStates.PDF_TO_EXCEL,
+        PdfOfficeFormat.pptx => HttpStates.PDF_TO_PPTX,
+      };
+      final call = switch (e.pdfToOffice.format) {
+        PdfOfficeFormat.word =>
+          (ProgressCallback p) => _pdfService.pdfToWord(req: e.pdfToOffice, cancelToken: e.cancelToken, onSendProgress: p),
+        PdfOfficeFormat.excel =>
+          (ProgressCallback p) => _pdfService.pdfToExcel(req: e.pdfToOffice, cancelToken: e.cancelToken, onSendProgress: p),
+        PdfOfficeFormat.pptx =>
+          (ProgressCallback p) => _pdfService.pdfToPptx(req: e.pdfToOffice, cancelToken: e.cancelToken, onSendProgress: p),
+      };
+      return _handle(emit: emit, key: key, call: call, error: 'Conversion failed');
+    });
 
     // Returns JSON metadata — does not save a file
     on<GetMetadataEvent>((event, emit) async {

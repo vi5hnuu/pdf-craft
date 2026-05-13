@@ -56,6 +56,9 @@ class ToolsScreen extends StatelessWidget {
         tools: [
           _ToolItem(name: 'PDF to JPG', icon: Icons.image, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfToJpgRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Image to PDF', icon: Icons.picture_as_pdf_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.imageToPdfRoute.path, multiSelect: true, limitToExtensions: images))),
+          _ToolItem(name: 'PDF to Word', icon: Icons.description_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfToWordRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'PDF to Excel', icon: Icons.table_chart_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfToExcelRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'PDF to PowerPoint', icon: Icons.slideshow_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfToPptxRoute.path, multiSelect: false, limitToExtensions: pdf))),
         ],
       ),
       _ToolCategory(

@@ -37,7 +37,9 @@ import 'package:pdf_craft/pages/AnnotatePdfView.dart';
 import 'package:pdf_craft/pages/FormPdfView.dart';
 import 'package:pdf_craft/pages/PlaceImageView.dart';
 import 'package:pdf_craft/pages/ImageStudioView.dart';
+import 'package:pdf_craft/pages/PdfToOfficeView.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
+import 'package:pdf_craft/models/request/pdf-to-office.dart' show PdfOfficeFormat;
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
@@ -452,6 +454,45 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
             op: extra['op'] as ImageStudioOp? ?? ImageStudioOp.compress,
           );
         },
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.pdfToWordRoute.path,
+        name: AppRoutes.pdfToWordRoute.name,
+        builder: (context, state) => PdfToOfficeView(
+          file: ((state.extra as Map)['files'] as List<File>).first,
+          format: PdfOfficeFormat.word,
+        ),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.pdfToExcelRoute.path,
+        name: AppRoutes.pdfToExcelRoute.name,
+        builder: (context, state) => PdfToOfficeView(
+          file: ((state.extra as Map)['files'] as List<File>).first,
+          format: PdfOfficeFormat.excel,
+        ),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.pdfToPptxRoute.path,
+        name: AppRoutes.pdfToPptxRoute.name,
+        builder: (context, state) => PdfToOfficeView(
+          file: ((state.extra as Map)['files'] as List<File>).first,
+          format: PdfOfficeFormat.pptx,
+        ),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

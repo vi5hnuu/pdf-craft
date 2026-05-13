@@ -137,3 +137,8 @@ class ResizeImageEvent extends PdfEvent {
   final ResizeImage resizeImage;
   const ResizeImageEvent({required this.resizeImage, super.cancelToken});
 }
+
+class PdfToOfficeEvent extends PdfEvent {
+  final PdfToOffice pdfToOffice;
+  const PdfToOfficeEvent({required this.pdfToOffice, super.cancelToken});
+}
