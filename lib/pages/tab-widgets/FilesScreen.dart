@@ -288,34 +288,6 @@ class _FilesScreenState extends State<FilesScreen> {
               child: Row(
                 children: [
                   Text(
-                    'Cloud Storage',
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            const StorageTile(
-                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
-                leadingIconSvgPath: 'assets/icons/google-drive.svg',
-                title: 'Google Drive'),
-            const StorageTile(
-                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
-                leadingIconSvgPath: 'assets/icons/drop-box.svg',
-                title: 'DropBox'),
-            const StorageTile(
-                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
-                leadingIconSvgPath: 'assets/icons/one-drive.svg',
-                title: 'OneDrive'),
-            const StorageTile(
-                trailing: TextButton(onPressed: null, child: Text('Coming Soon')),
-                leadingIconSvgPath: 'assets/icons/share-point.svg',
-                title: 'SharePoint'),
-            const Padding(
-              padding: EdgeInsets.only(left: 18.0, top: 12.0),
-              child: Row(
-                children: [
-                  Text(
                     'Others',
                     style:
                         TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
