@@ -29,6 +29,7 @@ class ToolsScreen extends StatelessWidget {
           _ToolItem(name: 'Add Blank Pages', icon: Icons.add_box_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.addBlankPagesRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Stamp PDF', icon: Icons.photo_filter, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.stampPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'QR Stamp', icon: Icons.qr_code_2, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.qrStampPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Annotate PDF', icon: Icons.draw_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.annotatePdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'PDF Info', icon: Icons.info_outline, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfInfoRoute.path, multiSelect: false, limitToExtensions: pdf))),
         ],
       ),

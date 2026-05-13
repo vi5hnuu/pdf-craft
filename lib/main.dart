@@ -32,6 +32,7 @@ import 'package:pdf_craft/pages/OnboardingScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/StampPdfView.dart';
 import 'package:pdf_craft/pages/QrStampPdfView.dart';
+import 'package:pdf_craft/pages/AnnotatePdfView.dart';
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
@@ -379,6 +380,17 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         name: AppRoutes.qrStampPdfRoute.name,
         builder: (context, state) =>
             QrStampPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.annotatePdfRoute.path,
+        name: AppRoutes.annotatePdfRoute.name,
+        builder: (context, state) =>
+            AnnotatePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
