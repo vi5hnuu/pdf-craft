@@ -117,3 +117,23 @@ class PlaceImageEvent extends PdfEvent {
   final PlaceImage placeImage;
   const PlaceImageEvent({required this.placeImage, super.cancelToken});
 }
+
+class CompressImageEvent extends PdfEvent {
+  final CompressImage compressImage;
+  const CompressImageEvent({required this.compressImage, super.cancelToken});
+}
+
+class ConvertToJpgEvent extends PdfEvent {
+  final ConvertToJpg convertToJpg;
+  const ConvertToJpgEvent({required this.convertToJpg, super.cancelToken});
+}
+
+class ConvertFromJpgEvent extends PdfEvent {
+  final ConvertFromJpg convertFromJpg;
+  const ConvertFromJpgEvent({required this.convertFromJpg, super.cancelToken});
+}
+
+class ResizeImageEvent extends PdfEvent {
+  final ResizeImage resizeImage;
+  const ResizeImageEvent({required this.resizeImage, super.cancelToken});
+}

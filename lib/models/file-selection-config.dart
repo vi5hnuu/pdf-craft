@@ -5,6 +5,8 @@ class FileSelectionConfig{
   final String? redirectPath;
   final int? minSelection;
   final List<String>? excludeShowingDirsPath;
+  // Additional data merged into the route extra alongside 'files'
+  final Map<String, dynamic>? extra;
 
-  FileSelectionConfig({this.excludeShowingDirsPath,required this.path,this.multiSelect,this.limitToExtensions=const [],this.redirectPath,this.minSelection});
+  FileSelectionConfig({this.excludeShowingDirsPath,required this.path,this.multiSelect,this.limitToExtensions=const [],this.redirectPath,this.minSelection,this.extra});
 }

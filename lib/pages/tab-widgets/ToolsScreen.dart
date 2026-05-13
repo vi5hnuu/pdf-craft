@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
@@ -86,6 +87,57 @@ class ToolsScreen extends StatelessWidget {
                 limitToExtensions: pdf,
               ),
             ),
+          ),
+        ],
+      ),
+      _ToolCategory(
+        name: 'Image Studio',
+        icon: Icons.photo_filter,
+        color: const Color(0xFF00897B),
+        tools: [
+          _ToolItem(
+            name: 'Compress Image',
+            icon: Icons.compress,
+            onTap: () => router.pushNamed(AppRoutes.fileManagement.name,
+                extra: FileSelectionConfig(
+                    path: Constants.rootStoragePath,
+                    redirectPath: AppRoutes.imageStudioRoute.path,
+                    multiSelect: false,
+                    limitToExtensions: ['.jpg', '.jpeg', '.png', '.bmp', '.gif'],
+                    extra: {'op': ImageStudioOp.compress})),
+          ),
+          _ToolItem(
+            name: 'Convert to JPG',
+            icon: Icons.image,
+            onTap: () => router.pushNamed(AppRoutes.fileManagement.name,
+                extra: FileSelectionConfig(
+                    path: Constants.rootStoragePath,
+                    redirectPath: AppRoutes.imageStudioRoute.path,
+                    multiSelect: false,
+                    limitToExtensions: ['.png', '.bmp', '.gif', '.webp'],
+                    extra: {'op': ImageStudioOp.convertToJpg})),
+          ),
+          _ToolItem(
+            name: 'Convert from JPG',
+            icon: Icons.swap_horiz,
+            onTap: () => router.pushNamed(AppRoutes.fileManagement.name,
+                extra: FileSelectionConfig(
+                    path: Constants.rootStoragePath,
+                    redirectPath: AppRoutes.imageStudioRoute.path,
+                    multiSelect: false,
+                    limitToExtensions: ['.jpg', '.jpeg'],
+                    extra: {'op': ImageStudioOp.convertFromJpg})),
+          ),
+          _ToolItem(
+            name: 'Resize Image',
+            icon: Icons.photo_size_select_large,
+            onTap: () => router.pushNamed(AppRoutes.fileManagement.name,
+                extra: FileSelectionConfig(
+                    path: Constants.rootStoragePath,
+                    redirectPath: AppRoutes.imageStudioRoute.path,
+                    multiSelect: false,
+                    limitToExtensions: ['.jpg', '.jpeg', '.png', '.bmp'],
+                    extra: {'op': ImageStudioOp.resize})),
           ),
         ],
       ),

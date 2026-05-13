@@ -32,12 +32,12 @@ class _FilesManagementState extends State<FilesManagement> {
         child: Flex(direction: Axis.vertical,
         children: [
           Expanded(child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files){
-            final result={'files':files};
+            final mergedResult = {'files': files, ...?widget.config.extra};
             if(widget.config.redirectPath==null) {
-              router.pop(result);
+              router.pop(mergedResult);
             } else {
               // replace so tool route sits directly on Tools screen — no stale file picker in back stack
-              router.replace(widget.config.redirectPath!,extra: result);
+              router.replace(widget.config.redirectPath!, extra: mergedResult);
             }
           } ,directoryPath: widget.config.path,multiSelect: widget.config.multiSelect,limitSelectionToExtensions: widget.config.limitToExtensions)),
           const BannerAdd(),

@@ -27,6 +27,7 @@ import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/models/request/place-image.dart';
+import 'package:pdf_craft/models/request/image-studio.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -170,6 +171,30 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       error: 'Failed to place image on PDF',
     ));
 
+    on<CompressImageEvent>((e, emit) => _handleImage(
+      emit: emit,
+      call: (p) => _pdfService.compressImage(req: e.compressImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to compress image',
+    ));
+
+    on<ConvertToJpgEvent>((e, emit) => _handleImage(
+      emit: emit,
+      call: (p) => _pdfService.convertToJpg(req: e.convertToJpg, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to convert image to JPG',
+    ));
+
+    on<ConvertFromJpgEvent>((e, emit) => _handleImage(
+      emit: emit,
+      call: (p) => _pdfService.convertFromJpg(req: e.convertFromJpg, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to convert image from JPG',
+    ));
+
+    on<ResizeImageEvent>((e, emit) => _handleImage(
+      emit: emit,
+      call: (p) => _pdfService.resizeImage(req: e.resizeImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to resize image',
+    ));
+
     // Returns JSON metadata — does not save a file
     on<GetMetadataEvent>((event, emit) async {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, const HttpState.loading())));
@@ -214,6 +239,45 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       if (match != null) return match.group(1)!;
     }
     return 'default_filename.pdf';
+  }
+
+  // Handler for image-studio operations — saves to processed dir with image extension
+  Future<void> _handleImage({
+    required Emitter<PdfState> emit,
+    required Future<Response<Uint8List>> Function(ProgressCallback onSendProgress) call,
+    required String error,
+  }) async {
+    const key = HttpStates.IMAGE_STUDIO;
+    emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, const HttpState.loading())));
+    try {
+      final res = await call((sent, total) {
+        if (total > 0) {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.loading(progress: sent / total))));
+        }
+      });
+      if (res.data == null) throw Exception(error);
+      final file = await _saveImageToProcessed(res);
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.done(extras: {'savedFile': file}))));
+    } on DioException catch (e) {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+    } catch (_) {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: error))));
+    }
+  }
+
+  Future<File> _saveImageToProcessed(Response<Uint8List> fileRes) async {
+    if (!await StoragePermissions.requestStoragePermissions()) {
+      throw Exception('Failed to save — storage permission denied');
+    }
+    final directory = Directory(Constants.processedDirPath);
+    if (!directory.existsSync()) await directory.create(recursive: true);
+    final contentDisposition = fileRes.headers.value('content-disposition');
+    final dummyName = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final filename = contentDisposition?.split('=').last ?? dummyName;
+    var file = File('${directory.path}/$filename');
+    if (file.existsSync()) file = File('${directory.path}/$dummyName');
+    await file.writeAsBytes(fileRes.data!);
+    return file;
   }
 
   Future<File> _saveFileToProcessed(Response<Uint8List> fileRes) async {

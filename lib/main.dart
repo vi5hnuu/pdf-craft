@@ -36,6 +36,8 @@ import 'package:pdf_craft/pages/QrStampPdfView.dart';
 import 'package:pdf_craft/pages/AnnotatePdfView.dart';
 import 'package:pdf_craft/pages/FormPdfView.dart';
 import 'package:pdf_craft/pages/PlaceImageView.dart';
+import 'package:pdf_craft/pages/ImageStudioView.dart';
+import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
 import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
@@ -433,6 +435,23 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
           pdfFile: ((state.extra as Map)['files'] as List<File>).first,
           title: 'Image Overlay',
         ),
+      ),
+      // Image Studio: extra has 'files' list + 'op' ImageStudioOp
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.imageStudioRoute.path,
+        name: AppRoutes.imageStudioRoute.name,
+        builder: (context, state) {
+          final extra = state.extra as Map;
+          return ImageStudioView(
+            file: (extra['files'] as List<File>).first,
+            op: extra['op'] as ImageStudioOp? ?? ImageStudioOp.compress,
+          );
+        },
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
