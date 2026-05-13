@@ -89,6 +89,10 @@ class _MainScreenState extends State<MainScreen> {
               icon: Icon(Icons.document_scanner_outlined),
               label: 'Scanner',
               activeIcon: Icon(Icons.document_scanner)),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.cloud_outlined),
+              label: 'Cloud',
+              activeIcon: Icon(Icons.cloud)),
         ],
         currentIndex: widget.navigationShell.currentIndex,
         onTap: _onTap,

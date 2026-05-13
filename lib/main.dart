@@ -65,6 +65,8 @@ final GlobalKey<NavigatorState> _toolsNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'tools');
 final GlobalKey<NavigatorState> _scannerNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'scanner');
+final GlobalKey<NavigatorState> _cloudNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'cloud');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -590,11 +592,20 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
               initialLocation: AppRoutes.scannerRoute.path,
               routes: [
                 GoRoute(
-                  // The screen to display as the root in the first tab of the
-                  // bottom navigation bar.
                   path: AppRoutes.scannerRoute.path,
                   name: AppRoutes.scannerRoute.name,
                   builder: (BuildContext context, GoRouterState state) => ScannerScreen(),
+                ),
+              ]),
+          StatefulShellBranch(
+              navigatorKey: _cloudNavigatorKey,
+              initialLocation: AppRoutes.cloudRoute.path,
+              routes: [
+                GoRoute(
+                  path: AppRoutes.cloudRoute.path,
+                  name: AppRoutes.cloudRoute.name,
+                  builder: (BuildContext context, GoRouterState state) =>
+                      const DriveScreen(fileToUpload: null),
                 ),
               ]),
           // StatefulShellBranch(

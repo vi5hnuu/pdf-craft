@@ -144,18 +144,6 @@ class ToolsScreen extends StatelessWidget {
           ),
         ],
       ),
-      _ToolCategory(
-        name: 'Cloud Storage',
-        icon: Icons.cloud_outlined,
-        color: const Color(0xFF1565C0),
-        tools: [
-          _ToolItem(
-            name: 'Google Drive',
-            icon: Icons.add_to_drive_outlined,
-            onTap: () => router.pushNamed(AppRoutes.driveRoute.name),
-          ),
-        ],
-      ),
     ];
 
     return SafeArea(
