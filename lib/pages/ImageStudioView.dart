@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' as img_studio;
+import 'package:pdf_craft/models/request/filter-image.dart' as fi;
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -36,13 +37,15 @@ class _ImageStudioViewState extends State<ImageStudioView>
   final _widthC = TextEditingController();
   final _heightC = TextEditingController();
   bool _maintainAspect = true;
+  // Filter
+  fi.ImageFilterType _filterType = fi.ImageFilterType.grayscale;
+  double _filterIntensity = 1.0;
 
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    _tabC = TabController(length: 4, vsync: this, initialIndex: widget.op.index);
-
+    _tabC = TabController(length: 5, vsync: this, initialIndex: widget.op.index);
   }
 
   @override
@@ -61,14 +64,17 @@ class _ImageStudioViewState extends State<ImageStudioView>
             Tab(icon: Icon(Icons.image), text: 'To JPG'),
             Tab(icon: Icon(Icons.swap_horiz), text: 'From JPG'),
             Tab(icon: Icon(Icons.photo_size_select_large), text: 'Resize'),
+            Tab(icon: Icon(Icons.auto_fix_high), text: 'Filters'),
           ],
         ),
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
-            p.httpStates[HttpStates.IMAGE_STUDIO] != c.httpStates[HttpStates.IMAGE_STUDIO],
+            p.httpStates[HttpStates.IMAGE_STUDIO] != c.httpStates[HttpStates.IMAGE_STUDIO] ||
+            p.httpStates[HttpStates.FILTER_IMAGE] != c.httpStates[HttpStates.FILTER_IMAGE],
         listenWhen: (p, c) =>
-            p.httpStates[HttpStates.IMAGE_STUDIO] != c.httpStates[HttpStates.IMAGE_STUDIO],
+            p.httpStates[HttpStates.IMAGE_STUDIO] != c.httpStates[HttpStates.IMAGE_STUDIO] ||
+            p.httpStates[HttpStates.FILTER_IMAGE] != c.httpStates[HttpStates.FILTER_IMAGE],
         listener: (context, state) {
           final s = state.httpStates[HttpStates.IMAGE_STUDIO];
           if (s?.done == true) {
@@ -79,9 +85,17 @@ class _ImageStudioViewState extends State<ImageStudioView>
           } else if (s?.loading == true) {
             NotificationService.showSnackbar(text: 'Processing image…', color: Colors.lightBlue);
           }
+          final fs = state.httpStates[HttpStates.FILTER_IMAGE];
+          if (fs?.done == true) {
+            AdsSingleton().dispatch(ShowInterstitialAd());
+            NotificationService.showSnackbar(text: 'Filtered image saved', color: Colors.green);
+          } else if (fs?.error != null) {
+            NotificationService.showSnackbar(text: fs!.error!, color: Colors.red);
+          }
         },
         builder: (context, state) {
-          final loading = state.httpStates[HttpStates.IMAGE_STUDIO]?.loading == true;
+          final loading = state.httpStates[HttpStates.IMAGE_STUDIO]?.loading == true ||
+              state.httpStates[HttpStates.FILTER_IMAGE]?.loading == true;
           return Stack(children: [
             Column(children: [
               // File info card
@@ -107,11 +121,12 @@ class _ImageStudioViewState extends State<ImageStudioView>
                     _buildToJpgTab(theme, loading),
                     _buildFromJpgTab(theme, loading),
                     _buildResizeTab(theme, loading),
+                    _buildFilterTab(theme, loading),
                   ],
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO] ?? state.httpStates[HttpStates.FILTER_IMAGE]),
           ]);
         },
       ),
@@ -247,6 +262,49 @@ class _ImageStudioViewState extends State<ImageStudioView>
     );
   }
 
+  // ── Filter tab ────────────────────────────────────────────────────────────────
+
+  static const _filterLabels = <fi.ImageFilterType, String>{
+    fi.ImageFilterType.grayscale: 'Grayscale',
+    fi.ImageFilterType.sepia: 'Sepia',
+    fi.ImageFilterType.sharpen: 'Sharpen',
+    fi.ImageFilterType.brightness: 'Brightness',
+    fi.ImageFilterType.contrast: 'Contrast',
+    fi.ImageFilterType.vintage: 'Vintage',
+  };
+
+  Widget _buildFilterTab(ThemeData theme, bool loading) {
+    final showIntensity = _filterType != fi.ImageFilterType.grayscale &&
+        _filterType != fi.ImageFilterType.sharpen;
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Filter', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: fi.ImageFilterType.values.map((type) => ChoiceChip(
+            label: Text(_filterLabels[type] ?? type.name),
+            selected: _filterType == type,
+            onSelected: (_) => setState(() => _filterType = type),
+          )).toList(),
+        ),
+        if (showIntensity) ...[
+          const SizedBox(height: 16),
+          Text('Intensity: ${_filterIntensity.toStringAsFixed(1)}',
+              style: theme.textTheme.bodyMedium),
+          Slider(
+            value: _filterIntensity,
+            min: 0, max: 2, divisions: 20,
+            onChanged: (v) => setState(() => _filterIntensity = v),
+          ),
+        ],
+        const Spacer(),
+        _submitButton(loading, 'Apply Filter', Icons.auto_fix_high, _onFilter),
+      ]),
+    );
+  }
+
   // ── Shared submit button ──────────────────────────────────────────────────────
 
   Widget _submitButton(bool loading, String label, IconData icon, VoidCallback onTap) {
@@ -288,6 +346,16 @@ class _ImageStudioViewState extends State<ImageStudioView>
     BlocProvider.of<PdfBloc>(context).add(ConvertFromJpgEvent(
       convertFromJpg: img_studio.ConvertFromJpg(
         format: _fromJpgFormat,
+        file: await MultipartFile.fromFile(widget.file.path),
+      ),
+    ));
+  }
+
+  Future<void> _onFilter() async {
+    BlocProvider.of<PdfBloc>(context).add(FilterImageEvent(
+      filterImage: fi.FilterImage(
+        filterType: _filterType,
+        intensity: _filterIntensity,
         file: await MultipartFile.fromFile(widget.file.path),
       ),
     ));
