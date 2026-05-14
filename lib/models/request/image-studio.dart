@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 
-enum ImageStudioOp { compress, convertToJpg, convertFromJpg, resize }
+enum ImageStudioOp { compress, convertToJpg, convertFromJpg, resize, filter }
 
 class CompressImage {
   final String? outFileName;

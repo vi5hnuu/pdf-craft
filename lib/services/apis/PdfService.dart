@@ -25,6 +25,11 @@ import 'package:pdf_craft/models/request/image-studio.dart';
 import 'package:pdf_craft/models/request/pdf-to-office.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
+import 'package:pdf_craft/models/request/redact-pdf.dart';
+import 'package:pdf_craft/models/request/duplicate-pages.dart';
+import 'package:pdf_craft/models/request/get-bookmarks.dart';
+import 'package:pdf_craft/models/request/edit-bookmarks.dart';
+import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 
 import '../../singletons/DioSingleton.dart';
@@ -32,6 +37,11 @@ import '../../singletons/DioSingleton.dart';
 class PdfService {
   static final PdfService _instance = PdfService._();
 
+  static String get _redactPdf => "${Constants.baseUrl}/pdf-studio/redact-pdf";
+  static String get _duplicatePages => "${Constants.baseUrl}/pdf-studio/duplicate-pages";
+  static String get _getBookmarks => "${Constants.baseUrl}/pdf-studio/get-bookmarks";
+  static String get _editBookmarks => "${Constants.baseUrl}/pdf-studio/edit-bookmarks";
+  static String get _filterImage => "${Constants.baseUrl}/image-studio/filter-image";
   static String get _getMetadata => "${Constants.baseUrl}/pdf-studio/get-metadata";
   static String get _editMetadata => "${Constants.baseUrl}/pdf-studio/edit-metadata";
   static String get _headerFooter => "${Constants.baseUrl}/pdf-studio/header-footer";
@@ -182,5 +192,26 @@ class PdfService {
 
   Future<Response<Uint8List>> pdfToPptx({required PdfToOffice req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_pdfToPptx, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> redactPdf({required RedactPdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_redactPdf, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> duplicatePages({required DuplicatePages req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_duplicatePages, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  /// Returns the bookmark tree as JSON (not a file download).
+  Future<Response<dynamic>> getBookmarks({required GetBookmarks req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_getBookmarks, data: FormData.fromMap(req.toJson()), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> editBookmarks({required EditBookmarks req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_editBookmarks, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> filterImage({required FilterImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_filterImage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 }

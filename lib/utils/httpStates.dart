@@ -28,6 +28,12 @@ class HttpStates{
   static const String PDF_TO_EXCEL="PDF_TO_EXCEL";
   static const String PDF_TO_PPTX="PDF_TO_PPTX";
 
+  static const String REDACT_PDF="REDACT_PDF";
+  static const String DUPLICATE_PAGES="DUPLICATE_PAGES";
+  static const String GET_BOOKMARKS="GET_BOOKMARKS";
+  static const String EDIT_BOOKMARKS="EDIT_BOOKMARKS";
+  static const String FILTER_IMAGE="FILTER_IMAGE";
+
   static const String LOAD_DIRECTORY_FILES="LOAD_DIRECTORY_FILES";
   static const String MOVE_FILE_TO="MOVE_FILE_TO";
   static const String DELETE_FILE="DELETE_FILE";

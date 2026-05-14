@@ -142,3 +142,28 @@ class PdfToOfficeEvent extends PdfEvent {
   final PdfToOffice pdfToOffice;
   const PdfToOfficeEvent({required this.pdfToOffice, super.cancelToken});
 }
+
+class RedactPdfEvent extends PdfEvent {
+  final RedactPdf redactPdf;
+  const RedactPdfEvent({required this.redactPdf, super.cancelToken});
+}
+
+class DuplicatePagesEvent extends PdfEvent {
+  final DuplicatePages duplicatePages;
+  const DuplicatePagesEvent({required this.duplicatePages, super.cancelToken});
+}
+
+class GetBookmarksEvent extends PdfEvent {
+  final GetBookmarks getBookmarks;
+  const GetBookmarksEvent({required this.getBookmarks, super.cancelToken});
+}
+
+class EditBookmarksEvent extends PdfEvent {
+  final EditBookmarks editBookmarks;
+  const EditBookmarksEvent({required this.editBookmarks, super.cancelToken});
+}
+
+class FilterImageEvent extends PdfEvent {
+  final FilterImage filterImage;
+  const FilterImageEvent({required this.filterImage, super.cancelToken});
+}

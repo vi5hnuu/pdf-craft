@@ -31,6 +31,11 @@ import 'package:pdf_craft/models/request/image-studio.dart';
 import 'package:pdf_craft/models/request/pdf-to-office.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
+import 'package:pdf_craft/models/request/redact-pdf.dart';
+import 'package:pdf_craft/models/request/duplicate-pages.dart';
+import 'package:pdf_craft/models/request/get-bookmarks.dart';
+import 'package:pdf_craft/models/request/edit-bookmarks.dart';
+import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
@@ -213,6 +218,44 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       return _handle(emit: emit, key: key, call: call, error: 'Conversion failed');
     });
 
+    on<RedactPdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.REDACT_PDF,
+      call: (p) => _pdfService.redactPdf(req: e.redactPdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to redact PDF',
+    ));
+
+    on<DuplicatePagesEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.DUPLICATE_PAGES,
+      call: (p) => _pdfService.duplicatePages(req: e.duplicatePages, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to duplicate pages',
+    ));
+
+    on<EditBookmarksEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.EDIT_BOOKMARKS,
+      call: (p) => _pdfService.editBookmarks(req: e.editBookmarks, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to edit bookmarks',
+    ));
+
+    on<FilterImageEvent>((e, emit) => _handleImage(
+      emit: emit,
+      key: HttpStates.FILTER_IMAGE,
+      call: (p) => _pdfService.filterImage(req: e.filterImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to apply filter',
+    ));
+
+    // Returns JSON bookmark tree — does not save a file
+    on<GetBookmarksEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, const HttpState.loading())));
+      try {
+        final res = await _pdfService.getBookmarks(req: event.getBookmarks, cancelToken: event.cancelToken);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.done(extras: {'bookmarks': res.data}))));
+      } on DioException catch (e) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.error(error: e.message ?? 'Failed to get bookmarks'))));
+      } catch (_) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, const HttpState.error(error: 'Failed to get bookmarks'))));
+      }
+    });
+
     // Returns JSON metadata — does not save a file
     on<GetMetadataEvent>((event, emit) async {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, const HttpState.loading())));
@@ -254,10 +297,10 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
   // Handler for image-studio operations — saves to processed dir with image extension
   Future<void> _handleImage({
     required Emitter<PdfState> emit,
+    String key = HttpStates.IMAGE_STUDIO,
     required Future<Response<Uint8List>> Function(ProgressCallback onSendProgress) call,
     required String error,
   }) async {
-    const key = HttpStates.IMAGE_STUDIO;
     emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, const HttpState.loading())));
     try {
       final res = await call((sent, total) {
