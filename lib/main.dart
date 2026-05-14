@@ -39,6 +39,10 @@ import 'package:pdf_craft/pages/PlaceImageView.dart';
 import 'package:pdf_craft/pages/ImageStudioView.dart';
 import 'package:pdf_craft/pages/PdfToOfficeView.dart';
 import 'package:pdf_craft/pages/DriveScreen.dart';
+import 'package:pdf_craft/pages/RedactPdfView.dart';
+import 'package:pdf_craft/pages/DuplicatePagesView.dart';
+import 'package:pdf_craft/pages/BookmarksEditorView.dart';
+import 'package:pdf_craft/pages/PdfCompareView.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/models/request/pdf-to-office.dart' show PdfOfficeFormat;
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
@@ -504,6 +508,56 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
         builder: (context, state) {
           final files = (state.extra as Map)['files'] as List<File>;
           return BatchProcessView(files: files);
+        },
+      ),
+      // Redact PDF — single file
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.redactPdfRoute.path,
+        name: AppRoutes.redactPdfRoute.name,
+        builder: (context, state) => RedactPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Duplicate Pages — single file
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.duplicatePagesRoute.path,
+        name: AppRoutes.duplicatePagesRoute.name,
+        builder: (context, state) => DuplicatePagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Bookmarks Editor — single file
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.bookmarksEditorRoute.path,
+        name: AppRoutes.bookmarksEditorRoute.name,
+        builder: (context, state) => BookmarksEditorView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // PDF Compare — two files via multiSelect; extra has {'files': [file1, file2]}
+      GoRoute(
+        redirect: (context, state) {
+          final files = (state.extra as Map?)?.containsKey('files') == true
+              ? (state.extra as Map)['files'] as List<File>?
+              : null;
+          if (files == null || files.length < 2) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.pdfCompareRoute.path,
+        name: AppRoutes.pdfCompareRoute.name,
+        builder: (context, state) {
+          final files = ((state.extra as Map)['files'] as List<File>);
+          return PdfCompareView(file1: files[0], file2: files[1]);
         },
       ),
       // Google Drive screen — extra may be {'file': File} for direct upload, or null for browse

@@ -34,6 +34,10 @@ class ToolsScreen extends StatelessWidget {
           _ToolItem(name: 'Annotate PDF', icon: Icons.draw_outlined, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.annotatePdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'Fill PDF Form', icon: Icons.edit_document, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.formPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
           _ToolItem(name: 'PDF Info', icon: Icons.info_outline, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfInfoRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Redact PDF', icon: Icons.hide_source, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.redactPdfRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Duplicate Pages', icon: Icons.copy_all, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.duplicatePagesRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Bookmarks', icon: Icons.bookmark_outline, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.bookmarksEditorRoute.path, multiSelect: false, limitToExtensions: pdf))),
+          _ToolItem(name: 'Compare PDF', icon: Icons.compare, onTap: () => router.pushNamed(AppRoutes.fileManagement.name, extra: FileSelectionConfig(path: Constants.rootStoragePath, redirectPath: AppRoutes.pdfCompareRoute.path, multiSelect: true, minSelection: 2, limitToExtensions: pdf))),
         ],
       ),
       _ToolCategory(
@@ -141,6 +145,17 @@ class ToolsScreen extends StatelessWidget {
                     multiSelect: false,
                     limitToExtensions: ['.jpg', '.jpeg', '.png', '.bmp'],
                     extra: {'op': ImageStudioOp.resize})),
+          ),
+          _ToolItem(
+            name: 'Image Filters',
+            icon: Icons.auto_fix_high,
+            onTap: () => router.pushNamed(AppRoutes.fileManagement.name,
+                extra: FileSelectionConfig(
+                    path: Constants.rootStoragePath,
+                    redirectPath: AppRoutes.imageStudioRoute.path,
+                    multiSelect: false,
+                    limitToExtensions: ['.jpg', '.jpeg', '.png', '.bmp'],
+                    extra: {'op': ImageStudioOp.filter})),
           ),
         ],
       ),
