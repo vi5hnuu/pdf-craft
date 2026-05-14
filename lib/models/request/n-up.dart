@@ -14,7 +14,7 @@ class NUp {
             if (outFileName != null) 'out_file_name': outFileName,
             'n_up': nUp,
           }),
-          contentType: 'application/json',
+          contentType: DioMediaType.parse('application/json'),
         ),
         'file': file,
       };

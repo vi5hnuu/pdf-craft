@@ -12,7 +12,7 @@ class OptimizePdf {
           jsonEncode({
             if (outFileName != null) 'out_file_name': outFileName,
           }),
-          contentType: 'application/json',
+          contentType: DioMediaType.parse('application/json'),
         ),
         'file': file,
       };

@@ -14,7 +14,7 @@ class RemoveBlankPages {
             if (outFileName != null) 'out_file_name': outFileName,
             'threshold': threshold,
           }),
-          contentType: 'application/json',
+          contentType: DioMediaType.parse('application/json'),
         ),
         'file': file,
       };
