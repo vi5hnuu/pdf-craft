@@ -87,25 +87,45 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 32),
-          Row(children: [
-            Expanded(child: _ScanCard(
-              icon: Icons.picture_as_pdf,
-              label: 'Scan to PDF',
-              description: 'Creates a multi-page PDF from scanned pages.',
-              color: theme.colorScheme.primary,
-              loading: _scanning,
-              onTap: () => _startScan(DocumentFormat.pdf),
-            )),
-            const SizedBox(width: 16),
-            Expanded(child: _ScanCard(
-              icon: Icons.image_outlined,
-              label: 'Scan to JPEG',
-              description: 'Saves each page as a separate JPEG image.',
-              color: const Color(0xFF7B1FA2),
-              loading: _scanning,
-              onTap: () => _startScan(DocumentFormat.jpeg),
-            )),
-          ]),
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              SizedBox(
+                width: (MediaQuery.sizeOf(context).width - 56) / 2,
+                child: _ScanCard(
+                  icon: Icons.picture_as_pdf,
+                  label: 'Scan to PDF',
+                  description: 'Creates a multi-page PDF from scanned pages.',
+                  color: theme.colorScheme.primary,
+                  loading: _scanning,
+                  onTap: () => _startScan(DocumentFormat.pdf),
+                ),
+              ),
+              SizedBox(
+                width: (MediaQuery.sizeOf(context).width - 56) / 2,
+                child: _ScanCard(
+                  icon: Icons.image_outlined,
+                  label: 'Scan to JPEG',
+                  description: 'Saves each page as a separate JPEG image.',
+                  color: const Color(0xFF7B1FA2),
+                  loading: _scanning,
+                  onTap: () => _startScan(DocumentFormat.jpeg),
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: _ScanCard(
+                  icon: Icons.document_scanner_outlined,
+                  label: 'Searchable PDF',
+                  description: 'OCR scan — creates a PDF with selectable, searchable text layer.',
+                  color: const Color(0xFF00796B),
+                  loading: _scanning,
+                  onTap: () => _startScan(DocumentFormat.pdf),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           Card(
             margin: EdgeInsets.zero,

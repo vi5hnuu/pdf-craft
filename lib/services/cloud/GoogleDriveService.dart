@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:path_provider/path_provider.dart';
 
 /// Manages Google Sign-In authentication and Google Drive file operations.
 ///
@@ -66,6 +68,63 @@ class GoogleDriveService {
 
     authClient.close();
     return result.id;
+  }
+
+  /// Returns storage quota info: `limit` and `usage` in bytes as strings.
+  Future<drive.About> getStorageQuota() async {
+    _currentUser ??= await _signIn.signInSilently();
+    if (_currentUser == null) throw Exception('Not signed in to Google Drive');
+    final authClient = await _signIn.authenticatedClient();
+    if (authClient == null) throw Exception('Failed to get authenticated Drive client');
+    final api = drive.DriveApi(authClient);
+    final about = await api.about.get($fields: 'storageQuota');
+    authClient.close();
+    return about;
+  }
+
+  /// Deletes a file from the user's Drive by its file ID.
+  Future<void> deleteFile(String fileId) async {
+    _currentUser ??= await _signIn.signInSilently();
+    if (_currentUser == null) throw Exception('Not signed in to Google Drive');
+    final authClient = await _signIn.authenticatedClient();
+    if (authClient == null) throw Exception('Failed to get authenticated Drive client');
+    final api = drive.DriveApi(authClient);
+    await api.files.delete(fileId);
+    authClient.close();
+  }
+
+  /// Downloads a Drive file to the device's temp directory.
+  /// [onProgress] is called with values 0.0–1.0 as bytes accumulate.
+  Future<File> downloadFile(String fileId, String fileName, {void Function(double)? onProgress}) async {
+    _currentUser ??= await _signIn.signInSilently();
+    if (_currentUser == null) throw Exception('Not signed in to Google Drive');
+    final authClient = await _signIn.authenticatedClient();
+    if (authClient == null) throw Exception('Failed to get authenticated Drive client');
+
+    final api = drive.DriveApi(authClient);
+    final media = await api.files.get(
+      fileId,
+      downloadOptions: drive.DownloadOptions.fullMedia,
+    ) as drive.Media;
+
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/$fileName');
+    final sink = file.openWrite();
+
+    final chunks = <int>[];
+    final total = media.length ?? 0;
+
+    await for (final chunk in media.stream) {
+      chunks.addAll(chunk);
+      sink.add(chunk);
+      if (onProgress != null && total > 0) {
+        onProgress(chunks.length / total);
+      }
+    }
+    await sink.flush();
+    await sink.close();
+    authClient.close();
+    return file;
   }
 
   /// Lists all files in the user's Drive (not trashed), newest first.

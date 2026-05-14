@@ -14,6 +14,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProtectPdfView extends StatefulWidget {
   final File file;
@@ -30,6 +31,7 @@ class ProtectPdfView extends StatefulWidget {
 class _ProtectPdfViewState extends State<ProtectPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   final TextEditingController outFileNameC=TextEditingController();
+  final TextEditingController _hintC=TextEditingController();
   String ownerPassword="";
   String userPassword="";
   final List<UserAccessPermission> userPermissions=[];
@@ -55,7 +57,12 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
             if(httpState?.done==true){
               AdsSingleton().dispatch(ShowInterstitialAd());
               NotificationService.showSnackbar(text: "Protected file successfully",color: Colors.green);
-              if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
+              final savedFile = httpState?.extras?['savedFile'];
+              if (savedFile is File && _hintC.text.trim().isNotEmpty) {
+                SharedPreferences.getInstance().then((prefs) =>
+                  prefs.setString('pwd_hint_${savedFile.path.split('/').last}', _hintC.text.trim()));
+              }
+              if(savedFile is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath': savedFile.path});
             }else if(httpState?.error!=null){
               NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
             }else if(httpState?.loading==true){
@@ -78,6 +85,16 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                               TextFormField(keyboardType: TextInputType.text,
                                   decoration: InputDecoration(labelText: "File name",border: OutlineInputBorder()),
                                   controller: outFileNameC),
+                              SizedBox(height: 16,),
+                              TextFormField(
+                                controller: _hintC,
+                                decoration: InputDecoration(
+                                  labelText: "Password Hint (optional)",
+                                  hintText: "e.g. My birthday year",
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.lightbulb_outline),
+                                ),
+                              ),
                               SizedBox(height: 16,),
                               TextFormField(keyboardType: TextInputType.number,
                                 decoration: InputDecoration(labelText: "Owner Password",border: OutlineInputBorder()),
