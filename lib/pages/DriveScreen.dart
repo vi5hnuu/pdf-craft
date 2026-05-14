@@ -160,7 +160,7 @@ class _DriveScreenState extends State<DriveScreen> {
           children: [
             Icon(Icons.folder_open_outlined, size: 56, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
             const SizedBox(height: 12),
-            const Text('No files uploaded yet'),
+            const Text('No files found in your Drive'),
             if (widget.fileToUpload != null) ...[
               const SizedBox(height: 8),
               Text('Tap the button below to upload your file.', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.55))),

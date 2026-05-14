@@ -15,7 +15,11 @@ class GoogleDriveService {
   GoogleDriveService._();
   factory GoogleDriveService() => _instance;
 
-  final _signIn = GoogleSignIn(scopes: [drive.DriveApi.driveFileScope]);
+  // driveFileScope: create/upload files; driveReadonlyScope: list all existing files
+  final _signIn = GoogleSignIn(scopes: [
+    drive.DriveApi.driveFileScope,
+    drive.DriveApi.driveReadonlyScope,
+  ]);
 
   GoogleSignInAccount? _currentUser;
   GoogleSignInAccount? get currentUser => _currentUser;
@@ -64,7 +68,7 @@ class GoogleDriveService {
     return result.id;
   }
 
-  /// Lists files previously uploaded to the "PDF Craft" folder.
+  /// Lists all files in the user's Drive (not trashed), newest first.
   Future<List<drive.File>> listFiles() async {
     _currentUser ??= await _signIn.signInSilently();
     if (_currentUser == null) return [];
@@ -73,12 +77,11 @@ class GoogleDriveService {
     if (authClient == null) return [];
 
     final api = drive.DriveApi(authClient);
-    final folderId = await _ensureFolder(api, 'PDF Craft');
-
     final result = await api.files.list(
-      q: "'$folderId' in parents and trashed = false",
+      q: "trashed = false and mimeType != 'application/vnd.google-apps.folder'",
       $fields: 'files(id, name, size, modifiedTime, mimeType)',
       orderBy: 'modifiedTime desc',
+      pageSize: 100,
     );
 
     authClient.close();
