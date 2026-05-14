@@ -30,6 +30,9 @@ import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
+import 'package:pdf_craft/models/request/remove-blank-pages.dart';
+import 'package:pdf_craft/models/request/optimize-pdf.dart';
+import 'package:pdf_craft/models/request/n-up.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 
 import '../../singletons/DioSingleton.dart';
@@ -42,6 +45,9 @@ class PdfService {
   static String get _getBookmarks => "${Constants.baseUrl}/pdf-studio/get-bookmarks";
   static String get _editBookmarks => "${Constants.baseUrl}/pdf-studio/edit-bookmarks";
   static String get _filterImage => "${Constants.baseUrl}/image-studio/filter-image";
+  static String get _removeBlankPages => "${Constants.baseUrl}/pdf-studio/remove-blank-pages";
+  static String get _optimizePdf => "${Constants.baseUrl}/pdf-studio/optimize-pdf";
+  static String get _nUpPdf => "${Constants.baseUrl}/pdf-studio/n-up";
   static String get _getMetadata => "${Constants.baseUrl}/pdf-studio/get-metadata";
   static String get _editMetadata => "${Constants.baseUrl}/pdf-studio/edit-metadata";
   static String get _headerFooter => "${Constants.baseUrl}/pdf-studio/header-footer";
@@ -213,5 +219,17 @@ class PdfService {
 
   Future<Response<Uint8List>> filterImage({required FilterImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_filterImage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> removeBlankPages({required RemoveBlankPages req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_removeBlankPages, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> optimizePdf({required OptimizePdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_optimizePdf, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> nUpPdf({required NUp req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_nUpPdf, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 }

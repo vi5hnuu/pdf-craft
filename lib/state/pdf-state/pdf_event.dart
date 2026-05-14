@@ -167,3 +167,18 @@ class FilterImageEvent extends PdfEvent {
   final FilterImage filterImage;
   const FilterImageEvent({required this.filterImage, super.cancelToken});
 }
+
+class RemoveBlankPagesEvent extends PdfEvent {
+  final RemoveBlankPages removeBlankPages;
+  const RemoveBlankPagesEvent({required this.removeBlankPages, super.cancelToken});
+}
+
+class OptimizePdfEvent extends PdfEvent {
+  final OptimizePdf optimizePdf;
+  const OptimizePdfEvent({required this.optimizePdf, super.cancelToken});
+}
+
+class NUpPdfEvent extends PdfEvent {
+  final NUp nUp;
+  const NUpPdfEvent({required this.nUp, super.cancelToken});
+}

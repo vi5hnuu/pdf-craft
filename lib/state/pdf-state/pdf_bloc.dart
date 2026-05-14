@@ -36,6 +36,9 @@ import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
+import 'package:pdf_craft/models/request/remove-blank-pages.dart';
+import 'package:pdf_craft/models/request/optimize-pdf.dart';
+import 'package:pdf_craft/models/request/n-up.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
@@ -241,6 +244,27 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       key: HttpStates.FILTER_IMAGE,
       call: (p) => _pdfService.filterImage(req: e.filterImage, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to apply filter',
+    ));
+
+    on<RemoveBlankPagesEvent>((e, emit) => _handle(
+      emit: emit,
+      key: HttpStates.REMOVE_BLANK_PAGES,
+      call: (p) => _pdfService.removeBlankPages(req: e.removeBlankPages, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to remove blank pages',
+    ));
+
+    on<OptimizePdfEvent>((e, emit) => _handle(
+      emit: emit,
+      key: HttpStates.OPTIMIZE_PDF,
+      call: (p) => _pdfService.optimizePdf(req: e.optimizePdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to optimize PDF',
+    ));
+
+    on<NUpPdfEvent>((e, emit) => _handle(
+      emit: emit,
+      key: HttpStates.N_UP_PDF,
+      call: (p) => _pdfService.nUpPdf(req: e.nUp, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to create N-up PDF',
     ));
 
     // Returns JSON bookmark tree — does not save a file

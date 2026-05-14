@@ -43,6 +43,10 @@ import 'package:pdf_craft/pages/RedactPdfView.dart';
 import 'package:pdf_craft/pages/DuplicatePagesView.dart';
 import 'package:pdf_craft/pages/BookmarksEditorView.dart';
 import 'package:pdf_craft/pages/PdfCompareView.dart';
+import 'package:pdf_craft/pages/SignPdfView.dart';
+import 'package:pdf_craft/pages/RemoveBlankPagesView.dart';
+import 'package:pdf_craft/pages/OptimizePdfView.dart';
+import 'package:pdf_craft/pages/NUpPdfView.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/models/request/pdf-to-office.dart' show PdfOfficeFormat;
 import 'package:pdf_craft/pages/UnProtectPdfView.dart';
@@ -509,6 +513,50 @@ class NestedTabNavigationExampleApp extends StatelessWidget {
           final files = (state.extra as Map)['files'] as List<File>;
           return BatchProcessView(files: files);
         },
+      ),
+      // Sign PDF — single file; draws signature then navigates to PlaceImageView
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.signPdfRoute.path,
+        name: AppRoutes.signPdfRoute.name,
+        builder: (context, state) => SignPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Remove blank pages
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.removeBlankPagesRoute.path,
+        name: AppRoutes.removeBlankPagesRoute.name,
+        builder: (context, state) => RemoveBlankPagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Optimize PDF
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.optimizePdfRoute.path,
+        name: AppRoutes.optimizePdfRoute.name,
+        builder: (context, state) => OptimizePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // N-Up PDF layout
+      GoRoute(
+        redirect: (context, state) {
+          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.nUpPdfRoute.path,
+        name: AppRoutes.nUpPdfRoute.name,
+        builder: (context, state) => NUpPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // Redact PDF — single file
       GoRoute(

@@ -11,9 +11,11 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdfx/pdfx.dart';
@@ -192,26 +194,12 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
           ),
         ],
       ),
+      // Save is handled directly in _onSave via PdfService; BlocConsumer here only
+      // provides the loading overlay for any other STAMP_PDF operations on this screen.
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.STAMP_PDF] != c.httpStates[HttpStates.STAMP_PDF],
-        listenWhen: (p, c) => p.httpStates[HttpStates.STAMP_PDF] != c.httpStates[HttpStates.STAMP_PDF],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.STAMP_PDF];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Annotations applied', color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Saving annotations…', color: Colors.lightBlue);
-          }
-        },
+        listenWhen: (_, __) => false,
+        listener: (context, state) {},
         builder: (context, state) {
           return Stack(children: [
             Column(children: [
@@ -664,30 +652,70 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
 
   // ── Save ──────────────────────────────────────────────────────────────────
 
+  /// Saves all annotated pages sequentially.
+  /// Navigates to each annotated page, captures the RepaintBoundary, and stamps
+  /// it via direct service call so the result file can be chained into the next stamp.
   Future<void> _onSave() async {
+    final annotatedPages = _pageObjects.entries
+        .where((e) => e.value.isNotEmpty)
+        .map((e) => e.key)
+        .toList()..sort();
+    if (annotatedPages.isEmpty) return;
+
     setState(() => _saving = true);
     try {
-      final boundary = _annotationKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) throw Exception('Could not capture annotations');
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) throw Exception('Failed to encode');
-      final tmpDir = await getTemporaryDirectory();
-      final stampFile = File('${tmpDir.path}/annotation_${DateTime.now().millisecondsSinceEpoch}.png');
-      await stampFile.writeAsBytes(byteData.buffer.asUint8List());
+      final baseName = 'annotated_${widget.file.path.split('/').last.replaceAll('.pdf', '')}';
+      File inputFile = widget.file;
+
+      for (final pageNo in annotatedPages) {
+        if (_currentPage != pageNo) {
+          await _loadPage(pageNo);
+          // Wait for the next frame so the painter fully renders before capture
+          await WidgetsBinding.instance.endOfFrame;
+        }
+
+        final boundary = _annotationKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+        if (boundary == null) continue;
+
+        final image = await boundary.toImage(pixelRatio: 3.0);
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (byteData == null) continue;
+
+        final tmpDir = await getTemporaryDirectory();
+        final stampFile = File('${tmpDir.path}/ann_p${pageNo}_${DateTime.now().millisecondsSinceEpoch}.png');
+        await stampFile.writeAsBytes(byteData.buffer.asUint8List());
+
+        // Direct service call so result file can be used as input for the next page
+        final resp = await PdfService().stampPdf(
+          stampPdf: StampPdf(
+            outFileName: baseName,
+            opacity: 1.0,
+            fromPage: pageNo - 1,
+            toPage: pageNo - 1,
+            file: await MultipartFile.fromFile(inputFile.path),
+            stamp: await MultipartFile.fromFile(
+                stampFile.path, contentType: DioMediaType.parse('image/png')),
+          ),
+        );
+
+        if (resp.data != null) {
+          final outDir = Directory(Constants.processedDirPath);
+          if (!outDir.existsSync()) await outDir.create(recursive: true);
+          final outFile = File('${outDir.path}/$baseName.pdf');
+          await outFile.writeAsBytes(resp.data!);
+          inputFile = outFile;
+        }
+      }
+
       if (!mounted) return;
-      BlocProvider.of<PdfBloc>(context).add(StampPdfEvent(
-        stampPdf: StampPdf(
-          outFileName: 'annotated_${widget.file.path.split('/').last.replaceAll('.pdf', '')}',
-          opacity: 1.0,
-          fromPage: _currentPage - 1,
-          toPage: _currentPage - 1,
-          file: await MultipartFile.fromFile(widget.file.path),
-          stamp: await MultipartFile.fromFile(stampFile.path, contentType: DioMediaType.parse('image/png')),
-        ),
-      ));
+      AdsSingleton().dispatch(ShowInterstitialAd());
+      NotificationService.showSnackbar(text: 'Annotations saved', color: Colors.green);
+      GoRouter.of(context).pushNamed(
+        AppRoutes.pdfFilePreviewRoute.name,
+        pathParameters: {'pdfFilePath': inputFile.path},
+      );
     } catch (e) {
-      NotificationService.showSnackbar(text: 'Failed to save: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: 'Save failed: $e', color: Colors.red);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

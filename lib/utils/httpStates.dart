@@ -34,6 +34,10 @@ class HttpStates{
   static const String EDIT_BOOKMARKS="EDIT_BOOKMARKS";
   static const String FILTER_IMAGE="FILTER_IMAGE";
 
+  static const String REMOVE_BLANK_PAGES="REMOVE_BLANK_PAGES";
+  static const String OPTIMIZE_PDF="OPTIMIZE_PDF";
+  static const String N_UP_PDF="N_UP_PDF";
+
   static const String LOAD_DIRECTORY_FILES="LOAD_DIRECTORY_FILES";
   static const String MOVE_FILE_TO="MOVE_FILE_TO";
   static const String DELETE_FILE="DELETE_FILE";

@@ -7,6 +7,8 @@ import 'package:pdf_craft/models/enums/compression-level.dart';
 import 'package:pdf_craft/models/request/compress-pdf.dart';
 import 'package:pdf_craft/models/request/flatten-pdf.dart';
 import 'package:pdf_craft/models/request/grayscale-pdf.dart';
+import 'package:pdf_craft/models/request/optimize-pdf.dart';
+import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/repair-pdf.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -17,7 +19,9 @@ enum _Tool {
   grayscale('Grayscale', Icons.invert_colors, HttpStates.GRAYSCALE_PDF),
   compress('Compress (recommended)', Icons.compress, HttpStates.COMPRESS_PDF),
   repair('Repair', Icons.build_outlined, HttpStates.REPAIR_PDF),
-  flatten('Flatten', Icons.layers_clear_outlined, HttpStates.FLATTEN_PDF);
+  flatten('Flatten', Icons.layers_clear_outlined, HttpStates.FLATTEN_PDF),
+  optimize('Optimize', Icons.auto_fix_high, HttpStates.OPTIMIZE_PDF),
+  removeBlankPages('Remove Blank Pages', Icons.delete_sweep_outlined, HttpStates.REMOVE_BLANK_PAGES);
 
   final String label;
   final IconData icon;
@@ -120,6 +124,14 @@ class _BatchProcessViewState extends State<BatchProcessView> {
         case _Tool.flatten:
           _bloc.add(FlattenPdfEvent(
             flattenPdf: FlattenPdf(outFileName: outName, file: multipart),
+          ));
+        case _Tool.optimize:
+          _bloc.add(OptimizePdfEvent(
+            optimizePdf: OptimizePdf(outFileName: outName, file: multipart),
+          ));
+        case _Tool.removeBlankPages:
+          _bloc.add(RemoveBlankPagesEvent(
+            removeBlankPages: RemoveBlankPages(file: multipart),
           ));
       }
     } catch (e) {

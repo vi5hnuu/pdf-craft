@@ -161,6 +161,19 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
           title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text('Page ${item.pageIndex + 1}'),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            // Indent / dedent
+            IconButton(
+              icon: const Icon(Icons.format_indent_increase, size: 18),
+              tooltip: 'Indent (make child)',
+              onPressed: item.indent < 3 ? () => setState(() => _bookmarks[i] = _BookmarkItem(
+                title: item.title, pageIndex: item.pageIndex, indent: item.indent + 1)) : null,
+            ),
+            IconButton(
+              icon: const Icon(Icons.format_indent_decrease, size: 18),
+              tooltip: 'Dedent (move up)',
+              onPressed: item.indent > 0 ? () => setState(() => _bookmarks[i] = _BookmarkItem(
+                title: item.title, pageIndex: item.pageIndex, indent: item.indent - 1)) : null,
+            ),
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 20),
               tooltip: 'Rename',
@@ -276,13 +289,26 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
     ));
   }
 
-  // Converts flat list with indent levels back to a nested tree
+  // Converts flat list with indent levels back to a properly nested tree.
+  // Uses a parent-stack: index N holds the children list for depth N-1.
   List<Map<String, dynamic>> _buildTree(List<_BookmarkItem> flat) {
-    final result = <Map<String, dynamic>>[];
+    final root = <Map<String, dynamic>>[];
+    // parentStack[depth] = children list to append into at that depth
+    final parentStack = <List<Map<String, dynamic>>>[root];
+
     for (final item in flat) {
-      result.add({'title': item.title, 'pageIndex': item.pageIndex, 'children': []});
+      final node = <String, dynamic>{
+        'title': item.title,
+        'pageIndex': item.pageIndex,
+        'children': <Map<String, dynamic>>[],
+      };
+      // Ensure stack is tall enough (clamp to avoid orphan items from invalid indent jumps)
+      final depth = item.indent.clamp(0, parentStack.length - 1);
+      while (parentStack.length > depth + 1) parentStack.removeLast();
+      parentStack.last.add(node);
+      parentStack.add(node['children'] as List<Map<String, dynamic>>);
     }
-    return result;
+    return root;
   }
 
   // Flattens nested bookmark JSON into a flat list with indent levels

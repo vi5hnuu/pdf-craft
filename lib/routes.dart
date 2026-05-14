@@ -45,6 +45,11 @@ class AppRoutes{
   static AppRoute pdfToWordRoute=AppRoute(name: 'pdf-to-word-tool', path: '/pdf-to-word-tool');
   static AppRoute pdfToExcelRoute=AppRoute(name: 'pdf-to-excel-tool', path: '/pdf-to-excel-tool');
   static AppRoute pdfToPptxRoute=AppRoute(name: 'pdf-to-pptx-tool', path: '/pdf-to-pptx-tool');
+  static AppRoute signPdfRoute=AppRoute(name: 'sign-pdf-tool', path: '/sign-pdf-tool');
+  static AppRoute removeBlankPagesRoute=AppRoute(name: 'remove-blank-pages-tool', path: '/remove-blank-pages-tool');
+  static AppRoute optimizePdfRoute=AppRoute(name: 'optimize-pdf-tool', path: '/optimize-pdf-tool');
+  static AppRoute nUpPdfRoute=AppRoute(name: 'n-up-pdf-tool', path: '/n-up-pdf-tool');
+
   static AppRoute redactPdfRoute=AppRoute(name: 'redact-pdf-tool', path: '/redact-pdf-tool');
   static AppRoute duplicatePagesRoute=AppRoute(name: 'duplicate-pages-tool', path: '/duplicate-pages-tool');
   static AppRoute bookmarksEditorRoute=AppRoute(name: 'bookmarks-editor', path: '/bookmarks-editor');
