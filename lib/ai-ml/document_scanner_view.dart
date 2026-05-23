@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
+import 'package:pdfx/pdfx.dart';
 
 class DocumentScannerView extends StatefulWidget {
   @override
@@ -12,10 +12,12 @@ class DocumentScannerView extends StatefulWidget {
 class _DocumentScannerViewState extends State<DocumentScannerView> {
   DocumentScanner? _documentScanner;
   DocumentScanningResult? _result;
+  PdfControllerPinch? _pdfController;
 
   @override
   void dispose() {
     _documentScanner?.close();
+    _pdfController?.dispose();
     super.dispose();
   }
 
@@ -80,7 +82,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                 ),
               ],
             ),
-            if (_result?.pdf != null) ...[
+            if (_result?.pdf != null && _pdfController != null) ...[
               Padding(
                 padding: const EdgeInsets.only(
                     top: 16, bottom: 8, right: 8, left: 8),
@@ -90,13 +92,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
               ),
               SizedBox(
                 height: 300,
-                child: PDFView(
-                  filePath: _result!.pdf!.uri,
-                  enableSwipe: true,
-                  swipeHorizontal: true,
-                  autoSpacing: false,
-                  pageFling: false,
-                ),
+                child: PdfViewPinch(controller: _pdfController!),
               ),
             ],
             if (_result?.images?.isNotEmpty == true) ...[
@@ -119,6 +115,8 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
   void startScan(DocumentFormat format) async {
     try {
       _result = null;
+      _pdfController?.dispose();
+      _pdfController = null;
       setState(() {});
       _documentScanner?.close();
       _documentScanner = DocumentScanner(
@@ -130,10 +128,14 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
         ),
       );
       _result = await _documentScanner?.scanDocument();
-      print('result: $_result');
+      if (_result?.pdf != null) {
+        _pdfController = PdfControllerPinch(
+          document: PdfDocument.openFile(_result!.pdf!.uri),
+        );
+      }
       setState(() {});
     } catch (e) {
-      print('Error: $e');
+      debugPrint('Error: $e');
     }
   }
 }
