@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,6 +32,9 @@ class _SplashScreenState extends State<SplashScreen> {
     MobileAds.instance.initialize().then((value) {
       if(!mounted) return;
       setState(()=>adsInitilized=true);
+      // Preload an App Open ad now that MobileAds is initialized, so the first
+      // background->foreground (warm resume) has an ad ready to show.
+      AppOpenAdManager().loadAd();
       if(timer!.isActive) return;
       LoggerSingleton().logger.i('Ads ${value.adapterStatuses.keys.join(',')} : ${value.adapterStatuses.values.join(',')}');
       goToHome();

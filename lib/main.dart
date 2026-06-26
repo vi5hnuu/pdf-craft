@@ -57,6 +57,7 @@ import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
+import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -89,12 +90,56 @@ Future<void> main() async {
   ));
   runApp(ListenableBuilder(
     listenable: ThemeManager(),
-    builder: (context, _) => NestedTabNavigationExampleApp(),
+    builder: (context, _) => const NestedTabNavigationExampleApp(),
   ));
 }
 
-class NestedTabNavigationExampleApp extends StatelessWidget {
-  NestedTabNavigationExampleApp({super.key});
+class NestedTabNavigationExampleApp extends StatefulWidget {
+  const NestedTabNavigationExampleApp({super.key});
+
+  @override
+  State<NestedTabNavigationExampleApp> createState() =>
+      _NestedTabNavigationExampleAppState();
+}
+
+class _NestedTabNavigationExampleAppState
+    extends State<NestedTabNavigationExampleApp> with WidgetsBindingObserver {
+  /// Tracks whether the app has gone to the background at least once.
+  /// Used so the App Open ad shows only on a genuine warm resume and never on
+  /// the initial cold start (which reaches `resumed` with no prior background).
+  bool _wasBackgrounded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.inactive:
+        _wasBackgrounded = true;
+        break;
+      case AppLifecycleState.resumed:
+        if (_wasBackgrounded) {
+          _wasBackgrounded = false;
+          AppOpenAdManager().showAdIfAvailable();
+        }
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
 
   final GoRouter _router = GoRouter(
     debugLogDiagnostics: true,
