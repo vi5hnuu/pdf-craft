@@ -88,10 +88,7 @@ Future<void> main() async {
     systemNavigationBarColor: Colors.black,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
-  runApp(ListenableBuilder(
-    listenable: ThemeManager(),
-    builder: (context, _) => const NestedTabNavigationExampleApp(),
-  ));
+  runApp(const NestedTabNavigationExampleApp());
 }
 
 class NestedTabNavigationExampleApp extends StatefulWidget {
@@ -778,14 +775,23 @@ class _NestedTabNavigationExampleAppState
     return MultiBlocProvider(providers: [
       BlocProvider(lazy: true,create: (context) => FilesBloc()),
       BlocProvider(lazy: true,create: (context) => PdfBloc(pdfService: PdfService()))
-    ], child: MaterialApp.router(
-      scaffoldMessengerKey: NotificationService.messengerKey,
-      title: 'Pdf craft',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeManager().mode,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      routerConfig: _router,
-    ));
+    ],
+      // Listen to ThemeManager HERE (around MaterialApp itself) so a theme
+      // change rebuilds MaterialApp and re-reads themeMode live. Previously the
+      // ListenableBuilder wrapped a const widget at runApp(), so notifications
+      // could not propagate and the theme only applied on a fresh start.
+      child: ListenableBuilder(
+        listenable: ThemeManager(),
+        builder: (context, _) => MaterialApp.router(
+          scaffoldMessengerKey: NotificationService.messengerKey,
+          title: 'Pdf craft',
+          debugShowCheckedModeBanner: false,
+          themeMode: ThemeManager().mode,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          routerConfig: _router,
+        ),
+      ),
+    );
   }
 }
