@@ -128,7 +128,7 @@ class _FileTileState extends State<FileTile> {
                   padding: const EdgeInsets.all(6),
                   child: Image.asset(fileIcon, fit: BoxFit.contain),
                 )
-              : Icon(
+              : FaIcon(
                   widget.file is Directory
                       ? FontAwesomeIcons.solidFolder
                       : FontAwesomeIcons.file,
