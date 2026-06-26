@@ -7,6 +7,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Debouncer.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
@@ -53,6 +54,13 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   List<File> deletedFiles = [];
   _SortMode _sortMode = _SortMode.name;
 
+  // Filtering / sorting controls (item 1).
+  bool _ascending = true; // sort direction toggle
+  String _nameFilter = ''; // case-insensitive substring filter on file name
+  String? _extFilter; // selected file-type extension filter (e.g. '.pdf')
+  final _filterDebouncer = Debouncer(milliseconds: 250);
+  final _searchController = TextEditingController();
+
   @override
   void initState() {
     bloc = BlocProvider.of<FilesBloc>(context);
@@ -61,39 +69,73 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     super.initState();
   }
 
-  /// Sorts files by the current mode. Stats and lengths are pre-cached before
-  /// sorting so the comparator never calls sync IO repeatedly (O(N) instead of O(N log N)).
-  List<FileSystemEntity> _sortedFiles(List<FileSystemEntity> files) {
-    final dirs = files.whereType<Directory>().toList();
-    final regularFiles = files.whereType<File>().toList();
+  String _nameOf(FileSystemEntity e) => e.path.split('/').last;
+
+  /// Distinct lowercase extensions among the regular files (for the type filter).
+  Set<String> _availableExtensions(List<FileSystemEntity> files) {
+    final exts = <String>{};
+    for (final f in files.whereType<File>()) {
+      final dot = f.path.lastIndexOf('.');
+      if (dot != -1) exts.add(f.path.substring(dot).toLowerCase());
+    }
+    return exts;
+  }
+
+  /// Applies the active name/extension filters, then sorts by the current field
+  /// and direction. Directories are always kept above files and never hidden by
+  /// the extension filter (so the user can still navigate). Stats/lengths are
+  /// pre-cached before sorting so the comparator never calls sync IO repeatedly
+  /// (O(N) instead of O(N log N)).
+  List<FileSystemEntity> _visibleFiles(List<FileSystemEntity> files) {
+    Iterable<FileSystemEntity> filtered = files;
+
+    final q = _nameFilter.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      filtered = filtered.where((f) => _nameOf(f).toLowerCase().contains(q));
+    }
+    if (_extFilter != null) {
+      filtered = filtered.where(
+          (f) => f is Directory || f.path.toLowerCase().endsWith(_extFilter!));
+    }
+
+    final dirs = filtered.whereType<Directory>().toList();
+    final regularFiles = filtered.whereType<File>().toList();
+
+    int byName(FileSystemEntity a, FileSystemEntity b) =>
+        _nameOf(a).toLowerCase().compareTo(_nameOf(b).toLowerCase());
 
     switch (_sortMode) {
       case _SortMode.name:
-        dirs.sort((a, b) => a.path.split('/').last.toLowerCase()
-            .compareTo(b.path.split('/').last.toLowerCase()));
-        regularFiles.sort((a, b) => a.path.split('/').last.toLowerCase()
-            .compareTo(b.path.split('/').last.toLowerCase()));
+        dirs.sort(byName);
+        regularFiles.sort(byName);
       case _SortMode.date:
-        // Pre-cache modified times — avoids statSync inside comparator (O(N log N) → O(N))
+        // Pre-cache modified times — avoids statSync inside comparator.
         final modTimes = <String, DateTime>{};
         for (final f in [...dirs, ...regularFiles]) {
           try { modTimes[f.path] = f.statSync().modified; } catch (_) {}
         }
-        dirs.sort((a, b) => (modTimes[b.path] ?? DateTime(0))
-            .compareTo(modTimes[a.path] ?? DateTime(0)));
-        regularFiles.sort((a, b) => (modTimes[b.path] ?? DateTime(0))
-            .compareTo(modTimes[a.path] ?? DateTime(0)));
+        int byDate(FileSystemEntity a, FileSystemEntity b) =>
+            (modTimes[a.path] ?? DateTime(0))
+                .compareTo(modTimes[b.path] ?? DateTime(0));
+        dirs.sort(byDate);
+        regularFiles.sort(byDate);
       case _SortMode.size:
-        // Pre-cache file sizes — avoids lengthSync inside comparator (O(N log N) → O(N))
+        // Pre-cache file sizes — avoids lengthSync inside comparator. Size is
+        // meaningless for directories, so they stay name-sorted.
         final sizes = <String, int>{};
         for (final f in regularFiles) {
           try { sizes[f.path] = f.lengthSync(); } catch (_) {}
         }
+        dirs.sort(byName);
         regularFiles.sort((a, b) =>
-            (sizes[b.path] ?? 0).compareTo(sizes[a.path] ?? 0));
+            (sizes[a.path] ?? 0).compareTo(sizes[b.path] ?? 0));
     }
 
-    return [...dirs, ...regularFiles];
+    // Comparators above produce ascending order; flip for descending.
+    final orderedDirs = _ascending ? dirs : dirs.reversed.toList();
+    final orderedFiles =
+        _ascending ? regularFiles : regularFiles.reversed.toList();
+    return [...orderedDirs, ...orderedFiles];
   }
 
   @override
@@ -128,8 +170,8 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         buildWhen: (previous, current) => previous != current,
         listenWhen: (previous, current) => previous != current,
         builder: (context, state) {
-          // Compute sorted list once per build — avoids re-sorting for every item in ListView
-          final sortedFiles = _sortedFiles(state.files);
+          // Compute filtered+sorted list once per build — avoids re-sorting for every item in ListView
+          final sortedFiles = _visibleFiles(state.files);
 
           return Stack(children: [
             if (!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
@@ -138,10 +180,19 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   : Flex(
                       direction: Axis.vertical,
                       children: [
-                        _buildBreadcrumbAndSort(theme, primary),
+                        _buildBreadcrumbAndSort(theme, primary, state.files),
                         Flexible(
                           fit: FlexFit.tight,
-                          child: ListView.builder(
+                          child: sortedFiles.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No matching files',
+                                    style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.5)),
+                                  ),
+                                )
+                              : ListView.builder(
                             itemCount: sortedFiles.length,
                             itemBuilder: (context, index) {
                               final file = sortedFiles[index];
@@ -221,7 +272,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     );
   }
 
-  Widget _buildBreadcrumbAndSort(ThemeData theme, Color primary) {
+  Widget _buildBreadcrumbAndSort(
+      ThemeData theme, Color primary, List<FileSystemEntity> allFiles) {
+    final availableExts = _availableExtensions(allFiles).toList()..sort();
     return Container(
       color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -276,52 +329,125 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ],
             ),
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Text('Sort:',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-              const SizedBox(width: 4),
-              ..._SortMode.values.map((mode) => Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _sortMode = mode),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _sortMode == mode
-                              ? primary.withValues(alpha: 0.15)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _sortMode == mode
-                                ? primary
-                                : theme.dividerColor,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          mode.name[0].toUpperCase() +
-                              mode.name.substring(1),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: _sortMode == mode
-                                ? primary
-                                : theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.6),
-                          ),
-                        ),
+          const SizedBox(height: 8),
+          // Name filter (debounced so typing doesn't rebuild on every keystroke).
+          SizedBox(
+            height: 40,
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Filter by name',
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: _nameFilter.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () {
+                          _searchController.clear();
+                          _filterDebouncer.cancel();
+                          setState(() => _nameFilter = '');
+                        },
                       ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onChanged: (v) => _filterDebouncer.run(() {
+                if (mounted) setState(() => _nameFilter = v);
+              }),
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Sort field + direction + type filter.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                Text('Sort:',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface
+                            .withValues(alpha: 0.5))),
+                const SizedBox(width: 4),
+                ..._SortMode.values.map((mode) => Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: _pill(
+                        theme,
+                        primary,
+                        label: mode.name[0].toUpperCase() +
+                            mode.name.substring(1),
+                        selected: _sortMode == mode,
+                        onTap: () => setState(() => _sortMode = mode),
+                      ),
+                    )),
+                const SizedBox(width: 4),
+                // Direction toggle.
+                GestureDetector(
+                  onTap: () => setState(() => _ascending = !_ascending),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: theme.dividerColor),
                     ),
-                  )),
-            ],
+                    child: Icon(
+                      _ascending
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
+                      size: 14,
+                      color: primary,
+                    ),
+                  ),
+                ),
+                if (availableExts.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  _pill(theme, primary,
+                      label: 'All',
+                      selected: _extFilter == null,
+                      onTap: () => setState(() => _extFilter = null)),
+                  for (final ext in availableExts) ...[
+                    const SizedBox(width: 4),
+                    _pill(theme, primary,
+                        label: ext,
+                        selected: _extFilter == ext,
+                        onTap: () => setState(() => _extFilter = ext)),
+                  ],
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 4),
         ],
+      ),
+    );
+  }
+
+  /// Small selectable pill used for sort-field and type-filter chips.
+  Widget _pill(ThemeData theme, Color primary,
+      {required String label, required bool selected, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: selected ? primary.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: selected ? primary : theme.dividerColor, width: 1),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: selected
+                ? primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
       ),
     );
   }
@@ -535,6 +661,8 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   @override
   void dispose() {
+    _filterDebouncer.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
