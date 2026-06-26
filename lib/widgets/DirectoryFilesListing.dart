@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
+import 'package:pdf_craft/state/selection/SelectionService.dart';
+import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/Debouncer.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
@@ -61,12 +63,22 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   final _filterDebouncer = Debouncer(milliseconds: 250);
   final _searchController = TextEditingController();
 
+  /// Browse mode = plain file browsing (no tool picker). Only in this mode do
+  /// we enable the global cross-folder selection + tool intellisense bar; the
+  /// picker flow keeps its own local [selectedFiles] + "Complete Selection".
+  bool get _browseMode => widget.multiSelect == null;
+
   @override
   void initState() {
     bloc = BlocProvider.of<FilesBloc>(context);
     pathToDirectory = [widget.directoryPath];
     _loadDirectoryFiles(pathToDirectory.last);
+    if (_browseMode) SelectionService().addListener(_onSelectionChanged);
     super.initState();
+  }
+
+  void _onSelectionChanged() {
+    if (mounted) setState(() {});
   }
 
   String _nameOf(FileSystemEntity e) => e.path.split('/').last;
@@ -148,6 +160,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        // Back first cancels an active cross-folder selection.
+        if (_browseMode && SelectionService().isActive) {
+          SelectionService().clear();
+          return;
+        }
         if (pathToDirectory.length <= 1) {
           router.pop();
         } else {
@@ -255,6 +272,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                                 )
                               : null,
                         ),
+                        // Cross-folder selection bar (browse mode only).
+                        if (_browseMode && SelectionService().isActive)
+                          _buildSelectionBar(theme, primary),
                       ],
                     )),
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
@@ -452,8 +472,165 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     );
   }
 
+  /// Bottom action bar shown while a cross-folder selection is active.
+  /// Lets the user review/clear the selection and apply an applicable tool.
+  Widget _buildSelectionBar(ThemeData theme, Color primary) {
+    final count = SelectionService().count;
+    return Material(
+      elevation: 8,
+      color: theme.cardColor,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Text('$count selected',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Manage selection',
+                icon: const Icon(Icons.checklist),
+                onPressed: _manageSelections,
+              ),
+              IconButton(
+                tooltip: 'Clear',
+                icon: const Icon(Icons.close),
+                onPressed: () => SelectionService().clear(),
+              ),
+              const SizedBox(width: 4),
+              FilledButton.icon(
+                onPressed: _showToolsForSelection,
+                icon: const Icon(Icons.build, size: 18),
+                label: const Text('Tools'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Intellisense menu: shows only the tools that apply to the current
+  /// selection (single-file tools for one file, multi-file tools once their
+  /// minimum is met, extension filters honored) — driven by [ToolRegistry].
+  void _showToolsForSelection() {
+    final files = SelectionService().files;
+    final applicable = ToolRegistry.toolsForSelection(files);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => SafeArea(
+        child: applicable.isEmpty
+            ? const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('No tools apply to this selection'),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Apply to ${files.length} file(s)',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: applicable
+                          .map((tool) => ListTile(
+                                leading: Icon(tool.icon,
+                                    color: tool.category.color),
+                                title: Text(tool.name),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  final selected = SelectionService().files;
+                                  SelectionService().clear();
+                                  tool.openWithFiles(context, selected);
+                                },
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  /// Lets the user review the cross-folder selection and remove individual
+  /// items (or clear all).
+  void _manageSelections() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => SafeArea(
+        child: AnimatedBuilder(
+          animation: SelectionService(),
+          builder: (ctx, _) {
+            final files = SelectionService().files;
+            if (files.isEmpty) {
+              // Nothing left — close the sheet.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop();
+              });
+              return const SizedBox.shrink();
+            }
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Row(
+                    children: [
+                      Text('${files.length} selected',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => SelectionService().clear(),
+                        child: const Text('Clear all'),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: files.length,
+                    itemBuilder: (c, i) {
+                      final f = files[i];
+                      return ListTile(
+                        dense: true,
+                        leading: const Icon(Icons.insert_drive_file_outlined),
+                        title: Text(f.path.split('/').last,
+                            overflow: TextOverflow.ellipsis),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: () =>
+                              SelectionService().removeByPath(f.path),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   bool _isFileSelected(FileSystemEntity file) {
     if (file is Directory) return false;
+    if (_browseMode) return SelectionService().contains(file.path);
     return selectedFiles.any((selectedFile) => selectedFile.path == file.path);
   }
 
@@ -487,6 +664,16 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ),
             ),
             const Divider(height: 1),
+            if (!isDir && _browseMode)
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline),
+                title: Text(
+                    _isFileSelected(file) ? 'Deselect' : 'Select for tools'),
+                onTap: () {
+                  Navigator.pop(context);
+                  SelectionService().toggle(file as File);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: Text('Rename ${isDir ? 'Folder' : 'File'}'),
@@ -661,6 +848,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   @override
   void dispose() {
+    if (_browseMode) {
+      SelectionService().removeListener(_onSelectionChanged);
+      // Don't leak a cross-folder selection out of the browser.
+      SelectionService().clear();
+    }
     _filterDebouncer.dispose();
     _searchController.dispose();
     super.dispose();
@@ -674,6 +866,12 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
       }
 
       if (widget.multiSelect == null) {
+        // Browse mode: while a cross-folder selection is active, a tap toggles
+        // selection instead of opening the file.
+        if (SelectionService().isActive) {
+          SelectionService().toggle(file as File);
+          return;
+        }
         if (Utility.isPdf(file.path)) {
           GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
               pathParameters: {'pdfFilePath': file.path});
