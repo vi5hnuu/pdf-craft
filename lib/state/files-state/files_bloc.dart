@@ -20,6 +20,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   StreamSubscription<File>? _searchSubscription;
   StreamController<List<File>>? _searchController;
 
+  /// Upper bound on search results to keep the stream/UI responsive.
+  static const _maxSearchResults = 300;
+
   FilesBloc() : super(FilesState.initial()) {
     on<LoadDirectoryFilesEvent>((event, emit) async {
       emit(state.copyWith(httpStates: state.httpStates.clone()
@@ -55,6 +58,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     });
 
     on<SearchFileEvent>((event, emit) async {
+      // Cancel any in-flight search so a new query doesn't race the old one.
       if (_searchSubscription != null) await _searchSubscription?.cancel();
       _searchController ??= StreamController<List<File>>.broadcast();
 
@@ -63,6 +67,10 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             (data) {
           files.add(data);
           _searchController!.add(files);
+          // Cap results to keep memory/UI bounded on huge trees.
+          if (files.length >= _maxSearchResults) {
+            _searchSubscription?.cancel();
+          }
         },
         onError: _searchController!.addError,
       );
@@ -137,7 +145,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
                 .split('/')
                 .last
                 .toLowerCase();
-            if (!fileName.startsWith(userInput.toLowerCase())) continue;
+            // Substring match (not just prefix) for a more forgiving search.
+            if (!fileName.contains(userInput.toLowerCase())) continue;
             yield entity;
           } else if (entity is Directory) {
             yield* searchFiles(entity.path, userInput);
