@@ -5,6 +5,8 @@ import 'package:lottie/lottie.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/PrefFlags.dart';
+import 'package:pdf_craft/widgets/ConfirmDialog.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -105,15 +107,29 @@ class _PdfPreviewState extends State<PdfPreview> {
           IconButton(
             icon: const Icon(Icons.cloud_upload_outlined),
             tooltip: 'Upload to Drive',
-            onPressed: () => GoRouter.of(context).pushNamed(
-              AppRoutes.driveRoute.name,
-              extra: {'file': File(widget.pdfFilePath)},
-            ),
+            onPressed: _uploadToDrive,
           ),
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share',
             onPressed: () => Share.shareXFiles([XFile(widget.pdfFilePath)]),
+          ),
+          // Our in-app viewer is intentionally lightweight; offer a way out to
+          // a full external PDF viewer at any time (not just on error).
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'external') _openExternally();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'external',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.open_in_new),
+                  title: Text('Open in external viewer'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -164,6 +180,39 @@ class _PdfPreviewState extends State<PdfPreview> {
     return ColorFiltered(
       colorFilter: ColorFilter.matrix(_nightMode ? _invertMatrix : _identityMatrix),
       child: viewer,
+    );
+  }
+
+  void _openExternally() {
+    final ext = '.${widget.pdfFilePath.split('.').last}';
+    OpenFile.open(widget.pdfFilePath,
+        type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*');
+  }
+
+  /// Explains what uploading does before navigating to the Drive screen, with a
+  /// "don't ask again" option so power users aren't nagged.
+  Future<void> _uploadToDrive() async {
+    final skip = await PrefFlags.isSet(PrefFlags.skipDriveUploadInfo);
+    if (!mounted) return;
+    if (!skip) {
+      final result = await ConfirmDialog.show(
+        context,
+        title: 'Upload to Google Drive',
+        message:
+            'A copy of this PDF will be uploaded to your Google Drive (in a "PDF Craft" folder). You can review or switch your account on the next screen.',
+        confirmLabel: 'Continue',
+        icon: Icons.cloud_upload_outlined,
+        showDontAskAgain: true,
+      );
+      if (!result.confirmed) return;
+      if (result.dontAskAgain) {
+        await PrefFlags.set(PrefFlags.skipDriveUploadInfo, true);
+      }
+    }
+    if (!mounted) return;
+    GoRouter.of(context).pushNamed(
+      AppRoutes.driveRoute.name,
+      extra: {'file': File(widget.pdfFilePath)},
     );
   }
 
