@@ -19,7 +19,6 @@ class StorageStats {
   final int totalItemsInDownloads;
   final int totalItemsInDocuments;
   final int totalProcessedFiles;
-  final int totalFileInBin;
   final bool isLoading;
 
   StorageStats(
@@ -27,15 +26,13 @@ class StorageStats {
       required this.totalItemsInDownloads,
       this.isLoading = false,
       required this.totalItemsInDocuments,
-      required this.totalProcessedFiles,
-      required this.totalFileInBin});
+      required this.totalProcessedFiles});
 
   StorageStats copyWith({
     int? totalItemsInRoot,
     int? totalItemsInDownloads,
     int? totalItemsInDocuments,
     int? totalProcessedFiles,
-    int? totalFileInBin,
     bool? isLoading,
   }) {
     return StorageStats(
@@ -45,8 +42,7 @@ class StorageStats {
         isLoading: isLoading ?? this.isLoading,
         totalItemsInDocuments:
             totalItemsInDocuments ?? this.totalItemsInDocuments,
-        totalProcessedFiles: totalProcessedFiles ?? this.totalProcessedFiles,
-        totalFileInBin: totalFileInBin ?? this.totalFileInBin);
+        totalProcessedFiles: totalProcessedFiles ?? this.totalProcessedFiles);
   }
 
   static StorageStats zero() {
@@ -55,8 +51,7 @@ class StorageStats {
         totalItemsInRoot: 0,
         totalItemsInDownloads: 0,
         totalItemsInDocuments: 0,
-        totalProcessedFiles: 0,
-        totalFileInBin: 0);
+        totalProcessedFiles: 0);
   }
 }
 
@@ -221,9 +216,6 @@ class _FilesScreenState extends State<FilesScreen> {
                       onTap: () => router
                           .pushNamed(AppRoutes.filesListingRoute.name,
                               extra: FileSelectionConfig(
-                                  excludeShowingDirsPath: [
-                                    Constants.binDirPath
-                                  ],
                                   path: Constants.rootStoragePath))
                           .then((value) => _loadStats()),
                       trailing: stats == null || stats.isLoading
@@ -237,9 +229,6 @@ class _FilesScreenState extends State<FilesScreen> {
                       onTap: () => router
                           .pushNamed(AppRoutes.filesListingRoute.name,
                               extra: FileSelectionConfig(
-                                  excludeShowingDirsPath: [
-                                    Constants.binDirPath
-                                  ],
                                   path: Constants.downloadsStoragePath))
                           .then((value) => _loadStats()),
                       trailing: stats == null || stats.isLoading
@@ -253,9 +242,6 @@ class _FilesScreenState extends State<FilesScreen> {
                       onTap: () => router
                           .pushNamed(AppRoutes.filesListingRoute.name,
                               extra: FileSelectionConfig(
-                                  excludeShowingDirsPath: [
-                                    Constants.binDirPath
-                                  ],
                                   path: Constants.documentsStoragePath))
                           .then((value) => _loadStats()),
                       trailing: stats == null || stats.isLoading
@@ -283,38 +269,6 @@ class _FilesScreenState extends State<FilesScreen> {
               },
             ),
             const BannerAdd(),
-            const Padding(
-              padding: EdgeInsets.only(left: 18.0, top: 12.0),
-              child: Row(
-                children: [
-                  Text(
-                    'Others',
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            StreamBuilder<StorageStats>(
-              stream: storageStats.stream,
-              builder: (context, snapshot) {
-                final stats = snapshot.data;
-                final loadingWidget = SizedBox(
-                  width: 16,
-                  child: SpinKitThreeBounce(
-                      color: theme.colorScheme.onSurface, size: 8),
-                );
-                return StorageTile(
-                  onTap: _goToBin,
-                  trailing: stats == null || stats.isLoading
-                      ? loadingWidget
-                      : Text(stats.totalFileInBin.toString(),
-                          style: const TextStyle(fontSize: 16)),
-                  leadingIconSvgPath: 'assets/icons/recycle-bin.svg',
-                  title: 'Bin',
-                );
-              },
-            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -336,14 +290,12 @@ class _FilesScreenState extends State<FilesScreen> {
               .list(followLinks: false)
               .length,
           Directory(Constants.processedDirPath).list(followLinks: false).length,
-          Directory(Constants.binDirPath).list(followLinks: false).length,
         ]);
         storageStats.sink.add(StorageStats(
             totalItemsInRoot: stats[0],
             totalItemsInDownloads: stats[1],
             totalItemsInDocuments: stats[2],
-            totalProcessedFiles: stats[3],
-            totalFileInBin: stats[4]));
+            totalProcessedFiles: stats[3]));
 
         final recents = await RecentFilesService().getRecentFiles(limit: 10);
         final favorites = await FavoritesService().getFavorites();
@@ -365,8 +317,7 @@ class _FilesScreenState extends State<FilesScreen> {
     final mainDirs = [
       Constants.downloadsStoragePath,
       Constants.documentsStoragePath,
-      Constants.processedDirPath,
-      Constants.binDirPath
+      Constants.processedDirPath
     ];
     for (var dirPath in mainDirs) {
       final dir = Directory(dirPath);
@@ -376,10 +327,4 @@ class _FilesScreenState extends State<FilesScreen> {
     }
   }
 
-  void _goToBin() {
-    GoRouter.of(context)
-        .pushNamed(AppRoutes.filesListingRoute.name,
-            extra: FileSelectionConfig(path: Constants.binDirPath))
-        .then((value) => _loadStats());
-  }
 }
