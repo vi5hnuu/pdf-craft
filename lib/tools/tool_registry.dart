@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/RecentToolsService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 
 /// A tool category (used for grouping + accent colour on the Tools screen).
@@ -94,6 +95,7 @@ class ToolDef {
 
   /// Opens the file-picker flow for this tool (used from the Tools screen).
   void openPicker(BuildContext context) {
+    RecentToolsService().record(id);
     GoRouter.of(context).pushNamed(
       AppRoutes.fileManagement.name,
       extra: FileSelectionConfig(
@@ -111,6 +113,7 @@ class ToolDef {
   /// the file→tool intellisense menu and the incoming-files chooser), skipping
   /// the picker.
   void openWithFiles(BuildContext context, List<File> files) {
+    RecentToolsService().record(id);
     GoRouter.of(context).pushNamed(
       route.name,
       extra: {'files': files, ...?extra},
