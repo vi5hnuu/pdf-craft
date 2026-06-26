@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 
@@ -29,6 +30,9 @@ import 'package:pdf_craft/pages/ReorderPdfView.dart';
 import 'package:pdf_craft/pages/RotatePdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/RecentsScreen.dart';
+import 'package:pdf_craft/pages/IncomingFilesScreen.dart';
+import 'package:pdf_craft/services/IncomingFilesChannel.dart';
+import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/pages/BatchProcessView.dart';
 import 'package:pdf_craft/pages/OnboardingScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
@@ -107,16 +111,43 @@ class _NestedTabNavigationExampleAppState
   /// the initial cold start (which reaches `resumed` with no prior background).
   bool _wasBackgrounded = false;
 
+  // Subscription to files shared into the app while it is running.
+  StreamSubscription<List<String>>? _sharingSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _initSharingIntent();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _sharingSub?.cancel();
     super.dispose();
+  }
+
+  /// Listens for files opened/shared into the app (Android "Open with" / share
+  /// sheet) both at cold start and while running, and routes them to the
+  /// incoming-files chooser.
+  void _initSharingIntent() {
+    _sharingSub = IncomingFilesChannel.instance.stream.listen(
+      _handleSharedFiles,
+      onError: (e) =>
+          LoggerSingleton().logger.w('Incoming files stream error: $e'),
+    );
+    // Handle the file(s) that launched the app from a cold start.
+    IncomingFilesChannel.instance.getInitialFiles().then(_handleSharedFiles);
+  }
+
+  void _handleSharedFiles(List<String> paths) {
+    if (paths.isEmpty) return;
+    final files = paths.map((p) => File(p)).toList();
+    // Defer until after the current frame so the router is ready.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _router.pushNamed(AppRoutes.incomingFilesRoute.name, extra: files);
+    });
   }
 
   @override
@@ -199,6 +230,19 @@ class _NestedTabNavigationExampleAppState
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const RecentsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.incomingFilesRoute.name,
+        path: AppRoutes.incomingFilesRoute.path,
+        redirect: (context, state) =>
+            state.extra is List<File> ? null : AppRoutes.errorRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: IncomingFilesScreen(files: state.extra as List<File>),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
