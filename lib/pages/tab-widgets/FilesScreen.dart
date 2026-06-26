@@ -86,11 +86,23 @@ class _FilesScreenState extends State<FilesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_recentPdfs.isNotEmpty) ...[
-              const Padding(
-                padding: EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8),
-                child: Text(
-                  'Recent Files',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, right: 8, top: 24.0, bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Recent Files',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    ),
+                    // The home preview is capped at 10; offer the full list.
+                    TextButton(
+                      onPressed: () => router
+                          .pushNamed(AppRoutes.recentsRoute.name)
+                          .then((_) => _loadStats()),
+                      child: const Text('See more'),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(

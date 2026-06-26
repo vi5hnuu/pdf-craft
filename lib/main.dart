@@ -28,6 +28,7 @@ import 'package:pdf_craft/pages/RepairPdfView.dart';
 import 'package:pdf_craft/pages/ReorderPdfView.dart';
 import 'package:pdf_craft/pages/RotatePdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
+import 'package:pdf_craft/pages/RecentsScreen.dart';
 import 'package:pdf_craft/pages/BatchProcessView.dart';
 import 'package:pdf_craft/pages/OnboardingScreen.dart';
 import 'package:pdf_craft/pages/SplashScreen.dart';
@@ -187,6 +188,17 @@ class _NestedTabNavigationExampleAppState
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: SearchScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.recentsRoute.name,
+        path: AppRoutes.recentsRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const RecentsScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
