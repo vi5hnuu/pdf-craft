@@ -19,7 +19,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   Timer? timer;
-  var adsInitilized=false;
+  bool _navigated = false; // ensure we navigate exactly once
 
   @override
   void initState() {
@@ -29,19 +29,21 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
 
+    // Navigate as soon as ad init completes — no fixed minimum delay (the
+    // splash previously always waited the full timer). MobileAds init is the
+    // only gate.
     MobileAds.instance.initialize().then((value) {
-      if(!mounted) return;
-      setState(()=>adsInitilized=true);
+      if (!mounted) return;
       // Preload an App Open ad now that MobileAds is initialized, so the first
       // background->foreground (warm resume) has an ad ready to show.
       AppOpenAdManager().loadAd();
-      if(timer!.isActive) return;
       LoggerSingleton().logger.i('Ads ${value.adapterStatuses.keys.join(',')} : ${value.adapterStatuses.values.join(',')}');
-      goToHome();
+      _goOnce();
     });
-    timer=Timer(const Duration(seconds: 5),(){
+    // Safety fallback so we never hang if ad init stalls.
+    timer=Timer(const Duration(seconds: 3),(){
       if(!mounted) return;
-      if(adsInitilized) goToHome();
+      _goOnce();
     });
     super.initState();
   }
@@ -73,6 +75,15 @@ class _SplashScreenState extends State<SplashScreen> {
             SpinKitPulse(color: theme.primaryColor),
           ],
         ));
+  }
+
+  /// Navigates to the next screen exactly once, whichever trigger (ad init or
+  /// the safety timer) fires first.
+  void _goOnce() {
+    if (_navigated) return;
+    _navigated = true;
+    timer?.cancel();
+    goToHome();
   }
 
   Future<void> goToHome() async {
