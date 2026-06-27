@@ -8,15 +8,15 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/selection/SelectionService.dart';
-import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/Debouncer.dart';
+import 'package:pdf_craft/utils/FileSortFilter.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
+import 'package:pdf_craft/widgets/SelectionBar.dart';
+import 'package:pdf_craft/widgets/SortControls.dart';
 import 'package:open_file/open_file.dart';
-
-enum _SortMode { name, date, size }
 
 class DirectoryFilesListing extends StatefulWidget {
   final String directoryPath;
@@ -55,7 +55,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   final List<File> selectedFiles = [];
   List<String> pathToDirectory = [];
   List<File> deletedFiles = [];
-  _SortMode _sortMode = _SortMode.name;
+  FileSortMode _sortMode = FileSortMode.name;
 
   // Filtering / sorting controls (item 1).
   bool _ascending = true; // sort direction toggle
@@ -82,74 +82,13 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     if (mounted) setState(() {});
   }
 
-  String _nameOf(FileSystemEntity e) => e.path.split('/').last;
-
-  /// Distinct lowercase extensions among the regular files (for the type filter).
-  Set<String> _availableExtensions(List<FileSystemEntity> files) {
-    final exts = <String>{};
-    for (final f in files.whereType<File>()) {
-      final dot = f.path.lastIndexOf('.');
-      if (dot != -1) exts.add(f.path.substring(dot).toLowerCase());
-    }
-    return exts;
-  }
-
-  /// Applies the active name/extension filters, then sorts by the current field
-  /// and direction. Directories are always kept above files and never hidden by
-  /// the extension filter (so the user can still navigate). Stats/lengths are
-  /// pre-cached before sorting so the comparator never calls sync IO repeatedly
-  /// (O(N) instead of O(N log N)).
-  List<FileSystemEntity> _visibleFiles(List<FileSystemEntity> files) {
-    Iterable<FileSystemEntity> filtered = files;
-
-    final q = _nameFilter.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      filtered = filtered.where((f) => _nameOf(f).toLowerCase().contains(q));
-    }
-    if (_extFilter != null) {
-      filtered = filtered.where(
-          (f) => f is Directory || f.path.toLowerCase().endsWith(_extFilter!));
-    }
-
-    final dirs = filtered.whereType<Directory>().toList();
-    final regularFiles = filtered.whereType<File>().toList();
-
-    int byName(FileSystemEntity a, FileSystemEntity b) =>
-        _nameOf(a).toLowerCase().compareTo(_nameOf(b).toLowerCase());
-
-    switch (_sortMode) {
-      case _SortMode.name:
-        dirs.sort(byName);
-        regularFiles.sort(byName);
-      case _SortMode.date:
-        // Pre-cache modified times — avoids statSync inside comparator.
-        final modTimes = <String, DateTime>{};
-        for (final f in [...dirs, ...regularFiles]) {
-          try { modTimes[f.path] = f.statSync().modified; } catch (_) {}
-        }
-        int byDate(FileSystemEntity a, FileSystemEntity b) =>
-            (modTimes[a.path] ?? DateTime(0))
-                .compareTo(modTimes[b.path] ?? DateTime(0));
-        dirs.sort(byDate);
-        regularFiles.sort(byDate);
-      case _SortMode.size:
-        // Pre-cache file sizes — avoids lengthSync inside comparator. Size is
-        // meaningless for directories, so they stay name-sorted.
-        final sizes = <String, int>{};
-        for (final f in regularFiles) {
-          try { sizes[f.path] = f.lengthSync(); } catch (_) {}
-        }
-        dirs.sort(byName);
-        regularFiles.sort((a, b) =>
-            (sizes[a.path] ?? 0).compareTo(sizes[b.path] ?? 0));
-    }
-
-    // Comparators above produce ascending order; flip for descending.
-    final orderedDirs = _ascending ? dirs : dirs.reversed.toList();
-    final orderedFiles =
-        _ascending ? regularFiles : regularFiles.reversed.toList();
-    return [...orderedDirs, ...orderedFiles];
-  }
+  /// Applies the active name/extension filters and sort via the shared utility.
+  List<FileSystemEntity> _visibleFiles(List<FileSystemEntity> files) =>
+      applySortFilter(files,
+          nameQuery: _nameFilter,
+          ext: _extFilter,
+          mode: _sortMode,
+          ascending: _ascending);
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +214,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                         ),
                         // Cross-folder selection bar (browse mode only).
                         if (_browseMode && SelectionService().isActive)
-                          _buildSelectionBar(theme, primary),
+                          const SelectionBar(),
                       ],
                     )),
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
@@ -295,7 +234,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   Widget _buildBreadcrumbAndSort(
       ThemeData theme, Color primary, List<FileSystemEntity> allFiles) {
-    final availableExts = _availableExtensions(allFiles).toList()..sort();
+    final availableExts = availableExtensions(allFiles).toList()..sort();
     return Container(
       color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -381,47 +320,17 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
             ),
           ),
           const SizedBox(height: 6),
-          // Sort field + direction + type filter.
+          // Sort field + direction (shared control) + type filter.
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                Text('Sort:',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.5))),
-                const SizedBox(width: 4),
-                ..._SortMode.values.map((mode) => Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: _pill(
-                        theme,
-                        primary,
-                        label: mode.name[0].toUpperCase() +
-                            mode.name.substring(1),
-                        selected: _sortMode == mode,
-                        onTap: () => setState(() => _sortMode = mode),
-                      ),
-                    )),
-                const SizedBox(width: 4),
-                // Direction toggle.
-                GestureDetector(
-                  onTap: () => setState(() => _ascending = !_ascending),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.dividerColor),
-                    ),
-                    child: Icon(
-                      _ascending
-                          ? Icons.arrow_upward
-                          : Icons.arrow_downward,
-                      size: 14,
-                      color: primary,
-                    ),
-                  ),
+                SortControls(
+                  mode: _sortMode,
+                  ascending: _ascending,
+                  onModeChanged: (m) => setState(() => _sortMode = m),
+                  onToggleDirection: () =>
+                      setState(() => _ascending = !_ascending),
                 ),
                 if (availableExts.isNotEmpty) ...[
                   const SizedBox(width: 8),
@@ -468,163 +377,6 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                 ? primary
                 : theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
-        ),
-      ),
-    );
-  }
-
-  /// Bottom action bar shown while a cross-folder selection is active.
-  /// Lets the user review/clear the selection and apply an applicable tool.
-  Widget _buildSelectionBar(ThemeData theme, Color primary) {
-    final count = SelectionService().count;
-    return Material(
-      elevation: 8,
-      color: theme.cardColor,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Text('$count selected',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              const Spacer(),
-              IconButton(
-                tooltip: 'Manage selection',
-                icon: const Icon(Icons.checklist),
-                onPressed: _manageSelections,
-              ),
-              IconButton(
-                tooltip: 'Clear',
-                icon: const Icon(Icons.close),
-                onPressed: () => SelectionService().clear(),
-              ),
-              const SizedBox(width: 4),
-              FilledButton.icon(
-                onPressed: _showToolsForSelection,
-                icon: const Icon(Icons.build, size: 18),
-                label: const Text('Tools'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Intellisense menu: shows only the tools that apply to the current
-  /// selection (single-file tools for one file, multi-file tools once their
-  /// minimum is met, extension filters honored) — driven by [ToolRegistry].
-  void _showToolsForSelection() {
-    final files = SelectionService().files;
-    final applicable = ToolRegistry.toolsForSelection(files);
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => SafeArea(
-        child: applicable.isEmpty
-            ? const Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('No tools apply to this selection'),
-              )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('Apply to ${files.length} file(s)',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15)),
-                    ),
-                  ),
-                  Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: applicable
-                          .map((tool) => ListTile(
-                                leading: Icon(tool.icon,
-                                    color: tool.category.color),
-                                title: Text(tool.name),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  final selected = SelectionService().files;
-                                  SelectionService().clear();
-                                  tool.openWithFiles(context, selected);
-                                },
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  /// Lets the user review the cross-folder selection and remove individual
-  /// items (or clear all).
-  void _manageSelections() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => SafeArea(
-        child: AnimatedBuilder(
-          animation: SelectionService(),
-          builder: (ctx, _) {
-            final files = SelectionService().files;
-            if (files.isEmpty) {
-              // Nothing left to manage — show a hint rather than popping the
-              // route from inside build (which can assert).
-              return const Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('No files selected'),
-              );
-            }
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Row(
-                    children: [
-                      Text('${files.length} selected',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15)),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => SelectionService().clear(),
-                        child: const Text('Clear all'),
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: files.length,
-                    itemBuilder: (c, i) {
-                      final f = files[i];
-                      return ListTile(
-                        dense: true,
-                        leading: const Icon(Icons.insert_drive_file_outlined),
-                        title: Text(f.path.split('/').last,
-                            overflow: TextOverflow.ellipsis),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () =>
-                              SelectionService().removeByPath(f.path),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
         ),
       ),
     );
