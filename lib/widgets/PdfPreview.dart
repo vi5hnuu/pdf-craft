@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/PrefFlags.dart';
+import 'package:pdf_craft/widgets/ConfirmDialog.dart';
+import 'package:pdf_craft/widgets/InputDialog.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -105,15 +107,29 @@ class _PdfPreviewState extends State<PdfPreview> {
           IconButton(
             icon: const Icon(Icons.cloud_upload_outlined),
             tooltip: 'Upload to Drive',
-            onPressed: () => GoRouter.of(context).pushNamed(
-              AppRoutes.driveRoute.name,
-              extra: {'file': File(widget.pdfFilePath)},
-            ),
+            onPressed: _uploadToDrive,
           ),
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share',
             onPressed: () => Share.shareXFiles([XFile(widget.pdfFilePath)]),
+          ),
+          // Our in-app viewer is intentionally lightweight; offer a way out to
+          // a full external PDF viewer at any time (not just on error).
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'external') _openExternally();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'external',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.open_in_new),
+                  title: Text('Open in external viewer'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -167,73 +183,62 @@ class _PdfPreviewState extends State<PdfPreview> {
     );
   }
 
-  Future<void> _askForPasswordAndRetry(BuildContext context) async {
-    final controller = TextEditingController();
-    final newPassword = await showDialog<String?>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Password Required'),
-        content: TextField(
-          controller: controller,
-          obscureText: true,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Enter PDF password',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (v) => Navigator.pop(context, v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Open'),
-          ),
-        ],
-      ),
+  void _openExternally() {
+    final ext = '.${widget.pdfFilePath.split('.').last}';
+    OpenFile.open(widget.pdfFilePath,
+        type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*');
+  }
+
+  /// Explains what uploading does before navigating to the Drive screen, with a
+  /// "don't ask again" option so power users aren't nagged.
+  Future<void> _uploadToDrive() async {
+    final skip = await PrefFlags.isSet(PrefFlags.skipDriveUploadInfo);
+    if (!mounted) return;
+    if (!skip) {
+      final result = await ConfirmDialog.show(
+        context,
+        title: 'Upload to Google Drive',
+        message:
+            'A copy of this PDF will be uploaded to your Google Drive (in a "PDF Craft" folder). You can review or switch your account on the next screen.',
+        confirmLabel: 'Continue',
+        icon: Icons.cloud_upload_outlined,
+        showDontAskAgain: true,
+      );
+      if (!result.confirmed) return;
+      if (result.dontAskAgain) {
+        await PrefFlags.set(PrefFlags.skipDriveUploadInfo, true);
+      }
+    }
+    if (!mounted) return;
+    GoRouter.of(context).pushNamed(
+      AppRoutes.driveRoute.name,
+      extra: {'file': File(widget.pdfFilePath)},
     );
-    controller.dispose();
+  }
+
+  Future<void> _askForPasswordAndRetry(BuildContext context) async {
+    final newPassword = await InputDialog.show(
+      context,
+      title: 'Password Required',
+      label: 'Enter PDF password',
+      obscure: true,
+      confirmLabel: 'Open',
+    );
     if (newPassword != null) {
       _password = newPassword.isEmpty ? null : newPassword;
       await _loadDocument();
     }
   }
 
-  void _showJumpToPageDialog(int totalPages) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Go to Page'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: '1 – $totalPages',
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: (_) => _jumpToPage(controller.text, totalPages),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => _jumpToPage(controller.text, totalPages),
-            child: const Text('Go'),
-          ),
-        ],
-      ),
+  Future<void> _showJumpToPageDialog(int totalPages) async {
+    final input = await InputDialog.show(
+      context,
+      title: 'Go to Page',
+      hint: '1 – $totalPages',
+      keyboardType: TextInputType.number,
+      confirmLabel: 'Go',
     );
-  }
-
-  void _jumpToPage(String input, int totalPages) {
-    Navigator.pop(context);
+    if (input == null) return;
     final page = int.tryParse(input);
     if (page == null || page < 1 || page > totalPages) return;
     _controller?.jumpToPage(page);
@@ -254,51 +259,61 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
     final ext = '.${filePath.split('.').last}';
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: 200,
-              child: LottieBuilder.asset(
-                'assets/lottie/error.json',
-                fit: BoxFit.fitWidth,
-                repeat: false,
+            // Lightweight vector icon instead of a heavy Lottie animation.
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
+              child: Icon(Icons.lock_outline, size: 44, color: primary),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Could not open this file',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            const SizedBox(height: 20),
+            Text(
+              'This PDF is locked',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'The file may be password-protected or corrupt.',
+            Text(
+              "It looks password-protected or couldn't be opened. Enter the "
+              'password to view it here, or open it in another app.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.lock_outline, size: 16),
-                  label: const Text('Enter Password'),
-                  onPressed: onRetryWithPassword,
+            // Full-width stacked buttons — robust on narrow screens.
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: const Icon(Icons.lock_open_outlined, size: 18),
+                label: const Text('Enter password'),
+                onPressed: onRetryWithPassword,
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('Open in another app'),
+                onPressed: () => OpenFile.open(
+                  filePath,
+                  type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*',
                 ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('Open Externally'),
-                  onPressed: () => OpenFile.open(
-                    filePath,
-                    type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*',
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),

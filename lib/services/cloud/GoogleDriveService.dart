@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
@@ -127,24 +126,31 @@ class GoogleDriveService {
     return file;
   }
 
-  /// Lists all files in the user's Drive (not trashed), newest first.
-  Future<List<drive.File>> listFiles() async {
+  /// Lists a page of files in the user's Drive (not trashed), newest first.
+  ///
+  /// Returns the page's files plus a [nextPageToken] (null when there are no
+  /// more pages). Pass the token back in [pageToken] to fetch the next page —
+  /// this lets the UI lazily page through large Drives instead of fetching a
+  /// fixed 100 at once. Only the fields the UI needs are requested.
+  Future<({List<drive.File> files, String? nextPageToken})> listFiles(
+      {String? pageToken}) async {
     _currentUser ??= await _signIn.signInSilently();
-    if (_currentUser == null) return [];
+    if (_currentUser == null) return (files: <drive.File>[], nextPageToken: null);
 
     final authClient = await _signIn.authenticatedClient();
-    if (authClient == null) return [];
+    if (authClient == null) return (files: <drive.File>[], nextPageToken: null);
 
     final api = drive.DriveApi(authClient);
     final result = await api.files.list(
       q: "trashed = false and mimeType != 'application/vnd.google-apps.folder'",
-      $fields: 'files(id, name, size, modifiedTime, mimeType)',
+      $fields: 'nextPageToken, files(id, name, size, modifiedTime, mimeType)',
       orderBy: 'modifiedTime desc',
-      pageSize: 100,
+      pageSize: 50,
+      pageToken: pageToken,
     );
 
     authClient.close();
-    return result.files ?? [];
+    return (files: result.files ?? <drive.File>[], nextPageToken: result.nextPageToken);
   }
 
   /// Ensures the named folder exists in Drive root. Returns its folder ID.

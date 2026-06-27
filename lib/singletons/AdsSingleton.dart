@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/utils/AdUnits.dart';
 
 abstract class AdEvent {}
 
@@ -32,7 +33,7 @@ class AdsSingleton {
     if (_isLoading || _cachedAd != null) return;
     _isLoading = true;
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-4715945578201106/9362646476',
+      adUnitId: AdUnits.interstitial,
       request: const AdRequest(keywords: [
         'pdf', 'file management', 'ilovepdf', 'document', 'compress',
         'merge', 'split', 'convert', 'scanner'

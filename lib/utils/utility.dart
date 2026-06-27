@@ -14,7 +14,9 @@ class Utility{
   }
 
   static bool isPdf(String path) {
-    return path.endsWith('pdf');
+    // Case-insensitive so '.PDF' files also open in the in-app preview instead
+    // of falling through to the external "open with" chooser.
+    return path.toLowerCase().endsWith('.pdf');
   }
 
   static String fileName({required File file}) {
