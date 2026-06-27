@@ -8,6 +8,7 @@ import 'package:lottie/lottie.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,6 +38,8 @@ class _SplashScreenState extends State<SplashScreen> {
       // Preload an App Open ad now that MobileAds is initialized, so the first
       // background->foreground (warm resume) has an ad ready to show.
       AppOpenAdManager().loadAd();
+      // Preload a rewarded ad for the first heavy-tool gate.
+      RewardedAdManager().loadAd();
       LoggerSingleton().logger.i('Ads ${value.adapterStatuses.keys.join(',')} : ${value.adapterStatuses.values.join(',')}');
       _goOnce();
     });

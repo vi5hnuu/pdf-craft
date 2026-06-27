@@ -6,6 +6,7 @@ import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RecentToolsService.dart';
+import 'package:pdf_craft/tools/reward_gate.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 
 /// A tool category (used for grouping + accent colour on the Tools screen).
@@ -94,29 +95,44 @@ class ToolDef {
   }
 
   /// Opens the file-picker flow for this tool (used from the Tools screen).
+  /// Heavy tools first pass through the opt-in rewarded-ad gate.
   void openPicker(BuildContext context) {
-    RecentToolsService().record(id);
-    GoRouter.of(context).pushNamed(
-      AppRoutes.fileManagement.name,
-      extra: FileSelectionConfig(
-        path: Constants.rootStoragePath,
-        redirectPath: route.path,
-        multiSelect: multiSelect,
-        minSelection: multiSelect ? minSelection : null,
-        limitToExtensions: extensions,
-        extra: extra,
-      ),
+    RewardGate.run(
+      context,
+      isHeavy: isHeavy,
+      toolName: name,
+      proceed: () {
+        RecentToolsService().record(id);
+        GoRouter.of(context).pushNamed(
+          AppRoutes.fileManagement.name,
+          extra: FileSelectionConfig(
+            path: Constants.rootStoragePath,
+            redirectPath: route.path,
+            multiSelect: multiSelect,
+            minSelection: multiSelect ? minSelection : null,
+            limitToExtensions: extensions,
+            extra: extra,
+          ),
+        );
+      },
     );
   }
 
   /// Opens the tool directly with an already-chosen [files] selection (used by
   /// the file→tool intellisense menu and the incoming-files chooser), skipping
-  /// the picker.
+  /// the picker. Heavy tools first pass through the opt-in rewarded-ad gate.
   void openWithFiles(BuildContext context, List<File> files) {
-    RecentToolsService().record(id);
-    GoRouter.of(context).pushNamed(
-      route.name,
-      extra: {'files': files, ...?extra},
+    RewardGate.run(
+      context,
+      isHeavy: isHeavy,
+      toolName: name,
+      proceed: () {
+        RecentToolsService().record(id);
+        GoRouter.of(context).pushNamed(
+          route.name,
+          extra: {'files': files, ...?extra},
+        );
+      },
     );
   }
 }
