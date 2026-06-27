@@ -555,34 +555,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     final ext = isFile ? '.${currentName.split('.').last}' : '';
     final baseName = isFile && currentName.contains('.') ? currentName.substring(0, currentName.lastIndexOf('.')) : currentName;
 
-    final controller = TextEditingController(text: baseName);
     final newName = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Rename ${isFile ? 'File' : 'Folder'}'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 1,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            labelText: 'New name',
-            suffixText: ext,
-            isDense: true,
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+      builder: (_) =>
+          _RenameDialog(initialName: baseName, ext: ext, isFile: isFile),
     );
-    controller.dispose();
 
     if (newName == null || newName.isEmpty || newName == baseName) return;
 
@@ -650,6 +627,61 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           color: Colors.red,
           showCloseIcon: true);
     }
+  }
+}
+
+/// Rename dialog. A StatefulWidget so it owns its TextEditingController and
+/// disposes it in State.dispose (after the route is fully removed), avoiding the
+/// "_dependents.isEmpty is not true" assertion that occurs when a controller is
+/// disposed while its TextField is still animating out.
+class _RenameDialog extends StatefulWidget {
+  final String initialName;
+  final String ext;
+  final bool isFile;
+
+  const _RenameDialog(
+      {required this.initialName, required this.ext, required this.isFile});
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialName);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.pop(context, _controller.text.trim());
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Rename ${widget.isFile ? 'File' : 'Folder'}'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLines: 1,
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(
+          labelText: 'New name',
+          suffixText: widget.ext,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        FilledButton(onPressed: _submit, child: const Text('Rename')),
+      ],
+    );
   }
 }
 

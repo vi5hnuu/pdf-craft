@@ -97,16 +97,12 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: SafeArea(
       child: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-              child: Text('Settings',
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 0.3)),
-            ),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // Appearance
           _sectionHeader(theme, 'Appearance', Icons.palette_outlined),
@@ -201,6 +197,7 @@ class _SettingScreenState extends State<SettingScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
       ),
+    ),
     );
   }
 
