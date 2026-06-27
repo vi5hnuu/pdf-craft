@@ -47,7 +47,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.3)),
                   const SizedBox(width: 8),
-                  Text('${ToolRegistry.tools.length}',
+                  Text('( ${ToolRegistry.tools.length} )',
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
