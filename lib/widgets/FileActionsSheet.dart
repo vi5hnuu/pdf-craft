@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/FavoritesService.dart';
+import 'package:pdf_craft/state/selection/SelectionService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
@@ -25,12 +26,14 @@ class FileActionsSheet {
     BuildContext context,
     File file, {
     VoidCallback? onChanged,
+    bool allowSelect = false,
   }) {
     return showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => _FileActionsBody(file: file, onChanged: onChanged),
+      builder: (_) => _FileActionsBody(
+          file: file, onChanged: onChanged, allowSelect: allowSelect),
     );
   }
 }
@@ -39,7 +42,12 @@ class _FileActionsBody extends StatefulWidget {
   final File file;
   final VoidCallback? onChanged;
 
-  const _FileActionsBody({required this.file, this.onChanged});
+  /// Show a "Select for tools" entry (only where a selection bar exists to act
+  /// on it, e.g. Search). Off on surfaces without a selection bar.
+  final bool allowSelect;
+
+  const _FileActionsBody(
+      {required this.file, this.onChanged, this.allowSelect = false});
 
   @override
   State<_FileActionsBody> createState() => _FileActionsBodyState();
@@ -120,6 +128,17 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
               title: Text(_isPdf ? 'View' : 'Open externally'),
               onTap: _view,
             ),
+            if (widget.allowSelect)
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline),
+                title: Text(SelectionService().contains(widget.file.path)
+                    ? 'Deselect'
+                    : 'Select for tools'),
+                onTap: () {
+                  Navigator.pop(context);
+                  SelectionService().toggle(widget.file);
+                },
+              ),
             ListTile(
               leading: Icon(
                   _isFavorite ? Icons.star : Icons.star_border,
