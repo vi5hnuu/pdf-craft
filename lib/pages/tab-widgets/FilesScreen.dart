@@ -11,6 +11,8 @@ import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
+import 'package:pdf_craft/widgets/FileActionsSheet.dart';
+import 'package:pdf_craft/widgets/FilePreviewCard.dart';
 import 'package:pdf_craft/widgets/StorageTile.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -19,7 +21,6 @@ class StorageStats {
   final int totalItemsInDownloads;
   final int totalItemsInDocuments;
   final int totalProcessedFiles;
-  final int totalFileInBin;
   final bool isLoading;
 
   StorageStats(
@@ -27,15 +28,13 @@ class StorageStats {
       required this.totalItemsInDownloads,
       this.isLoading = false,
       required this.totalItemsInDocuments,
-      required this.totalProcessedFiles,
-      required this.totalFileInBin});
+      required this.totalProcessedFiles});
 
   StorageStats copyWith({
     int? totalItemsInRoot,
     int? totalItemsInDownloads,
     int? totalItemsInDocuments,
     int? totalProcessedFiles,
-    int? totalFileInBin,
     bool? isLoading,
   }) {
     return StorageStats(
@@ -45,8 +44,7 @@ class StorageStats {
         isLoading: isLoading ?? this.isLoading,
         totalItemsInDocuments:
             totalItemsInDocuments ?? this.totalItemsInDocuments,
-        totalProcessedFiles: totalProcessedFiles ?? this.totalProcessedFiles,
-        totalFileInBin: totalFileInBin ?? this.totalFileInBin);
+        totalProcessedFiles: totalProcessedFiles ?? this.totalProcessedFiles);
   }
 
   static StorageStats zero() {
@@ -55,8 +53,7 @@ class StorageStats {
         totalItemsInRoot: 0,
         totalItemsInDownloads: 0,
         totalItemsInDocuments: 0,
-        totalProcessedFiles: 0,
-        totalFileInBin: 0);
+        totalProcessedFiles: 0);
   }
 }
 
@@ -83,7 +80,6 @@ class _FilesScreenState extends State<FilesScreen> {
   Widget build(BuildContext context) {
     final router = GoRouter.of(context);
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -91,53 +87,41 @@ class _FilesScreenState extends State<FilesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_recentPdfs.isNotEmpty) ...[
-              const Padding(
-                padding: EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8),
-                child: Text(
-                  'Recent Files',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, right: 8, top: 24.0, bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Recent Files',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    ),
+                    // The home preview is capped at 10; offer the full list.
+                    TextButton(
+                      onPressed: () => router
+                          .pushNamed(AppRoutes.recentsRoute.name)
+                          .then((_) => _loadStats()),
+                      child: const Text('See more'),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
-                height: 130,
-                child: ListView.builder(
+                height: 180,
+                child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _recentPdfs.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final pdf = _recentPdfs[index];
-                    final name = pdf.path.split('/').last;
-                    return GestureDetector(
+                    return FilePreviewCard(
+                      file: pdf,
                       onTap: () => router.pushNamed(
                           AppRoutes.pdfFilePreviewRoute.name,
                           pathParameters: {'pdfFilePath': pdf.path}),
-                      child: Card(
-                        elevation: 0,
-                        color: theme.cardColor,
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 2),
-                        child: SizedBox(
-                          width: 90,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.picture_as_pdf,
-                                    color: primary, size: 36),
-                                const SizedBox(height: 8),
-                                Text(
-                                  name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      onLongPress: () => FileActionsSheet.show(context, pdf,
+                          onChanged: _loadStats),
                     );
                   },
                 ),
@@ -152,42 +136,27 @@ class _FilesScreenState extends State<FilesScreen> {
                 ),
               ),
               SizedBox(
-                height: 130,
-                child: ListView.builder(
+                height: 180,
+                child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _favoritePdfs.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final pdf = _favoritePdfs[index];
-                    final name = pdf.path.split('/').last;
-                    return GestureDetector(
+                    return FilePreviewCard(
+                      file: pdf,
                       onTap: () => router.pushNamed(
                           AppRoutes.pdfFilePreviewRoute.name,
                           pathParameters: {'pdfFilePath': pdf.path}),
-                      child: Card(
-                        elevation: 0,
-                        color: theme.cardColor,
-                        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        child: SizedBox(
-                          width: 90,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.star, color: Colors.amber, size: 36),
-                                const SizedBox(height: 8),
-                                Text(
-                                  name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      onLongPress: () => FileActionsSheet.show(context, pdf,
+                          onChanged: _loadStats),
+                      badge: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                            color: Colors.white, shape: BoxShape.circle),
+                        child: const Icon(Icons.star,
+                            color: Colors.amber, size: 16),
                       ),
                     );
                   },
@@ -221,9 +190,6 @@ class _FilesScreenState extends State<FilesScreen> {
                       onTap: () => router
                           .pushNamed(AppRoutes.filesListingRoute.name,
                               extra: FileSelectionConfig(
-                                  excludeShowingDirsPath: [
-                                    Constants.binDirPath
-                                  ],
                                   path: Constants.rootStoragePath))
                           .then((value) => _loadStats()),
                       trailing: stats == null || stats.isLoading
@@ -237,9 +203,6 @@ class _FilesScreenState extends State<FilesScreen> {
                       onTap: () => router
                           .pushNamed(AppRoutes.filesListingRoute.name,
                               extra: FileSelectionConfig(
-                                  excludeShowingDirsPath: [
-                                    Constants.binDirPath
-                                  ],
                                   path: Constants.downloadsStoragePath))
                           .then((value) => _loadStats()),
                       trailing: stats == null || stats.isLoading
@@ -253,9 +216,6 @@ class _FilesScreenState extends State<FilesScreen> {
                       onTap: () => router
                           .pushNamed(AppRoutes.filesListingRoute.name,
                               extra: FileSelectionConfig(
-                                  excludeShowingDirsPath: [
-                                    Constants.binDirPath
-                                  ],
                                   path: Constants.documentsStoragePath))
                           .then((value) => _loadStats()),
                       trailing: stats == null || stats.isLoading
@@ -283,38 +243,6 @@ class _FilesScreenState extends State<FilesScreen> {
               },
             ),
             const BannerAdd(),
-            const Padding(
-              padding: EdgeInsets.only(left: 18.0, top: 12.0),
-              child: Row(
-                children: [
-                  Text(
-                    'Others',
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            StreamBuilder<StorageStats>(
-              stream: storageStats.stream,
-              builder: (context, snapshot) {
-                final stats = snapshot.data;
-                final loadingWidget = SizedBox(
-                  width: 16,
-                  child: SpinKitThreeBounce(
-                      color: theme.colorScheme.onSurface, size: 8),
-                );
-                return StorageTile(
-                  onTap: _goToBin,
-                  trailing: stats == null || stats.isLoading
-                      ? loadingWidget
-                      : Text(stats.totalFileInBin.toString(),
-                          style: const TextStyle(fontSize: 16)),
-                  leadingIconSvgPath: 'assets/icons/recycle-bin.svg',
-                  title: 'Bin',
-                );
-              },
-            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -336,14 +264,12 @@ class _FilesScreenState extends State<FilesScreen> {
               .list(followLinks: false)
               .length,
           Directory(Constants.processedDirPath).list(followLinks: false).length,
-          Directory(Constants.binDirPath).list(followLinks: false).length,
         ]);
         storageStats.sink.add(StorageStats(
             totalItemsInRoot: stats[0],
             totalItemsInDownloads: stats[1],
             totalItemsInDocuments: stats[2],
-            totalProcessedFiles: stats[3],
-            totalFileInBin: stats[4]));
+            totalProcessedFiles: stats[3]));
 
         final recents = await RecentFilesService().getRecentFiles(limit: 10);
         final favorites = await FavoritesService().getFavorites();
@@ -365,8 +291,7 @@ class _FilesScreenState extends State<FilesScreen> {
     final mainDirs = [
       Constants.downloadsStoragePath,
       Constants.documentsStoragePath,
-      Constants.processedDirPath,
-      Constants.binDirPath
+      Constants.processedDirPath
     ];
     for (var dirPath in mainDirs) {
       final dir = Directory(dirPath);
@@ -376,10 +301,4 @@ class _FilesScreenState extends State<FilesScreen> {
     }
   }
 
-  void _goToBin() {
-    GoRouter.of(context)
-        .pushNamed(AppRoutes.filesListingRoute.name,
-            extra: FileSelectionConfig(path: Constants.binDirPath))
-        .then((value) => _loadStats());
-  }
 }

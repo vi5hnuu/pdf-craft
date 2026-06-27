@@ -115,10 +115,14 @@ class _FileTileState extends State<FileTile> {
         selected: widget.selected,
         selectedTileColor: primary.withValues(alpha: 0.12),
         selectedColor: primary,
+        // Keep the leading icon vertically centered even when a subtitle is
+        // present (otherwise it floats to the top on two-line tiles).
+        titleAlignment: ListTileTitleAlignment.center,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: Container(
           width: 40,
           height: 40,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),

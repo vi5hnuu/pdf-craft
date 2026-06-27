@@ -23,15 +23,13 @@ enum _FieldType { text, checkbox, date }
 class _FormField {
   final _FieldType type;
   Offset position;   // fraction of canvas width/height
-  String value;
-  bool checked;
+  String value = '';
+  bool checked = false;
   final String id;
 
   _FormField({
     required this.type,
     required this.position,
-    this.value = '',
-    this.checked = false,
   }) : id = UniqueKey().toString();
 }
 

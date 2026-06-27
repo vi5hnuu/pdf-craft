@@ -6,9 +6,11 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/cloud/GoogleDriveService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 enum _FileFilter { all, pdf, images, docs, other }
 
@@ -32,14 +34,34 @@ class _DriveScreenState extends State<DriveScreen> {
   _FileFilter _filter = _FileFilter.all;
   String? _downloadingId;
 
+  // Pagination over the Drive file list.
+  String? _nextPageToken;
+  bool _loadingMore = false;
+  final ScrollController _scrollController = ScrollController();
+
   drive.About? _storageAbout;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _tryRestoreSession();
     if (widget.fileToUpload != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _autoUpload());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Load the next page as the user approaches the bottom.
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      _loadMore();
     }
   }
 
@@ -81,12 +103,35 @@ class _DriveScreenState extends State<DriveScreen> {
     if (!mounted) return;
     setState(() => _loadingFiles = true);
     try {
-      final files = await _drive.listFiles();
-      if (mounted) setState(() => _allFiles = files);
+      final page = await _drive.listFiles();
+      if (mounted) {
+        setState(() {
+          _allFiles = page.files;
+          _nextPageToken = page.nextPageToken;
+        });
+      }
     } catch (e) {
       if (mounted) NotificationService.showSnackbar(text: 'Failed to load Drive files', color: Colors.red);
     } finally {
       if (mounted) setState(() => _loadingFiles = false);
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || _nextPageToken == null) return;
+    setState(() => _loadingMore = true);
+    try {
+      final page = await _drive.listFiles(pageToken: _nextPageToken);
+      if (mounted) {
+        setState(() {
+          _allFiles = [..._allFiles, ...page.files];
+          _nextPageToken = page.nextPageToken;
+        });
+      }
+    } catch (_) {
+      // Silent — the already-loaded files remain usable.
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
     }
   }
 
@@ -150,29 +195,77 @@ class _DriveScreenState extends State<DriveScreen> {
     }
   }
 
-  Future<void> _deleteFile(drive.File f) async {
-    if (f.id == null) return;
-    final confirm = await showDialog<bool>(
+  /// Downloads the Drive file, then offers the PDF/image tools that apply to it
+  /// (intellisense via [ToolRegistry]). This makes the cloud tab tool-oriented
+  /// rather than a generic file manager.
+  Future<void> _useInTools(drive.File f) async {
+    if (f.id == null || f.name == null) return;
+    setState(() => _downloadingId = f.id);
+    File local;
+    try {
+      local = await _drive.downloadFile(f.id!, f.name!);
+    } catch (e) {
+      if (mounted) NotificationService.showSnackbar(text: 'Could not fetch file: $e', color: Colors.red);
+      return;
+    } finally {
+      if (mounted) setState(() => _downloadingId = null);
+    }
+    if (!mounted) return;
+
+    final tools = ToolRegistry.toolsForSelection([local]);
+    if (tools.isEmpty) {
+      NotificationService.showSnackbar(text: 'No tools available for this file type', color: Colors.orange);
+      return;
+    }
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete file'),
-        content: Text('Delete "${f.name}" from Google Drive?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Apply a tool',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: tools
+                    .map((tool) => ListTile(
+                          leading: Icon(tool.icon, color: tool.category.color),
+                          title: Text(tool.name),
+                          onTap: () {
+                            Navigator.pop(context);
+                            tool.openWithFiles(context, [local]);
+                          },
+                        ))
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
-    if (confirm != true) return;
+  }
+
+  /// Downloads the Drive file and opens the system share sheet.
+  Future<void> _shareFile(drive.File f) async {
+    if (f.id == null || f.name == null) return;
+    setState(() => _downloadingId = f.id);
     try {
-      await _drive.deleteFile(f.id!);
-      await Future.wait([_loadFiles(), _loadStorage()]);
-      if (mounted) NotificationService.showSnackbar(text: 'Deleted from Drive', color: Colors.orange);
+      final local = await _drive.downloadFile(f.id!, f.name!);
+      if (!mounted) return;
+      await Share.shareXFiles([XFile(local.path)]);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Delete failed: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: 'Share failed: $e', color: Colors.red);
+    } finally {
+      if (mounted) setState(() => _downloadingId = null);
     }
   }
 
@@ -340,9 +433,19 @@ class _DriveScreenState extends State<DriveScreen> {
     return RefreshIndicator(
       onRefresh: () => Future.wait([_loadFiles(), _loadStorage()]),
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 96),
-        itemCount: files.length,
-        itemBuilder: (context, i) => _buildFileCard(theme, files[i]),
+        // +1 for the trailing paging indicator when more pages exist.
+        itemCount: files.length + (_nextPageToken != null ? 1 : 0),
+        itemBuilder: (context, i) {
+          if (i >= files.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return _buildFileCard(theme, files[i]);
+        },
       ),
     );
   }
@@ -359,7 +462,7 @@ class _DriveScreenState extends State<DriveScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(12,10,12,0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             _fileIconBox(name, f.mimeType),
@@ -377,24 +480,35 @@ class _DriveScreenState extends State<DriveScreen> {
             const LinearProgressIndicator(),
           ],
           const SizedBox(height: 8),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            if (isPdf)
+          // Tool-oriented actions (no Delete — this is a PDF toolbox, not a
+          // Drive file manager).
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 4,
+            children: [
+              if (isPdf)
+                TextButton.icon(
+                  onPressed: isDownloading ? null : () => _openPdf(f),
+                  icon: const Icon(Icons.open_in_new, size: 18),
+                  label: const Text('Open'),
+                ),
               TextButton.icon(
-                onPressed: isDownloading ? null : () => _openPdf(f),
-                icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text('Open'),
+                onPressed: isDownloading ? null : () => _useInTools(f),
+                icon: const Icon(Icons.build_outlined, size: 18),
+                label: const Text('Tools'),
               ),
-            TextButton.icon(
-              onPressed: isDownloading ? null : () => _downloadFile(f),
-              icon: const Icon(Icons.download_outlined, size: 18),
-              label: const Text('Download'),
-            ),
-            TextButton.icon(
-              onPressed: isDownloading ? null : () => _deleteFile(f),
-              icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-              label: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ]),
+              TextButton.icon(
+                onPressed: isDownloading ? null : () => _downloadFile(f),
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: const Text('Save'),
+              ),
+              TextButton.icon(
+                onPressed: isDownloading ? null : () => _shareFile(f),
+                icon: const Icon(Icons.share_outlined, size: 18),
+                label: const Text('Share'),
+              ),
+            ],
+          ),
         ]),
       ),
     );

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class Constants {
   // Physical device: use the machine's LAN IP (emulator: 10.0.2.2)
   static String get baseUrl => kDebugMode
-      ? "http://10.50.186.225:8082/api/v1"
+      ? "http://10.137.75.21:8082/api/v1"
       : "https://pdf-studio-api.laxmi.solutions/api/v1";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
   static const String binDirPath = "storage/emulated/0/ilvPdfBin";

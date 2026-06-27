@@ -64,6 +64,8 @@ class AppRoutes{
 
   static AppRoute filesRoute=AppRoute(name: 'files', path: '/files');
   static AppRoute filesListingRoute=AppRoute(name: 'list', path: 'list');
+  static AppRoute recentsRoute=AppRoute(name: 'recents', path: '/recents');
+  static AppRoute incomingFilesRoute=AppRoute(name: 'incoming-files', path: '/incoming-files');
 
   static AppRoute toolsRoute=AppRoute(name: 'tools', path: '/tools');
 

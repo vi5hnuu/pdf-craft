@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -95,16 +97,12 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: SafeArea(
       child: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-              child: Text('Settings',
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 0.3)),
-            ),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // Appearance
           _sectionHeader(theme, 'Appearance', Icons.palette_outlined),
@@ -178,6 +176,15 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
+                    leading: const Icon(Icons.slideshow_outlined),
+                    title: const Text('App Intro'),
+                    subtitle: const Text('Replay the welcome walkthrough'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => GoRouter.of(context)
+                        .pushNamed(AppRoutes.onboardingRoute.name),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
                     leading: const Icon(Icons.code_outlined),
                     title: const Text('Version'),
                     trailing: Text('1.0.0', style: theme.textTheme.bodyMedium),
@@ -190,6 +197,7 @@ class _SettingScreenState extends State<SettingScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
       ),
+    ),
     );
   }
 

@@ -1,18 +1,23 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
+import 'package:pdf_craft/state/selection/SelectionService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/Debouncer.dart';
+import 'package:pdf_craft/utils/FileSortFilter.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
+import 'package:pdf_craft/widgets/FilterPill.dart';
+import 'package:pdf_craft/widgets/SelectionBar.dart';
+import 'package:pdf_craft/widgets/SortControls.dart';
 import 'package:open_file/open_file.dart';
-
-enum _SortMode { name, date, size }
 
 class DirectoryFilesListing extends StatefulWidget {
   final String directoryPath;
@@ -51,50 +56,40 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   final List<File> selectedFiles = [];
   List<String> pathToDirectory = [];
   List<File> deletedFiles = [];
-  _SortMode _sortMode = _SortMode.name;
+  FileSortMode _sortMode = FileSortMode.name;
+
+  // Filtering / sorting controls (item 1).
+  bool _ascending = true; // sort direction toggle
+  String _nameFilter = ''; // case-insensitive substring filter on file name
+  String? _extFilter; // selected file-type extension filter (e.g. '.pdf')
+  final _filterDebouncer = Debouncer(milliseconds: 250);
+  final _searchController = TextEditingController();
+
+  /// Browse mode = plain file browsing (no tool picker). Only in this mode do
+  /// we enable the global cross-folder selection + tool intellisense bar; the
+  /// picker flow keeps its own local [selectedFiles] + "Complete Selection".
+  bool get _browseMode => widget.multiSelect == null;
 
   @override
   void initState() {
     bloc = BlocProvider.of<FilesBloc>(context);
     pathToDirectory = [widget.directoryPath];
     _loadDirectoryFiles(pathToDirectory.last);
+    if (_browseMode) SelectionService().addListener(_onSelectionChanged);
     super.initState();
   }
 
-  /// Sorts files by the current mode. Stats and lengths are pre-cached before
-  /// sorting so the comparator never calls sync IO repeatedly (O(N) instead of O(N log N)).
-  List<FileSystemEntity> _sortedFiles(List<FileSystemEntity> files) {
-    final dirs = files.whereType<Directory>().toList();
-    final regularFiles = files.whereType<File>().toList();
-
-    switch (_sortMode) {
-      case _SortMode.name:
-        dirs.sort((a, b) => a.path.split('/').last.toLowerCase()
-            .compareTo(b.path.split('/').last.toLowerCase()));
-        regularFiles.sort((a, b) => a.path.split('/').last.toLowerCase()
-            .compareTo(b.path.split('/').last.toLowerCase()));
-      case _SortMode.date:
-        // Pre-cache modified times — avoids statSync inside comparator (O(N log N) → O(N))
-        final modTimes = <String, DateTime>{};
-        for (final f in [...dirs, ...regularFiles]) {
-          try { modTimes[f.path] = f.statSync().modified; } catch (_) {}
-        }
-        dirs.sort((a, b) => (modTimes[b.path] ?? DateTime(0))
-            .compareTo(modTimes[a.path] ?? DateTime(0)));
-        regularFiles.sort((a, b) => (modTimes[b.path] ?? DateTime(0))
-            .compareTo(modTimes[a.path] ?? DateTime(0)));
-      case _SortMode.size:
-        // Pre-cache file sizes — avoids lengthSync inside comparator (O(N log N) → O(N))
-        final sizes = <String, int>{};
-        for (final f in regularFiles) {
-          try { sizes[f.path] = f.lengthSync(); } catch (_) {}
-        }
-        regularFiles.sort((a, b) =>
-            (sizes[b.path] ?? 0).compareTo(sizes[a.path] ?? 0));
-    }
-
-    return [...dirs, ...regularFiles];
+  void _onSelectionChanged() {
+    if (mounted) setState(() {});
   }
+
+  /// Applies the active name/extension filters and sort via the shared utility.
+  List<FileSystemEntity> _visibleFiles(List<FileSystemEntity> files) =>
+      applySortFilter(files,
+          nameQuery: _nameFilter,
+          ext: _extFilter,
+          mode: _sortMode,
+          ascending: _ascending);
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +101,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        // Back first cancels an active cross-folder selection.
+        if (_browseMode && SelectionService().isActive) {
+          SelectionService().clear();
+          return;
+        }
         if (pathToDirectory.length <= 1) {
           router.pop();
         } else {
@@ -128,8 +128,8 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         buildWhen: (previous, current) => previous != current,
         listenWhen: (previous, current) => previous != current,
         builder: (context, state) {
-          // Compute sorted list once per build — avoids re-sorting for every item in ListView
-          final sortedFiles = _sortedFiles(state.files);
+          // Compute filtered+sorted list once per build — avoids re-sorting for every item in ListView
+          final sortedFiles = _visibleFiles(state.files);
 
           return Stack(children: [
             if (!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
@@ -138,10 +138,19 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   : Flex(
                       direction: Axis.vertical,
                       children: [
-                        _buildBreadcrumbAndSort(theme, primary),
+                        _buildBreadcrumbAndSort(theme, primary, state.files),
                         Flexible(
                           fit: FlexFit.tight,
-                          child: ListView.builder(
+                          child: sortedFiles.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No matching files',
+                                    style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.5)),
+                                  ),
+                                )
+                              : ListView.builder(
                             itemCount: sortedFiles.length,
                             itemBuilder: (context, index) {
                               final file = sortedFiles[index];
@@ -204,6 +213,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                                 )
                               : null,
                         ),
+                        // Cross-folder selection bar (browse mode only).
+                        if (_browseMode && SelectionService().isActive)
+                          const SelectionBar(),
                       ],
                     )),
             if (state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
@@ -221,7 +233,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     );
   }
 
-  Widget _buildBreadcrumbAndSort(ThemeData theme, Color primary) {
+  Widget _buildBreadcrumbAndSort(
+      ThemeData theme, Color primary, List<FileSystemEntity> allFiles) {
+    final availableExts = availableExtensions(allFiles).toList()..sort();
     return Container(
       color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -276,49 +290,70 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ],
             ),
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Text('Sort:',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-              const SizedBox(width: 4),
-              ..._SortMode.values.map((mode) => Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _sortMode = mode),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _sortMode == mode
-                              ? primary.withValues(alpha: 0.15)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _sortMode == mode
-                                ? primary
-                                : theme.dividerColor,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          mode.name[0].toUpperCase() +
-                              mode.name.substring(1),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: _sortMode == mode
-                                ? primary
-                                : theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.6),
-                          ),
-                        ),
+          const SizedBox(height: 8),
+          // Name filter (debounced so typing doesn't rebuild on every keystroke).
+          SizedBox(
+            height: 40,
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Filter by name',
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: _nameFilter.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () {
+                          _searchController.clear();
+                          _filterDebouncer.cancel();
+                          setState(() => _nameFilter = '');
+                        },
                       ),
-                    ),
-                  )),
-            ],
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onChanged: (v) => _filterDebouncer.run(() {
+                if (mounted) setState(() => _nameFilter = v);
+              }),
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Sort field + direction (shared control) + type filter.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                SortControls(
+                  mode: _sortMode,
+                  ascending: _ascending,
+                  onModeChanged: (m) => setState(() => _sortMode = m),
+                  onToggleDirection: () =>
+                      setState(() => _ascending = !_ascending),
+                ),
+                if (availableExts.isNotEmpty) ...[
+                  Container(
+                    width: 1,
+                    height: 20,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    color: theme.dividerColor,
+                  ),
+                  FilterPill(
+                      label: 'All',
+                      selected: _extFilter == null,
+                      onTap: () => setState(() => _extFilter = null)),
+                  for (final ext in availableExts) ...[
+                    const SizedBox(width: 6),
+                    FilterPill(
+                        label: ext,
+                        selected: _extFilter == ext,
+                        onTap: () => setState(() => _extFilter = ext)),
+                  ],
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 4),
         ],
@@ -328,6 +363,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   bool _isFileSelected(FileSystemEntity file) {
     if (file is Directory) return false;
+    if (_browseMode) return SelectionService().contains(file.path);
     return selectedFiles.any((selectedFile) => selectedFile.path == file.path);
   }
 
@@ -361,6 +397,16 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ),
             ),
             const Divider(height: 1),
+            if (!isDir && _browseMode)
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline),
+                title: Text(
+                    _isFileSelected(file) ? 'Deselect' : 'Select for tools'),
+                onTap: () {
+                  Navigator.pop(context);
+                  SelectionService().toggle(file as File);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: Text('Rename ${isDir ? 'Folder' : 'File'}'),
@@ -426,9 +472,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
-              const Divider(height: 24),
-              _infoRow(Icons.folder_outlined, 'Path', file.path),
+              _infoRow(Icons.insert_drive_file_outlined, 'Name', name, copyable: true),
+              const SizedBox(height: 12),
+              _infoRow(Icons.folder_outlined, 'Path', file.path, copyable: true),
               const SizedBox(height: 12),
               _infoRow(Icons.data_usage_outlined, 'Size', size),
               const SizedBox(height: 12),
@@ -442,20 +488,36 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value) {
+  Widget _infoRow(IconData icon, String label, String value,
+      {bool copyable = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: Colors.grey),
         const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            const SizedBox(height: 2),
-            Text(value, style: const TextStyle(fontSize: 13)),
-          ],
+        // Expanded so long values (e.g. paths) wrap instead of overflowing.
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontSize: 13)),
+            ],
+          ),
         ),
+        if (copyable)
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.copy, size: 16),
+            tooltip: 'Copy',
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: value));
+              NotificationService.showSnackbar(
+                  text: 'Copied to clipboard', color: Colors.green);
+            },
+          ),
       ],
     );
   }
@@ -493,31 +555,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     final ext = isFile ? '.${currentName.split('.').last}' : '';
     final baseName = isFile && currentName.contains('.') ? currentName.substring(0, currentName.lastIndexOf('.')) : currentName;
 
-    final controller = TextEditingController(text: baseName);
     final newName = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Rename ${isFile ? 'File' : 'Folder'}'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            labelText: 'New name',
-            suffixText: ext,
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+      builder: (_) =>
+          _RenameDialog(initialName: baseName, ext: ext, isFile: isFile),
     );
-    controller.dispose();
 
     if (newName == null || newName.isEmpty || newName == baseName) return;
 
@@ -535,6 +577,13 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   @override
   void dispose() {
+    if (_browseMode) {
+      SelectionService().removeListener(_onSelectionChanged);
+      // Don't leak a cross-folder selection out of the browser.
+      SelectionService().clear();
+    }
+    _filterDebouncer.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -546,6 +595,12 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
       }
 
       if (widget.multiSelect == null) {
+        // Browse mode: while a cross-folder selection is active, a tap toggles
+        // selection instead of opening the file.
+        if (SelectionService().isActive) {
+          SelectionService().toggle(file as File);
+          return;
+        }
         if (Utility.isPdf(file.path)) {
           GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
               pathParameters: {'pdfFilePath': file.path});
@@ -572,6 +627,61 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           color: Colors.red,
           showCloseIcon: true);
     }
+  }
+}
+
+/// Rename dialog. A StatefulWidget so it owns its TextEditingController and
+/// disposes it in State.dispose (after the route is fully removed), avoiding the
+/// "_dependents.isEmpty is not true" assertion that occurs when a controller is
+/// disposed while its TextField is still animating out.
+class _RenameDialog extends StatefulWidget {
+  final String initialName;
+  final String ext;
+  final bool isFile;
+
+  const _RenameDialog(
+      {required this.initialName, required this.ext, required this.isFile});
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialName);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.pop(context, _controller.text.trim());
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Rename ${widget.isFile ? 'File' : 'Folder'}'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLines: 1,
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(
+          labelText: 'New name',
+          suffixText: widget.ext,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        FilledButton(onPressed: _submit, child: const Text('Rename')),
+      ],
+    );
   }
 }
 
