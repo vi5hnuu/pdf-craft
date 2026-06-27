@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -303,51 +302,61 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
     final ext = '.${filePath.split('.').last}';
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: 200,
-              child: LottieBuilder.asset(
-                'assets/lottie/error.json',
-                fit: BoxFit.fitWidth,
-                repeat: false,
+            // Lightweight vector icon instead of a heavy Lottie animation.
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
+              child: Icon(Icons.lock_outline, size: 44, color: primary),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Could not open this file',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            const SizedBox(height: 20),
+            Text(
+              'This PDF is locked',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'The file may be password-protected or corrupt.',
+            Text(
+              "It looks password-protected or couldn't be opened. Enter the "
+              'password to view it here, or open it in another app.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.lock_outline, size: 16),
-                  label: const Text('Enter Password'),
-                  onPressed: onRetryWithPassword,
+            // Full-width stacked buttons — robust on narrow screens.
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: const Icon(Icons.lock_open_outlined, size: 18),
+                label: const Text('Enter password'),
+                onPressed: onRetryWithPassword,
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('Open in another app'),
+                onPressed: () => OpenFile.open(
+                  filePath,
+                  type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*',
                 ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  icon: const Icon(Icons.open_in_new, size: 16),
-                  label: const Text('Open Externally'),
-                  onPressed: () => OpenFile.open(
-                    filePath,
-                    type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*',
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
