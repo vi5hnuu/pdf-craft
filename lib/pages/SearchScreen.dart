@@ -135,6 +135,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     : StreamBuilder<List<File>>(
                         stream: searchStream,
                         builder: (context, snapshot) {
+                          // Fresh stream with no emission yet => still searching.
+                          if (!snapshot.hasData) {
+                            return _searching(theme);
+                          }
                           final all = snapshot.data ?? const [];
                           final results =
                               all.where(_matchesType).toList(growable: false);
@@ -181,6 +185,22 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Text(text,
             style: TextStyle(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+      );
+
+  Widget _searching(ThemeData theme) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(strokeWidth: 2.5)),
+            const SizedBox(height: 12),
+            Text('Searching…',
+                style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+          ],
+        ),
       );
 
   String _typeLabel(_TypeFilter t) {

@@ -59,22 +59,29 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     on<SearchFileEvent>((event, emit) async {
       // Cancel any in-flight search so a new query doesn't race the old one.
-      if (_searchSubscription != null) await _searchSubscription?.cancel();
-      _searchController ??= StreamController<List<File>>.broadcast();
+      await _searchSubscription?.cancel();
+      await _searchController?.close();
+      // A fresh stream per query so the UI resets (no stale results flashing)
+      // and can show a "searching" state until the first emission.
+      final controller = StreamController<List<File>>.broadcast();
+      _searchController = controller;
 
-      List<File> files = [];
+      final List<File> files = [];
       _searchSubscription = searchFiles(event.path, event.nameLike).listen(
-            (data) {
+        (data) {
           files.add(data);
-          _searchController!.add(files);
+          if (!controller.isClosed) controller.add(List<File>.from(files));
           // Cap results to keep memory/UI bounded on huge trees.
-          if (files.length >= _maxSearchResults) {
-            _searchSubscription?.cancel();
-          }
+          if (files.length >= _maxSearchResults) _searchSubscription?.cancel();
         },
-        onError: _searchController!.addError,
+        onError: controller.addError,
+        // Emit the final list (possibly empty) so the UI can distinguish
+        // "still searching" from "finished with no results".
+        onDone: () {
+          if (!controller.isClosed) controller.add(List<File>.from(files));
+        },
       );
-      emit(state.copyWith(searchStream: _searchController!.stream));
+      emit(state.copyWith(searchStream: controller.stream));
     });
 
     on<ResetSearchEvent>((event, emit) async {
