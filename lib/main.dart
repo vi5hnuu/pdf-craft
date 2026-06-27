@@ -59,6 +59,7 @@ import 'package:pdf_craft/pages/WatermarkPdfView.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
 import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
+import 'package:pdf_craft/pages/tab-widgets/SettingScreen.dart';
 import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -230,6 +231,17 @@ class _NestedTabNavigationExampleAppState
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const RecentsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.settingsRoute.name,
+        path: AppRoutes.settingsRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const SettingScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

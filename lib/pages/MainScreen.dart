@@ -67,6 +67,12 @@ class _MainScreenState extends State<MainScreen> {
                 GoRouter.of(context).pushNamed(AppRoutes.searchRoute.name),
             icon: const Icon(Icons.search),
           ),
+          IconButton(
+            tooltip: 'Settings',
+            onPressed: () =>
+                GoRouter.of(context).pushNamed(AppRoutes.settingsRoute.name),
+            icon: const Icon(Icons.settings_outlined),
+          ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
