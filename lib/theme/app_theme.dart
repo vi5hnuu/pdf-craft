@@ -74,7 +74,10 @@ class AppTheme {
           style: FilledButton.styleFrom(
             backgroundColor: _primary,
             foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(52),
+            // Min height only (width 0) — forcing infinite width here made
+            // FilledButtons crash inside Rows / dialog action bars. Screens that
+            // want a full-width button wrap it in a double.infinity container.
+            minimumSize: const Size(0, 52),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             textStyle: const TextStyle(
@@ -155,7 +158,10 @@ class AppTheme {
           style: FilledButton.styleFrom(
             backgroundColor: _primary,
             foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(52),
+            // Min height only (width 0) — forcing infinite width here made
+            // FilledButtons crash inside Rows / dialog action bars. Screens that
+            // want a full-width button wrap it in a double.infinity container.
+            minimumSize: const Size(0, 52),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             textStyle: const TextStyle(
