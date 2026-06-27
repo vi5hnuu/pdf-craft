@@ -161,14 +161,16 @@ class _RecentToolsRow extends StatelessWidget {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
             SizedBox(
-              height: 96,
+              // Tall enough for ToolCard's icon box + 2-line label + padding
+              // (otherwise the card overflows the row vertically).
+              height: 124,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: tools.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 10),
                 itemBuilder: (context, i) =>
-                    SizedBox(width: 84, child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+                    SizedBox(width: 88, child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
               ),
             ),
           ],
