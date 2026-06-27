@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/utils/AdUnits.dart';
 
 class BannerAdd extends StatefulWidget {
   const BannerAdd({super.key});
@@ -27,8 +28,7 @@ class _BannerAddState extends State<BannerAdd> {
   void _loadAd() {
     final bannerAd = BannerAd(
       size: AdSize.banner,
-      adUnitId: 'ca-app-pub-4715945578201106/3610792197',
-      // adUnitId: 'ca-app-pub-3940256099942544/9214589741', //test
+      adUnitId: AdUnits.banner,
       request: const AdRequest(keywords: ['gfg','geeksforgeeks','leetcode','codingninja','codechef','codeforces','naukri','pdf','ilovepdf','file management']),
       listener: BannerAdListener(
         onAdLoaded: (ad) {

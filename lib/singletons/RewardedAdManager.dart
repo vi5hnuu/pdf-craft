@@ -1,14 +1,15 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/utils/AdUnits.dart';
 
 /// Manages a single cached Rewarded ad, shown (opt-in) before "heavy" /
 /// server-side operations so those expensive tools can stay free.
 ///
 /// Mirrors [AppOpenAdManager]: load/cache, show, then preload the next.
 class RewardedAdManager {
-  // Google's public TEST rewarded ad unit. Replace with the real AdMob rewarded
-  // unit id before release.
-  static const String _adUnitId = 'ca-app-pub-3940256099942544/5224354917';
+  // Ad unit id (test in debug; in release uses the production unit from
+  // [AdUnits.rewarded] — currently still the test id, replace before launch).
+  static String get _adUnitId => AdUnits.rewarded;
 
   RewardedAd? _cachedAd;
   bool _isLoading = false;

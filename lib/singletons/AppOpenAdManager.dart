@@ -1,5 +1,6 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/utils/AdUnits.dart';
 
 /// Manages the lifecycle of a single App Open ad.
 ///
@@ -9,8 +10,8 @@ import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 /// (see the lifecycle observer in main.dart). This keeps the class focused on a
 /// single responsibility.
 class AppOpenAdManager {
-  /// Real production App Open ad unit id.
-  static const String _adUnitId = 'ca-app-pub-4715945578201106/5084422823';
+  /// Ad unit id (test in debug, production in release — see [AdUnits]).
+  static String get _adUnitId => AdUnits.appOpen;
 
   /// App Open ads are only valid for ~4 hours after load (Google guidance);
   /// showing a staler ad is wasteful, so we discard and reload past this.
