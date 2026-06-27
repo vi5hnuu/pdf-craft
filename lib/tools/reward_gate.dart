@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:pdf_craft/widgets/ConfirmDialog.dart';
 
 /// Opt-in rewarded-ad gate for "heavy" (server-side / expensive) tools.
 ///
 /// Per AdMob policy rewarded ads must be user-initiated, so for heavy tools we
-/// ask first. If the user agrees we show the ad and then proceed; if no ad is
-/// available we proceed anyway (the gate monetizes but never hard-blocks). Light
-/// tools run immediately.
+/// ask first. The gated action unlocks ONLY if the user actually earns the
+/// reward (watches the ad). If no ad is available (e.g. offline) or the ad is
+/// closed early, the action does NOT proceed — otherwise users could bypass the
+/// gate simply by going offline. Light tools run immediately.
 class RewardGate {
   RewardGate._();
 
@@ -34,9 +36,16 @@ class RewardGate {
     if (!result.confirmed) return;
 
     RewardedAdManager().show(
-      onComplete: (_) {
-        // Proceed whether or not a reward was earned / an ad was available.
+      // Only unlock when the reward is genuinely earned.
+      onRewardEarned: () {
         if (context.mounted) proceed();
+      },
+      // No ad / offline / closed early — do not unlock; tell the user why.
+      onUnavailable: () {
+        NotificationService.showSnackbar(
+          text: 'No ad available right now. Check your internet and try again.',
+          color: Colors.orange,
+        );
       },
     );
   }

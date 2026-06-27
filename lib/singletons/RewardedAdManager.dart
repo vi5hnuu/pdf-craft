@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/utils/AdUnits.dart';
@@ -43,16 +44,22 @@ class RewardedAdManager {
     );
   }
 
-  /// Shows the cached ad if available and reports completion via [onComplete]
-  /// (true when the reward was earned). If no ad is ready it completes
-  /// immediately with `false` and preloads one — callers should treat that as
-  /// "proceed anyway" so users are never blocked by ad availability. Always
-  /// preloads the next ad afterwards.
-  void show({required void Function(bool earnedReward) onComplete}) {
+  /// Attempts to show the cached rewarded ad.
+  ///
+  /// [onRewardEarned] fires ONLY when the user actually watched the ad to the
+  /// rewarded point — that's the only path callers should use to unlock a gated
+  /// action. [onUnavailable] fires for every other outcome (no ad cached /
+  /// offline / failed to show / closed early without earning), so the caller can
+  /// surface an error and must NOT unlock. This closes the "go offline to skip
+  /// the ad" bypass. Always preloads the next ad afterwards.
+  void show({
+    required VoidCallback onRewardEarned,
+    required VoidCallback onUnavailable,
+  }) {
     final ad = _cachedAd;
     if (ad == null) {
-      loadAd();
-      onComplete(false);
+      loadAd(); // try to have one ready next time
+      onUnavailable();
       return;
     }
     _cachedAd = null;
@@ -61,13 +68,17 @@ class RewardedAdManager {
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         loadAd();
-        onComplete(earned);
+        if (earned) {
+          onRewardEarned();
+        } else {
+          onUnavailable(); // closed before earning the reward
+        }
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
         loadAd();
         LoggerSingleton().logger.e('Rewarded ad failed to show: $error');
-        onComplete(false);
+        onUnavailable();
       },
     );
     ad.show(onUserEarnedReward: (ad, reward) => earned = true);
