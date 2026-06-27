@@ -11,6 +11,8 @@ import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
+import 'package:pdf_craft/widgets/FileActionsSheet.dart';
+import 'package:pdf_craft/widgets/FilePreviewCard.dart';
 import 'package:pdf_craft/widgets/StorageTile.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -78,7 +80,6 @@ class _FilesScreenState extends State<FilesScreen> {
   Widget build(BuildContext context) {
     final router = GoRouter.of(context);
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -106,45 +107,21 @@ class _FilesScreenState extends State<FilesScreen> {
                 ),
               ),
               SizedBox(
-                height: 130,
-                child: ListView.builder(
+                height: 180,
+                child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _recentPdfs.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final pdf = _recentPdfs[index];
-                    final name = pdf.path.split('/').last;
-                    return GestureDetector(
+                    return FilePreviewCard(
+                      file: pdf,
                       onTap: () => router.pushNamed(
                           AppRoutes.pdfFilePreviewRoute.name,
                           pathParameters: {'pdfFilePath': pdf.path}),
-                      child: Card(
-                        elevation: 0,
-                        color: theme.cardColor,
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 2),
-                        child: SizedBox(
-                          width: 90,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.picture_as_pdf,
-                                    color: primary, size: 36),
-                                const SizedBox(height: 8),
-                                Text(
-                                  name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      onLongPress: () => FileActionsSheet.show(context, pdf,
+                          onChanged: _loadStats),
                     );
                   },
                 ),
@@ -159,42 +136,27 @@ class _FilesScreenState extends State<FilesScreen> {
                 ),
               ),
               SizedBox(
-                height: 130,
-                child: ListView.builder(
+                height: 180,
+                child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _favoritePdfs.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final pdf = _favoritePdfs[index];
-                    final name = pdf.path.split('/').last;
-                    return GestureDetector(
+                    return FilePreviewCard(
+                      file: pdf,
                       onTap: () => router.pushNamed(
                           AppRoutes.pdfFilePreviewRoute.name,
                           pathParameters: {'pdfFilePath': pdf.path}),
-                      child: Card(
-                        elevation: 0,
-                        color: theme.cardColor,
-                        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        child: SizedBox(
-                          width: 90,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.star, color: Colors.amber, size: 36),
-                                const SizedBox(height: 8),
-                                Text(
-                                  name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      onLongPress: () => FileActionsSheet.show(context, pdf,
+                          onChanged: _loadStats),
+                      badge: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                            color: Colors.white, shape: BoxShape.circle),
+                        child: const Icon(Icons.star,
+                            color: Colors.amber, size: 16),
                       ),
                     );
                   },

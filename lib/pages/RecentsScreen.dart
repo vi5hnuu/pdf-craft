@@ -5,6 +5,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RecentFilesService.dart';
+import 'package:pdf_craft/widgets/FileActionsSheet.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
 
 /// Full list of recent PDFs, reached via the "See more" action on the Files
@@ -66,6 +67,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
                       return FileTile(
                         file: file,
                         onPress: () => _open(file),
+                        onLongPress: () =>
+                            FileActionsSheet.show(context, file, onChanged: _load),
                       );
                     },
                   ),
