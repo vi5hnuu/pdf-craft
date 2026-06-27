@@ -14,6 +14,7 @@ import 'package:pdf_craft/utils/FileSortFilter.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
+import 'package:pdf_craft/widgets/FilterPill.dart';
 import 'package:pdf_craft/widgets/SelectionBar.dart';
 import 'package:pdf_craft/widgets/SortControls.dart';
 import 'package:open_file/open_file.dart';
@@ -333,14 +334,19 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                       setState(() => _ascending = !_ascending),
                 ),
                 if (availableExts.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  _pill(theme, primary,
+                  Container(
+                    width: 1,
+                    height: 20,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    color: theme.dividerColor,
+                  ),
+                  FilterPill(
                       label: 'All',
                       selected: _extFilter == null,
                       onTap: () => setState(() => _extFilter = null)),
                   for (final ext in availableExts) ...[
-                    const SizedBox(width: 4),
-                    _pill(theme, primary,
+                    const SizedBox(width: 6),
+                    FilterPill(
                         label: ext,
                         selected: _extFilter == ext,
                         onTap: () => setState(() => _extFilter = ext)),
@@ -351,33 +357,6 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           ),
           const SizedBox(height: 4),
         ],
-      ),
-    );
-  }
-
-  /// Small selectable pill used for sort-field and type-filter chips.
-  Widget _pill(ThemeData theme, Color primary,
-      {required String label, required bool selected, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: selected ? primary.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: selected ? primary : theme.dividerColor, width: 1),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: selected
-                ? primary
-                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
       ),
     );
   }

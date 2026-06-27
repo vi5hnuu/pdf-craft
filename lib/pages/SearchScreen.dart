@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/FileSortFilter.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/FileActionsSheet.dart';
+import 'package:pdf_craft/widgets/FilterPill.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
 import 'package:pdf_craft/widgets/SelectionBar.dart';
 import 'package:pdf_craft/widgets/SortControls.dart';
@@ -163,31 +164,36 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildFilterSortBar(ThemeData theme) {
     return SizedBox(
-      height: 48,
-      child: ListView(
+      height: 44,
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        children: [
-          for (final t in _TypeFilter.values)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(_typeLabel(t)),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (final t in _TypeFilter.values) ...[
+              FilterPill(
+                label: _typeLabel(t),
                 selected: _typeFilter == t,
-                onSelected: (_) => setState(() => _typeFilter = t),
+                onTap: () => setState(() => _typeFilter = t),
               ),
+              const SizedBox(width: 6),
+            ],
+            // Divider between the type group and the sort group.
+            Container(
+              width: 1,
+              height: 20,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              color: theme.dividerColor,
             ),
-          const SizedBox(width: 4),
-          Center(
-            child: SortControls(
+            SortControls(
               mode: _sortMode,
               ascending: _ascending,
               onModeChanged: (m) => setState(() => _sortMode = m),
-              onToggleDirection: () =>
-                  setState(() => _ascending = !_ascending),
+              onToggleDirection: () => setState(() => _ascending = !_ascending),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
