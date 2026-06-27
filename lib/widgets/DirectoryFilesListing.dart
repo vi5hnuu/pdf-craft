@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
@@ -576,11 +577,12 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           builder: (ctx, _) {
             final files = SelectionService().files;
             if (files.isEmpty) {
-              // Nothing left — close the sheet.
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop();
-              });
-              return const SizedBox.shrink();
+              // Nothing left to manage — show a hint rather than popping the
+              // route from inside build (which can assert).
+              return const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('No files selected'),
+              );
             }
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -739,9 +741,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
-              const Divider(height: 24),
-              _infoRow(Icons.folder_outlined, 'Path', file.path),
+              _infoRow(Icons.insert_drive_file_outlined, 'Name', name, copyable: true),
+              const SizedBox(height: 12),
+              _infoRow(Icons.folder_outlined, 'Path', file.path, copyable: true),
               const SizedBox(height: 12),
               _infoRow(Icons.data_usage_outlined, 'Size', size),
               const SizedBox(height: 12),
@@ -755,20 +757,36 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value) {
+  Widget _infoRow(IconData icon, String label, String value,
+      {bool copyable = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: Colors.grey),
         const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            const SizedBox(height: 2),
-            Text(value, style: const TextStyle(fontSize: 13)),
-          ],
+        // Expanded so long values (e.g. paths) wrap instead of overflowing.
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontSize: 13)),
+            ],
+          ),
         ),
+        if (copyable)
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.copy, size: 16),
+            tooltip: 'Copy',
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: value));
+              NotificationService.showSnackbar(
+                  text: 'Copied to clipboard', color: Colors.green);
+            },
+          ),
       ],
     );
   }
@@ -814,9 +832,12 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         content: TextField(
           controller: controller,
           autofocus: true,
+          maxLines: 1,
+          textInputAction: TextInputAction.done,
           decoration: InputDecoration(
             labelText: 'New name',
             suffixText: ext,
+            isDense: true,
             border: const OutlineInputBorder(),
           ),
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),

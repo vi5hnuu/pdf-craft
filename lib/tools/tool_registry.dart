@@ -128,9 +128,11 @@ class ToolDef {
       toolName: name,
       proceed: () {
         RecentToolsService().record(id);
+        // Pass a fresh, modifiable List<File> — selections come in as
+        // unmodifiable lists and some tool views reorder/mutate the list.
         GoRouter.of(context).pushNamed(
           route.name,
-          extra: {'files': files, ...?extra},
+          extra: <String, dynamic>{'files': List<File>.from(files), ...?extra},
         );
       },
     );
