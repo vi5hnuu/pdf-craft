@@ -6,6 +6,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/PrefFlags.dart';
 import 'package:pdf_craft/widgets/ConfirmDialog.dart';
+import 'package:pdf_craft/widgets/InputDialog.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -216,72 +217,28 @@ class _PdfPreviewState extends State<PdfPreview> {
   }
 
   Future<void> _askForPasswordAndRetry(BuildContext context) async {
-    final controller = TextEditingController();
-    final newPassword = await showDialog<String?>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Password Required'),
-        content: TextField(
-          controller: controller,
-          obscureText: true,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Enter PDF password',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (v) => Navigator.pop(context, v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Open'),
-          ),
-        ],
-      ),
+    final newPassword = await InputDialog.show(
+      context,
+      title: 'Password Required',
+      label: 'Enter PDF password',
+      obscure: true,
+      confirmLabel: 'Open',
     );
-    controller.dispose();
     if (newPassword != null) {
       _password = newPassword.isEmpty ? null : newPassword;
       await _loadDocument();
     }
   }
 
-  void _showJumpToPageDialog(int totalPages) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Go to Page'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: '1 – $totalPages',
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: (_) => _jumpToPage(controller.text, totalPages),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => _jumpToPage(controller.text, totalPages),
-            child: const Text('Go'),
-          ),
-        ],
-      ),
+  Future<void> _showJumpToPageDialog(int totalPages) async {
+    final input = await InputDialog.show(
+      context,
+      title: 'Go to Page',
+      hint: '1 – $totalPages',
+      keyboardType: TextInputType.number,
+      confirmLabel: 'Go',
     );
-  }
-
-  void _jumpToPage(String input, int totalPages) {
-    Navigator.pop(context);
+    if (input == null) return;
     final page = int.tryParse(input);
     if (page == null || page < 1 || page > totalPages) return;
     _controller?.jumpToPage(page);
