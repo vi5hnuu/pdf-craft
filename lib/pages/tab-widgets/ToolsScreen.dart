@@ -34,14 +34,27 @@ class _ToolsScreenState extends State<ToolsScreen> {
     return SafeArea(
       child: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-              child: Text('All Tools',
-                  style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3)),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  const Text('All Tools',
+                      style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3)),
+                  const SizedBox(width: 8),
+                  Text('${ToolRegistry.tools.length}',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.5))),
+                ],
+              ),
             ),
           ),
           // Search box.
