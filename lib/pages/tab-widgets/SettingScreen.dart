@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -175,6 +177,15 @@ class _SettingScreenState extends State<SettingScreen> {
                     leading: Icon(Icons.apps),
                     title: Text('PDF Craft'),
                     subtitle: Text('PDF & Image toolkit'),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
+                    leading: const Icon(Icons.slideshow_outlined),
+                    title: const Text('App Intro'),
+                    subtitle: const Text('Replay the welcome walkthrough'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => GoRouter.of(context)
+                        .pushNamed(AppRoutes.onboardingRoute.name),
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
