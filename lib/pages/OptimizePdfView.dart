@@ -21,6 +21,8 @@ class OptimizePdfView extends StatefulWidget {
 }
 
 class _OptimizePdfViewState extends State<OptimizePdfView> {
+  CancelToken? _cancelToken;
+
   @override
   void initState() {
     super.initState();
@@ -108,11 +110,15 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
 
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
-    BlocProvider.of<PdfBloc>(context).add(OptimizePdfEvent(
+    _cancelToken = CancelToken();
+    final bloc = BlocProvider.of<PdfBloc>(context);
+    final file = await MultipartFile.fromFile(widget.file.path);
+    bloc.add(OptimizePdfEvent(
       optimizePdf: OptimizePdf(
         outFileName: '${baseName}_optimized',
-        file: await MultipartFile.fromFile(widget.file.path),
+        file: file,
       ),
+      cancelToken: _cancelToken,
     ));
   }
 }

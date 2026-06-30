@@ -23,6 +23,7 @@ class PdfToOfficeView extends StatefulWidget {
 class _PdfToOfficeViewState extends State<PdfToOfficeView> {
   late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
+  CancelToken? _cancelToken;
 
   String get _stateKey {
     switch (widget.format) {
@@ -123,7 +124,11 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[_stateKey], label: 'Converting your PDF'),
+              LoadingOverlay(
+                httpState: state.httpStates[_stateKey],
+                label: 'Converting your PDF',
+                onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
+              ),
             ],
           );
         },
@@ -133,12 +138,15 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
 
   void _onConvert() async {
     final name = _outFileNameC.text.trim().isEmpty ? _defaultName : _outFileNameC.text.trim();
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
     _bloc.add(PdfToOfficeEvent(
       pdfToOffice: PdfToOffice(
         outFileName: name,
         format: widget.format,
-        file: await MultipartFile.fromFile(widget.file.path),
+        file: file,
       ),
+      cancelToken: _cancelToken,
     ));
   }
 

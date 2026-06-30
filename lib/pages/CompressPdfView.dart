@@ -26,6 +26,8 @@ class _CompressPdfViewState extends State<CompressPdfView> {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
   CompressionLevel _level = CompressionLevel.RECOMMENDED;
+  // Token for the in-flight request so the overlay's Cancel can abort it.
+  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -91,7 +93,11 @@ class _CompressPdfViewState extends State<CompressPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.COMPRESS_PDF], label: 'Compressing your PDF'),
+              LoadingOverlay(
+                httpState: state.httpStates[HttpStates.COMPRESS_PDF],
+                label: 'Compressing your PDF',
+                onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
+              ),
             ],
           );
         },
@@ -100,12 +106,15 @@ class _CompressPdfViewState extends State<CompressPdfView> {
   }
 
   void _onCompress() async {
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
     bloc.add(CompressPdfEvent(
       compressPdf: CompressPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'compressed_file',
         level: _level,
-        file: await MultipartFile.fromFile(widget.file.path),
+        file: file,
       ),
+      cancelToken: _cancelToken,
     ));
   }
 

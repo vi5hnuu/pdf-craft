@@ -27,6 +27,7 @@ class ImageToPdfView extends StatefulWidget {
 
 class _ImageToPdfViewState extends State<ImageToPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
+  CancelToken? _cancelToken;
   final TextEditingController outFileNameC=TextEditingController();
 
   @override
@@ -113,7 +114,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 )
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
           ],
         );
       },)
@@ -131,6 +132,8 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
   }
 
   void _onConvertToPdf() async {
-    bloc.add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text, files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
+    _cancelToken = CancelToken();
+    final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
+    bloc.add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text, files: files), cancelToken: _cancelToken));
   }
 }

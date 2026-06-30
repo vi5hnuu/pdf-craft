@@ -25,6 +25,7 @@ class MergePdfView extends StatefulWidget {
 class _MergePdfViewState extends State<MergePdfView> {
   final TextEditingController outFileNameC=TextEditingController();
   int? draggingItemIndex;
+  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -104,7 +105,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge PDFs")),)
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF], label: 'Merging your PDFs'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF], label: 'Merging your PDFs', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
           ],
         );
       },),
@@ -122,6 +123,9 @@ class _MergePdfViewState extends State<MergePdfView> {
   }
 
   void _startMerge() async {
-    BlocProvider.of<PdfBloc>(context).add(MergePdfEvent(mergePdf: MergePdf(out_file_name: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path))))));
+    _cancelToken = CancelToken();
+    final bloc = BlocProvider.of<PdfBloc>(context);
+    final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
+    bloc.add(MergePdfEvent(mergePdf: MergePdf(out_file_name: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: files), cancelToken: _cancelToken));
   }
 }
