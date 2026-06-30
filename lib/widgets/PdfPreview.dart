@@ -6,6 +6,7 @@ import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/PrefFlags.dart';
 import 'package:pdf_craft/widgets/ConfirmDialog.dart';
@@ -28,6 +29,8 @@ class _PdfPreviewState extends State<PdfPreview> {
   String? _password;
   bool _loadError = false;
   bool _nightMode = false;
+  // Mutable so a rename can update the open file in place.
+  late String _path = widget.pdfFilePath;
 
   // Inverts RGB channels while keeping alpha — turns white pages dark for night reading
   static const _invertMatrix = <double>[
@@ -45,7 +48,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     0, 0, 0, 1, 0,
   ];
 
-  String get _fileName => widget.pdfFilePath.split('/').last;
+  String get _fileName => _path.split('/').last;
 
   @override
   void initState() {
@@ -61,7 +64,7 @@ class _PdfPreviewState extends State<PdfPreview> {
       _loadError = false;
     });
     try {
-      final doc = await PdfDocument.openFile(widget.pdfFilePath, password: _password);
+      final doc = await PdfDocument.openFile(_path, password: _password);
       if (!mounted) return;
       setState(() {
         _controller = PdfControllerPinch(
@@ -123,15 +126,38 @@ class _PdfPreviewState extends State<PdfPreview> {
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share',
-            onPressed: () => Share.shareXFiles([XFile(widget.pdfFilePath)]),
+            onPressed: () => Share.shareXFiles([XFile(_path)]),
           ),
           // Our in-app viewer is intentionally lightweight; offer a way out to
           // a full external PDF viewer at any time (not just on error).
           PopupMenuButton<String>(
             onSelected: (value) {
-              if (value == 'external') _openExternally();
+              switch (value) {
+                case 'external':
+                  _openExternally();
+                case 'rename':
+                  _rename();
+                case 'save_copy':
+                  _saveCopyToDownloads();
+              }
             },
             itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'rename',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.drive_file_rename_outline),
+                  title: Text('Rename'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'save_copy',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.download_outlined),
+                  title: Text('Save a copy to Downloads'),
+                ),
+              ),
               PopupMenuItem(
                 value: 'external',
                 child: ListTile(
@@ -152,7 +178,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     // Show error state (password prompt or generic error)
     if (_loadError) {
       return _ErrorState(
-        filePath: widget.pdfFilePath,
+        filePath: _path,
         onRetryWithPassword: () => _askForPasswordAndRetry(context),
       );
     }
@@ -181,7 +207,7 @@ class _PdfPreviewState extends State<PdfPreview> {
         documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
         pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         errorBuilder: (_, error) => _ErrorState(
-          filePath: widget.pdfFilePath,
+          filePath: _path,
           onRetryWithPassword: () => _askForPasswordAndRetry(context),
         ),
       ),
@@ -195,9 +221,62 @@ class _PdfPreviewState extends State<PdfPreview> {
   }
 
   void _openExternally() {
-    final ext = '.${widget.pdfFilePath.split('.').last}';
-    OpenFile.open(widget.pdfFilePath,
+    final ext = '.${_path.split('.').last}';
+    OpenFile.open(_path,
         type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*');
+  }
+
+  /// Renames the open file on disk and keeps viewing it under the new name.
+  Future<void> _rename() async {
+    final name = _fileName;
+    final dot = name.lastIndexOf('.');
+    final base = dot == -1 ? name : name.substring(0, dot);
+    final ext = dot == -1 ? '' : name.substring(dot);
+
+    final newBase = await InputDialog.show(
+      context,
+      title: 'Rename file',
+      label: 'New name',
+      initial: base,
+      confirmLabel: 'Rename',
+    );
+    if (newBase == null || newBase.trim().isEmpty || newBase.trim() == base) return;
+
+    final dir = File(_path).parent.path;
+    final newPath = '$dir/${newBase.trim()}$ext';
+    if (File(newPath).existsSync()) {
+      NotificationService.showSnackbar(text: 'A file with that name already exists', color: Colors.red);
+      return;
+    }
+    try {
+      await File(_path).rename(newPath);
+      if (!mounted) return;
+      setState(() => _path = newPath);
+      NotificationService.showSnackbar(text: 'Renamed', color: Colors.green);
+    } catch (_) {
+      NotificationService.showSnackbar(text: 'Could not rename file', color: Colors.red);
+    }
+  }
+
+  /// Copies the open file into the device Downloads folder for easy retrieval.
+  Future<void> _saveCopyToDownloads() async {
+    try {
+      final dir = Directory(Constants.downloadsStoragePath);
+      if (!dir.existsSync()) await dir.create(recursive: true);
+      // Avoid clobbering an existing download with the same name.
+      var dest = '${dir.path}/$_fileName';
+      if (File(dest).existsSync()) {
+        final name = _fileName;
+        final dot = name.lastIndexOf('.');
+        final base = dot == -1 ? name : name.substring(0, dot);
+        final ext = dot == -1 ? '' : name.substring(dot);
+        dest = '${dir.path}/$base-${DateTime.now().millisecondsSinceEpoch}$ext';
+      }
+      await File(_path).copy(dest);
+      NotificationService.showSnackbar(text: 'Saved to Downloads', color: Colors.green);
+    } catch (_) {
+      NotificationService.showSnackbar(text: 'Could not save to Downloads', color: Colors.red);
+    }
   }
 
   /// Explains what uploading does before navigating to the Drive screen, with a
@@ -223,7 +302,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     if (!mounted) return;
     GoRouter.of(context).pushNamed(
       AppRoutes.driveRoute.name,
-      extra: {'file': File(widget.pdfFilePath)},
+      extra: {'file': File(_path)},
     );
   }
 
@@ -250,7 +329,7 @@ class _PdfPreviewState extends State<PdfPreview> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => _OutlineSheet(
-        filePath: widget.pdfFilePath,
+        filePath: _path,
         onJump: (pageIndex) {
           Navigator.pop(context);
           _controller?.jumpToPage(pageIndex + 1); // controller is 1-indexed
