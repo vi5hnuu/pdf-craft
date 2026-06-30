@@ -139,7 +139,8 @@ class _SettingScreenState extends State<SettingScreen> {
                   ListTile(
                     leading: const Icon(Icons.storage_outlined),
                     title: const Text('Processed Files'),
-                    subtitle: Text('$_processedFileCount files · $_processedDirSize'),
+                    subtitle: Text('$_processedFileCount files · $_processedDirSize · tap to view'),
+                    onTap: () => GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
                     trailing: TextButton(
                       onPressed: _processedFileCount == 0 ? null : _clearCache,
                       child: const Text('Clear', style: TextStyle(color: Colors.red)),

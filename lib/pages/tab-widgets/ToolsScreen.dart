@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/FavoriteToolsService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/RecentToolsService.dart';
@@ -50,21 +52,34 @@ class _ToolsScreenState extends State<ToolsScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
                 children: [
-                  const Text('All Tools',
-                      style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3)),
-                  const SizedBox(width: 8),
-                  Text('( ${ToolRegistry.tools.length} )',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.5))),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        const Text('All Tools',
+                            style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.3)),
+                        const SizedBox(width: 8),
+                        Text('( ${ToolRegistry.tools.length} )',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.5))),
+                      ],
+                    ),
+                  ),
+                  // Quick access to everything tools have produced.
+                  IconButton(
+                    icon: const Icon(Icons.folder_special_outlined),
+                    tooltip: 'Results',
+                    onPressed: () =>
+                        GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
+                  ),
                 ],
               ),
             ),
