@@ -54,6 +54,16 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       : _pdfService = pdfService,
         super(PdfState.initial()) {
 
+    // Clears leftover state for the given keys so a re-opened tool screen starts
+    // clean (prevents stale done/error from a prior run firing on mount).
+    on<ResetHttpStateEvent>((e, emit) {
+      final states = state.httpStates.clone();
+      for (final key in e.keys) {
+        states.remove(key);
+      }
+      emit(state.copyWith(httpStates: states));
+    });
+
     on<MergePdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.MERGE_PDF,
       call: (p) => _pdfService.mergePdf(mergePdf: e.mergePdf, cancelToken: e.cancelToken, onSendProgress: p),
@@ -312,7 +322,12 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       final file = await _saveFileToProcessed(res);
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.done(extras: {'savedFile': file}))));
     } on DioException catch (e) {
-      emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      // A user-cancelled request should leave no error behind — reset to idle.
+      if (e.type == DioExceptionType.cancel) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..remove(key)));
+      } else {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      }
     } catch (_) {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: error))));
     }
@@ -336,39 +351,80 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       final file = await _saveImageToProcessed(res);
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.done(extras: {'savedFile': file}))));
     } on DioException catch (e) {
-      emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      if (e.type == DioExceptionType.cancel) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..remove(key)));
+      } else {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      }
     } catch (_) {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: error))));
     }
   }
 
   Future<File> _saveImageToProcessed(Response<Uint8List> fileRes) async {
+    return _saveBytesToProcessed(fileRes, fallbackPrefix: 'image', fallbackExt: 'jpg');
+  }
+
+  Future<File> _saveFileToProcessed(Response<Uint8List> fileRes) async {
+    return _saveBytesToProcessed(fileRes, fallbackPrefix: 'file', fallbackExt: 'pdf');
+  }
+
+  /// Persists a downloaded response to the processed directory using the server's
+  /// suggested filename (Content-Disposition), falling back to a timestamped name.
+  /// Guarantees the final path does not collide with an existing file.
+  Future<File> _saveBytesToProcessed(
+    Response<Uint8List> fileRes, {
+    required String fallbackPrefix,
+    required String fallbackExt,
+  }) async {
     if (!await StoragePermissions.requestStoragePermissions()) {
       throw Exception('Failed to save — storage permission denied');
     }
     final directory = Directory(Constants.processedDirPath);
     if (!directory.existsSync()) await directory.create(recursive: true);
-    final contentDisposition = fileRes.headers.value('content-disposition');
-    final dummyName = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final filename = contentDisposition?.split('=').last ?? dummyName;
-    var file = File('${directory.path}/$filename');
-    if (file.existsSync()) file = File('${directory.path}/$dummyName');
+
+    final fallback = '${fallbackPrefix}_${DateTime.now().millisecondsSinceEpoch}.$fallbackExt';
+    final suggested = _filenameFromContentDisposition(fileRes.headers.value('content-disposition')) ?? fallback;
+    final file = File(_uniquePath(directory.path, suggested));
     await file.writeAsBytes(fileRes.data!);
     return file;
   }
 
-  Future<File> _saveFileToProcessed(Response<Uint8List> fileRes) async {
-    if (!await StoragePermissions.requestStoragePermissions()) {
-      throw Exception('Failed to save — storage permission denied');
+  /// Parses a filename out of a Content-Disposition header, handling both the
+  /// RFC 5987 `filename*=UTF-8''name.ext` form and the plain/quoted `filename=`
+  /// form. Returns null when no usable name is present.
+  String? _filenameFromContentDisposition(String? header) {
+    if (header == null || header.isEmpty) return null;
+    // Prefer the extended (filename*) form when present.
+    final ext = RegExp(r"filename\*\s*=\s*[^']*''([^;]+)", caseSensitive: false).firstMatch(header);
+    if (ext != null) {
+      final decoded = Uri.decodeComponent(ext.group(1)!.trim());
+      if (decoded.isNotEmpty) return _sanitizeName(decoded);
     }
-    final directory = Directory(Constants.processedDirPath);
-    if (!directory.existsSync()) await directory.create(recursive: true);
-    final contentDisposition = fileRes.headers.value('content-disposition');
-    final dummyName = 'file_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final filename = contentDisposition?.split('=').last ?? dummyName;
-    var file = File('${directory.path}/$filename');
-    if (file.existsSync()) file = File('${directory.path}/$dummyName');
-    await file.writeAsBytes(fileRes.data!);
-    return file;
+    final plain = RegExp(r'filename\s*=\s*"?([^";]+)"?', caseSensitive: false).firstMatch(header);
+    if (plain != null) {
+      final name = plain.group(1)!.trim();
+      if (name.isNotEmpty) return _sanitizeName(name);
+    }
+    return null;
+  }
+
+  /// Strips any path separators a malicious/odd header might inject.
+  String _sanitizeName(String name) => name.split(RegExp(r'[\\/]')).last;
+
+  /// Returns a path in [dir] for [name], appending " (n)" before the extension
+  /// until it no longer collides with an existing file.
+  String _uniquePath(String dir, String name) {
+    var candidate = File('$dir/$name');
+    if (!candidate.existsSync()) return candidate.path;
+    final dot = name.lastIndexOf('.');
+    final base = dot == -1 ? name : name.substring(0, dot);
+    final ext = dot == -1 ? '' : name.substring(dot);
+    var n = 1;
+    do {
+      candidate = File('$dir/$base ($n)$ext');
+      n++;
+    } while (candidate.existsSync());
+    return candidate.path;
   }
 }

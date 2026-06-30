@@ -83,6 +83,15 @@ final GlobalKey<NavigatorState> _scannerNavigatorKey =
 final GlobalKey<NavigatorState> _cloudNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'cloud');
 
+/// Redirect guard for tool routes: ensures `state.extra` carries a `files`
+/// `List<File>`. Returns the error route instead of throwing on a bad cast
+/// (e.g. a malformed deep link or a route restored with no extra).
+String? _requireFiles(BuildContext context, GoRouterState state) {
+  final extra = state.extra;
+  if (extra is! Map || extra['files'] is! List<File>) return AppRoutes.errorRoute.path;
+  return null;
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeManager().init();
@@ -276,10 +285,7 @@ class _NestedTabNavigationExampleAppState
       GoRoute(
         // The screen to display as the root in the first tab of the
         // bottom navigation bar.
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.mergePdfRoute.path,
         name: AppRoutes.mergePdfRoute.name,
@@ -287,20 +293,14 @@ class _NestedTabNavigationExampleAppState
         builder: (BuildContext context, GoRouterState state) => MergePdfView(files: (state.extra as Map)['files'] as List<File>),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.reorderPdfPagesRoute.path,
         name: AppRoutes.reorderPdfPagesRoute.name,
         builder: (BuildContext context, GoRouterState state) => ReorderPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.pdfToJpgRoute.path,
         name: AppRoutes.pdfToJpgRoute.name,
@@ -308,201 +308,133 @@ class _NestedTabNavigationExampleAppState
         builder: (BuildContext context, GoRouterState state) => PdfToJpgView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.imageToPdfRoute.path,
         name: AppRoutes.imageToPdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => ImageToPdfView(files: ((state.extra as Map)['files'] as List<File>)),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.pageNumbersRoute.path,
         name: AppRoutes.pageNumbersRoute.name,
         builder: (BuildContext context, GoRouterState state) => PageNumberPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.splitPdfRoute.path,
         name: AppRoutes.splitPdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => SplitPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.protectPdfRoute.path,
         name: AppRoutes.protectPdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => ProtectPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.unprotectPdfRoute.path,
         name: AppRoutes.unprotectPdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => UnProtectPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.rotatePdfRoute.path,
         name: AppRoutes.rotatePdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => RotatePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.compressPdfRoute.path,
         name: AppRoutes.compressPdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => CompressPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.watermarkPdfRoute.path,
         name: AppRoutes.watermarkPdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => WatermarkPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.extractTextRoute.path,
         name: AppRoutes.extractTextRoute.name,
         builder: (BuildContext context, GoRouterState state) => ExtractTextView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.grayscalePdfRoute.path,
         name: AppRoutes.grayscalePdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => GrayscalePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          final files=(state.extra as Map)['files'];
-          if(files is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.cropPdfRoute.path,
         name: AppRoutes.cropPdfRoute.name,
         builder: (BuildContext context, GoRouterState state) => CropPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.pdfInfoRoute.path,
         name: AppRoutes.pdfInfoRoute.name,
         builder: (context, state) => PdfInfoView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.editMetadataRoute.path,
         name: AppRoutes.editMetadataRoute.name,
         builder: (context, state) => EditMetadataView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.headerFooterRoute.path,
         name: AppRoutes.headerFooterRoute.name,
         builder: (context, state) => HeaderFooterView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.repairPdfRoute.path,
         name: AppRoutes.repairPdfRoute.name,
         builder: (context, state) => RepairPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.flattenPdfRoute.path,
         name: AppRoutes.flattenPdfRoute.name,
         builder: (context, state) => FlattenPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.addBlankPagesRoute.path,
         name: AppRoutes.addBlankPagesRoute.name,
         builder: (context, state) => AddBlankPagesView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.stampPdfRoute.path,
         name: AppRoutes.stampPdfRoute.name,
         builder: (context, state) => StampPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.qrStampPdfRoute.path,
         name: AppRoutes.qrStampPdfRoute.name,
@@ -510,10 +442,7 @@ class _NestedTabNavigationExampleAppState
             QrStampPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.annotatePdfRoute.path,
         name: AppRoutes.annotatePdfRoute.name,
@@ -521,10 +450,7 @@ class _NestedTabNavigationExampleAppState
             AnnotatePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.formPdfRoute.path,
         name: AppRoutes.formPdfRoute.name,
@@ -547,10 +473,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Used by Image Overlay tool: extra comes from fileManagement with 'files' key
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.imageOverlayRoute.path,
         name: AppRoutes.imageOverlayRoute.name,
@@ -561,10 +484,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Image Studio: extra has 'files' list + 'op' ImageStudioOp
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.imageStudioRoute.path,
         name: AppRoutes.imageStudioRoute.name,
@@ -577,10 +497,7 @@ class _NestedTabNavigationExampleAppState
         },
       ),
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.pdfToWordRoute.path,
         name: AppRoutes.pdfToWordRoute.name,
@@ -590,10 +507,7 @@ class _NestedTabNavigationExampleAppState
         ),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.pdfToExcelRoute.path,
         name: AppRoutes.pdfToExcelRoute.name,
@@ -603,10 +517,7 @@ class _NestedTabNavigationExampleAppState
         ),
       ),
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.pdfToPptxRoute.path,
         name: AppRoutes.pdfToPptxRoute.name,
@@ -626,10 +537,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Sign PDF — single file; draws signature then navigates to PlaceImageView
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.signPdfRoute.path,
         name: AppRoutes.signPdfRoute.name,
@@ -637,10 +545,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Remove blank pages
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.removeBlankPagesRoute.path,
         name: AppRoutes.removeBlankPagesRoute.name,
@@ -648,10 +553,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Optimize PDF
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.optimizePdfRoute.path,
         name: AppRoutes.optimizePdfRoute.name,
@@ -659,10 +561,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // N-Up PDF layout
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.nUpPdfRoute.path,
         name: AppRoutes.nUpPdfRoute.name,
@@ -670,10 +569,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Redact PDF — single file
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.redactPdfRoute.path,
         name: AppRoutes.redactPdfRoute.name,
@@ -681,10 +577,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Duplicate Pages — single file
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.duplicatePagesRoute.path,
         name: AppRoutes.duplicatePagesRoute.name,
@@ -692,10 +585,7 @@ class _NestedTabNavigationExampleAppState
       ),
       // Bookmarks Editor — single file
       GoRoute(
-        redirect: (context, state) {
-          if ((state.extra as Map)['files'] is! List<File>) return AppRoutes.errorRoute.path;
-          return null;
-        },
+        redirect: _requireFiles,
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.bookmarksEditorRoute.path,
         name: AppRoutes.bookmarksEditorRoute.name,

@@ -6,6 +6,15 @@ abstract class PdfEvent {
   const PdfEvent({this.cancelToken});
 }
 
+/// Clears the given [HttpStates] keys back to "idle" so a freshly opened tool
+/// screen never reacts to a previous run's leftover done/error state (which
+/// could otherwise trigger a phantom navigation or snackbar). Dispatched from
+/// [ToolViewMixin]/tool initState before kicking off a new operation.
+class ResetHttpStateEvent extends PdfEvent {
+  final List<String> keys;
+  const ResetHttpStateEvent({required this.keys});
+}
+
 
 
 class MergePdfEvent extends PdfEvent{
