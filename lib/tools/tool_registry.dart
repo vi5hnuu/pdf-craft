@@ -148,6 +148,7 @@ class ToolRegistry {
     ToolDef(id: 'merge', name: 'Merge PDF', icon: Icons.merge, category: ToolCategories.pdf, route: AppRoutes.mergePdfRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: null),
     ToolDef(id: 'split', name: 'Split PDF', icon: Icons.call_split, category: ToolCategories.pdf, route: AppRoutes.splitPdfRoute, extensions: _pdf),
     ToolDef(id: 'reorder', name: 'Reorder Pages', icon: Icons.swap_vert, category: ToolCategories.pdf, route: AppRoutes.reorderPdfPagesRoute, extensions: _pdf),
+    ToolDef(id: 'organize', name: 'Organize Pages', icon: Icons.dashboard_customize_outlined, category: ToolCategories.pdf, route: AppRoutes.organizePagesRoute, extensions: _pdf),
     ToolDef(id: 'rotate', name: 'Rotate PDF', icon: Icons.rotate_right, category: ToolCategories.pdf, route: AppRoutes.rotatePdfRoute, extensions: _pdf),
     ToolDef(id: 'page-numbers', name: 'Page Numbers', icon: Icons.format_list_numbered, category: ToolCategories.pdf, route: AppRoutes.pageNumbersRoute, extensions: _pdf),
     ToolDef(id: 'crop', name: 'Crop PDF', icon: Icons.crop, category: ToolCategories.pdf, route: AppRoutes.cropPdfRoute, extensions: _pdf),
