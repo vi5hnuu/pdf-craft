@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/routes.dart';
@@ -10,6 +9,7 @@ import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/FileActionsSheet.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
+import 'package:pdf_craft/widgets/SkeletonList.dart';
 
 /// "Results" hub — every file a tool has produced, in one place.
 ///
@@ -114,7 +114,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         ],
       ),
       body: files == null
-          ? Center(child: SpinKitPulse(color: theme.colorScheme.primary))
+          ? const SkeletonList()
           : files.isEmpty
               ? _buildEmpty(theme)
               : RefreshIndicator(
