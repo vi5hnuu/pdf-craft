@@ -69,7 +69,7 @@ Whether you're merging reports, signing a contract, scanning a receipt, converti
 
 **🎨 Built for you**
 • Clean, modern interface with Light, Dark & System themes
-• Works offline for local tools — your files stay on your device
+• Secure cloud processing — files are sent over HTTPS and removed after processing
 
 Download PDF Craft and turn your phone into a complete PDF workstation. 🚀
 
