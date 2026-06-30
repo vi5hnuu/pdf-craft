@@ -1,51 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:pdf_craft/models/HttpState.dart';
+import 'package:pdf_craft/widgets/ProcessingOverlay.dart';
 
-/// Full-screen overlay that shows upload progress or a spinner.
+/// Backwards-compatible wrapper kept so existing tool screens keep working.
+///
+/// The actual presentation now lives in [ProcessingOverlay] (branded card,
+/// staged status, security note, optional cancel). Pass [label] for a
+/// tool-specific verb and [onCancel] to surface a Cancel button.
+///
 /// Place as the last child of a Stack that covers the whole screen.
 class LoadingOverlay extends StatelessWidget {
   final HttpState? httpState;
+  final String? label;
+  final VoidCallback? onCancel;
 
-  const LoadingOverlay({super.key, required this.httpState});
+  const LoadingOverlay({super.key, required this.httpState, this.label, this.onCancel});
 
   @override
   Widget build(BuildContext context) {
-    if (httpState?.loading != true) return const SizedBox.shrink();
-
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-    final progress = httpState?.progress;
-
-    return Container(
-      color: theme.scaffoldBackgroundColor.withValues(alpha: 0.88),
-      child: Center(
-        child: progress != null
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 200,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        backgroundColor: primary.withValues(alpha: 0.15),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${(progress * 100).toInt()}%',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              )
-            : SpinKitThreeBounce(color: primary, size: 40),
-      ),
-    );
+    return ProcessingOverlay(httpState: httpState, label: label, onCancel: onCancel);
   }
 }

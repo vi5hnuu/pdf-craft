@@ -64,7 +64,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               const BannerAdd(),
             ]),
           ),
-          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF]),
+          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF'),
         ]);
       },
     );

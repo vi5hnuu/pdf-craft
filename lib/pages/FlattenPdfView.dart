@@ -47,8 +47,6 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Flattening PDF...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -99,7 +97,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.FLATTEN_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.FLATTEN_PDF], label: 'Flattening your PDF'),
             ],
           );
         },

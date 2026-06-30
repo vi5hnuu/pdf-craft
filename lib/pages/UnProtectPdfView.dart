@@ -61,8 +61,6 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
               if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
             }else if(httpState?.error!=null){
               NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-            }else if(httpState?.loading==true){
-              NotificationService.showSnackbar(text: "Started file un-protection",color: Colors.lightBlue);
             }
           },
           builder: (context, state) {
@@ -95,7 +93,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                    ],
                  ),
                ),
-               LoadingOverlay(httpState: state.httpStates[HttpStates.UNPROTECT_PDF]),
+               LoadingOverlay(httpState: state.httpStates[HttpStates.UNPROTECT_PDF], label: 'Removing password'),
              ],
            );
           },),

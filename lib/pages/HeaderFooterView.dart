@@ -62,8 +62,6 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Adding header/footer...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -152,7 +150,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.HEADER_FOOTER]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.HEADER_FOOTER], label: 'Adding header & footer'),
             ],
           );
         },

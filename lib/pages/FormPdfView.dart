@@ -138,9 +138,6 @@ class _FormPdfViewState extends State<FormPdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(
-                text: 'Applying fields…', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -187,7 +184,7 @@ class _FormPdfViewState extends State<FormPdfView> {
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: 'Stamping your PDF'),
           ]);
         },
       ),

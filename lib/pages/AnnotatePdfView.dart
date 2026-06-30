@@ -213,7 +213,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
               _buildOptionsPanel(theme),
               _buildSaveBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: 'Stamping your PDF'),
           ]);
         },
       ),

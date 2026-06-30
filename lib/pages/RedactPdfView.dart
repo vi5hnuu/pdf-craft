@@ -134,7 +134,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
               if (_totalPages > 1) _buildPageNav(theme),
               _buildSaveBar(theme, loading),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.REDACT_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.REDACT_PDF], label: 'Redacting your PDF'),
           ]);
         },
       ),

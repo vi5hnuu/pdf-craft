@@ -99,7 +99,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.OPTIMIZE_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.OPTIMIZE_PDF], label: 'Optimizing your PDF'),
           ]);
         },
       ),

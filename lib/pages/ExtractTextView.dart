@@ -47,8 +47,6 @@ class _ExtractTextViewState extends State<ExtractTextView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Extracting text...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -76,7 +74,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.EXTRACT_TEXT]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.EXTRACT_TEXT], label: 'Extracting text'),
             ],
           );
         },

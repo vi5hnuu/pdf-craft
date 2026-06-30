@@ -82,8 +82,6 @@ class _ImageStudioViewState extends State<ImageStudioView>
             NotificationService.showSnackbar(text: 'Image saved to processed folder', color: Colors.green);
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Processing image…', color: Colors.lightBlue);
           }
           final fs = state.httpStates[HttpStates.FILTER_IMAGE];
           if (fs?.done == true) {
@@ -126,7 +124,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO] ?? state.httpStates[HttpStates.FILTER_IMAGE]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO] ?? state.httpStates[HttpStates.FILTER_IMAGE], label: 'Processing your image'),
           ]);
         },
       ),

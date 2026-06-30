@@ -89,7 +89,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.N_UP_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.N_UP_PDF], label: 'Building N-up layout'),
           ]);
         },
       ),

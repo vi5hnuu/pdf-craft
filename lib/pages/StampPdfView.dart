@@ -55,8 +55,6 @@ class _StampPdfViewState extends State<StampPdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Stamping PDF...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -132,7 +130,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: 'Stamping your PDF'),
             ],
           );
         },

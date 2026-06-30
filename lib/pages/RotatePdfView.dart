@@ -119,9 +119,6 @@ class _RotatePdfViewState extends State<RotatePdfView> {
               } else if (httpState?.error != null) {
                 NotificationService.showSnackbar(
                     text: httpState!.error!, color: Colors.red);
-              } else if (httpState?.loading == true) {
-                NotificationService.showSnackbar(
-                    text: 'Rotating…', color: Colors.lightBlue);
               }
             },
             builder: (context, state) {
@@ -360,7 +357,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                     ],
                   ),
                   LoadingOverlay(
-                      httpState: state.httpStates[HttpStates.ROTATE_PDF]),
+                      httpState: state.httpStates[HttpStates.ROTATE_PDF],
+                      label: 'Rotating your PDF'),
                 ],
               );
             },

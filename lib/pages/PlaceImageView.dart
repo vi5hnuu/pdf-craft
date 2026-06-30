@@ -187,8 +187,6 @@ class _PlaceImageViewState extends State<PlaceImageView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Placing image…', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -241,7 +239,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
               // Bottom bar: aspect lock + confirm
               _buildBottomBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.PLACE_IMAGE]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.PLACE_IMAGE], label: 'Placing image'),
           ]);
         },
       ),

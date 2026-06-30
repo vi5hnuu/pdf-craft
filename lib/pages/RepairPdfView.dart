@@ -47,8 +47,6 @@ class _RepairPdfViewState extends State<RepairPdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Repairing PDF...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -103,7 +101,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.REPAIR_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.REPAIR_PDF], label: 'Repairing your PDF'),
             ],
           );
         },

@@ -52,8 +52,6 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
           if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
         }else if(httpState?.error!=null){
           NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-        }else if(httpState?.loading==true){
-          NotificationService.showSnackbar(text: "Started converting image/s to pdf",color: Colors.lightBlue);
         }
       },builder: (context, state) {
         return Stack(
@@ -115,7 +113,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 )
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF'),
           ],
         );
       },)

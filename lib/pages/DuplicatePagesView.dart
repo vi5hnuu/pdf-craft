@@ -111,7 +111,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
               // Count stepper + submit
               _buildBottomBar(theme, loading),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.DUPLICATE_PAGES]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.DUPLICATE_PAGES], label: 'Duplicating pages'),
           ]);
         },
       ),

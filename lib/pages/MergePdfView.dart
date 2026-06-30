@@ -47,8 +47,6 @@ class _MergePdfViewState extends State<MergePdfView> {
             if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
           }else if(httpState?.error!=null){
             NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-          }else if(httpState?.loading==true){
-            NotificationService.showSnackbar(text: "Started merging",color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -106,7 +104,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge PDFs")),)
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF], label: 'Merging your PDFs'),
           ],
         );
       },),

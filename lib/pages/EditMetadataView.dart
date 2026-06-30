@@ -53,8 +53,6 @@ class _EditMetadataViewState extends State<EditMetadataView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Updating metadata...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -102,7 +100,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.EDIT_METADATA]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.EDIT_METADATA], label: 'Saving metadata'),
             ],
           );
         },

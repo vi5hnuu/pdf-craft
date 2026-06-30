@@ -329,7 +329,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                 ],
               ),
 
-              LoadingOverlay(httpState: state.httpStates[HttpStates.PAGE_NUMBERS]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.PAGE_NUMBERS], label: 'Adding page numbers'),
             ],
           );
         },

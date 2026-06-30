@@ -167,7 +167,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                   ),
                 ],
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.REORDER_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.REORDER_PDF], label: 'Saving new order'),
             ],
           );
         },

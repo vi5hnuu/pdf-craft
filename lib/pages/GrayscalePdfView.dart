@@ -48,8 +48,6 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Converting to grayscale...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -77,7 +75,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.GRAYSCALE_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.GRAYSCALE_PDF], label: 'Converting to grayscale'),
             ],
           );
         },

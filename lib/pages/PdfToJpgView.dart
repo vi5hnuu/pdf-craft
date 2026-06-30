@@ -61,8 +61,6 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
           if(file is File) _openFile(file);
         }else if(httpState?.error!=null){
           NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-        }else if(httpState?.loading==true){
-          NotificationService.showSnackbar(text: "Started converting to jpg",color: Colors.lightBlue);
         }
       },
       builder: (context, state) {
@@ -154,7 +152,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   )
                 ],),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.PDF_TO_JPG]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.PDF_TO_JPG], label: 'Converting to images'),
           ],
         );
       },),

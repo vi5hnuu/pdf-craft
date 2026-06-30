@@ -98,9 +98,6 @@ class _CropPdfViewState extends State<CropPdfView> {
           } else if (s?.error != null) {
             NotificationService.showSnackbar(
                 text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(
-                text: 'Cropping PDF…', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -163,7 +160,7 @@ class _CropPdfViewState extends State<CropPdfView> {
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.CROP_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.CROP_PDF], label: 'Cropping your PDF'),
           ]);
         },
       ),

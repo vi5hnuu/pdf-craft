@@ -50,8 +50,6 @@ class _CompressPdfViewState extends State<CompressPdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Compressing PDF...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -93,7 +91,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.COMPRESS_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.COMPRESS_PDF], label: 'Compressing your PDF'),
             ],
           );
         },

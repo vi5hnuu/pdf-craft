@@ -67,14 +67,6 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
     }
   }
 
-  String get _convertingMessage {
-    switch (widget.format) {
-      case PdfOfficeFormat.word: return 'Converting to Word…';
-      case PdfOfficeFormat.excel: return 'Converting to Excel…';
-      case PdfOfficeFormat.pptx: return 'Converting to PowerPoint…';
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -98,8 +90,6 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: _convertingMessage, color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -133,7 +123,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[_stateKey]),
+              LoadingOverlay(httpState: state.httpStates[_stateKey], label: 'Converting your PDF'),
             ],
           );
         },
