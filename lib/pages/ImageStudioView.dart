@@ -41,11 +41,16 @@ class _ImageStudioViewState extends State<ImageStudioView>
   fi.ImageFilterType _filterType = fi.ImageFilterType.grayscale;
   double _filterIntensity = 1.0;
 
+  String _sizeLabel = '';
+
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     _tabC = TabController(length: 5, vsync: this, initialIndex: widget.op.index);
+    try {
+      _sizeLabel = '${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB';
+    } catch (_) {}
   }
 
   @override
@@ -104,7 +109,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
                     leading: const Icon(Icons.image_outlined),
                     title: Text(filename, maxLines: 1, overflow: TextOverflow.ellipsis),
                     subtitle: Text(
-                      '${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB',
+                      _sizeLabel,
                       style: theme.textTheme.bodySmall,
                     ),
                   ),

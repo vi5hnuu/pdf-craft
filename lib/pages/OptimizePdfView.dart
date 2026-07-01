@@ -22,18 +22,22 @@ class OptimizePdfView extends StatefulWidget {
 
 class _OptimizePdfViewState extends State<OptimizePdfView> {
   CancelToken? _cancelToken;
+  String _sizeKb = '';
 
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
+    try {
+      _sizeKb = (widget.file.lengthSync() / 1024).toStringAsFixed(1);
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final filename = widget.file.path.split('/').last;
-    final sizeKb = (widget.file.lengthSync() / 1024).toStringAsFixed(1);
+    final sizeKb = _sizeKb;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Optimize PDF')),

@@ -30,10 +30,15 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
     return 'Low — removes only fully blank pages';
   }
 
+  String _sizeLabel = '';
+
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
+    try {
+      _sizeLabel = '${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB';
+    } catch (_) {}
   }
 
   @override
@@ -71,7 +76,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                   child: ListTile(
                     leading: const Icon(Icons.picture_as_pdf_outlined),
                     title: Text(filename, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text('${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB',
+                    subtitle: Text(_sizeLabel.isEmpty ? '' : _sizeLabel,
                         style: theme.textTheme.bodySmall),
                   ),
                 ),

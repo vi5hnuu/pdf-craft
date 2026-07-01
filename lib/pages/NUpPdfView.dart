@@ -22,11 +22,16 @@ class NUpPdfView extends StatefulWidget {
 
 class _NUpPdfViewState extends State<NUpPdfView> {
   int _nUp = 2;
+  // Read once (off the build path) so rebuilds don't re-stat the file.
+  String _sizeLabel = '';
 
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
+    try {
+      _sizeLabel = '${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB';
+    } catch (_) {}
   }
 
   @override
@@ -64,8 +69,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                   child: ListTile(
                     leading: const Icon(Icons.picture_as_pdf_outlined),
                     title: Text(filename, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text('${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB',
-                        style: theme.textTheme.bodySmall),
+                    subtitle: Text(_sizeLabel, style: theme.textTheme.bodySmall),
                   ),
                 ),
                 const SizedBox(height: 24),
