@@ -30,6 +30,9 @@ class AppRoutes{
   static AppRoute scalePdfRoute=AppRoute(name: 'scale-pdf-tool', path: '/scale-pdf-tool');
   static AppRoute insertPdfRoute=AppRoute(name: 'insert-pdf-tool', path: '/insert-pdf-tool');
   static AppRoute extractEmbeddedRoute=AppRoute(name: 'extract-embedded-tool', path: '/extract-embedded-tool');
+  static AppRoute analyzePdfRoute=AppRoute(name: 'analyze-pdf-tool', path: '/analyze-pdf-tool');
+  static AppRoute replacePagesRoute=AppRoute(name: 'replace-pages-tool', path: '/replace-pages-tool');
+  static AppRoute extractFontsRoute=AppRoute(name: 'extract-fonts-tool', path: '/extract-fonts-tool');
   static AppRoute pdfToJpgRoute=AppRoute(name: 'pdf-to-jpg-tool', path: '/pdf-to-jpg-tool');
   static AppRoute imageToPdfRoute=AppRoute(name: 'image-to-pdf-tool', path: '/image-to-pdf-tool');
   static AppRoute pageNumbersRoute=AppRoute(name: 'page-numbers-tool', path: '/page-numbers-tool');

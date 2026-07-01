@@ -222,6 +222,21 @@ class ExtractEmbeddedFilesEvent extends PdfEvent {
   const ExtractEmbeddedFilesEvent({required this.extractEmbeddedFiles, super.cancelToken});
 }
 
+class AnalyzePdfEvent extends PdfEvent {
+  final AnalyzePdf analyzePdf;
+  const AnalyzePdfEvent({required this.analyzePdf, super.cancelToken});
+}
+
+class ReplacePagesEvent extends PdfEvent {
+  final ReplacePages replacePages;
+  const ReplacePagesEvent({required this.replacePages, super.cancelToken});
+}
+
+class ExtractFontsEvent extends PdfEvent {
+  final ExtractFonts extractFonts;
+  const ExtractFontsEvent({required this.extractFonts, super.cancelToken});
+}
+
 class FilterImageEvent extends PdfEvent {
   final FilterImage filterImage;
   const FilterImageEvent({required this.filterImage, super.cancelToken});

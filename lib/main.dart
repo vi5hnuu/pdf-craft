@@ -44,6 +44,9 @@ import 'package:pdf_craft/pages/ResizePageView.dart';
 import 'package:pdf_craft/pages/ScalePdfView.dart';
 import 'package:pdf_craft/pages/InsertPdfView.dart';
 import 'package:pdf_craft/pages/ExtractEmbeddedFilesView.dart';
+import 'package:pdf_craft/pages/AnalyzePdfView.dart';
+import 'package:pdf_craft/pages/ReplacePagesView.dart';
+import 'package:pdf_craft/pages/ExtractFontsView.dart';
 import 'package:pdf_craft/pages/IncomingFilesScreen.dart';
 import 'package:pdf_craft/services/IncomingFilesChannel.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -723,6 +726,34 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.extractEmbeddedRoute.path,
         name: AppRoutes.extractEmbeddedRoute.name,
         builder: (context, state) => ExtractEmbeddedFilesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Analyze PDF — single file (JSON report)
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.analyzePdfRoute.path,
+        name: AppRoutes.analyzePdfRoute.name,
+        builder: (context, state) => AnalyzePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Replace Pages — two files
+      GoRoute(
+        redirect: (context, state) {
+          final files = (state.extra as Map?)?['files'];
+          if (files is! List<File> || files.length < 2) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.replacePagesRoute.path,
+        name: AppRoutes.replacePagesRoute.name,
+        builder: (context, state) => ReplacePagesView(files: (state.extra as Map)['files'] as List<File>),
+      ),
+      // Extract Fonts — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.extractFontsRoute.path,
+        name: AppRoutes.extractFontsRoute.name,
+        builder: (context, state) => ExtractFontsView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // PDF Compare — two files via multiSelect; extra has {'files': [file1, file2]}
       GoRoute(

@@ -39,6 +39,9 @@ import 'package:pdf_craft/models/request/resize-page.dart';
 import 'package:pdf_craft/models/request/scale-pdf.dart';
 import 'package:pdf_craft/models/request/insert-pdf.dart';
 import 'package:pdf_craft/models/request/extract-embedded-files.dart';
+import 'package:pdf_craft/models/request/analyze-pdf.dart';
+import 'package:pdf_craft/models/request/replace-pages.dart';
+import 'package:pdf_craft/models/request/extract-fonts.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -63,6 +66,9 @@ class PdfService {
   static String get _scalePdf => "${Constants.baseUrl}/pdf-studio/scale-pdf";
   static String get _insertPdf => "${Constants.baseUrl}/pdf-studio/insert-pdf";
   static String get _extractEmbedded => "${Constants.baseUrl}/pdf-studio/extract-embedded-files";
+  static String get _analyzePdf => "${Constants.baseUrl}/pdf-studio/analyze-pdf";
+  static String get _replacePages => "${Constants.baseUrl}/pdf-studio/replace-pages";
+  static String get _extractFonts => "${Constants.baseUrl}/pdf-studio/extract-fonts";
   static String get _editBookmarks => "${Constants.baseUrl}/pdf-studio/edit-bookmarks";
   static String get _filterImage => "${Constants.baseUrl}/image-studio/filter-image";
   static String get _removeBlankPages => "${Constants.baseUrl}/pdf-studio/remove-blank-pages";
@@ -275,6 +281,19 @@ class PdfService {
 
   Future<Response<Uint8List>> extractEmbeddedFiles({required ExtractEmbeddedFiles req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_extractEmbedded, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  /// Returns a JSON analysis report — not a file download.
+  Future<Response<dynamic>> analyzePdf({required AnalyzePdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_analyzePdf, data: FormData.fromMap(req.toJson()), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> replacePages({required ReplacePages req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_replacePages, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> extractFonts({required ExtractFonts req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_extractFonts, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
   Future<Response<Uint8List>> filterImage({required FilterImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {

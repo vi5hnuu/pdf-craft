@@ -40,6 +40,9 @@ class HttpStates{
   static const String SCALE_PDF="SCALE_PDF";
   static const String INSERT_PDF="INSERT_PDF";
   static const String EXTRACT_EMBEDDED="EXTRACT_EMBEDDED";
+  static const String ANALYZE_PDF="ANALYZE_PDF";
+  static const String REPLACE_PAGES="REPLACE_PAGES";
+  static const String EXTRACT_FONTS="EXTRACT_FONTS";
   static const String GET_BOOKMARKS="GET_BOOKMARKS";
   static const String EDIT_BOOKMARKS="EDIT_BOOKMARKS";
   static const String FILTER_IMAGE="FILTER_IMAGE";

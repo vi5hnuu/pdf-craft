@@ -45,6 +45,9 @@ import 'package:pdf_craft/models/request/resize-page.dart';
 import 'package:pdf_craft/models/request/scale-pdf.dart';
 import 'package:pdf_craft/models/request/insert-pdf.dart';
 import 'package:pdf_craft/models/request/extract-embedded-files.dart';
+import 'package:pdf_craft/models/request/analyze-pdf.dart';
+import 'package:pdf_craft/models/request/replace-pages.dart';
+import 'package:pdf_craft/models/request/extract-fonts.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -318,6 +321,35 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       call: (p) => _pdfService.extractEmbeddedFiles(req: e.extractEmbeddedFiles, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to extract embedded files',
     ));
+
+    on<ReplacePagesEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.REPLACE_PAGES,
+      call: (p) => _pdfService.replacePages(req: e.replacePages, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to replace pages',
+    ));
+
+    on<ExtractFontsEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.EXTRACT_FONTS,
+      call: (p) => _pdfService.extractFonts(req: e.extractFonts, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to extract fonts',
+    ));
+
+    // Returns a JSON analysis report — does not save a file.
+    on<AnalyzePdfEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, const HttpState.loading())));
+      try {
+        final res = await _pdfService.analyzePdf(req: event.analyzePdf, cancelToken: event.cancelToken);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.done(extras: {'analysis': res.data}))));
+      } on DioException catch (e) {
+        if (e.type == DioExceptionType.cancel) {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.ANALYZE_PDF)));
+        } else {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.error(error: e.message ?? 'Failed to analyze PDF'))));
+        }
+      } catch (_) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, const HttpState.error(error: 'Failed to analyze PDF'))));
+      }
+    });
 
     on<FilterImageEvent>((e, emit) => _handleImage(
       emit: emit,
