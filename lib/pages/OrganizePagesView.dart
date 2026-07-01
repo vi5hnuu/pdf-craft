@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/ToolResultHandler.dart';
 import 'package:pdf_craft/utils/ToolViewMixin.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Visual page organiser: drag to reorder and tap ✕ to delete pages on a single
@@ -35,9 +35,6 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
   List<int> _order = [];
   int _totalPages = 0;
 
-  // Render cache keyed by original page index so reorder/delete never re-renders.
-  final Map<int, Uint8List> _cache = {};
-
   @override
   void initState() {
     super.initState();
@@ -57,25 +54,6 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
       });
     } catch (_) {
       if (mounted) setState(() => _loadError = true);
-    }
-  }
-
-  Future<Uint8List?> _thumbBytes(int pageIndex) async {
-    if (_cache.containsKey(pageIndex)) return _cache[pageIndex];
-    final doc = _doc;
-    if (doc == null) return null;
-    try {
-      final page = await doc.getPage(pageIndex + 1); // pdfx is 1-indexed
-      final img = await page.render(
-        width: page.width / 2,
-        height: page.height / 2,
-        format: PdfPageImageFormat.jpeg,
-      );
-      await page.close();
-      if (img != null) _cache[pageIndex] = img.bytes;
-      return img?.bytes;
-    } catch (_) {
-      return null;
     }
   }
 
@@ -104,7 +82,11 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
 
   @override
   void dispose() {
-    _doc?.close();
+    final doc = _doc;
+    if (doc != null) {
+      PdfPageThumbnail.evictDocument(doc);
+      doc.close();
+    }
     super.dispose();
   }
 
@@ -187,16 +169,13 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                     width: 54,
                     height: 72,
                     color: theme.colorScheme.surfaceContainerHighest,
-                    child: FutureBuilder<Uint8List?>(
-                      future: _thumbBytes(original),
-                      builder: (context, snap) {
-                        if (snap.connectionState != ConnectionState.done) {
-                          return const Center(
-                              child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)));
-                        }
-                        if (snap.data == null) return const Icon(Icons.broken_image_outlined, size: 18);
-                        return Image.memory(snap.data!, fit: BoxFit.cover);
-                      },
+                    // Cached widget keyed by page — never re-renders on drag/delete.
+                    child: PdfPageThumbnail(
+                      key: ValueKey('thumb_$original'),
+                      document: _doc!,
+                      pageNumber: original + 1,
+                      width: 54,
+                      height: 72,
                     ),
                   ),
                 ),

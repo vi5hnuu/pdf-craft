@@ -348,6 +348,9 @@ class ToolCard extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(12),
         child: Stack(
+          // Center the icon+label block; the star badge is separately positioned.
+          alignment: Alignment.center,
+          fit: StackFit.expand,
           children: [
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
