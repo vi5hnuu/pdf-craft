@@ -69,6 +69,10 @@ class ToolDef {
   /// Extra payload merged into the route arguments (e.g. Image Studio op).
   final Map<String, dynamic>? extra;
 
+  /// Short, human description of what the tool does (shown via the info button
+  /// on the tool card). Looked up by [id] so the tool list stays terse.
+  String get description => ToolRegistry.descriptions[id] ?? '';
+
   const ToolDef({
     required this.id,
     required this.name,
@@ -217,6 +221,71 @@ class ToolRegistry {
     ToolDef(id: 'img-flip', name: 'Flip Image', icon: Icons.flip, category: ToolCategories.imageStudio, route: AppRoutes.flipImageRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.webp'], isHeavy: true),
     ToolDef(id: 'img-border', name: 'Add Border', icon: Icons.border_outer, category: ToolCategories.imageStudio, route: AppRoutes.addBorderRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.webp'], isHeavy: true),
   ];
+
+  /// Short descriptions keyed by tool id — shown by the info button on cards.
+  static const Map<String, String> descriptions = {
+    'merge': 'Combine several PDFs into one file, in the order you choose.',
+    'split': 'Split a PDF into parts by page ranges, fixed size, or bookmarks.',
+    'reorder': 'Rearrange the pages of a PDF by dragging them.',
+    'organize': 'Visually reorder and delete pages on a thumbnail grid.',
+    'extract-pages': 'Pick pages to keep and export them as a new PDF.',
+    'delete-pages': 'Remove selected pages and keep the rest.',
+    'reverse-pages': 'Flip the page order so the last page comes first.',
+    'mirror-pages': 'Flip pages horizontally or vertically (a mirror image).',
+    'insert-pdf': 'Insert another PDF into this one after a chosen page.',
+    'split-by-size': 'Break a PDF into parts each below a size you set.',
+    'rotate': 'Rotate all or selected pages by any angle.',
+    'page-numbers': 'Add page numbers with position and style options.',
+    'crop': 'Trim page margins by dragging crop handles.',
+    'add-blank': 'Insert blank pages at chosen positions.',
+    'stamp': 'Stamp text or an image onto pages.',
+    'qr-stamp': 'Generate a QR code and stamp it onto the PDF.',
+    'image-overlay': 'Place and size an image anywhere on a page.',
+    'annotate': 'Draw, highlight and add notes on the PDF.',
+    'fill-form': 'Build a fillable form — add text, checkbox, radio and more.',
+    'pdf-info': 'View the PDF\'s metadata (title, author, dates).',
+    'analyze': 'Report page/word counts and blank, duplicate & landscape pages.',
+    'replace-pages': 'Replace a page range with the pages of another PDF.',
+    'sign': 'Draw or import a signature and place it on the PDF.',
+    'redact': 'Cover sensitive areas with black boxes, permanently.',
+    'duplicate-pages': 'Duplicate selected pages, with per-page copy counts.',
+    'bookmarks': 'View and edit the PDF\'s bookmark outline.',
+    'compare': 'Compare two PDFs side by side.',
+    'compress': 'Reduce file size by compressing the PDF.',
+    'optimize': 'Optimize and clean up the PDF to shrink it.',
+    'remove-blanks': 'Detect and remove blank pages.',
+    'n-up': 'Place multiple pages per sheet (2-up / 4-up).',
+    'resize-page': 'Reflow pages onto A4, Letter or Legal size.',
+    'scale-pdf': 'Scale page size and content by a percentage.',
+    'watermark': 'Add a text or image watermark across pages.',
+    'grayscale': 'Convert the PDF to grayscale.',
+    'extract-text': 'Extract all text from the PDF.',
+    'header-footer': 'Add headers and footers with page tokens.',
+    'edit-metadata': 'Edit the PDF\'s title, author and other metadata.',
+    'pdf-to-jpg': 'Convert PDF pages to JPG images.',
+    'extract-images': 'Pull embedded images out of the PDF as a ZIP.',
+    'extract-embedded': 'Extract file attachments embedded in the PDF.',
+    'extract-fonts': 'Extract embedded fonts as a ZIP.',
+    'image-to-pdf': 'Combine images into a single PDF.',
+    'pdf-to-word': 'Convert the PDF to an editable Word document.',
+    'pdf-to-excel': 'Convert the PDF\'s text into an Excel spreadsheet.',
+    'pdf-to-pptx': 'Convert the PDF into a PowerPoint presentation.',
+    'protect': 'Password-protect the PDF and set permissions.',
+    'unprotect': 'Remove the password from a protected PDF.',
+    'repair': 'Attempt to repair a damaged or unreadable PDF.',
+    'flatten': 'Fill existing form fields, then flatten them into the page.',
+    'remove-metadata': 'Strip identifying metadata from the PDF.',
+    'sanitize': 'Remove JavaScript, attachments and actions from the PDF.',
+    'batch': 'Apply one tool to many PDFs at once.',
+    'img-compress': 'Compress an image to a smaller JPEG.',
+    'img-to-jpg': 'Convert an image to JPEG.',
+    'img-from-jpg': 'Convert a JPEG to PNG or another format.',
+    'img-resize': 'Resize an image to specific dimensions.',
+    'img-filter': 'Apply filters like grayscale, sepia or sharpen.',
+    'img-rotate': 'Rotate an image in 90° steps.',
+    'img-flip': 'Mirror an image horizontally or vertically.',
+    'img-border': 'Add a coloured border around an image.',
+  };
 
   /// Lookup by stable id (for recents). Returns null if not found.
   static ToolDef? byId(String id) {

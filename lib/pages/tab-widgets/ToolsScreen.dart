@@ -378,14 +378,53 @@ class ToolCard extends StatelessWidget {
                 ),
               ],
             ),
+            // Info affordance (top-left) — reveals what the tool does.
+            if (tool.description.isNotEmpty)
+              Positioned(
+                top: -2,
+                left: -2,
+                child: GestureDetector(
+                  onTap: () => _showInfo(context),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(Icons.info_outline, size: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.35)),
+                  ),
+                ),
+              ),
+            // Ad hint (top-right) for tools that require watching an ad. Hint only.
+            if (tool.isHeavy)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Tooltip(
+                  message: 'Requires watching a short ad',
+                  child: Icon(Icons.smart_display_outlined, size: 15, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
+                ),
+              ),
             if (isFav)
               const Positioned(
-                top: 0,
+                bottom: 0,
                 right: 0,
                 child: Icon(Icons.star, size: 14, color: Colors.amber),
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Row(children: [
+          Icon(tool.icon, color: accentColor),
+          const SizedBox(width: 10),
+          Expanded(child: Text(tool.name, style: const TextStyle(fontSize: 17))),
+        ]),
+        content: Text(tool.description, style: const TextStyle(height: 1.5)),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Got it'))],
       ),
     );
   }
