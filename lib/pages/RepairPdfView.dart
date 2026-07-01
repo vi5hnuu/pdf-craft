@@ -23,6 +23,7 @@ class RepairPdfView extends StatefulWidget {
 class _RepairPdfViewState extends State<RepairPdfView> {
   late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
+  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -47,8 +48,6 @@ class _RepairPdfViewState extends State<RepairPdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Repairing PDF...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -103,7 +102,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.REPAIR_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.REPAIR_PDF], label: 'Repairing your PDF', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
             ],
           );
         },
@@ -112,11 +111,14 @@ class _RepairPdfViewState extends State<RepairPdfView> {
   }
 
   void _onRepair() async {
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
     _bloc.add(RepairPdfEvent(
       repairPdf: RepairPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
-        file: await MultipartFile.fromFile(widget.file.path),
+        file: file,
       ),
+      cancelToken: _cancelToken,
     ));
   }
 

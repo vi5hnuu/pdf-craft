@@ -11,8 +11,9 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/ToolResultHandler.dart';
+import 'package:pdf_craft/utils/ToolViewMixin.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
-import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdfx/pdfx.dart';
 
 class BookmarksEditorView extends StatefulWidget {
@@ -23,22 +24,29 @@ class BookmarksEditorView extends StatefulWidget {
   State<BookmarksEditorView> createState() => _BookmarksEditorViewState();
 }
 
-class _BookmarksEditorViewState extends State<BookmarksEditorView> {
+class _BookmarksEditorViewState extends State<BookmarksEditorView>
+    with ToolResultHandler, ToolViewMixin {
   // Flat list representation: each item has title, pageIndex, indentLevel
   List<_BookmarkItem> _bookmarks = [];
   int _totalPages = 1;
+  // The file currently being edited. After a save it points at the new output so
+  // re-loading reflects the persisted bookmarks.
+  late File _file = widget.file;
+  bool _loadedOnce = false;
 
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
+    // Clear any leftover bookmark state from a previous tool run before loading.
+    resetToolState([HttpStates.GET_BOOKMARKS, HttpStates.EDIT_BOOKMARKS]);
     _loadBookmarks();
     _loadPageCount();
   }
 
   Future<void> _loadPageCount() async {
     try {
-      final doc = await PdfDocument.openFile(widget.file.path);
+      final doc = await PdfDocument.openFile(_file.path);
       if (mounted) setState(() => _totalPages = doc.pagesCount);
       await doc.close();
     } catch (_) {}
@@ -46,11 +54,9 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
 
   void _loadBookmarks() {
     Future.microtask(() async {
-      final file = await MultipartFile.fromFile(widget.file.path);
+      final file = await MultipartFile.fromFile(_file.path);
       if (!mounted) return;
-      BlocProvider.of<PdfBloc>(context).add(GetBookmarksEvent(
-        getBookmarks: GetBookmarks(file: file),
-      ));
+      pdfBloc.add(GetBookmarksEvent(getBookmarks: GetBookmarks(file: file)));
     });
   }
 
@@ -84,20 +90,37 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
           if (getState?.done == true) {
             final raw = getState?.extras?['bookmarks'];
             if (raw is List) {
-              setState(() => _bookmarks = _flattenBookmarks(raw, 0));
+              setState(() {
+                _bookmarks = _flattenBookmarks(raw, 0);
+                _loadedOnce = true;
+              });
             }
           } else if (getState?.error != null) {
+            setState(() => _loadedOnce = true);
             NotificationService.showSnackbar(text: 'Could not load bookmarks', color: Colors.red);
           }
 
           final editState = state.httpStates[HttpStates.EDIT_BOOKMARKS];
           if (editState?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Bookmarks saved', color: Colors.green);
-            if (editState?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (editState!.extras!['savedFile'] as File).path},
+            onToolSuccess('Bookmarks saved');
+            final saved = editState?.extras?['savedFile'];
+            if (saved is File) {
+              // Keep editing the saved output and re-load so the user sees the
+              // persisted outline instead of being thrown into the plain viewer.
+              setState(() => _file = saved);
+              _loadBookmarks();
+              NotificationService.showSnackbar(
+                text: 'Saved. Bookmarks are embedded in the PDF.',
+                color: Colors.green,
+                action: SnackBarAction(
+                  label: 'VIEW PDF',
+                  textColor: Colors.white,
+                  onPressed: () => GoRouter.of(context).pushNamed(
+                    AppRoutes.pdfFilePreviewRoute.name,
+                    pathParameters: {'pdfFilePath': saved.path},
+                  ),
+                ),
               );
             }
           } else if (editState?.error != null) {
@@ -105,20 +128,21 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
           }
         },
         builder: (context, state) {
-          final loading = state.httpStates[HttpStates.GET_BOOKMARKS]?.loading == true ||
-              state.httpStates[HttpStates.EDIT_BOOKMARKS]?.loading == true;
+          final getLoading = state.httpStates[HttpStates.GET_BOOKMARKS]?.loading == true;
+          final editState = state.httpStates[HttpStates.EDIT_BOOKMARKS];
+          final saving = editState?.loading == true;
           return Stack(children: [
             Column(children: [
               Expanded(
-                child: loading && _bookmarks.isEmpty
+                child: (getLoading && !_loadedOnce)
                     ? const Center(child: CircularProgressIndicator())
                     : _bookmarks.isEmpty
                         ? _buildEmptyState(theme)
                         : _buildList(theme),
               ),
-              _buildSaveBar(theme, loading),
+              _buildSaveBar(theme, saving),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.EDIT_BOOKMARKS]),
+            processingOverlay(editState, label: 'Saving bookmarks'),
           ]);
         },
       ),
@@ -130,8 +154,19 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.bookmark_border, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
         const SizedBox(height: 12),
-        const Text('No bookmarks found'),
-        const SizedBox(height: 8),
+        const Text('No bookmarks in this PDF', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Text(
+            'Bookmarks are stored inside the PDF itself. Add some below, then '
+            'Save to embed them — they\'ll travel with the file.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+          ),
+        ),
+        const SizedBox(height: 14),
         FilledButton.icon(
           icon: const Icon(Icons.add),
           label: const Text('Add first bookmark'),
@@ -155,24 +190,23 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
       itemBuilder: (context, i) {
         final item = _bookmarks[i];
         return ListTile(
-          key: ValueKey(i),
+          // Stable per-item key so reorder/indent edits never mis-associate rows.
+          key: ValueKey(item.id),
           contentPadding: EdgeInsets.only(left: 16 + item.indent * 20.0, right: 8),
           leading: Icon(Icons.bookmark_outline, color: theme.colorScheme.primary),
           title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text('Page ${item.pageIndex + 1}'),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-            // Indent / dedent
+            // Indent / dedent — mutate in place so the item keeps its key.
             IconButton(
               icon: const Icon(Icons.format_indent_increase, size: 18),
               tooltip: 'Indent (make child)',
-              onPressed: item.indent < 3 ? () => setState(() => _bookmarks[i] = _BookmarkItem(
-                title: item.title, pageIndex: item.pageIndex, indent: item.indent + 1)) : null,
+              onPressed: item.indent < 3 ? () => setState(() => item.indent++) : null,
             ),
             IconButton(
               icon: const Icon(Icons.format_indent_decrease, size: 18),
               tooltip: 'Dedent (move up)',
-              onPressed: item.indent > 0 ? () => setState(() => _bookmarks[i] = _BookmarkItem(
-                title: item.title, pageIndex: item.pageIndex, indent: item.indent - 1)) : null,
+              onPressed: item.indent > 0 ? () => setState(() => item.indent--) : null,
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 20),
@@ -265,11 +299,11 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
           FilledButton(
             onPressed: () {
               final page = (int.tryParse(pageC.text) ?? 1).clamp(1, _totalPages) - 1;
-              setState(() => _bookmarks[index] = _BookmarkItem(
-                title: titleC.text.trim().isEmpty ? item.title : titleC.text.trim(),
-                pageIndex: page,
-                indent: item.indent,
-              ));
+              // Mutate in place so the row keeps its stable key.
+              setState(() {
+                item.title = titleC.text.trim().isEmpty ? item.title : titleC.text.trim();
+                item.pageIndex = page;
+              });
               Navigator.pop(ctx);
             },
             child: const Text('Save'),
@@ -281,12 +315,15 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
 
   Future<void> _onSave() async {
     final tree = _buildTree(_bookmarks);
-    BlocProvider.of<PdfBloc>(context).add(EditBookmarksEvent(
-      editBookmarks: EditBookmarks(
-        bookmarksJson: jsonEncode(tree),
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+    final file = await MultipartFile.fromFile(_file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => EditBookmarksEvent(
+          editBookmarks: EditBookmarks(
+            bookmarksJson: jsonEncode(tree),
+            file: file,
+          ),
+          cancelToken: cancelToken,
+        ));
   }
 
   // Converts flat list with indent levels back to a properly nested tree.
@@ -331,8 +368,12 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView> {
 }
 
 class _BookmarkItem {
+  static int _seq = 0;
+  // Stable identity for list keys, independent of position/content edits.
+  final int id;
   String title;
   int pageIndex;
   int indent;
-  _BookmarkItem({required this.title, required this.pageIndex, required this.indent});
+  _BookmarkItem({required this.title, required this.pageIndex, required this.indent})
+      : id = _seq++;
 }

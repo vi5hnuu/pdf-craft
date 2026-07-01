@@ -35,6 +35,24 @@ import 'package:pdf_craft/models/request/redact-pdf.dart';
 import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
+import 'package:pdf_craft/models/request/create-form.dart';
+import 'package:pdf_craft/models/request/remove-metadata.dart';
+import 'package:pdf_craft/models/request/extract-images.dart';
+import 'package:pdf_craft/models/request/sanitize-pdf.dart';
+import 'package:pdf_craft/models/request/split-by-size.dart';
+import 'package:pdf_craft/models/request/mirror-pdf.dart';
+import 'package:pdf_craft/models/request/resize-page.dart';
+import 'package:pdf_craft/models/request/scale-pdf.dart';
+import 'package:pdf_craft/models/request/insert-pdf.dart';
+import 'package:pdf_craft/models/request/extract-embedded-files.dart';
+import 'package:pdf_craft/models/request/analyze-pdf.dart';
+import 'package:pdf_craft/models/request/replace-pages.dart';
+import 'package:pdf_craft/models/request/extract-fonts.dart';
+import 'package:pdf_craft/models/request/rotate-image.dart';
+import 'package:pdf_craft/models/request/flip-image.dart';
+import 'package:pdf_craft/models/request/border-image.dart';
+import 'package:pdf_craft/models/request/get-form-fields.dart';
+import 'package:pdf_craft/models/request/fill-flatten.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -53,6 +71,16 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
   PdfBloc({required PdfService pdfService})
       : _pdfService = pdfService,
         super(PdfState.initial()) {
+
+    // Clears leftover state for the given keys so a re-opened tool screen starts
+    // clean (prevents stale done/error from a prior run firing on mount).
+    on<ResetHttpStateEvent>((e, emit) {
+      final states = state.httpStates.clone();
+      for (final key in e.keys) {
+        states.remove(key);
+      }
+      emit(state.copyWith(httpStates: states));
+    });
 
     on<MergePdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.MERGE_PDF,
@@ -204,6 +232,47 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       error: 'Failed to resize image',
     ));
 
+    on<RotateImageEvent>((e, emit) => _handleImage(
+      emit: emit, key: HttpStates.ROTATE_IMAGE,
+      call: (p) => _pdfService.rotateImage(req: e.rotateImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to rotate image',
+    ));
+
+    on<FlipImageEvent>((e, emit) => _handleImage(
+      emit: emit, key: HttpStates.FLIP_IMAGE,
+      call: (p) => _pdfService.flipImage(req: e.flipImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to flip image',
+    ));
+
+    on<BorderImageEvent>((e, emit) => _handleImage(
+      emit: emit, key: HttpStates.BORDER_IMAGE,
+      call: (p) => _pdfService.borderImage(req: e.borderImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to add border',
+    ));
+
+    on<FillFlattenEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.FILL_FLATTEN,
+      call: (p) => _pdfService.fillFlatten(req: e.fillFlatten, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to fill & flatten',
+    ));
+
+    // Returns the PDF's existing form fields as JSON — does not save a file.
+    on<GetFormFieldsEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, const HttpState.loading())));
+      try {
+        final res = await _pdfService.getFormFields(req: event.getFormFields, cancelToken: event.cancelToken);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.done(extras: {'fields': res.data}))));
+      } on DioException catch (e) {
+        if (e.type == DioExceptionType.cancel) {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.GET_FORM_FIELDS)));
+        } else {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.error(error: e.message ?? 'Failed to read form fields'))));
+        }
+      } catch (_) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, const HttpState.error(error: 'Failed to read form fields'))));
+      }
+    });
+
     on<PdfToOfficeEvent>((e, emit) {
       final key = switch (e.pdfToOffice.format) {
         PdfOfficeFormat.word => HttpStates.PDF_TO_WORD,
@@ -238,6 +307,95 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       call: (p) => _pdfService.editBookmarks(req: e.editBookmarks, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to edit bookmarks',
     ));
+
+    on<CreateFormEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.CREATE_FORM,
+      call: (p) => _pdfService.createForm(req: e.createForm, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to create form',
+    ));
+
+    on<RemoveMetadataEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.REMOVE_METADATA,
+      call: (p) => _pdfService.removeMetadata(req: e.removeMetadata, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to remove metadata',
+    ));
+
+    on<ExtractImagesEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.EXTRACT_IMAGES,
+      call: (p) => _pdfService.extractImages(req: e.extractImages, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to extract images',
+    ));
+
+    on<SanitizePdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.SANITIZE_PDF,
+      call: (p) => _pdfService.sanitizePdf(req: e.sanitizePdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to sanitize PDF',
+    ));
+
+    on<SplitBySizeEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.SPLIT_BY_SIZE,
+      call: (p) => _pdfService.splitBySize(req: e.splitBySize, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to split PDF',
+    ));
+
+    on<MirrorPdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.MIRROR_PDF,
+      call: (p) => _pdfService.mirrorPdf(req: e.mirrorPdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to mirror PDF',
+    ));
+
+    on<ResizePageEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.RESIZE_PAGE,
+      call: (p) => _pdfService.resizePage(req: e.resizePage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to resize pages',
+    ));
+
+    on<ScalePdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.SCALE_PDF,
+      call: (p) => _pdfService.scalePdf(req: e.scalePdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to scale PDF',
+    ));
+
+    on<InsertPdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.INSERT_PDF,
+      call: (p) => _pdfService.insertPdf(req: e.insertPdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to insert PDF',
+    ));
+
+    on<ExtractEmbeddedFilesEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.EXTRACT_EMBEDDED,
+      call: (p) => _pdfService.extractEmbeddedFiles(req: e.extractEmbeddedFiles, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to extract embedded files',
+    ));
+
+    on<ReplacePagesEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.REPLACE_PAGES,
+      call: (p) => _pdfService.replacePages(req: e.replacePages, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to replace pages',
+    ));
+
+    on<ExtractFontsEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.EXTRACT_FONTS,
+      call: (p) => _pdfService.extractFonts(req: e.extractFonts, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to extract fonts',
+    ));
+
+    // Returns a JSON analysis report — does not save a file.
+    on<AnalyzePdfEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, const HttpState.loading())));
+      try {
+        final res = await _pdfService.analyzePdf(req: event.analyzePdf, cancelToken: event.cancelToken);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.done(extras: {'analysis': res.data}))));
+      } on DioException catch (e) {
+        if (e.type == DioExceptionType.cancel) {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.ANALYZE_PDF)));
+        } else {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.error(error: e.message ?? 'Failed to analyze PDF'))));
+        }
+      } catch (_) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, const HttpState.error(error: 'Failed to analyze PDF'))));
+      }
+    });
 
     on<FilterImageEvent>((e, emit) => _handleImage(
       emit: emit,
@@ -312,7 +470,12 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       final file = await _saveFileToProcessed(res);
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.done(extras: {'savedFile': file}))));
     } on DioException catch (e) {
-      emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      // A user-cancelled request should leave no error behind — reset to idle.
+      if (e.type == DioExceptionType.cancel) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..remove(key)));
+      } else {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      }
     } catch (_) {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: error))));
     }
@@ -336,39 +499,80 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       final file = await _saveImageToProcessed(res);
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.done(extras: {'savedFile': file}))));
     } on DioException catch (e) {
-      emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      if (e.type == DioExceptionType.cancel) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..remove(key)));
+      } else {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+      }
     } catch (_) {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: error))));
     }
   }
 
   Future<File> _saveImageToProcessed(Response<Uint8List> fileRes) async {
+    return _saveBytesToProcessed(fileRes, fallbackPrefix: 'image', fallbackExt: 'jpg');
+  }
+
+  Future<File> _saveFileToProcessed(Response<Uint8List> fileRes) async {
+    return _saveBytesToProcessed(fileRes, fallbackPrefix: 'file', fallbackExt: 'pdf');
+  }
+
+  /// Persists a downloaded response to the processed directory using the server's
+  /// suggested filename (Content-Disposition), falling back to a timestamped name.
+  /// Guarantees the final path does not collide with an existing file.
+  Future<File> _saveBytesToProcessed(
+    Response<Uint8List> fileRes, {
+    required String fallbackPrefix,
+    required String fallbackExt,
+  }) async {
     if (!await StoragePermissions.requestStoragePermissions()) {
       throw Exception('Failed to save — storage permission denied');
     }
     final directory = Directory(Constants.processedDirPath);
     if (!directory.existsSync()) await directory.create(recursive: true);
-    final contentDisposition = fileRes.headers.value('content-disposition');
-    final dummyName = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final filename = contentDisposition?.split('=').last ?? dummyName;
-    var file = File('${directory.path}/$filename');
-    if (file.existsSync()) file = File('${directory.path}/$dummyName');
+
+    final fallback = '${fallbackPrefix}_${DateTime.now().millisecondsSinceEpoch}.$fallbackExt';
+    final suggested = _filenameFromContentDisposition(fileRes.headers.value('content-disposition')) ?? fallback;
+    final file = File(_uniquePath(directory.path, suggested));
     await file.writeAsBytes(fileRes.data!);
     return file;
   }
 
-  Future<File> _saveFileToProcessed(Response<Uint8List> fileRes) async {
-    if (!await StoragePermissions.requestStoragePermissions()) {
-      throw Exception('Failed to save — storage permission denied');
+  /// Parses a filename out of a Content-Disposition header, handling both the
+  /// RFC 5987 `filename*=UTF-8''name.ext` form and the plain/quoted `filename=`
+  /// form. Returns null when no usable name is present.
+  String? _filenameFromContentDisposition(String? header) {
+    if (header == null || header.isEmpty) return null;
+    // Prefer the extended (filename*) form when present.
+    final ext = RegExp(r"filename\*\s*=\s*[^']*''([^;]+)", caseSensitive: false).firstMatch(header);
+    if (ext != null) {
+      final decoded = Uri.decodeComponent(ext.group(1)!.trim());
+      if (decoded.isNotEmpty) return _sanitizeName(decoded);
     }
-    final directory = Directory(Constants.processedDirPath);
-    if (!directory.existsSync()) await directory.create(recursive: true);
-    final contentDisposition = fileRes.headers.value('content-disposition');
-    final dummyName = 'file_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final filename = contentDisposition?.split('=').last ?? dummyName;
-    var file = File('${directory.path}/$filename');
-    if (file.existsSync()) file = File('${directory.path}/$dummyName');
-    await file.writeAsBytes(fileRes.data!);
-    return file;
+    final plain = RegExp(r'filename\s*=\s*"?([^";]+)"?', caseSensitive: false).firstMatch(header);
+    if (plain != null) {
+      final name = plain.group(1)!.trim();
+      if (name.isNotEmpty) return _sanitizeName(name);
+    }
+    return null;
+  }
+
+  /// Strips any path separators a malicious/odd header might inject.
+  String _sanitizeName(String name) => name.split(RegExp(r'[\\/]')).last;
+
+  /// Returns a path in [dir] for [name], appending " (n)" before the extension
+  /// until it no longer collides with an existing file.
+  String _uniquePath(String dir, String name) {
+    var candidate = File('$dir/$name');
+    if (!candidate.existsSync()) return candidate.path;
+    final dot = name.lastIndexOf('.');
+    final base = dot == -1 ? name : name.substring(0, dot);
+    final ext = dot == -1 ? '' : name.substring(dot);
+    var n = 1;
+    do {
+      candidate = File('$dir/$base ($n)$ext');
+      n++;
+    } while (candidate.existsSync());
+    return candidate.path;
   }
 }

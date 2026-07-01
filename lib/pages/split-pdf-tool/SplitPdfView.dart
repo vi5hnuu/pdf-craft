@@ -68,8 +68,6 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                 if(file is File) OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]);
               }else if(httpState?.error!=null){
                 NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-              }else if(httpState?.loading==true){
-                NotificationService.showSnackbar(text: "Started Splitting",color: Colors.lightBlue);
               }
             },
           builder: (context, state) {
@@ -94,7 +92,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                     ),
                   )
                 ],),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.SPLIT_PDF]),
+                LoadingOverlay(httpState: state.httpStates[HttpStates.SPLIT_PDF], label: 'Splitting your PDF'),
               ],
             );
           },

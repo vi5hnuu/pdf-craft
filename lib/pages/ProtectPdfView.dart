@@ -65,8 +65,6 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
               if(savedFile is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath': savedFile.path});
             }else if(httpState?.error!=null){
               NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-            }else if(httpState?.loading==true){
-              NotificationService.showSnackbar(text: "Started file protection",color: Colors.lightBlue);
             }
           },
           builder: (context, state) {
@@ -143,7 +141,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                     ],
                   ),
                 ),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.PROTECT_PDF]),
+                LoadingOverlay(httpState: state.httpStates[HttpStates.PROTECT_PDF], label: 'Protecting your PDF'),
               ],
             );
           },)

@@ -6,6 +6,15 @@ abstract class PdfEvent {
   const PdfEvent({this.cancelToken});
 }
 
+/// Clears the given [HttpStates] keys back to "idle" so a freshly opened tool
+/// screen never reacts to a previous run's leftover done/error state (which
+/// could otherwise trigger a phantom navigation or snackbar). Dispatched from
+/// [ToolViewMixin]/tool initState before kicking off a new operation.
+class ResetHttpStateEvent extends PdfEvent {
+  final List<String> keys;
+  const ResetHttpStateEvent({required this.keys});
+}
+
 
 
 class MergePdfEvent extends PdfEvent{
@@ -138,6 +147,31 @@ class ResizeImageEvent extends PdfEvent {
   const ResizeImageEvent({required this.resizeImage, super.cancelToken});
 }
 
+class RotateImageEvent extends PdfEvent {
+  final RotateImage rotateImage;
+  const RotateImageEvent({required this.rotateImage, super.cancelToken});
+}
+
+class FlipImageEvent extends PdfEvent {
+  final FlipImage flipImage;
+  const FlipImageEvent({required this.flipImage, super.cancelToken});
+}
+
+class BorderImageEvent extends PdfEvent {
+  final BorderImage borderImage;
+  const BorderImageEvent({required this.borderImage, super.cancelToken});
+}
+
+class GetFormFieldsEvent extends PdfEvent {
+  final GetFormFields getFormFields;
+  const GetFormFieldsEvent({required this.getFormFields, super.cancelToken});
+}
+
+class FillFlattenEvent extends PdfEvent {
+  final FillFlatten fillFlatten;
+  const FillFlattenEvent({required this.fillFlatten, super.cancelToken});
+}
+
 class PdfToOfficeEvent extends PdfEvent {
   final PdfToOffice pdfToOffice;
   const PdfToOfficeEvent({required this.pdfToOffice, super.cancelToken});
@@ -161,6 +195,71 @@ class GetBookmarksEvent extends PdfEvent {
 class EditBookmarksEvent extends PdfEvent {
   final EditBookmarks editBookmarks;
   const EditBookmarksEvent({required this.editBookmarks, super.cancelToken});
+}
+
+class CreateFormEvent extends PdfEvent {
+  final CreateForm createForm;
+  const CreateFormEvent({required this.createForm, super.cancelToken});
+}
+
+class RemoveMetadataEvent extends PdfEvent {
+  final RemoveMetadata removeMetadata;
+  const RemoveMetadataEvent({required this.removeMetadata, super.cancelToken});
+}
+
+class ExtractImagesEvent extends PdfEvent {
+  final ExtractImages extractImages;
+  const ExtractImagesEvent({required this.extractImages, super.cancelToken});
+}
+
+class SanitizePdfEvent extends PdfEvent {
+  final SanitizePdf sanitizePdf;
+  const SanitizePdfEvent({required this.sanitizePdf, super.cancelToken});
+}
+
+class SplitBySizeEvent extends PdfEvent {
+  final SplitBySize splitBySize;
+  const SplitBySizeEvent({required this.splitBySize, super.cancelToken});
+}
+
+class MirrorPdfEvent extends PdfEvent {
+  final MirrorPdf mirrorPdf;
+  const MirrorPdfEvent({required this.mirrorPdf, super.cancelToken});
+}
+
+class ResizePageEvent extends PdfEvent {
+  final ResizePage resizePage;
+  const ResizePageEvent({required this.resizePage, super.cancelToken});
+}
+
+class ScalePdfEvent extends PdfEvent {
+  final ScalePdf scalePdf;
+  const ScalePdfEvent({required this.scalePdf, super.cancelToken});
+}
+
+class InsertPdfEvent extends PdfEvent {
+  final InsertPdf insertPdf;
+  const InsertPdfEvent({required this.insertPdf, super.cancelToken});
+}
+
+class ExtractEmbeddedFilesEvent extends PdfEvent {
+  final ExtractEmbeddedFiles extractEmbeddedFiles;
+  const ExtractEmbeddedFilesEvent({required this.extractEmbeddedFiles, super.cancelToken});
+}
+
+class AnalyzePdfEvent extends PdfEvent {
+  final AnalyzePdf analyzePdf;
+  const AnalyzePdfEvent({required this.analyzePdf, super.cancelToken});
+}
+
+class ReplacePagesEvent extends PdfEvent {
+  final ReplacePages replacePages;
+  const ReplacePagesEvent({required this.replacePages, super.cancelToken});
+}
+
+class ExtractFontsEvent extends PdfEvent {
+  final ExtractFonts extractFonts;
+  const ExtractFontsEvent({required this.extractFonts, super.cancelToken});
 }
 
 class FilterImageEvent extends PdfEvent {

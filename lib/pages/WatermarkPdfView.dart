@@ -58,8 +58,6 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Adding watermark...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -125,7 +123,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.WATERMARK_PDF]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.WATERMARK_PDF], label: 'Adding watermark'),
             ],
           );
         },

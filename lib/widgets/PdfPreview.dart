@@ -1,8 +1,12 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/services/apis/PdfService.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/PrefFlags.dart';
 import 'package:pdf_craft/widgets/ConfirmDialog.dart';
@@ -25,6 +29,8 @@ class _PdfPreviewState extends State<PdfPreview> {
   String? _password;
   bool _loadError = false;
   bool _nightMode = false;
+  // Mutable so a rename can update the open file in place.
+  late String _path = widget.pdfFilePath;
 
   // Inverts RGB channels while keeping alpha — turns white pages dark for night reading
   static const _invertMatrix = <double>[
@@ -42,7 +48,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     0, 0, 0, 1, 0,
   ];
 
-  String get _fileName => widget.pdfFilePath.split('/').last;
+  String get _fileName => _path.split('/').last;
 
   @override
   void initState() {
@@ -58,7 +64,7 @@ class _PdfPreviewState extends State<PdfPreview> {
       _loadError = false;
     });
     try {
-      final doc = await PdfDocument.openFile(widget.pdfFilePath, password: _password);
+      final doc = await PdfDocument.openFile(_path, password: _password);
       if (!mounted) return;
       setState(() {
         _controller = PdfControllerPinch(
@@ -99,6 +105,14 @@ class _PdfPreviewState extends State<PdfPreview> {
                 );
               },
             ),
+          // Outline / bookmarks — reads the PDF's embedded outline so bookmarks
+          // added via the Bookmarks tool are actually visible and navigable here.
+          if (_controller != null)
+            IconButton(
+              icon: const Icon(Icons.list_alt_outlined),
+              tooltip: 'Bookmarks',
+              onPressed: _showOutline,
+            ),
           IconButton(
             icon: Icon(_nightMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
             tooltip: _nightMode ? 'Day mode' : 'Night mode',
@@ -112,15 +126,38 @@ class _PdfPreviewState extends State<PdfPreview> {
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share',
-            onPressed: () => Share.shareXFiles([XFile(widget.pdfFilePath)]),
+            onPressed: () => Share.shareXFiles([XFile(_path)]),
           ),
           // Our in-app viewer is intentionally lightweight; offer a way out to
           // a full external PDF viewer at any time (not just on error).
           PopupMenuButton<String>(
             onSelected: (value) {
-              if (value == 'external') _openExternally();
+              switch (value) {
+                case 'external':
+                  _openExternally();
+                case 'rename':
+                  _rename();
+                case 'save_copy':
+                  _saveCopyToDownloads();
+              }
             },
             itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'rename',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.drive_file_rename_outline),
+                  title: Text('Rename'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'save_copy',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.download_outlined),
+                  title: Text('Save a copy to Downloads'),
+                ),
+              ),
               PopupMenuItem(
                 value: 'external',
                 child: ListTile(
@@ -134,14 +171,39 @@ class _PdfPreviewState extends State<PdfPreview> {
         ],
       ),
       body: _buildBody(theme, primary),
+      // A guaranteed way back to original size — pinch-out can occasionally
+      // stall just above the fit scale, so surface a reset control when zoomed.
+      floatingActionButton: _controller == null
+          ? null
+          : ValueListenableBuilder(
+              valueListenable: _controller!,
+              builder: (context, _, __) {
+                final zoomedIn = _controller!.zoomRatio > 1.05;
+                if (!zoomedIn) return const SizedBox.shrink();
+                return FloatingActionButton.small(
+                  heroTag: 'resetZoom',
+                  tooltip: 'Fit to screen',
+                  onPressed: _resetZoom,
+                  child: const Icon(Icons.zoom_out_map),
+                );
+              },
+            ),
     );
+  }
+
+  /// Animates the viewer back to the current page's fit scale.
+  void _resetZoom() {
+    final c = _controller;
+    if (c == null) return;
+    final fit = c.calculatePageFitMatrix(pageNumber: c.page);
+    if (fit != null) c.goTo(destination: fit);
   }
 
   Widget _buildBody(ThemeData theme, Color primary) {
     // Show error state (password prompt or generic error)
     if (_loadError) {
       return _ErrorState(
-        filePath: widget.pdfFilePath,
+        filePath: _path,
         onRetryWithPassword: () => _askForPasswordAndRetry(context),
       );
     }
@@ -170,23 +232,81 @@ class _PdfPreviewState extends State<PdfPreview> {
         documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
         pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         errorBuilder: (_, error) => _ErrorState(
-          filePath: widget.pdfFilePath,
+          filePath: _path,
           onRetryWithPassword: () => _askForPasswordAndRetry(context),
         ),
       ),
     );
 
-    // Always wrap in ColorFiltered so PdfViewPinch is never disposed/recreated on toggle
-    return ColorFiltered(
+    // Double-tap resets zoom to fit (only claims the double-tap gesture, so
+    // pinch/pan still reach the viewer). Always wrap in ColorFiltered so
+    // PdfViewPinch is never disposed/recreated on the night-mode toggle.
+    return GestureDetector(
+      onDoubleTap: _resetZoom,
+      child: ColorFiltered(
       colorFilter: ColorFilter.matrix(_nightMode ? _invertMatrix : _identityMatrix),
       child: viewer,
+      ),
     );
   }
 
   void _openExternally() {
-    final ext = '.${widget.pdfFilePath.split('.').last}';
-    OpenFile.open(widget.pdfFilePath,
+    final ext = '.${_path.split('.').last}';
+    OpenFile.open(_path,
         type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*');
+  }
+
+  /// Renames the open file on disk and keeps viewing it under the new name.
+  Future<void> _rename() async {
+    final name = _fileName;
+    final dot = name.lastIndexOf('.');
+    final base = dot == -1 ? name : name.substring(0, dot);
+    final ext = dot == -1 ? '' : name.substring(dot);
+
+    final newBase = await InputDialog.show(
+      context,
+      title: 'Rename file',
+      label: 'New name',
+      initial: base,
+      confirmLabel: 'Rename',
+    );
+    if (newBase == null || newBase.trim().isEmpty || newBase.trim() == base) return;
+
+    final dir = File(_path).parent.path;
+    final newPath = '$dir/${newBase.trim()}$ext';
+    if (File(newPath).existsSync()) {
+      NotificationService.showSnackbar(text: 'A file with that name already exists', color: Colors.red);
+      return;
+    }
+    try {
+      await File(_path).rename(newPath);
+      if (!mounted) return;
+      setState(() => _path = newPath);
+      NotificationService.showSnackbar(text: 'Renamed', color: Colors.green);
+    } catch (_) {
+      NotificationService.showSnackbar(text: 'Could not rename file', color: Colors.red);
+    }
+  }
+
+  /// Copies the open file into the device Downloads folder for easy retrieval.
+  Future<void> _saveCopyToDownloads() async {
+    try {
+      final dir = Directory(Constants.downloadsStoragePath);
+      if (!dir.existsSync()) await dir.create(recursive: true);
+      // Avoid clobbering an existing download with the same name.
+      var dest = '${dir.path}/$_fileName';
+      if (File(dest).existsSync()) {
+        final name = _fileName;
+        final dot = name.lastIndexOf('.');
+        final base = dot == -1 ? name : name.substring(0, dot);
+        final ext = dot == -1 ? '' : name.substring(dot);
+        dest = '${dir.path}/$base-${DateTime.now().millisecondsSinceEpoch}$ext';
+      }
+      await File(_path).copy(dest);
+      NotificationService.showSnackbar(text: 'Saved to Downloads', color: Colors.green);
+    } catch (_) {
+      NotificationService.showSnackbar(text: 'Could not save to Downloads', color: Colors.red);
+    }
   }
 
   /// Explains what uploading does before navigating to the Drive screen, with a
@@ -212,7 +332,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     if (!mounted) return;
     GoRouter.of(context).pushNamed(
       AppRoutes.driveRoute.name,
-      extra: {'file': File(widget.pdfFilePath)},
+      extra: {'file': File(_path)},
     );
   }
 
@@ -228,6 +348,24 @@ class _PdfPreviewState extends State<PdfPreview> {
       _password = newPassword.isEmpty ? null : newPassword;
       await _loadDocument();
     }
+  }
+
+  /// Opens a bottom sheet listing the PDF's embedded outline (bookmarks).
+  /// Tapping an entry jumps the viewer to that page.
+  Future<void> _showOutline() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => _OutlineSheet(
+        filePath: _path,
+        onJump: (pageIndex) {
+          Navigator.pop(context);
+          _controller?.jumpToPage(pageIndex + 1); // controller is 1-indexed
+        },
+      ),
+    );
   }
 
   Future<void> _showJumpToPageDialog(int totalPages) async {
@@ -249,6 +387,124 @@ class _PdfPreviewState extends State<PdfPreview> {
     _controller?.dispose();
     super.dispose();
   }
+}
+
+/// Fetches and renders the PDF's embedded outline (bookmarks) in a bottom sheet.
+/// Bookmarks live inside the PDF, so they're read server-side via get-bookmarks.
+class _OutlineSheet extends StatefulWidget {
+  final String filePath;
+  final void Function(int pageIndex) onJump;
+
+  const _OutlineSheet({required this.filePath, required this.onJump});
+
+  @override
+  State<_OutlineSheet> createState() => _OutlineSheetState();
+}
+
+class _OutlineSheetState extends State<_OutlineSheet> {
+  late Future<List<_OutlineItem>> _future = _load();
+
+  Future<List<_OutlineItem>> _load() async {
+    final file = await MultipartFile.fromFile(widget.filePath);
+    final res = await PdfService().getBookmarks(req: GetBookmarks(file: file));
+    final data = res.data;
+    final out = <_OutlineItem>[];
+    if (data is List) _flatten(data, 0, out);
+    return out;
+  }
+
+  void _flatten(List<dynamic> raw, int depth, List<_OutlineItem> into) {
+    for (final item in raw) {
+      if (item is! Map) continue;
+      into.add(_OutlineItem(
+        title: (item['title'] as String?)?.trim().isNotEmpty == true ? item['title'] as String : 'Untitled',
+        pageIndex: (item['pageIndex'] as num?)?.toInt() ?? 0,
+        depth: depth,
+      ));
+      final children = item['children'];
+      if (children is List && children.isNotEmpty) _flatten(children, depth + 1, into);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.5,
+      maxChildSize: 0.85,
+      builder: (context, scrollController) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(color: theme.dividerColor, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(children: [
+                Icon(Icons.bookmark_outline, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                const Text('Bookmarks', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              ]),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: FutureBuilder<List<_OutlineItem>>(
+                future: _future,
+                builder: (context, snap) {
+                  if (snap.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final items = snap.data ?? const [];
+                  if (snap.hasError || items.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'This PDF has no bookmarks.\nAdd some with the Bookmarks tool.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    controller: scrollController,
+                    itemCount: items.length,
+                    itemBuilder: (context, i) {
+                      final item = items[i];
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.only(left: 16 + item.depth * 18.0, right: 16),
+                        leading: Icon(Icons.bookmark_outline, size: 18, color: theme.colorScheme.primary),
+                        title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        trailing: Text('p.${item.pageIndex + 1}',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        onTap: () => widget.onJump(item.pageIndex),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _OutlineItem {
+  final String title;
+  final int pageIndex;
+  final int depth;
+  _OutlineItem({required this.title, required this.pageIndex, required this.depth});
 }
 
 class _ErrorState extends StatelessWidget {

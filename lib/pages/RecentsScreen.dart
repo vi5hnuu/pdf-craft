@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/widgets/FileActionsSheet.dart';
 import 'package:pdf_craft/widgets/FileTile.dart';
+import 'package:pdf_craft/widgets/SkeletonList.dart';
 
 /// Full list of recent PDFs, reached via the "See more" action on the Files
 /// tab. The home screen only shows a short horizontal preview; this screen
@@ -48,7 +48,7 @@ class _RecentsScreenState extends State<RecentsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Recent Files')),
       body: recents == null
-          ? Center(child: SpinKitPulse(color: theme.colorScheme.primary))
+          ? const SkeletonList()
           : recents.isEmpty
               ? Center(
                   child: Text(

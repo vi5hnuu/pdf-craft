@@ -17,6 +17,25 @@ class AppRoutes{
 
   static AppRoute mergePdfRoute=AppRoute(name: 'merge-pdf-tool', path: '/merge-pdf-tool');
   static AppRoute reorderPdfPagesRoute=AppRoute(name: 'reorder-pages-pdf-tool', path: '/reorder-pages-pdf-tool');
+  static AppRoute organizePagesRoute=AppRoute(name: 'organize-pages-tool', path: '/organize-pages-tool');
+  static AppRoute extractPagesRoute=AppRoute(name: 'extract-pages-tool', path: '/extract-pages-tool');
+  static AppRoute deletePagesRoute=AppRoute(name: 'delete-pages-tool', path: '/delete-pages-tool');
+  static AppRoute removeMetadataRoute=AppRoute(name: 'remove-metadata-tool', path: '/remove-metadata-tool');
+  static AppRoute extractImagesRoute=AppRoute(name: 'extract-images-tool', path: '/extract-images-tool');
+  static AppRoute sanitizePdfRoute=AppRoute(name: 'sanitize-pdf-tool', path: '/sanitize-pdf-tool');
+  static AppRoute splitBySizeRoute=AppRoute(name: 'split-by-size-tool', path: '/split-by-size-tool');
+  static AppRoute reversePagesRoute=AppRoute(name: 'reverse-pages-tool', path: '/reverse-pages-tool');
+  static AppRoute mirrorPagesRoute=AppRoute(name: 'mirror-pages-tool', path: '/mirror-pages-tool');
+  static AppRoute resizePageRoute=AppRoute(name: 'resize-page-tool', path: '/resize-page-tool');
+  static AppRoute scalePdfRoute=AppRoute(name: 'scale-pdf-tool', path: '/scale-pdf-tool');
+  static AppRoute insertPdfRoute=AppRoute(name: 'insert-pdf-tool', path: '/insert-pdf-tool');
+  static AppRoute extractEmbeddedRoute=AppRoute(name: 'extract-embedded-tool', path: '/extract-embedded-tool');
+  static AppRoute analyzePdfRoute=AppRoute(name: 'analyze-pdf-tool', path: '/analyze-pdf-tool');
+  static AppRoute replacePagesRoute=AppRoute(name: 'replace-pages-tool', path: '/replace-pages-tool');
+  static AppRoute extractFontsRoute=AppRoute(name: 'extract-fonts-tool', path: '/extract-fonts-tool');
+  static AppRoute rotateImageRoute=AppRoute(name: 'rotate-image-tool', path: '/rotate-image-tool');
+  static AppRoute flipImageRoute=AppRoute(name: 'flip-image-tool', path: '/flip-image-tool');
+  static AppRoute addBorderRoute=AppRoute(name: 'add-border-tool', path: '/add-border-tool');
   static AppRoute pdfToJpgRoute=AppRoute(name: 'pdf-to-jpg-tool', path: '/pdf-to-jpg-tool');
   static AppRoute imageToPdfRoute=AppRoute(name: 'image-to-pdf-tool', path: '/image-to-pdf-tool');
   static AppRoute pageNumbersRoute=AppRoute(name: 'page-numbers-tool', path: '/page-numbers-tool');
@@ -65,6 +84,7 @@ class AppRoutes{
   static AppRoute filesRoute=AppRoute(name: 'files', path: '/files');
   static AppRoute filesListingRoute=AppRoute(name: 'list', path: 'list');
   static AppRoute recentsRoute=AppRoute(name: 'recents', path: '/recents');
+  static AppRoute resultsRoute=AppRoute(name: 'results', path: '/results');
   static AppRoute incomingFilesRoute=AppRoute(name: 'incoming-files', path: '/incoming-files');
 
   static AppRoute toolsRoute=AppRoute(name: 'tools', path: '/tools');

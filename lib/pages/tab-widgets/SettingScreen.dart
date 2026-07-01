@@ -139,7 +139,8 @@ class _SettingScreenState extends State<SettingScreen> {
                   ListTile(
                     leading: const Icon(Icons.storage_outlined),
                     title: const Text('Processed Files'),
-                    subtitle: Text('$_processedFileCount files · $_processedDirSize'),
+                    subtitle: Text('$_processedFileCount files · $_processedDirSize · tap to view'),
+                    onTap: () => GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
                     trailing: TextButton(
                       onPressed: _processedFileCount == 0 ? null : _clearCache,
                       child: const Text('Clear', style: TextStyle(color: Colors.red)),
@@ -156,6 +157,38 @@ class _SettingScreenState extends State<SettingScreen> {
                     ),
                   ),
                 ]),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+          // Privacy & Data — be transparent that tools process on the server.
+          _sectionHeader(theme, 'Privacy & Data', Icons.shield_outlined),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.lock_outline, size: 20, color: theme.colorScheme.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Tools run on our secure server so results are identical on every '
+                          'device. Files are sent over an encrypted (HTTPS) connection, processed, '
+                          'and removed afterwards — we don\'t keep your documents.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              height: 1.45,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -187,7 +220,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   ListTile(
                     leading: const Icon(Icons.code_outlined),
                     title: const Text('Version'),
-                    trailing: Text('1.0.0', style: theme.textTheme.bodyMedium),
+                    trailing: Text('2.0.0', style: theme.textTheme.bodyMedium),
                   ),
                 ]),
               ),

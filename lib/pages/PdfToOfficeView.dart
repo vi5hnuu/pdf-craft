@@ -23,6 +23,7 @@ class PdfToOfficeView extends StatefulWidget {
 class _PdfToOfficeViewState extends State<PdfToOfficeView> {
   late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
+  CancelToken? _cancelToken;
 
   String get _stateKey {
     switch (widget.format) {
@@ -67,14 +68,6 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
     }
   }
 
-  String get _convertingMessage {
-    switch (widget.format) {
-      case PdfOfficeFormat.word: return 'Converting to Word…';
-      case PdfOfficeFormat.excel: return 'Converting to Excel…';
-      case PdfOfficeFormat.pptx: return 'Converting to PowerPoint…';
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -98,8 +91,6 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: _convertingMessage, color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -133,7 +124,11 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[_stateKey]),
+              LoadingOverlay(
+                httpState: state.httpStates[_stateKey],
+                label: 'Converting your PDF',
+                onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
+              ),
             ],
           );
         },
@@ -143,12 +138,15 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
 
   void _onConvert() async {
     final name = _outFileNameC.text.trim().isEmpty ? _defaultName : _outFileNameC.text.trim();
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
     _bloc.add(PdfToOfficeEvent(
       pdfToOffice: PdfToOffice(
         outFileName: name,
         format: widget.format,
-        file: await MultipartFile.fromFile(widget.file.path),
+        file: file,
       ),
+      cancelToken: _cancelToken,
     ));
   }
 

@@ -30,6 +30,7 @@ class PdfToJpgView extends StatefulWidget {
 
 class _PdfToJpgViewState extends State<PdfToJpgView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
+  CancelToken? _cancelToken;
   TextEditingController gapController=TextEditingController();
   int qualityDpi=Quality.LOW.dpi;
   bool isSingle=false;
@@ -61,8 +62,6 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
           if(file is File) _openFile(file);
         }else if(httpState?.error!=null){
           NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-        }else if(httpState?.loading==true){
-          NotificationService.showSnackbar(text: "Started converting to jpg",color: Colors.lightBlue);
         }
       },
       builder: (context, state) {
@@ -154,7 +153,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   )
                 ],),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.PDF_TO_JPG]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.PDF_TO_JPG], label: 'Converting to images', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
           ],
         );
       },),
@@ -162,7 +161,9 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   }
 
   void _onPdfToJpf() async {
-    bloc.add(PdfToJpgEvent(pdfToJpg: PdfToJpg(file: await MultipartFile.fromFile(widget.file.path), meta: PdfToJpgMeta(out_file_name: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null))));
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
+    bloc.add(PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(out_file_name: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null)), cancelToken: _cancelToken));
   }
 
   void _openFile(File file) {

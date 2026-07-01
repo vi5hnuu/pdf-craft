@@ -1,14 +1,20 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 
-/// User draws a signature on a blank canvas, then navigates to PlaceImageView
-/// to drag/resize and stamp it onto the PDF.
+/// Create a signature — either by drawing it or importing an image — then
+/// navigate to PlaceImageView to drag/resize and stamp it onto the PDF.
+///
+/// The drawn signature is exported **cropped to its ink bounds with a
+/// transparent background** (previously the whole white canvas was captured, so
+/// the signature ended up tiny inside a large white block). Strokes are smoothed
+/// with quadratic beziers for a natural pen feel.
 class SignPdfView extends StatefulWidget {
   final File file;
   const SignPdfView({super.key, required this.file});
@@ -18,130 +24,222 @@ class SignPdfView extends StatefulWidget {
 }
 
 class _SignPdfViewState extends State<SignPdfView> {
-  final _canvasKey = GlobalKey();
-  // Each stroke is a list of offsets; null marks a pen-up between strokes
+  // Each stroke is a list of offsets; null marks a pen-up between strokes.
   final List<List<Offset?>> _strokes = [];
   Color _inkColor = Colors.black;
   double _strokeWidth = 3.0;
-  bool _capturing = false;
+  bool _busy = false;
 
-  static const _colorOptions = [Colors.black, Colors.blue, Colors.red];
+  static const _colorOptions = [
+    Colors.black,
+    Color(0xFF1565C0), // blue-ink
+    Color(0xFFC62828), // red-ink
+  ];
+
+  bool get _hasStrokes => _strokes.any((s) => s.any((p) => p != null));
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasStrokes = _strokes.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sign PDF'),
         actions: [
-          if (hasStrokes)
-            IconButton(
-              icon: const Icon(Icons.undo),
-              tooltip: 'Undo last stroke',
-              onPressed: () => setState(() => _strokes.removeLast()),
-            ),
+          IconButton(
+            icon: const Icon(Icons.undo),
+            tooltip: 'Undo',
+            onPressed: _hasStrokes ? () => setState(() => _strokes.removeLast()) : null,
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Clear',
-            onPressed: hasStrokes ? () => setState(() => _strokes.clear()) : null,
-          ),
-          TextButton(
-            onPressed: hasStrokes && !_capturing ? _onPlace : null,
-            child: const Text('Place'),
+            onPressed: _hasStrokes ? () => setState(_strokes.clear) : null,
           ),
         ],
       ),
       body: Column(children: [
-        // Ink color + width controls
-        Container(
-          color: theme.cardColor,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(children: [
-            const Text('Ink: '),
-            ...(_colorOptions.map((c) => GestureDetector(
-              onTap: () => setState(() => _inkColor = c),
-              child: Container(
-                margin: const EdgeInsets.only(right: 8),
-                width: 28, height: 28,
-                decoration: BoxDecoration(
-                  color: c,
-                  shape: BoxShape.circle,
-                  border: _inkColor == c
-                      ? Border.all(color: theme.colorScheme.primary, width: 2.5)
-                      : Border.all(color: Colors.transparent, width: 2.5),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(children: [
+              Text(
+                'Draw your signature below, or import one from your device.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              ),
+              const SizedBox(height: 12),
+              // Signature canvas — a card with a guide line, like a signing pad.
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.dividerColor),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(children: [
+                    // Signature guide line.
+                    Positioned(
+                      left: 24,
+                      right: 24,
+                      bottom: 48,
+                      child: Row(children: [
+                        Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+                        const SizedBox(width: 8),
+                        Expanded(child: Container(height: 1.5, color: Colors.grey.shade300)),
+                      ]),
+                    ),
+                    if (!_hasStrokes)
+                      Center(
+                        child: Text('Sign here',
+                            style: TextStyle(color: Colors.grey.shade300, fontSize: 28, fontStyle: FontStyle.italic)),
+                      ),
+                    GestureDetector(
+                      onPanStart: (d) => setState(() => _strokes.add([d.localPosition])),
+                      onPanUpdate: (d) => setState(() => _strokes.last.add(d.localPosition)),
+                      onPanEnd: (_) => setState(() => _strokes.last.add(null)),
+                      child: CustomPaint(
+                        painter: _SignaturePainter(_strokes, _inkColor, _strokeWidth),
+                        size: Size.infinite,
+                      ),
+                    ),
+                  ]),
                 ),
               ),
-            ))),
-            const SizedBox(width: 16),
-            const Text('Width: '),
+            ]),
+          ),
+        ),
+        // Ink controls.
+        Container(
+          color: theme.cardColor,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(children: [
+            ..._colorOptions.map((c) => GestureDetector(
+                  onTap: () => setState(() => _inkColor = c),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 10),
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: c,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _inkColor == c ? theme.colorScheme.primary : Colors.transparent,
+                        width: 3,
+                      ),
+                    ),
+                  ),
+                )),
+            const SizedBox(width: 8),
+            Icon(Icons.line_weight, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             Expanded(
               child: Slider(
                 value: _strokeWidth,
-                min: 1.0, max: 8.0, divisions: 7,
+                min: 1.0,
+                max: 8.0,
+                divisions: 7,
                 label: _strokeWidth.round().toString(),
                 onChanged: (v) => setState(() => _strokeWidth = v),
               ),
             ),
           ]),
         ),
-        // Signature canvas
-        Expanded(
-          child: RepaintBoundary(
-            key: _canvasKey,
-            child: Container(
-              color: Colors.white,
-              child: GestureDetector(
-                onPanStart: (d) => setState(() => _strokes.add([d.localPosition])),
-                onPanUpdate: (d) => setState(() => _strokes.last.add(d.localPosition)),
-                onPanEnd: (_) => setState(() => _strokes.last.add(null)),
-                child: CustomPaint(
-                  painter: _SignaturePainter(_strokes, _inkColor, _strokeWidth),
-                  child: Container(),
+        // Actions.
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Row(children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _busy ? null : _importSignature,
+                  icon: const Icon(Icons.image_outlined),
+                  label: const Text('Import'),
+                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 ),
               ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            'Draw your signature, then tap Place to position it on the PDF.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton.icon(
+                  onPressed: (_hasStrokes && !_busy) ? _placeDrawn : null,
+                  icon: const Icon(Icons.check),
+                  label: const Text('Place on PDF'),
+                  style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                ),
+              ),
+            ]),
           ),
         ),
       ]),
     );
   }
 
-  Future<void> _onPlace() async {
-    setState(() => _capturing = true);
+  Future<void> _placeDrawn() async {
+    setState(() => _busy = true);
     try {
-      final boundary = _canvasKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) {
+      final bytes = await _exportCroppedSignature();
+      if (bytes == null) {
         NotificationService.showSnackbar(text: 'Could not capture signature', color: Colors.red);
         return;
       }
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-
       if (!mounted) return;
-      // Navigate to PlaceImageView — user drags and sizes the signature on the PDF page
       GoRouter.of(context).pushNamed(
         AppRoutes.placeImageRoute.name,
-        extra: {
-          'file': widget.file,
-          'imageBytes': byteData.buffer.asUint8List(),
-          'title': 'Place Signature',
-        },
+        extra: {'file': widget.file, 'imageBytes': bytes, 'title': 'Place Signature'},
       );
     } finally {
-      if (mounted) setState(() => _capturing = false);
+      if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _importSignature() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
+    final bytes = result?.files.firstOrNull?.bytes;
+    if (bytes == null || !mounted) return;
+    GoRouter.of(context).pushNamed(
+      AppRoutes.placeImageRoute.name,
+      extra: {'file': widget.file, 'imageBytes': bytes, 'title': 'Place Signature'},
+    );
+  }
+
+  /// Renders only the drawn strokes, cropped to their bounding box with padding
+  /// and a transparent background, at 3x for crisp stamping.
+  Future<Uint8List?> _exportCroppedSignature() async {
+    final pts = <Offset>[];
+    for (final stroke in _strokes) {
+      for (final p in stroke) {
+        if (p != null) pts.add(p);
+      }
+    }
+    if (pts.isEmpty) return null;
+
+    double minX = pts.first.dx, maxX = pts.first.dx, minY = pts.first.dy, maxY = pts.first.dy;
+    for (final p in pts) {
+      minX = p.dx < minX ? p.dx : minX;
+      maxX = p.dx > maxX ? p.dx : maxX;
+      minY = p.dy < minY ? p.dy : minY;
+      maxY = p.dy > maxY ? p.dy : maxY;
+    }
+    final pad = _strokeWidth * 2 + 12;
+    final rect = Rect.fromLTRB(minX - pad, minY - pad, maxX + pad, maxY + pad);
+    const scale = 3.0;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.scale(scale);
+    canvas.translate(-rect.left, -rect.top);
+    _SignaturePainter(_strokes, _inkColor, _strokeWidth).paint(canvas, rect.size);
+    final picture = recorder.endRecording();
+
+    final img = await picture.toImage((rect.width * scale).ceil(), (rect.height * scale).ceil());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    return byteData?.buffer.asUint8List();
   }
 }
 
@@ -162,18 +260,24 @@ class _SignaturePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     for (final stroke in strokes) {
-      final path = Path();
-      bool penDown = false;
-      for (final pt in stroke) {
-        if (pt == null) {
-          penDown = false;
-        } else if (!penDown) {
-          path.moveTo(pt.dx, pt.dy);
-          penDown = true;
-        } else {
-          path.lineTo(pt.dx, pt.dy);
-        }
+      // Collect the non-null points for this stroke.
+      final points = stroke.whereType<Offset>().toList();
+      if (points.isEmpty) continue;
+      if (points.length < 3) {
+        // Too short to smooth — draw a dot / short line.
+        canvas.drawPoints(ui.PointMode.polygon, points, paint);
+        continue;
       }
+      final path = Path()..moveTo(points.first.dx, points.first.dy);
+      // Quadratic beziers through midpoints for a smooth, natural line.
+      for (int i = 1; i < points.length - 1; i++) {
+        final mid = Offset(
+          (points[i].dx + points[i + 1].dx) / 2,
+          (points[i].dy + points[i + 1].dy) / 2,
+        );
+        path.quadraticBezierTo(points[i].dx, points[i].dy, mid.dx, mid.dy);
+      }
+      path.lineTo(points.last.dx, points.last.dy);
       canvas.drawPath(path, paint);
     }
   }

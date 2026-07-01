@@ -100,7 +100,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.REMOVE_BLANK_PAGES]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.REMOVE_BLANK_PAGES], label: 'Removing blank pages'),
           ]);
         },
       ),

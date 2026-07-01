@@ -25,7 +25,10 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   DocumentScanner? _documentScanner;
   DocumentScanningResult? _result;
-  bool _scanning = false;
+  // Which scan card is busy (0 = Scan to PDF, 1 = JPEG, 2 = Searchable), or null
+  // when idle. Only the active card shows a spinner; the rest are just disabled.
+  int? _scanningCard;
+  bool get _busy => _scanningCard != null;
   final TextEditingController _outFileNameC = TextEditingController();
 
   @override
@@ -64,7 +67,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               const BannerAdd(),
             ]),
           ),
-          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF]),
+          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF'),
         ]);
       },
     );
@@ -98,8 +101,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   label: 'Scan to PDF',
                   description: 'Creates a multi-page PDF from scanned pages.',
                   color: theme.colorScheme.primary,
-                  loading: _scanning,
-                  onTap: () => _startScan(DocumentFormat.pdf),
+                  loading: _scanningCard == 0,
+                  enabled: !_busy,
+                  onTap: () => _startScan(DocumentFormat.pdf, 0),
                 ),
               ),
               SizedBox(
@@ -109,8 +113,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   label: 'Scan to JPEG',
                   description: 'Saves each page as a separate JPEG image.',
                   color: const Color(0xFF7B1FA2),
-                  loading: _scanning,
-                  onTap: () => _startScan(DocumentFormat.jpeg),
+                  loading: _scanningCard == 1,
+                  enabled: !_busy,
+                  onTap: () => _startScan(DocumentFormat.jpeg, 1),
                 ),
               ),
               SizedBox(
@@ -120,8 +125,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   label: 'Searchable PDF',
                   description: 'OCR scan — creates a PDF with selectable, searchable text layer.',
                   color: const Color(0xFF00796B),
-                  loading: _scanning,
-                  onTap: () => _startScan(DocumentFormat.pdf),
+                  loading: _scanningCard == 2,
+                  enabled: !_busy,
+                  onTap: () => _startScan(DocumentFormat.pdf, 2),
                 ),
               ),
             ],
@@ -286,9 +292,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   // ── Logic ─────────────────────────────────────────────────────────────────
 
-  Future<void> _startScan(DocumentFormat format) async {
-    if (_scanning) return;
-    setState(() => _scanning = true);
+  Future<void> _startScan(DocumentFormat format, int card) async {
+    if (_busy) return;
+    setState(() => _scanningCard = card);
     try {
       _documentScanner?.close();
       _documentScanner = DocumentScanner(
@@ -303,10 +309,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
       AdsSingleton().dispatch(LoadInterstitialAd());
       setState(() {
         _result = result;
-        _scanning = false;
+        _scanningCard = null;
       });
     } catch (_) {
-      setState(() => _scanning = false);
+      setState(() => _scanningCard = null);
       NotificationService.showSnackbar(text: 'Scan cancelled or failed', color: Colors.red);
     }
   }
@@ -365,6 +371,7 @@ class _ScanCard extends StatelessWidget {
   final String description;
   final Color color;
   final bool loading;
+  final bool enabled;
   final VoidCallback onTap;
 
   const _ScanCard({
@@ -373,16 +380,20 @@ class _ScanCard extends StatelessWidget {
     required this.description,
     required this.color,
     required this.loading,
+    this.enabled = true,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return Opacity(
+      // Dim the non-active cards while a scan is running.
+      opacity: (enabled || loading) ? 1 : 0.5,
+      child: Card(
       clipBehavior: Clip.hardEdge,
       child: InkWell(
-        onTap: loading ? null : onTap,
+        onTap: enabled ? onTap : null,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -415,6 +426,7 @@ class _ScanCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

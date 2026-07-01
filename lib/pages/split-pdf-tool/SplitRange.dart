@@ -81,8 +81,6 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                   OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]??'*/*');
                 }else if(httpState?.error!=null){
                   NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-                }else if(httpState?.loading==true){
-                  NotificationService.showSnackbar(text: "Started Splitting",color: Colors.lightBlue);
                 }
               }
               ,child: Column(

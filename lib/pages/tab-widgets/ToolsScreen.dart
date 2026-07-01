@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/FavoriteToolsService.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/RecentToolsService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Debouncer.dart';
@@ -19,6 +23,13 @@ class _ToolsScreenState extends State<ToolsScreen> {
   String _query = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Warm the favourites cache so cards can render their star synchronously.
+    FavoriteToolsService().load();
+  }
+
+  @override
   void dispose() {
     _debouncer.dispose();
     _searchController.dispose();
@@ -31,28 +42,44 @@ class _ToolsScreenState extends State<ToolsScreen> {
     final searching = _query.trim().isNotEmpty;
     final results = ToolRegistry.search(_query);
 
-    return SafeArea(
+    // Rebuild on favourite changes so stars and the favourites row stay live.
+    return AnimatedBuilder(
+      animation: FavoriteToolsService(),
+      builder: (context, _) => SafeArea(
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
                 children: [
-                  const Text('All Tools',
-                      style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3)),
-                  const SizedBox(width: 8),
-                  Text('( ${ToolRegistry.tools.length} )',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.5))),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        const Text('All Tools',
+                            style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.3)),
+                        const SizedBox(width: 8),
+                        Text('( ${ToolRegistry.tools.length} )',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.5))),
+                      ],
+                    ),
+                  ),
+                  // Quick access to everything tools have produced.
+                  IconButton(
+                    icon: const Icon(Icons.folder_special_outlined),
+                    tooltip: 'Results',
+                    onPressed: () =>
+                        GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
+                  ),
                 ],
               ),
             ),
@@ -91,6 +118,8 @@ class _ToolsScreenState extends State<ToolsScreen> {
             // Flat search results grid.
             _buildToolsGrid(theme, results)
           else ...[
+            // Pinned favourites row (hidden when none).
+            SliverToBoxAdapter(child: _FavoriteToolsRow()),
             // Recently used row (live via RecentToolsService).
             SliverToBoxAdapter(
               child: AnimatedBuilder(
@@ -114,6 +143,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
+      ),
       ),
     );
   }
@@ -148,6 +178,46 @@ class _ToolsScreenState extends State<ToolsScreen> {
           childCount: tools.length,
         ),
       ),
+    );
+  }
+}
+
+/// Horizontal row of the user's pinned favourite tools (hidden when empty).
+/// Toggle a favourite by long-pressing any tool card.
+class _FavoriteToolsRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tools = FavoriteToolsService()
+        .ids
+        .map(ToolRegistry.byId)
+        .whereType<ToolDef>()
+        .toList(growable: false);
+    if (tools.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(children: [
+            Icon(Icons.star, size: 16, color: Colors.amber),
+            SizedBox(width: 6),
+            Text('Favourites',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+        SizedBox(
+          height: 124,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: tools.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) => SizedBox(
+                width: 88,
+                child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -253,11 +323,23 @@ class ToolCard extends StatelessWidget {
 
   const ToolCard({super.key, required this.tool, required this.accentColor});
 
+  Future<void> _toggleFavorite(BuildContext context) async {
+    final nowFav = await FavoriteToolsService().toggle(tool.id);
+    NotificationService.showSnackbar(
+      text: nowFav ? '${tool.name} added to favourites' : '${tool.name} removed from favourites',
+      color: nowFav ? Colors.amber : Colors.blueGrey,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isFav = FavoriteToolsService().isFavorite(tool.id);
     return GestureDetector(
       onTap: () => tool.openPicker(context),
+      // Long-press to pin/unpin from favourites.
+      onLongPress: () => _toggleFavorite(context),
       child: Container(
         decoration: BoxDecoration(
           color: theme.cardColor,
@@ -265,31 +347,84 @@ class ToolCard extends StatelessWidget {
           border: Border.all(color: theme.dividerColor),
         ),
         padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          // Center the icon+label block; the star badge is separately positioned.
+          alignment: Alignment.center,
+          fit: StackFit.expand,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(tool.icon, color: accentColor, size: 26),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  tool.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                      height: 1.3),
+                ),
+              ],
+            ),
+            // Info affordance (top-left) — reveals what the tool does.
+            if (tool.description.isNotEmpty)
+              Positioned(
+                top: -2,
+                left: -2,
+                child: GestureDetector(
+                  onTap: () => _showInfo(context),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(Icons.info_outline, size: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.35)),
+                  ),
+                ),
               ),
-              child: Icon(tool.icon, color: accentColor, size: 26),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              tool.name,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                  height: 1.3),
-            ),
+            // Ad hint (top-right) for tools that require watching an ad. Hint only.
+            if (tool.isHeavy)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Tooltip(
+                  message: 'Requires watching a short ad',
+                  child: Icon(Icons.smart_display_outlined, size: 15, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
+                ),
+              ),
+            if (isFav)
+              const Positioned(
+                bottom: 0,
+                right: 0,
+                child: Icon(Icons.star, size: 14, color: Colors.amber),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(children: [
+          Icon(tool.icon, color: accentColor),
+          const SizedBox(width: 10),
+          Expanded(child: Text(tool.name, style: const TextStyle(fontSize: 17))),
+        ]),
+        content: Text(tool.description, style: const TextStyle(height: 1.5)),
+        actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Got it'))],
       ),
     );
   }

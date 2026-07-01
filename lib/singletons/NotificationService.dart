@@ -9,7 +9,7 @@ class NotificationService {
 
   static get messengerKey => _scaffoldMessengerKey;
 
-  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? showSnackbar({required String text, MaterialColor color = Colors.red, bool showCloseIcon = true,Duration? duration}){
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? showSnackbar({required String text, MaterialColor color = Colors.red, bool showCloseIcon = true,Duration? duration, SnackBarAction? action}){
     _scaffoldMessengerKey.currentState?.clearSnackBars();
     final snackbar = SnackBar(
       content: Text(text,style: TextStyle(color: Colors.white),),
@@ -18,7 +18,9 @@ class NotificationService {
       behavior: SnackBarBehavior.floating,
       showCloseIcon: showCloseIcon,
       closeIconColor: Colors.white,
-      duration: duration ?? const Duration(seconds: 2),
+      // Give the user time to tap an action; otherwise keep it brief.
+      duration: duration ?? (action != null ? const Duration(seconds: 4) : const Duration(seconds: 2)),
+      action: action,
     );
     return _scaffoldMessengerKey.currentState?.showSnackBar(snackbar);
   }

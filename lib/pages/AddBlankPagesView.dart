@@ -54,8 +54,6 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Inserting blank pages...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -118,7 +116,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.ADD_BLANK_PAGES]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.ADD_BLANK_PAGES], label: 'Adding blank pages'),
             ],
           );
         },

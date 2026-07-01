@@ -98,58 +98,45 @@ class _CropPdfViewState extends State<CropPdfView> {
           } else if (s?.error != null) {
             NotificationService.showSnackbar(
                 text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(
-                text: 'Cropping PDF…', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
           return Stack(children: [
             Column(children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextFormField(
-                        controller: _outFileNameC,
-                        decoration: const InputDecoration(
-                          labelText: 'Output File Name',
-                          border: OutlineInputBorder(),
-                        ),
+              // Compact header — filename + hint (fixed, no scroll).
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _outFileNameC,
+                      decoration: const InputDecoration(
+                        labelText: 'Output File Name',
+                        border: OutlineInputBorder(),
+                        isDense: true,
                       ),
-                      const SizedBox(height: 20),
-
-                      Text('Drag handles to set crop margins',
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Blue shaded area will be removed. Drag the handles inward.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.55)),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Visual crop canvas
-                      _loading
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(40),
-                                child: CircularProgressIndicator(),
-                              ),
-                            )
-                          : _buildCropCanvas(theme),
-
-                      const SizedBox(height: 16),
-                      // Numeric readout
-                      _buildMarginReadout(theme),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Drag the blue handles inward — the shaded area is removed.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                    ),
+                  ],
                 ),
               ),
+              // Canvas fills the remaining space; generous margin keeps every
+              // handle fully visible and reachable (no scroll-vs-drag fight).
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(30, 20, 30, 20),
+                        child: _buildCropCanvas(theme),
+                      ),
+              ),
+              _buildMarginReadout(theme),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -163,7 +150,7 @@ class _CropPdfViewState extends State<CropPdfView> {
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.CROP_PDF]),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.CROP_PDF], label: 'Cropping your PDF'),
           ]);
         },
       ),
@@ -172,18 +159,29 @@ class _CropPdfViewState extends State<CropPdfView> {
 
   Widget _buildCropCanvas(ThemeData theme) {
     return LayoutBuilder(builder: (context, constraints) {
-      final canvasW = constraints.maxWidth;
-      // Maintain page aspect ratio in the canvas
-      final canvasH = canvasW * (_pageHeightPt / _pageWidthPt);
+      // Fit the page within the available area (both width AND height) so it
+      // never overflows/scrolls and all handles stay on screen.
+      final pageAspect = _pageWidthPt / _pageHeightPt;
+      double canvasW, canvasH;
+      if (constraints.maxWidth / constraints.maxHeight > pageAspect) {
+        canvasH = constraints.maxHeight;
+        canvasW = canvasH * pageAspect;
+      } else {
+        canvasW = constraints.maxWidth;
+        canvasH = canvasW / pageAspect;
+      }
       final cropColor = theme.colorScheme.primary.withValues(alpha: 0.25);
       const handleColor = Colors.blue;
       const handleThickness = 3.0;
       const handleHitArea = 32.0;
 
-      return SizedBox(
+      return Center(
+        child: SizedBox(
         width: canvasW,
         height: canvasH,
-        child: Stack(children: [
+        // Clip.none so the edge handles (which sit slightly outside the page)
+        // remain visible within the surrounding margin.
+        child: Stack(clipBehavior: Clip.none, children: [
           // Page image
           Positioned.fill(
             child: _pageImage != null
@@ -311,6 +309,7 @@ class _CropPdfViewState extends State<CropPdfView> {
             ),
           ),
         ]),
+      ),
       );
     });
   }

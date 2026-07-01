@@ -23,6 +23,7 @@ class ExtractTextView extends StatefulWidget {
 class _ExtractTextViewState extends State<ExtractTextView> {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
+  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -47,8 +48,6 @@ class _ExtractTextViewState extends State<ExtractTextView> {
             }
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          } else if (s?.loading == true) {
-            NotificationService.showSnackbar(text: 'Extracting text...', color: Colors.lightBlue);
           }
         },
         builder: (context, state) {
@@ -76,7 +75,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.EXTRACT_TEXT]),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.EXTRACT_TEXT], label: 'Extracting text', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
             ],
           );
         },
@@ -85,11 +84,14 @@ class _ExtractTextViewState extends State<ExtractTextView> {
   }
 
   void _onExtract() async {
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
     bloc.add(ExtractTextEvent(
       extractText: ExtractText(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'extracted_text',
-        file: await MultipartFile.fromFile(widget.file.path),
+        file: file,
       ),
+      cancelToken: _cancelToken,
     ));
   }
 
