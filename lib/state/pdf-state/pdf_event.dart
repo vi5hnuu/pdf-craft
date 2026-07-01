@@ -182,6 +182,21 @@ class RemoveMetadataEvent extends PdfEvent {
   const RemoveMetadataEvent({required this.removeMetadata, super.cancelToken});
 }
 
+class ExtractImagesEvent extends PdfEvent {
+  final ExtractImages extractImages;
+  const ExtractImagesEvent({required this.extractImages, super.cancelToken});
+}
+
+class SanitizePdfEvent extends PdfEvent {
+  final SanitizePdf sanitizePdf;
+  const SanitizePdfEvent({required this.sanitizePdf, super.cancelToken});
+}
+
+class SplitBySizeEvent extends PdfEvent {
+  final SplitBySize splitBySize;
+  const SplitBySizeEvent({required this.splitBySize, super.cancelToken});
+}
+
 class FilterImageEvent extends PdfEvent {
   final FilterImage filterImage;
   const FilterImageEvent({required this.filterImage, super.cancelToken});

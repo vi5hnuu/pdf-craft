@@ -21,6 +21,10 @@ class AppRoutes{
   static AppRoute extractPagesRoute=AppRoute(name: 'extract-pages-tool', path: '/extract-pages-tool');
   static AppRoute deletePagesRoute=AppRoute(name: 'delete-pages-tool', path: '/delete-pages-tool');
   static AppRoute removeMetadataRoute=AppRoute(name: 'remove-metadata-tool', path: '/remove-metadata-tool');
+  static AppRoute extractImagesRoute=AppRoute(name: 'extract-images-tool', path: '/extract-images-tool');
+  static AppRoute sanitizePdfRoute=AppRoute(name: 'sanitize-pdf-tool', path: '/sanitize-pdf-tool');
+  static AppRoute splitBySizeRoute=AppRoute(name: 'split-by-size-tool', path: '/split-by-size-tool');
+  static AppRoute reversePagesRoute=AppRoute(name: 'reverse-pages-tool', path: '/reverse-pages-tool');
   static AppRoute pdfToJpgRoute=AppRoute(name: 'pdf-to-jpg-tool', path: '/pdf-to-jpg-tool');
   static AppRoute imageToPdfRoute=AppRoute(name: 'image-to-pdf-tool', path: '/image-to-pdf-tool');
   static AppRoute pageNumbersRoute=AppRoute(name: 'page-numbers-tool', path: '/page-numbers-tool');

@@ -35,6 +35,10 @@ import 'package:pdf_craft/pages/OrganizePagesView.dart';
 import 'package:pdf_craft/pages/ExtractPagesView.dart';
 import 'package:pdf_craft/pages/DeletePagesView.dart';
 import 'package:pdf_craft/pages/RemoveMetadataView.dart';
+import 'package:pdf_craft/pages/ExtractImagesView.dart';
+import 'package:pdf_craft/pages/SanitizePdfView.dart';
+import 'package:pdf_craft/pages/SplitBySizeView.dart';
+import 'package:pdf_craft/pages/ReversePagesView.dart';
 import 'package:pdf_craft/pages/IncomingFilesScreen.dart';
 import 'package:pdf_craft/services/IncomingFilesChannel.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -638,6 +642,38 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.removeMetadataRoute.path,
         name: AppRoutes.removeMetadataRoute.name,
         builder: (context, state) => RemoveMetadataView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Extract Images — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.extractImagesRoute.path,
+        name: AppRoutes.extractImagesRoute.name,
+        builder: (context, state) => ExtractImagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Sanitize PDF — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.sanitizePdfRoute.path,
+        name: AppRoutes.sanitizePdfRoute.name,
+        builder: (context, state) => SanitizePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Split by Size — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.splitBySizeRoute.path,
+        name: AppRoutes.splitBySizeRoute.name,
+        builder: (context, state) => SplitBySizeView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Reverse Page Order — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.reversePagesRoute.path,
+        name: AppRoutes.reversePagesRoute.name,
+        builder: (context, state) => ReversePagesView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // PDF Compare — two files via multiSelect; extra has {'files': [file1, file2]}
       GoRoute(

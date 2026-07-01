@@ -37,6 +37,9 @@ import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
 import 'package:pdf_craft/models/request/create-form.dart';
 import 'package:pdf_craft/models/request/remove-metadata.dart';
+import 'package:pdf_craft/models/request/extract-images.dart';
+import 'package:pdf_craft/models/request/sanitize-pdf.dart';
+import 'package:pdf_craft/models/request/split-by-size.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -261,6 +264,24 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit: emit, key: HttpStates.REMOVE_METADATA,
       call: (p) => _pdfService.removeMetadata(req: e.removeMetadata, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to remove metadata',
+    ));
+
+    on<ExtractImagesEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.EXTRACT_IMAGES,
+      call: (p) => _pdfService.extractImages(req: e.extractImages, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to extract images',
+    ));
+
+    on<SanitizePdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.SANITIZE_PDF,
+      call: (p) => _pdfService.sanitizePdf(req: e.sanitizePdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to sanitize PDF',
+    ));
+
+    on<SplitBySizeEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.SPLIT_BY_SIZE,
+      call: (p) => _pdfService.splitBySize(req: e.splitBySize, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to split PDF',
     ));
 
     on<FilterImageEvent>((e, emit) => _handleImage(
