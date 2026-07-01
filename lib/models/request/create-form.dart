@@ -14,6 +14,7 @@ class FormFieldSpec {
   final String? exportValue;   // radio option value
   final double? fontSize;
   final bool? required;
+  final bool? checked; // checkbox / radio default-on
 
   FormFieldSpec({
     required this.type,
@@ -28,6 +29,7 @@ class FormFieldSpec {
     this.exportValue,
     this.fontSize,
     this.required,
+    this.checked,
   });
 
   Map<String, dynamic> toJson() => {
@@ -43,6 +45,7 @@ class FormFieldSpec {
         if (exportValue != null) 'export_value': exportValue,
         if (fontSize != null) 'font_size': fontSize,
         if (required != null) 'required': required,
+        if (checked != null) 'checked': checked,
       };
 }
 

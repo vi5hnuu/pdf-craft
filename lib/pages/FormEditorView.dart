@@ -43,6 +43,17 @@ extension FieldTypeX on FieldType {
         FieldType.date => 'date',
         FieldType.signature => 'signature',
       };
+
+  // ── Per-type config (single source of truth — adding a type touches only here) ──
+  Size get defaultSize => switch (this) {
+        FieldType.multiline => const Size(0.42, 0.12),
+        FieldType.checkbox || FieldType.radio => const Size(0.05, 0.032),
+        FieldType.signature => const Size(0.32, 0.08),
+        _ => const Size(0.36, 0.045),
+      };
+  bool get isToggle => this == FieldType.checkbox || this == FieldType.radio;
+  bool get hasOptions => this == FieldType.dropdown;
+  bool get hasValue => this == FieldType.text || this == FieldType.multiline || this == FieldType.date;
 }
 
 /// A placed form field. [rect] is stored in **fractional** page coordinates
@@ -58,6 +69,7 @@ class _Field {
   String exportValue = '';
   double fontSize = 0;
   bool required = false;
+  bool checked = false; // checkbox/radio prefill (on by default)
 
   _Field({required this.type, required this.rect, required this.name}) : id = UniqueKey().toString();
 }
@@ -144,12 +156,7 @@ class _FormEditorViewState extends State<FormEditorView> {
   /// Adds a field of [type] near the page centre, cascaded so successive fields
   /// don't stack exactly on top of one another, then selects it.
   void _addField(FieldType type) {
-    final size = switch (type) {
-      FieldType.multiline => const Size(0.42, 0.12),
-      FieldType.checkbox || FieldType.radio => const Size(0.05, 0.032),
-      FieldType.signature => const Size(0.32, 0.08),
-      _ => const Size(0.36, 0.045),
-    };
+    final size = type.defaultSize;
     final step = _fields.length % 6;
     final left = (0.12 + step * 0.03).clamp(0.0, 1 - size.width);
     final top = (0.18 + step * 0.05).clamp(0.0, 1 - size.height);
@@ -158,6 +165,48 @@ class _FormEditorViewState extends State<FormEditorView> {
       _fields.add(field);
       _selectedId = field.id;
     });
+  }
+
+  /// Adds a group of linked [type] (radio or checkbox) options in a neat column
+  /// from a list of labels. Radios share one group name; checkboxes share a base.
+  void _addGroup(FieldType type, List<String> labels) {
+    final size = type.defaultSize;
+    final groupName = '${type.wire}_group_${_autoName++}';
+    setState(() {
+      for (int i = 0; i < labels.length; i++) {
+        final top = (0.2 + i * (size.height + 0.03)).clamp(0.0, 1 - size.height);
+        final f = _Field(type: type, rect: Rect.fromLTWH(0.12, top, size.width, size.height), name: '${groupName}_${i + 1}');
+        if (type == FieldType.radio) {
+          f.group = groupName;
+          f.exportValue = labels[i];
+        }
+        _fields.add(f);
+        if (i == labels.length - 1) _selectedId = f.id;
+      }
+    });
+  }
+
+  Future<void> _promptGroup(FieldType type) async {
+    final controller = TextEditingController(text: 'Option 1, Option 2, Option 3');
+    final labels = await showDialog<List<String>>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('${type.label} group'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('Enter option labels, separated by commas.', style: TextStyle(fontSize: 13)),
+          const SizedBox(height: 12),
+          TextField(controller: controller, autofocus: true, decoration: const InputDecoration(border: OutlineInputBorder())),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    if (labels != null && labels.isNotEmpty) _addGroup(type, labels);
   }
 
   @override
@@ -488,10 +537,9 @@ class _FormEditorViewState extends State<FormEditorView> {
           value: f.value.isEmpty ? null : f.value,
           options: f.type == FieldType.dropdown ? f.options : null,
           exportValue: f.type == FieldType.radio ? (f.exportValue.isEmpty ? f.name : f.exportValue) : null,
-          fontSize: (f.type == FieldType.text || f.type == FieldType.multiline || f.type == FieldType.date) && f.fontSize > 0
-              ? f.fontSize
-              : null,
+          fontSize: f.type.hasValue && f.fontSize > 0 ? f.fontSize : null,
           required: f.required ? true : null,
+          checked: f.type.isToggle ? f.checked : null,
         ));
       }
     });
@@ -527,6 +575,35 @@ class _FormEditorViewState extends State<FormEditorView> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             children: [
               for (final t in FieldType.values) _paletteItem(theme, t),
+              _paletteGroupItem(theme, FieldType.radio, 'Radio group', Icons.radio_button_checked),
+              _paletteGroupItem(theme, FieldType.checkbox, 'Check group', Icons.checklist),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paletteGroupItem(ThemeData theme, FieldType t, String label, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _promptGroup(t),
+        child: Container(
+          width: 66,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 22, color: theme.colorScheme.secondary),
+              const SizedBox(height: 4),
+              Text(label, style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
             ],
           ),
         ),
@@ -603,7 +680,6 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final f = widget.field;
-    final isText = f.type == FieldType.text || f.type == FieldType.multiline || f.type == FieldType.date;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -618,13 +694,20 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
           _field(_group, 'Radio group', (v) => f.group = v),
           _field(_export, 'Option value', (v) => f.exportValue = v),
         ],
-        if (f.type == FieldType.dropdown)
+        if (f.type.hasOptions)
           _field(_options, 'Options (comma-separated)',
               (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
-        if (isText) _field(_value, 'Default value', (v) => f.value = v),
-        if (isText)
+        if (f.type.hasValue) _field(_value, 'Default value', (v) => f.value = v),
+        if (f.type.hasValue)
           _field(_fontSize, 'Font size (0 = auto)', (v) => f.fontSize = double.tryParse(v) ?? 0,
               keyboard: TextInputType.number),
+        if (f.type.isToggle)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(f.type == FieldType.radio ? 'Selected by default' : 'Checked by default'),
+            value: f.checked,
+            onChanged: (v) => setState(() => f.checked = v),
+          ),
         const SizedBox(height: 4),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
