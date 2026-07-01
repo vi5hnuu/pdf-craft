@@ -417,14 +417,14 @@ class ToolCard extends StatelessWidget {
   void _showInfo(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Row(children: [
           Icon(tool.icon, color: accentColor),
           const SizedBox(width: 10),
           Expanded(child: Text(tool.name, style: const TextStyle(fontSize: 17))),
         ]),
         content: Text(tool.description, style: const TextStyle(height: 1.5)),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Got it'))],
+        actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Got it'))],
       ),
     );
   }
