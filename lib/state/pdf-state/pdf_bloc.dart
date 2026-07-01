@@ -48,6 +48,9 @@ import 'package:pdf_craft/models/request/extract-embedded-files.dart';
 import 'package:pdf_craft/models/request/analyze-pdf.dart';
 import 'package:pdf_craft/models/request/replace-pages.dart';
 import 'package:pdf_craft/models/request/extract-fonts.dart';
+import 'package:pdf_craft/models/request/rotate-image.dart';
+import 'package:pdf_craft/models/request/flip-image.dart';
+import 'package:pdf_craft/models/request/border-image.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -225,6 +228,24 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit: emit,
       call: (p) => _pdfService.resizeImage(req: e.resizeImage, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to resize image',
+    ));
+
+    on<RotateImageEvent>((e, emit) => _handleImage(
+      emit: emit, key: HttpStates.ROTATE_IMAGE,
+      call: (p) => _pdfService.rotateImage(req: e.rotateImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to rotate image',
+    ));
+
+    on<FlipImageEvent>((e, emit) => _handleImage(
+      emit: emit, key: HttpStates.FLIP_IMAGE,
+      call: (p) => _pdfService.flipImage(req: e.flipImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to flip image',
+    ));
+
+    on<BorderImageEvent>((e, emit) => _handleImage(
+      emit: emit, key: HttpStates.BORDER_IMAGE,
+      call: (p) => _pdfService.borderImage(req: e.borderImage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to add border',
     ));
 
     on<PdfToOfficeEvent>((e, emit) {

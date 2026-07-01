@@ -43,6 +43,9 @@ class HttpStates{
   static const String ANALYZE_PDF="ANALYZE_PDF";
   static const String REPLACE_PAGES="REPLACE_PAGES";
   static const String EXTRACT_FONTS="EXTRACT_FONTS";
+  static const String ROTATE_IMAGE="ROTATE_IMAGE";
+  static const String FLIP_IMAGE="FLIP_IMAGE";
+  static const String BORDER_IMAGE="BORDER_IMAGE";
   static const String GET_BOOKMARKS="GET_BOOKMARKS";
   static const String EDIT_BOOKMARKS="EDIT_BOOKMARKS";
   static const String FILTER_IMAGE="FILTER_IMAGE";

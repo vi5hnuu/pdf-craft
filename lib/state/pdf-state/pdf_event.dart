@@ -147,6 +147,21 @@ class ResizeImageEvent extends PdfEvent {
   const ResizeImageEvent({required this.resizeImage, super.cancelToken});
 }
 
+class RotateImageEvent extends PdfEvent {
+  final RotateImage rotateImage;
+  const RotateImageEvent({required this.rotateImage, super.cancelToken});
+}
+
+class FlipImageEvent extends PdfEvent {
+  final FlipImage flipImage;
+  const FlipImageEvent({required this.flipImage, super.cancelToken});
+}
+
+class BorderImageEvent extends PdfEvent {
+  final BorderImage borderImage;
+  const BorderImageEvent({required this.borderImage, super.cancelToken});
+}
+
 class PdfToOfficeEvent extends PdfEvent {
   final PdfToOffice pdfToOffice;
   const PdfToOfficeEvent({required this.pdfToOffice, super.cancelToken});

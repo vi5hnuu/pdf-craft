@@ -42,6 +42,9 @@ import 'package:pdf_craft/models/request/extract-embedded-files.dart';
 import 'package:pdf_craft/models/request/analyze-pdf.dart';
 import 'package:pdf_craft/models/request/replace-pages.dart';
 import 'package:pdf_craft/models/request/extract-fonts.dart';
+import 'package:pdf_craft/models/request/rotate-image.dart';
+import 'package:pdf_craft/models/request/flip-image.dart';
+import 'package:pdf_craft/models/request/border-image.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -89,6 +92,9 @@ class PdfService {
   static String get _convertToJpg => "${Constants.baseUrl}/image-studio/convert-to-jpg";
   static String get _convertFromJpg => "${Constants.baseUrl}/image-studio/convert-from-jpg";
   static String get _resizeImage => "${Constants.baseUrl}/image-studio/resize-image";
+  static String get _rotateImage => "${Constants.baseUrl}/image-studio/rotate-image";
+  static String get _flipImage => "${Constants.baseUrl}/image-studio/flip-image";
+  static String get _borderImage => "${Constants.baseUrl}/image-studio/border-image";
   static String get _mergePdf => "${Constants.baseUrl}/pdf-studio/merge-pdf";
   static String get _reorderPdf => "${Constants.baseUrl}/pdf-studio/reorder-pdf";
   static String get _splitPdf => "${Constants.baseUrl}/pdf-studio/split-pdf";
@@ -212,6 +218,18 @@ class PdfService {
 
   Future<Response<Uint8List>> resizeImage({required ResizeImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_resizeImage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> rotateImage({required RotateImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_rotateImage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> flipImage({required FlipImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_flipImage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> borderImage({required BorderImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_borderImage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
   Future<Response<Uint8List>> pdfToWord({required PdfToOffice req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {

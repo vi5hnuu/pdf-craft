@@ -47,6 +47,9 @@ import 'package:pdf_craft/pages/ExtractEmbeddedFilesView.dart';
 import 'package:pdf_craft/pages/AnalyzePdfView.dart';
 import 'package:pdf_craft/pages/ReplacePagesView.dart';
 import 'package:pdf_craft/pages/ExtractFontsView.dart';
+import 'package:pdf_craft/pages/RotateImageView.dart';
+import 'package:pdf_craft/pages/FlipImageView.dart';
+import 'package:pdf_craft/pages/AddBorderView.dart';
 import 'package:pdf_craft/pages/IncomingFilesScreen.dart';
 import 'package:pdf_craft/services/IncomingFilesChannel.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -754,6 +757,30 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.extractFontsRoute.path,
         name: AppRoutes.extractFontsRoute.name,
         builder: (context, state) => ExtractFontsView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Rotate Image — single image
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.rotateImageRoute.path,
+        name: AppRoutes.rotateImageRoute.name,
+        builder: (context, state) => RotateImageView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Flip Image — single image
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.flipImageRoute.path,
+        name: AppRoutes.flipImageRoute.name,
+        builder: (context, state) => FlipImageView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Add Border — single image
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.addBorderRoute.path,
+        name: AppRoutes.addBorderRoute.name,
+        builder: (context, state) => AddBorderView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // PDF Compare — two files via multiSelect; extra has {'files': [file1, file2]}
       GoRoute(

@@ -213,6 +213,9 @@ class ToolRegistry {
     ToolDef(id: 'img-from-jpg', name: 'Convert from JPG', icon: Icons.swap_horiz, category: ToolCategories.imageStudio, route: AppRoutes.imageStudioRoute, extensions: ['.jpg', '.jpeg'], extra: {'op': ImageStudioOp.convertFromJpg}),
     ToolDef(id: 'img-resize', name: 'Resize Image', icon: Icons.photo_size_select_large, category: ToolCategories.imageStudio, route: AppRoutes.imageStudioRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp'], extra: {'op': ImageStudioOp.resize}),
     ToolDef(id: 'img-filter', name: 'Image Filters', icon: Icons.auto_fix_high, category: ToolCategories.imageStudio, route: AppRoutes.imageStudioRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp'], extra: {'op': ImageStudioOp.filter}),
+    ToolDef(id: 'img-rotate', name: 'Rotate Image', icon: Icons.rotate_right, category: ToolCategories.imageStudio, route: AppRoutes.rotateImageRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.webp'], isHeavy: true),
+    ToolDef(id: 'img-flip', name: 'Flip Image', icon: Icons.flip, category: ToolCategories.imageStudio, route: AppRoutes.flipImageRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.webp'], isHeavy: true),
+    ToolDef(id: 'img-border', name: 'Add Border', icon: Icons.border_outer, category: ToolCategories.imageStudio, route: AppRoutes.addBorderRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.webp'], isHeavy: true),
   ];
 
   /// Lookup by stable id (for recents). Returns null if not found.

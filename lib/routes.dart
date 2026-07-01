@@ -33,6 +33,9 @@ class AppRoutes{
   static AppRoute analyzePdfRoute=AppRoute(name: 'analyze-pdf-tool', path: '/analyze-pdf-tool');
   static AppRoute replacePagesRoute=AppRoute(name: 'replace-pages-tool', path: '/replace-pages-tool');
   static AppRoute extractFontsRoute=AppRoute(name: 'extract-fonts-tool', path: '/extract-fonts-tool');
+  static AppRoute rotateImageRoute=AppRoute(name: 'rotate-image-tool', path: '/rotate-image-tool');
+  static AppRoute flipImageRoute=AppRoute(name: 'flip-image-tool', path: '/flip-image-tool');
+  static AppRoute addBorderRoute=AppRoute(name: 'add-border-tool', path: '/add-border-tool');
   static AppRoute pdfToJpgRoute=AppRoute(name: 'pdf-to-jpg-tool', path: '/pdf-to-jpg-tool');
   static AppRoute imageToPdfRoute=AppRoute(name: 'image-to-pdf-tool', path: '/image-to-pdf-tool');
   static AppRoute pageNumbersRoute=AppRoute(name: 'page-numbers-tool', path: '/page-numbers-tool');
