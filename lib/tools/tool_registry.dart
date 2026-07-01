@@ -157,7 +157,7 @@ class ToolRegistry {
     ToolDef(id: 'qr-stamp', name: 'QR Stamp', icon: Icons.qr_code_2, category: ToolCategories.pdf, route: AppRoutes.qrStampPdfRoute, extensions: _pdf),
     ToolDef(id: 'image-overlay', name: 'Image Overlay', icon: Icons.image_outlined, category: ToolCategories.pdf, route: AppRoutes.imageOverlayRoute, extensions: _pdf),
     ToolDef(id: 'annotate', name: 'Annotate PDF', icon: Icons.draw_outlined, category: ToolCategories.pdf, route: AppRoutes.annotatePdfRoute, extensions: _pdf),
-    ToolDef(id: 'fill-form', name: 'Fill PDF Form', icon: Icons.edit_document, category: ToolCategories.pdf, route: AppRoutes.formPdfRoute, extensions: _pdf),
+    ToolDef(id: 'fill-form', name: 'Form Editor', icon: Icons.ballot_outlined, category: ToolCategories.pdf, route: AppRoutes.formPdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'pdf-info', name: 'PDF Info', icon: Icons.info_outline, category: ToolCategories.pdf, route: AppRoutes.pdfInfoRoute, extensions: _pdf),
     ToolDef(id: 'sign', name: 'Sign PDF', icon: Icons.draw, category: ToolCategories.pdf, route: AppRoutes.signPdfRoute, extensions: _pdf),
     ToolDef(id: 'redact', name: 'Redact PDF', icon: Icons.hide_source, category: ToolCategories.pdf, route: AppRoutes.redactPdfRoute, extensions: _pdf),

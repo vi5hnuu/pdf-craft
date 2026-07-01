@@ -35,6 +35,7 @@ import 'package:pdf_craft/models/request/redact-pdf.dart';
 import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
+import 'package:pdf_craft/models/request/create-form.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -247,6 +248,12 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit: emit, key: HttpStates.EDIT_BOOKMARKS,
       call: (p) => _pdfService.editBookmarks(req: e.editBookmarks, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to edit bookmarks',
+    ));
+
+    on<CreateFormEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.CREATE_FORM,
+      call: (p) => _pdfService.createForm(req: e.createForm, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to create form',
     ));
 
     on<FilterImageEvent>((e, emit) => _handleImage(

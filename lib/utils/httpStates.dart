@@ -30,6 +30,7 @@ class HttpStates{
 
   static const String REDACT_PDF="REDACT_PDF";
   static const String DUPLICATE_PAGES="DUPLICATE_PAGES";
+  static const String CREATE_FORM="CREATE_FORM";
   static const String GET_BOOKMARKS="GET_BOOKMARKS";
   static const String EDIT_BOOKMARKS="EDIT_BOOKMARKS";
   static const String FILTER_IMAGE="FILTER_IMAGE";

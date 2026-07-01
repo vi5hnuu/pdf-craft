@@ -41,7 +41,7 @@ import 'package:pdf_craft/pages/SplashScreen.dart';
 import 'package:pdf_craft/pages/StampPdfView.dart';
 import 'package:pdf_craft/pages/QrStampPdfView.dart';
 import 'package:pdf_craft/pages/AnnotatePdfView.dart';
-import 'package:pdf_craft/pages/FormPdfView.dart';
+import 'package:pdf_craft/pages/FormEditorView.dart';
 import 'package:pdf_craft/pages/PlaceImageView.dart';
 import 'package:pdf_craft/pages/ImageStudioView.dart';
 import 'package:pdf_craft/pages/PdfToOfficeView.dart';
@@ -468,7 +468,7 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.formPdfRoute.path,
         name: AppRoutes.formPdfRoute.name,
         builder: (context, state) =>
-            FormPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+            FormEditorView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // Used by QR Stamp: extra is { 'file': File, 'imageBytes': Uint8List, 'title': String }
       GoRoute(

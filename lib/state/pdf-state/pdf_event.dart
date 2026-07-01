@@ -172,6 +172,11 @@ class EditBookmarksEvent extends PdfEvent {
   const EditBookmarksEvent({required this.editBookmarks, super.cancelToken});
 }
 
+class CreateFormEvent extends PdfEvent {
+  final CreateForm createForm;
+  const CreateFormEvent({required this.createForm, super.cancelToken});
+}
+
 class FilterImageEvent extends PdfEvent {
   final FilterImage filterImage;
   const FilterImageEvent({required this.filterImage, super.cancelToken});
