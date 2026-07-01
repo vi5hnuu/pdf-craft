@@ -171,7 +171,32 @@ class _PdfPreviewState extends State<PdfPreview> {
         ],
       ),
       body: _buildBody(theme, primary),
+      // A guaranteed way back to original size — pinch-out can occasionally
+      // stall just above the fit scale, so surface a reset control when zoomed.
+      floatingActionButton: _controller == null
+          ? null
+          : ValueListenableBuilder(
+              valueListenable: _controller!,
+              builder: (context, _, __) {
+                final zoomedIn = _controller!.zoomRatio > 1.05;
+                if (!zoomedIn) return const SizedBox.shrink();
+                return FloatingActionButton.small(
+                  heroTag: 'resetZoom',
+                  tooltip: 'Fit to screen',
+                  onPressed: _resetZoom,
+                  child: const Icon(Icons.zoom_out_map),
+                );
+              },
+            ),
     );
+  }
+
+  /// Animates the viewer back to the current page's fit scale.
+  void _resetZoom() {
+    final c = _controller;
+    if (c == null) return;
+    final fit = c.calculatePageFitMatrix(pageNumber: c.page);
+    if (fit != null) c.goTo(destination: fit);
   }
 
   Widget _buildBody(ThemeData theme, Color primary) {
@@ -213,10 +238,15 @@ class _PdfPreviewState extends State<PdfPreview> {
       ),
     );
 
-    // Always wrap in ColorFiltered so PdfViewPinch is never disposed/recreated on toggle
-    return ColorFiltered(
+    // Double-tap resets zoom to fit (only claims the double-tap gesture, so
+    // pinch/pan still reach the viewer). Always wrap in ColorFiltered so
+    // PdfViewPinch is never disposed/recreated on the night-mode toggle.
+    return GestureDetector(
+      onDoubleTap: _resetZoom,
+      child: ColorFiltered(
       colorFilter: ColorFilter.matrix(_nightMode ? _invertMatrix : _identityMatrix),
       child: viewer,
+      ),
     );
   }
 
