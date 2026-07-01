@@ -36,6 +36,7 @@ import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
 import 'package:pdf_craft/models/request/create-form.dart';
+import 'package:pdf_craft/models/request/remove-metadata.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -254,6 +255,12 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit: emit, key: HttpStates.CREATE_FORM,
       call: (p) => _pdfService.createForm(req: e.createForm, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to create form',
+    ));
+
+    on<RemoveMetadataEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.REMOVE_METADATA,
+      call: (p) => _pdfService.removeMetadata(req: e.removeMetadata, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to remove metadata',
     ));
 
     on<FilterImageEvent>((e, emit) => _handleImage(

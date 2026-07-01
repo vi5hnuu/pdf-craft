@@ -177,6 +177,11 @@ class CreateFormEvent extends PdfEvent {
   const CreateFormEvent({required this.createForm, super.cancelToken});
 }
 
+class RemoveMetadataEvent extends PdfEvent {
+  final RemoveMetadata removeMetadata;
+  const RemoveMetadataEvent({required this.removeMetadata, super.cancelToken});
+}
+
 class FilterImageEvent extends PdfEvent {
   final FilterImage filterImage;
   const FilterImageEvent({required this.filterImage, super.cancelToken});

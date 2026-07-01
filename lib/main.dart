@@ -32,6 +32,9 @@ import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/RecentsScreen.dart';
 import 'package:pdf_craft/pages/ResultsScreen.dart';
 import 'package:pdf_craft/pages/OrganizePagesView.dart';
+import 'package:pdf_craft/pages/ExtractPagesView.dart';
+import 'package:pdf_craft/pages/DeletePagesView.dart';
+import 'package:pdf_craft/pages/RemoveMetadataView.dart';
 import 'package:pdf_craft/pages/IncomingFilesScreen.dart';
 import 'package:pdf_craft/services/IncomingFilesChannel.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -611,6 +614,30 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.organizePagesRoute.path,
         name: AppRoutes.organizePagesRoute.name,
         builder: (context, state) => OrganizePagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Extract Pages — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.extractPagesRoute.path,
+        name: AppRoutes.extractPagesRoute.name,
+        builder: (context, state) => ExtractPagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Delete Pages — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.deletePagesRoute.path,
+        name: AppRoutes.deletePagesRoute.name,
+        builder: (context, state) => DeletePagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Remove Metadata — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.removeMetadataRoute.path,
+        name: AppRoutes.removeMetadataRoute.name,
+        builder: (context, state) => RemoveMetadataView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // PDF Compare — two files via multiSelect; extra has {'files': [file1, file2]}
       GoRoute(

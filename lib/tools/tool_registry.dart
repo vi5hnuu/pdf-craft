@@ -149,6 +149,8 @@ class ToolRegistry {
     ToolDef(id: 'split', name: 'Split PDF', icon: Icons.call_split, category: ToolCategories.pdf, route: AppRoutes.splitPdfRoute, extensions: _pdf),
     ToolDef(id: 'reorder', name: 'Reorder Pages', icon: Icons.swap_vert, category: ToolCategories.pdf, route: AppRoutes.reorderPdfPagesRoute, extensions: _pdf),
     ToolDef(id: 'organize', name: 'Organize Pages', icon: Icons.dashboard_customize_outlined, category: ToolCategories.pdf, route: AppRoutes.organizePagesRoute, extensions: _pdf),
+    ToolDef(id: 'extract-pages', name: 'Extract Pages', icon: Icons.content_cut, category: ToolCategories.pdf, route: AppRoutes.extractPagesRoute, extensions: _pdf),
+    ToolDef(id: 'delete-pages', name: 'Delete Pages', icon: Icons.delete_outline, category: ToolCategories.pdf, route: AppRoutes.deletePagesRoute, extensions: _pdf),
     ToolDef(id: 'rotate', name: 'Rotate PDF', icon: Icons.rotate_right, category: ToolCategories.pdf, route: AppRoutes.rotatePdfRoute, extensions: _pdf),
     ToolDef(id: 'page-numbers', name: 'Page Numbers', icon: Icons.format_list_numbered, category: ToolCategories.pdf, route: AppRoutes.pageNumbersRoute, extensions: _pdf),
     ToolDef(id: 'crop', name: 'Crop PDF', icon: Icons.crop, category: ToolCategories.pdf, route: AppRoutes.cropPdfRoute, extensions: _pdf),
@@ -188,6 +190,7 @@ class ToolRegistry {
     ToolDef(id: 'unprotect', name: 'Unprotect PDF', icon: Icons.lock_open, category: ToolCategories.security, route: AppRoutes.unprotectPdfRoute, extensions: _pdf),
     ToolDef(id: 'repair', name: 'Repair PDF', icon: Icons.build_circle_outlined, category: ToolCategories.security, route: AppRoutes.repairPdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'flatten', name: 'Flatten PDF', icon: Icons.layers_clear, category: ToolCategories.security, route: AppRoutes.flattenPdfRoute, extensions: _pdf),
+    ToolDef(id: 'remove-metadata', name: 'Remove Metadata', icon: Icons.cleaning_services_outlined, category: ToolCategories.security, route: AppRoutes.removeMetadataRoute, extensions: _pdf),
 
     // ---- Batch ----
     ToolDef(id: 'batch', name: 'Batch Process', icon: Icons.layers, category: ToolCategories.batch, route: AppRoutes.batchProcessRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: null, isHeavy: true),

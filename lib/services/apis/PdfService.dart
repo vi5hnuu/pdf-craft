@@ -30,6 +30,7 @@ import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
 import 'package:pdf_craft/models/request/create-form.dart';
+import 'package:pdf_craft/models/request/remove-metadata.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -45,6 +46,7 @@ class PdfService {
   static String get _duplicatePages => "${Constants.baseUrl}/pdf-studio/duplicate-pages";
   static String get _getBookmarks => "${Constants.baseUrl}/pdf-studio/get-bookmarks";
   static String get _createForm => "${Constants.baseUrl}/pdf-studio/create-form";
+  static String get _removeMetadata => "${Constants.baseUrl}/pdf-studio/remove-metadata";
   static String get _editBookmarks => "${Constants.baseUrl}/pdf-studio/edit-bookmarks";
   static String get _filterImage => "${Constants.baseUrl}/image-studio/filter-image";
   static String get _removeBlankPages => "${Constants.baseUrl}/pdf-studio/remove-blank-pages";
@@ -221,6 +223,10 @@ class PdfService {
 
   Future<Response<Uint8List>> createForm({required CreateForm req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_createForm, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> removeMetadata({required RemoveMetadata req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_removeMetadata, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
   Future<Response<Uint8List>> filterImage({required FilterImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
