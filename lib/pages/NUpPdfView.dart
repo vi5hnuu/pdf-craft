@@ -113,15 +113,22 @@ class _NUpPdfViewState extends State<NUpPdfView> {
             ),
           ),
           child: Column(children: [
-            Icon(icon, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurface, size: 32),
+            // On a primaryContainer surface the correct foreground is
+            // onPrimaryContainer — using `primary` here made the icon wash out.
+            Icon(icon,
+                color: selected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurface,
+                size: 32),
             const SizedBox(height: 8),
             Text(title, style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: selected ? theme.colorScheme.primary : null,
+              color: selected ? theme.colorScheme.onPrimaryContainer : null,
             )),
             const SizedBox(height: 4),
             Text(subtitle, textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                style: theme.textTheme.bodySmall?.copyWith(
+                    color: selected
+                        ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7)
+                        : theme.colorScheme.onSurfaceVariant)),
           ]),
         ),
       ),
