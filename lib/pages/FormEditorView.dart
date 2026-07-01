@@ -15,7 +15,7 @@ import 'package:pdfx/pdfx.dart';
 
 enum FieldType { text, multiline, checkbox, radio, dropdown, date, signature }
 
-extension on FieldType {
+extension FieldTypeX on FieldType {
   String get label => switch (this) {
         FieldType.text => 'Text',
         FieldType.multiline => 'Paragraph',
@@ -54,8 +54,8 @@ class _Field {
   String name;
   String value = '';
   List<String> options = ['Option 1', 'Option 2'];
-  String group = 'group1';       // radio group
-  String exportValue = '';       // radio option value
+  String group = 'group1';
+  String exportValue = '';
   double fontSize = 0;
   bool required = false;
 
@@ -63,8 +63,8 @@ class _Field {
 }
 
 /// Full PDF form builder: place text / paragraph / checkbox / radio / dropdown /
-/// date / signature fields on any page, drag & resize them, edit their
-/// properties, zoom in for precision, then export a **real fillable** PDF.
+/// date / signature fields on any page, drag, resize & edit them, zoom in for
+/// precision, then export a **real fillable** PDF.
 class FormEditorView extends StatefulWidget {
   final File file;
   const FormEditorView({super.key, required this.file});
@@ -80,12 +80,10 @@ class _FormEditorViewState extends State<FormEditorView> {
   PdfPageImage? _pageImage;
   bool _loadingPage = true;
 
-  // Per-page fields and per-page PDF-point size (for coordinate conversion).
   final Map<int, List<_Field>> _pageFields = {};
   final Map<int, Size> _pagePoints = {};
   List<_Field> get _fields => _pageFields[_currentPage] ??= [];
 
-  FieldType _tool = FieldType.text;
   String? _selectedId;
   int _autoName = 1;
 
@@ -141,20 +139,21 @@ class _FormEditorViewState extends State<FormEditorView> {
     return null;
   }
 
-  void _addField() {
-    // Sensible default sizes (fractions of the page) per field type.
-    final size = switch (_tool) {
+  int get _totalFields => _pageFields.values.fold(0, (a, b) => a + b.length);
+
+  /// Adds a field of [type] near the page centre, cascaded so successive fields
+  /// don't stack exactly on top of one another, then selects it.
+  void _addField(FieldType type) {
+    final size = switch (type) {
       FieldType.multiline => const Size(0.42, 0.12),
       FieldType.checkbox || FieldType.radio => const Size(0.05, 0.032),
       FieldType.signature => const Size(0.32, 0.08),
       _ => const Size(0.36, 0.045),
     };
-    final rect = Rect.fromLTWH(0.5 - size.width / 2, 0.44, size.width, size.height);
-    final field = _Field(
-      type: _tool,
-      rect: rect,
-      name: '${_tool.wire}_${_autoName++}',
-    );
+    final step = _fields.length % 6;
+    final left = (0.12 + step * 0.03).clamp(0.0, 1 - size.width);
+    final top = (0.18 + step * 0.05).clamp(0.0, 1 - size.height);
+    final field = _Field(type: type, rect: Rect.fromLTWH(left, top, size.width, size.height), name: '${type.wire}_${_autoName++}');
     setState(() {
       _fields.add(field);
       _selectedId = field.id;
@@ -166,12 +165,27 @@ class _FormEditorViewState extends State<FormEditorView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Form Editor${_totalPages > 1 ? ' — P.$_currentPage/$_totalPages' : ''}'),
+        title: const Text('Form Editor'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.zoom_out_map),
-            tooltip: 'Reset zoom',
+            icon: const Icon(Icons.fit_screen_outlined),
+            tooltip: 'Fit to screen',
             onPressed: () => setState(() => _tc.value = Matrix4.identity()),
+          ),
+          // Primary action — enabled once there's at least one field and no
+          // submit in flight.
+          BlocBuilder<PdfBloc, PdfState>(
+            buildWhen: (p, c) => p.httpStates[HttpStates.CREATE_FORM] != c.httpStates[HttpStates.CREATE_FORM],
+            builder: (context, state) {
+              final busy = state.httpStates[HttpStates.CREATE_FORM]?.loading == true;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: FilledButton(
+                  onPressed: (_totalFields > 0 && !busy) ? _onSave : null,
+                  child: const Text('Create'),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -194,19 +208,14 @@ class _FormEditorViewState extends State<FormEditorView> {
           }
         },
         builder: (context, state) {
-          final loading = state.httpStates[HttpStates.CREATE_FORM]?.loading == true;
           return Stack(children: [
             Column(children: [
-              _buildToolbar(theme),
-              const Divider(height: 1),
               Expanded(
                 child: _loadingPage
                     ? const Center(child: CircularProgressIndicator())
-                    : _buildCanvas(theme),
+                    : _buildCanvasArea(theme),
               ),
-              if (_selected != null) _buildProperties(theme, _selected!),
-              if (_totalPages > 1) _buildPageNav(theme),
-              _buildSaveBar(theme, loading),
+              _buildPalette(theme),
             ]),
             LoadingOverlay(
               httpState: state.httpStates[HttpStates.CREATE_FORM],
@@ -219,37 +228,61 @@ class _FormEditorViewState extends State<FormEditorView> {
     );
   }
 
-  Widget _buildToolbar(ThemeData theme) {
-    return SizedBox(
-      height: 56,
-      child: Row(children: [
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(children: [
-              for (final t in FieldType.values)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    avatar: Icon(t.icon, size: 16, color: _tool == t ? theme.colorScheme.primary : null),
-                    label: Text(t.label),
-                    selected: _tool == t,
-                    onSelected: (_) => setState(() => _tool = t),
-                  ),
-                ),
-            ]),
+  // ── Canvas ──────────────────────────────────────────────────────────────────
+
+  Widget _buildCanvasArea(ThemeData theme) {
+    return Stack(children: [
+      Positioned.fill(child: _buildCanvas(theme)),
+      // Floating page navigator (only when multi-page).
+      if (_totalPages > 1)
+        Positioned(
+          top: 10,
+          left: 0,
+          right: 0,
+          child: Center(child: _pagePill(theme)),
+        ),
+      // Empty-state hint for the current page.
+      if (_fields.isEmpty)
+        Positioned(
+          bottom: 12,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text('Tap a field below to place it',
+                  style: TextStyle(fontSize: 12.5, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
+            ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: FilledButton.icon(
-            onPressed: _addField,
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add'),
+    ]);
+  }
+
+  Widget _pagePill(ThemeData theme) {
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(24),
+      color: theme.colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_left, size: 20),
+            onPressed: _currentPage > 1 ? () => _loadPage(_currentPage - 1) : null,
           ),
-        ),
-      ]),
+          Text('$_currentPage / $_totalPages', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_right, size: 20),
+            onPressed: _currentPage < _totalPages ? () => _loadPage(_currentPage + 1) : null,
+          ),
+        ]),
+      ),
     );
   }
 
@@ -271,32 +304,35 @@ class _FormEditorViewState extends State<FormEditorView> {
         child: SizedBox(
           width: dispW,
           height: dispH,
-          child: Stack(children: [
-            // Zoomable page + field visuals.
+          // Clip.none so edge handles of a selected field aren't cut off.
+          child: Stack(clipBehavior: Clip.none, children: [
             Positioned.fill(
-              child: InteractiveViewer(
-                transformationController: _tc,
-                minScale: 1,
-                maxScale: 5,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapUp: (d) => _selectAt(d.localPosition, dispW, dispH),
-                  child: Stack(children: [
-                    if (_pageImage != null)
-                      Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill)),
-                    ..._fields.map((f) => _fieldVisual(f, dispW, dispH, theme)),
-                  ]),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 10)],
+                ),
+                child: InteractiveViewer(
+                  transformationController: _tc,
+                  minScale: 1,
+                  maxScale: 5,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapUp: (d) => _selectAt(d.localPosition, dispW, dispH),
+                    child: Stack(clipBehavior: Clip.none, children: [
+                      if (_pageImage != null)
+                        Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill)),
+                      ..._fields.map((f) => _fieldVisual(f, dispW, dispH, theme)),
+                    ]),
+                  ),
                 ),
               ),
             ),
-            // Screen-space edit handles for the selected field (outside the
-            // InteractiveViewer, so dragging them never fights with pan/zoom).
             AnimatedBuilder(
               animation: _tc,
               builder: (context, _) {
                 final f = _selected;
                 if (f == null) return const SizedBox.shrink();
-                return _buildHandles(f, dispW, dispH);
+                return _buildHandles(f, dispW, dispH, theme);
               },
             ),
           ]),
@@ -305,12 +341,10 @@ class _FormEditorViewState extends State<FormEditorView> {
     });
   }
 
-  // Selects the topmost field under a tap (scene coords → fractional).
   void _selectAt(Offset local, double dispW, double dispH) {
-    final fx = local.dx / dispW;
-    final fy = local.dy / dispH;
+    final p = Offset(local.dx / dispW, local.dy / dispH);
     for (final f in _fields.reversed) {
-      if (f.rect.contains(Offset(fx, fy))) {
+      if (f.rect.contains(p)) {
         setState(() => _selectedId = f.id);
         return;
       }
@@ -321,6 +355,7 @@ class _FormEditorViewState extends State<FormEditorView> {
   Widget _fieldVisual(_Field f, double dispW, double dispH, ThemeData theme) {
     final r = Rect.fromLTWH(f.rect.left * dispW, f.rect.top * dispH, f.rect.width * dispW, f.rect.height * dispH);
     final isSel = f.id == _selectedId;
+    final primary = theme.colorScheme.primary;
     return Positioned(
       left: r.left,
       top: r.top,
@@ -329,40 +364,34 @@ class _FormEditorViewState extends State<FormEditorView> {
       child: IgnorePointer(
         child: Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            border: Border.all(
-              color: isSel ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.5),
-              width: isSel ? 2 : 1,
-            ),
+            color: primary.withValues(alpha: isSel ? 0.12 : 0.06),
+            border: Border.all(color: isSel ? primary : primary.withValues(alpha: 0.45), width: isSel ? 1.8 : 1),
             borderRadius: BorderRadius.circular(3),
           ),
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(children: [
-            Icon(f.type.icon, size: 12, color: theme.colorScheme.primary),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                f.type == FieldType.radio ? '${f.group}:${f.exportValue.isEmpty ? f.name : f.exportValue}' : f.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 9, color: theme.colorScheme.primary),
+          // A small type badge in the corner — no inline name label (less noise).
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Container(
+              padding: const EdgeInsets.all(1.5),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: isSel ? 0.9 : 0.5),
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(2), bottomRight: Radius.circular(4)),
               ),
+              child: Icon(f.type.icon, size: 10, color: Colors.white),
             ),
-          ]),
+          ),
         ),
       ),
     );
   }
 
-  // Draggable move body + resize + delete handles, positioned in screen space
-  // via the current InteractiveViewer transform.
-  Widget _buildHandles(_Field f, double dispW, double dispH) {
+  Widget _buildHandles(_Field f, double dispW, double dispH, ThemeData theme) {
     final scale = _tc.value.getMaxScaleOnAxis();
     final sceneTL = Offset(f.rect.left * dispW, f.rect.top * dispH);
     final screenTL = MatrixUtils.transformPoint(_tc.value, sceneTL);
     final w = f.rect.width * dispW * scale;
     final h = f.rect.height * dispH * scale;
+    final primary = theme.colorScheme.primary;
 
     void move(Offset screenDelta) {
       final dxFrac = (screenDelta.dx / scale) / dispW;
@@ -384,7 +413,21 @@ class _FormEditorViewState extends State<FormEditorView> {
       });
     }
 
-    return Stack(children: [
+    Widget circle(IconData icon, Color color, VoidCallback? onTap, {void Function(Offset)? onDrag}) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        onPanUpdate: onDrag == null ? null : (d) => onDrag(d.delta),
+        child: Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+          child: Icon(icon, color: Colors.white, size: 14),
+        ),
+      );
+    }
+
+    return Stack(clipBehavior: Clip.none, children: [
       // Move body.
       Positioned(
         left: screenTL.dx,
@@ -394,137 +437,38 @@ class _FormEditorViewState extends State<FormEditorView> {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onPanUpdate: (d) => move(d.delta),
+          onTap: () => _showProperties(f),
           child: const SizedBox.expand(),
         ),
       ),
-      // Delete handle.
+      // Edit (top-left).
+      Positioned(left: screenTL.dx - 13, top: screenTL.dy - 13, child: circle(Icons.edit, primary, () => _showProperties(f))),
+      // Delete (top-right).
       Positioned(
-        left: screenTL.dx + w - 12,
-        top: screenTL.dy - 12,
-        child: GestureDetector(
-          onTap: () => setState(() {
-            _fields.remove(f);
-            _selectedId = null;
-          }),
-          child: Container(
-            width: 24,
-            height: 24,
-            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-            child: const Icon(Icons.close, color: Colors.white, size: 14),
-          ),
-        ),
+        left: screenTL.dx + w - 13,
+        top: screenTL.dy - 13,
+        child: circle(Icons.close, Colors.red, () => setState(() {
+              _fields.remove(f);
+              _selectedId = null;
+            })),
       ),
-      // Resize handle (bottom-right).
-      Positioned(
-        left: screenTL.dx + w - 11,
-        top: screenTL.dy + h - 11,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onPanUpdate: (d) => resize(d.delta),
-          child: Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: const Icon(Icons.open_in_full, color: Colors.white, size: 11),
-          ),
-        ),
-      ),
+      // Resize (bottom-right).
+      Positioned(left: screenTL.dx + w - 13, top: screenTL.dy + h - 13, child: circle(Icons.open_in_full, primary, null, onDrag: resize)),
     ]);
   }
 
-  Widget _buildProperties(ThemeData theme, _Field f) {
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 168),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        border: Border(top: BorderSide(color: theme.dividerColor)),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(children: [
-              Icon(f.type.icon, size: 16, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
-              Text('${f.type.label} properties', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            ]),
-            const SizedBox(height: 6),
-            _propText('Field name', f.name, (v) => setState(() => f.name = v)),
-            if (f.type == FieldType.radio) ...[
-              _propText('Group', f.group, (v) => setState(() => f.group = v)),
-              _propText('Option value', f.exportValue, (v) => setState(() => f.exportValue = v)),
-            ],
-            if (f.type == FieldType.dropdown)
-              _propText('Options (comma-separated)', f.options.join(', '),
-                  (v) => setState(() => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList())),
-            if (f.type == FieldType.text || f.type == FieldType.multiline || f.type == FieldType.date)
-              _propText('Default value', f.value, (v) => setState(() => f.value = v)),
-            Row(children: [
-              const Text('Required', style: TextStyle(fontSize: 12)),
-              Switch(value: f.required, onChanged: (v) => setState(() => f.required = v)),
-            ]),
-          ],
-        ),
-      ),
-    );
-  }
+  // ── Properties (modal sheet, rebuilt per open) ───────────────────────────────
 
-  Widget _propText(String label, String value, ValueChanged<String> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: TextFormField(
-        initialValue: value,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          isDense: true,
-          labelText: label,
-          border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        ),
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _buildPageNav(ThemeData theme) {
-    return Container(
-      color: theme.scaffoldBackgroundColor,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: _currentPage > 1 ? () => _loadPage(_currentPage - 1) : null,
-        ),
-        Text('$_currentPage / $_totalPages'),
-        IconButton(
-          icon: const Icon(Icons.chevron_right),
-          onPressed: _currentPage < _totalPages ? () => _loadPage(_currentPage + 1) : null,
-        ),
-      ]),
-    );
-  }
-
-  Widget _buildSaveBar(ThemeData theme, bool loading) {
-    final total = _pageFields.values.fold<int>(0, (a, b) => a + b.length);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(top: BorderSide(color: theme.dividerColor)),
-      ),
-      child: FilledButton.icon(
-        onPressed: total > 0 && !loading ? _onSave : null,
-        icon: const Icon(Icons.save_alt),
-        label: Text(total == 0 ? 'Add fields to continue' : 'Create fillable PDF ($total field${total == 1 ? '' : 's'})'),
-      ),
-    );
+  void _showProperties(_Field f) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _FieldPropertiesSheet(field: f),
+    ).whenComplete(() {
+      if (mounted) setState(() {}); // refresh badges/state after edits
+    });
   }
 
   Future<void> _onSave() async {
@@ -535,7 +479,6 @@ class _FormEditorViewState extends State<FormEditorView> {
       for (final f in fields) {
         specs.add(FormFieldSpec(
           type: f.type.wire,
-          // Radio options share a field keyed by group; others use their name.
           name: f.type == FieldType.radio ? f.group : f.name,
           page: page - 1,
           x: f.rect.left * pts.width,
@@ -566,10 +509,152 @@ class _FormEditorViewState extends State<FormEditorView> {
     ));
   }
 
+  // ── Bottom palette ───────────────────────────────────────────────────────────
+
+  Widget _buildPalette(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, -2))],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 78,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            children: [
+              for (final t in FieldType.values) _paletteItem(theme, t),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paletteItem(ThemeData theme, FieldType t) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _addField(t),
+        child: Container(
+          width: 66,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.18)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(t.icon, size: 22, color: theme.colorScheme.primary),
+              const SizedBox(height: 4),
+              Text(t.label, style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _tc.dispose();
     _doc?.close();
     super.dispose();
+  }
+}
+
+/// Properties editor for a single field, opened as a modal sheet. Owns its own
+/// controllers (created from the field) so switching fields always shows the
+/// correct values, and writes edits straight back to the [field].
+class _FieldPropertiesSheet extends StatefulWidget {
+  final _Field field;
+  const _FieldPropertiesSheet({required this.field});
+
+  @override
+  State<_FieldPropertiesSheet> createState() => _FieldPropertiesSheetState();
+}
+
+class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
+  late final _name = TextEditingController(text: widget.field.name);
+  late final _group = TextEditingController(text: widget.field.group);
+  late final _export = TextEditingController(text: widget.field.exportValue);
+  late final _options = TextEditingController(text: widget.field.options.join(', '));
+  late final _value = TextEditingController(text: widget.field.value);
+  late final _fontSize = TextEditingController(text: widget.field.fontSize > 0 ? widget.field.fontSize.toStringAsFixed(0) : '');
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _group.dispose();
+    _export.dispose();
+    _options.dispose();
+    _value.dispose();
+    _fontSize.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final f = widget.field;
+    final isText = f.type == FieldType.text || f.type == FieldType.multiline || f.type == FieldType.date;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text('${f.type.label} field', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+        ]),
+        const SizedBox(height: 12),
+        _field(_name, 'Field name', (v) => f.name = v),
+        if (f.type == FieldType.radio) ...[
+          _field(_group, 'Radio group', (v) => f.group = v),
+          _field(_export, 'Option value', (v) => f.exportValue = v),
+        ],
+        if (f.type == FieldType.dropdown)
+          _field(_options, 'Options (comma-separated)',
+              (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
+        if (isText) _field(_value, 'Default value', (v) => f.value = v),
+        if (isText)
+          _field(_fontSize, 'Font size (0 = auto)', (v) => f.fontSize = double.tryParse(v) ?? 0,
+              keyboard: TextInputType.number),
+        const SizedBox(height: 4),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Required'),
+          value: f.required,
+          onChanged: (v) => setState(() => f.required = v),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
+        ),
+      ]),
+    );
+  }
+
+  Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged, {TextInputType? keyboard}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: c,
+        keyboardType: keyboard,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          isDense: true,
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        onChanged: onChanged,
+      ),
+    );
   }
 }
