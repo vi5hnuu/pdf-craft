@@ -25,8 +25,9 @@ class DuplicatePagesView extends StatefulWidget {
 class _DuplicatePagesViewState extends State<DuplicatePagesView> {
   PdfDocument? _doc;
   int _totalPages = 0;
-  final Set<int> _selectedPages = {}; // 0-indexed
-  int _count = 1; // copies to insert
+  // 0-indexed page -> copies to insert. A page is "selected" when it has an entry.
+  final Map<int, int> _pageCounts = {};
+  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -49,9 +50,9 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
       appBar: AppBar(
         title: const Text('Duplicate Pages'),
         actions: [
-          if (_selectedPages.isNotEmpty)
+          if (_pageCounts.isNotEmpty)
             TextButton(
-              onPressed: () => setState(() => _selectedPages.clear()),
+              onPressed: () => setState(() => _pageCounts.clear()),
               child: const Text('Clear'),
             ),
         ],
@@ -84,7 +85,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: Text(
-                  'Tap pages to select them for duplication.',
+                  'Tap a page to select it, then set how many copies of that page to add.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -111,7 +112,11 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
               // Count stepper + submit
               _buildBottomBar(theme, loading),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.DUPLICATE_PAGES], label: 'Duplicating pages'),
+            LoadingOverlay(
+              httpState: state.httpStates[HttpStates.DUPLICATE_PAGES],
+              label: 'Duplicating pages',
+              onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
+            ),
           ]);
         },
       ),
@@ -119,10 +124,15 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
   }
 
   Widget _buildPageTile(int i) {
-    final selected = _selectedPages.contains(i);
+    final selected = _pageCounts.containsKey(i);
+    final count = _pageCounts[i] ?? 1;
     return GestureDetector(
       onTap: () => setState(() {
-        if (selected) _selectedPages.remove(i); else _selectedPages.add(i);
+        if (selected) {
+          _pageCounts.remove(i);
+        } else {
+          _pageCounts[i] = 1;
+        }
       }),
       child: Stack(children: [
         ClipRRect(
@@ -134,17 +144,33 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
             height: double.infinity,
           ),
         ),
-        // Selection overlay
+        // Selection overlay with a per-page copy stepper.
         if (selected)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.35),
+                color: Colors.blue.withValues(alpha: 0.30),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.blue, width: 2),
               ),
-              child: const Center(
-                child: Icon(Icons.check_circle, color: Colors.white, size: 32),
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    _stepBtn(Icons.remove, count > 1
+                        ? () => setState(() => _pageCounts[i] = count - 1)
+                        : null),
+                    Text('×$count',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    _stepBtn(Icons.add, count < 20
+                        ? () => setState(() => _pageCounts[i] = count + 1)
+                        : null),
+                  ]),
+                ),
               ),
             ),
           ),
@@ -166,6 +192,17 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
     );
   }
 
+  Widget _stepBtn(IconData icon, VoidCallback? onTap) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon, size: 18, color: onTap == null ? Colors.white38 : Colors.white),
+      ),
+    );
+  }
+
   Widget _buildBottomBar(ThemeData theme, bool loading) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -174,44 +211,34 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
         border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        // Count stepper
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Text('Copies:'),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: const Icon(Icons.remove),
-            onPressed: _count > 1 ? () => setState(() => _count--) : null,
-          ),
-          Text('$_count', style: theme.textTheme.titleMedium),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _count < 10 ? () => setState(() => _count++) : null,
-          ),
-        ]),
-        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: _selectedPages.isEmpty || loading ? null : _onDuplicate,
+            onPressed: _pageCounts.isEmpty || loading ? null : _onDuplicate,
             icon: loading
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.copy_all),
-            label: Text(_selectedPages.isEmpty
+            label: Text(_pageCounts.isEmpty
                 ? 'Select pages to duplicate'
-                : 'Duplicate ${_selectedPages.length} page(s) × $_count'),
+                : 'Add $_totalCopies cop${_totalCopies == 1 ? 'y' : 'ies'} across ${_pageCounts.length} page(s)'),
           ),
         ),
       ]),
     );
   }
 
+  int get _totalCopies => _pageCounts.values.fold(0, (a, b) => a + b);
+
   Future<void> _onDuplicate() async {
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
     BlocProvider.of<PdfBloc>(context).add(DuplicatePagesEvent(
       duplicatePages: DuplicatePages(
-        pages: _selectedPages.toList()..sort(),
-        count: _count,
-        file: await MultipartFile.fromFile(widget.file.path),
+        pageCounts: Map<int, int>.from(_pageCounts),
+        file: file,
       ),
+      cancelToken: _cancelToken,
     ));
   }
 

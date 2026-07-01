@@ -3,14 +3,13 @@ import 'package:dio/dio.dart';
 
 class DuplicatePages {
   final String? outFileName;
-  final List<int> pages; // 0-indexed
-  final int count;       // copies of each selected page to insert (default 1)
+  // 0-indexed page number -> number of extra copies to insert after that page.
+  final Map<int, int> pageCounts;
   final MultipartFile file;
 
   DuplicatePages({
     this.outFileName,
-    required this.pages,
-    this.count = 1,
+    required this.pageCounts,
     required this.file,
   });
 
@@ -18,8 +17,8 @@ class DuplicatePages {
         'duplicate-pages-info': MultipartFile.fromString(
           jsonEncode({
             if (outFileName != null) 'out_file_name': outFileName,
-            'pages': pages,
-            'count': count,
+            // JSON object keys must be strings; backend reads them as ints.
+            'page_counts': pageCounts.map((k, v) => MapEntry(k.toString(), v)),
           }),
           contentType: DioMediaType.parse('application/json'),
         ),
