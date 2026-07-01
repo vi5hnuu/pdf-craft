@@ -34,6 +34,11 @@ import 'package:pdf_craft/models/request/remove-metadata.dart';
 import 'package:pdf_craft/models/request/extract-images.dart';
 import 'package:pdf_craft/models/request/sanitize-pdf.dart';
 import 'package:pdf_craft/models/request/split-by-size.dart';
+import 'package:pdf_craft/models/request/mirror-pdf.dart';
+import 'package:pdf_craft/models/request/resize-page.dart';
+import 'package:pdf_craft/models/request/scale-pdf.dart';
+import 'package:pdf_craft/models/request/insert-pdf.dart';
+import 'package:pdf_craft/models/request/extract-embedded-files.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -53,6 +58,11 @@ class PdfService {
   static String get _extractImages => "${Constants.baseUrl}/pdf-studio/extract-images";
   static String get _sanitizePdf => "${Constants.baseUrl}/pdf-studio/sanitize-pdf";
   static String get _splitBySize => "${Constants.baseUrl}/pdf-studio/split-by-size";
+  static String get _mirrorPdf => "${Constants.baseUrl}/pdf-studio/mirror-pdf";
+  static String get _resizePage => "${Constants.baseUrl}/pdf-studio/resize-page";
+  static String get _scalePdf => "${Constants.baseUrl}/pdf-studio/scale-pdf";
+  static String get _insertPdf => "${Constants.baseUrl}/pdf-studio/insert-pdf";
+  static String get _extractEmbedded => "${Constants.baseUrl}/pdf-studio/extract-embedded-files";
   static String get _editBookmarks => "${Constants.baseUrl}/pdf-studio/edit-bookmarks";
   static String get _filterImage => "${Constants.baseUrl}/image-studio/filter-image";
   static String get _removeBlankPages => "${Constants.baseUrl}/pdf-studio/remove-blank-pages";
@@ -245,6 +255,26 @@ class PdfService {
 
   Future<Response<Uint8List>> splitBySize({required SplitBySize req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_splitBySize, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> mirrorPdf({required MirrorPdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_mirrorPdf, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> resizePage({required ResizePage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_resizePage, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> scalePdf({required ScalePdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_scalePdf, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> insertPdf({required InsertPdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_insertPdf, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> extractEmbeddedFiles({required ExtractEmbeddedFiles req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_extractEmbedded, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
   Future<Response<Uint8List>> filterImage({required FilterImage req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {

@@ -39,6 +39,11 @@ import 'package:pdf_craft/pages/ExtractImagesView.dart';
 import 'package:pdf_craft/pages/SanitizePdfView.dart';
 import 'package:pdf_craft/pages/SplitBySizeView.dart';
 import 'package:pdf_craft/pages/ReversePagesView.dart';
+import 'package:pdf_craft/pages/MirrorPagesView.dart';
+import 'package:pdf_craft/pages/ResizePageView.dart';
+import 'package:pdf_craft/pages/ScalePdfView.dart';
+import 'package:pdf_craft/pages/InsertPdfView.dart';
+import 'package:pdf_craft/pages/ExtractEmbeddedFilesView.dart';
 import 'package:pdf_craft/pages/IncomingFilesScreen.dart';
 import 'package:pdf_craft/services/IncomingFilesChannel.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -674,6 +679,50 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.reversePagesRoute.path,
         name: AppRoutes.reversePagesRoute.name,
         builder: (context, state) => ReversePagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Mirror Pages — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.mirrorPagesRoute.path,
+        name: AppRoutes.mirrorPagesRoute.name,
+        builder: (context, state) => MirrorPagesView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Resize Page Size — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.resizePageRoute.path,
+        name: AppRoutes.resizePageRoute.name,
+        builder: (context, state) => ResizePageView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Scale PDF — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.scalePdfRoute.path,
+        name: AppRoutes.scalePdfRoute.name,
+        builder: (context, state) => ScalePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      // Insert PDF into PDF — two files
+      GoRoute(
+        redirect: (context, state) {
+          final files = (state.extra as Map?)?['files'];
+          if (files is! List<File> || files.length < 2) return AppRoutes.errorRoute.path;
+          return null;
+        },
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.insertPdfRoute.path,
+        name: AppRoutes.insertPdfRoute.name,
+        builder: (context, state) => InsertPdfView(files: (state.extra as Map)['files'] as List<File>),
+      ),
+      // Extract Embedded Files — single file
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.extractEmbeddedRoute.path,
+        name: AppRoutes.extractEmbeddedRoute.name,
+        builder: (context, state) => ExtractEmbeddedFilesView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // PDF Compare — two files via multiSelect; extra has {'files': [file1, file2]}
       GoRoute(

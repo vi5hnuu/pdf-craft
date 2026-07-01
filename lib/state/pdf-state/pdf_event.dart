@@ -197,6 +197,31 @@ class SplitBySizeEvent extends PdfEvent {
   const SplitBySizeEvent({required this.splitBySize, super.cancelToken});
 }
 
+class MirrorPdfEvent extends PdfEvent {
+  final MirrorPdf mirrorPdf;
+  const MirrorPdfEvent({required this.mirrorPdf, super.cancelToken});
+}
+
+class ResizePageEvent extends PdfEvent {
+  final ResizePage resizePage;
+  const ResizePageEvent({required this.resizePage, super.cancelToken});
+}
+
+class ScalePdfEvent extends PdfEvent {
+  final ScalePdf scalePdf;
+  const ScalePdfEvent({required this.scalePdf, super.cancelToken});
+}
+
+class InsertPdfEvent extends PdfEvent {
+  final InsertPdf insertPdf;
+  const InsertPdfEvent({required this.insertPdf, super.cancelToken});
+}
+
+class ExtractEmbeddedFilesEvent extends PdfEvent {
+  final ExtractEmbeddedFiles extractEmbeddedFiles;
+  const ExtractEmbeddedFilesEvent({required this.extractEmbeddedFiles, super.cancelToken});
+}
+
 class FilterImageEvent extends PdfEvent {
   final FilterImage filterImage;
   const FilterImageEvent({required this.filterImage, super.cancelToken});

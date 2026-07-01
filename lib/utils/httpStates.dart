@@ -35,6 +35,11 @@ class HttpStates{
   static const String EXTRACT_IMAGES="EXTRACT_IMAGES";
   static const String SANITIZE_PDF="SANITIZE_PDF";
   static const String SPLIT_BY_SIZE="SPLIT_BY_SIZE";
+  static const String MIRROR_PDF="MIRROR_PDF";
+  static const String RESIZE_PAGE="RESIZE_PAGE";
+  static const String SCALE_PDF="SCALE_PDF";
+  static const String INSERT_PDF="INSERT_PDF";
+  static const String EXTRACT_EMBEDDED="EXTRACT_EMBEDDED";
   static const String GET_BOOKMARKS="GET_BOOKMARKS";
   static const String EDIT_BOOKMARKS="EDIT_BOOKMARKS";
   static const String FILTER_IMAGE="FILTER_IMAGE";

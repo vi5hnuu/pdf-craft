@@ -25,6 +25,11 @@ class AppRoutes{
   static AppRoute sanitizePdfRoute=AppRoute(name: 'sanitize-pdf-tool', path: '/sanitize-pdf-tool');
   static AppRoute splitBySizeRoute=AppRoute(name: 'split-by-size-tool', path: '/split-by-size-tool');
   static AppRoute reversePagesRoute=AppRoute(name: 'reverse-pages-tool', path: '/reverse-pages-tool');
+  static AppRoute mirrorPagesRoute=AppRoute(name: 'mirror-pages-tool', path: '/mirror-pages-tool');
+  static AppRoute resizePageRoute=AppRoute(name: 'resize-page-tool', path: '/resize-page-tool');
+  static AppRoute scalePdfRoute=AppRoute(name: 'scale-pdf-tool', path: '/scale-pdf-tool');
+  static AppRoute insertPdfRoute=AppRoute(name: 'insert-pdf-tool', path: '/insert-pdf-tool');
+  static AppRoute extractEmbeddedRoute=AppRoute(name: 'extract-embedded-tool', path: '/extract-embedded-tool');
   static AppRoute pdfToJpgRoute=AppRoute(name: 'pdf-to-jpg-tool', path: '/pdf-to-jpg-tool');
   static AppRoute imageToPdfRoute=AppRoute(name: 'image-to-pdf-tool', path: '/image-to-pdf-tool');
   static AppRoute pageNumbersRoute=AppRoute(name: 'page-numbers-tool', path: '/page-numbers-tool');

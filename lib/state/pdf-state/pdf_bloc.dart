@@ -40,6 +40,11 @@ import 'package:pdf_craft/models/request/remove-metadata.dart';
 import 'package:pdf_craft/models/request/extract-images.dart';
 import 'package:pdf_craft/models/request/sanitize-pdf.dart';
 import 'package:pdf_craft/models/request/split-by-size.dart';
+import 'package:pdf_craft/models/request/mirror-pdf.dart';
+import 'package:pdf_craft/models/request/resize-page.dart';
+import 'package:pdf_craft/models/request/scale-pdf.dart';
+import 'package:pdf_craft/models/request/insert-pdf.dart';
+import 'package:pdf_craft/models/request/extract-embedded-files.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -282,6 +287,36 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit: emit, key: HttpStates.SPLIT_BY_SIZE,
       call: (p) => _pdfService.splitBySize(req: e.splitBySize, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to split PDF',
+    ));
+
+    on<MirrorPdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.MIRROR_PDF,
+      call: (p) => _pdfService.mirrorPdf(req: e.mirrorPdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to mirror PDF',
+    ));
+
+    on<ResizePageEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.RESIZE_PAGE,
+      call: (p) => _pdfService.resizePage(req: e.resizePage, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to resize pages',
+    ));
+
+    on<ScalePdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.SCALE_PDF,
+      call: (p) => _pdfService.scalePdf(req: e.scalePdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to scale PDF',
+    ));
+
+    on<InsertPdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.INSERT_PDF,
+      call: (p) => _pdfService.insertPdf(req: e.insertPdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to insert PDF',
+    ));
+
+    on<ExtractEmbeddedFilesEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.EXTRACT_EMBEDDED,
+      call: (p) => _pdfService.extractEmbeddedFiles(req: e.extractEmbeddedFiles, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to extract embedded files',
     ));
 
     on<FilterImageEvent>((e, emit) => _handleImage(
