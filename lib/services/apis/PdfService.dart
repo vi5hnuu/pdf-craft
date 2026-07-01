@@ -45,6 +45,8 @@ import 'package:pdf_craft/models/request/extract-fonts.dart';
 import 'package:pdf_craft/models/request/rotate-image.dart';
 import 'package:pdf_craft/models/request/flip-image.dart';
 import 'package:pdf_craft/models/request/border-image.dart';
+import 'package:pdf_craft/models/request/get-form-fields.dart';
+import 'package:pdf_craft/models/request/fill-flatten.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -60,6 +62,8 @@ class PdfService {
   static String get _duplicatePages => "${Constants.baseUrl}/pdf-studio/duplicate-pages";
   static String get _getBookmarks => "${Constants.baseUrl}/pdf-studio/get-bookmarks";
   static String get _createForm => "${Constants.baseUrl}/pdf-studio/create-form";
+  static String get _getFormFields => "${Constants.baseUrl}/pdf-studio/get-form-fields";
+  static String get _fillFlatten => "${Constants.baseUrl}/pdf-studio/fill-flatten";
   static String get _removeMetadata => "${Constants.baseUrl}/pdf-studio/remove-metadata";
   static String get _extractImages => "${Constants.baseUrl}/pdf-studio/extract-images";
   static String get _sanitizePdf => "${Constants.baseUrl}/pdf-studio/sanitize-pdf";
@@ -263,6 +267,15 @@ class PdfService {
 
   Future<Response<Uint8List>> createForm({required CreateForm req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_createForm, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  /// Returns the PDF's existing form fields as JSON (not a file download).
+  Future<Response<dynamic>> getFormFields({required GetFormFields req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_getFormFields, data: FormData.fromMap(req.toJson()), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  Future<Response<Uint8List>> fillFlatten({required FillFlatten req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_fillFlatten, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
   }
 
   Future<Response<Uint8List>> removeMetadata({required RemoveMetadata req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {

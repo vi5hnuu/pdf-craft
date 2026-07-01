@@ -51,6 +51,8 @@ import 'package:pdf_craft/models/request/extract-fonts.dart';
 import 'package:pdf_craft/models/request/rotate-image.dart';
 import 'package:pdf_craft/models/request/flip-image.dart';
 import 'package:pdf_craft/models/request/border-image.dart';
+import 'package:pdf_craft/models/request/get-form-fields.dart';
+import 'package:pdf_craft/models/request/fill-flatten.dart';
 import 'package:pdf_craft/models/request/filter-image.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
@@ -247,6 +249,29 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       call: (p) => _pdfService.borderImage(req: e.borderImage, cancelToken: e.cancelToken, onSendProgress: p),
       error: 'Failed to add border',
     ));
+
+    on<FillFlattenEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.FILL_FLATTEN,
+      call: (p) => _pdfService.fillFlatten(req: e.fillFlatten, cancelToken: e.cancelToken, onSendProgress: p),
+      error: 'Failed to fill & flatten',
+    ));
+
+    // Returns the PDF's existing form fields as JSON — does not save a file.
+    on<GetFormFieldsEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, const HttpState.loading())));
+      try {
+        final res = await _pdfService.getFormFields(req: event.getFormFields, cancelToken: event.cancelToken);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.done(extras: {'fields': res.data}))));
+      } on DioException catch (e) {
+        if (e.type == DioExceptionType.cancel) {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.GET_FORM_FIELDS)));
+        } else {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.error(error: e.message ?? 'Failed to read form fields'))));
+        }
+      } catch (_) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, const HttpState.error(error: 'Failed to read form fields'))));
+      }
+    });
 
     on<PdfToOfficeEvent>((e, emit) {
       final key = switch (e.pdfToOffice.format) {

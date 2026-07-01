@@ -162,6 +162,16 @@ class BorderImageEvent extends PdfEvent {
   const BorderImageEvent({required this.borderImage, super.cancelToken});
 }
 
+class GetFormFieldsEvent extends PdfEvent {
+  final GetFormFields getFormFields;
+  const GetFormFieldsEvent({required this.getFormFields, super.cancelToken});
+}
+
+class FillFlattenEvent extends PdfEvent {
+  final FillFlatten fillFlatten;
+  const FillFlattenEvent({required this.fillFlatten, super.cancelToken});
+}
+
 class PdfToOfficeEvent extends PdfEvent {
   final PdfToOffice pdfToOffice;
   const PdfToOfficeEvent({required this.pdfToOffice, super.cancelToken});
