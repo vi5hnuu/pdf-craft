@@ -26,4 +26,17 @@ class StoragePermissions {
       return await Permission.storage.isGranted;
     }
   }
+
+  /// True when the OS will no longer show the request dialog, so the only way to
+  /// grant is via system Settings.
+  static Future<bool> isPermanentlyDenied() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo build = await deviceInfo.androidInfo;
+
+    if (build.version.sdkInt >= 33) {
+      return await Permission.manageExternalStorage.isPermanentlyDenied;
+    } else {
+      return await Permission.storage.isPermanentlyDenied;
+    }
+  }
 }
