@@ -6,7 +6,8 @@ import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RecentToolsService.dart';
-import 'package:pdf_craft/tools/reward_gate.dart';
+import 'package:pdf_craft/tools/credit_gate.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 
 /// A tool category (used for grouping + accent colour on the Tools screen).
@@ -73,6 +74,13 @@ class ToolDef {
   /// on the tool card). Looked up by [id] so the tool list stays terse.
   String get description => ToolRegistry.descriptions[id] ?? '';
 
+  /// Backend cost id (if this tool calls a priced endpoint), else null.
+  String? get creditToolId => ToolRegistry.creditToolIds[id];
+
+  /// Headline credit cost from the live cost table (0 = free / unpriced).
+  int get creditCost =>
+      creditToolId == null ? 0 : CreditService().costFor(creditToolId!);
+
   const ToolDef({
     required this.id,
     required this.name,
@@ -101,9 +109,9 @@ class ToolDef {
   /// Opens the file-picker flow for this tool (used from the Tools screen).
   /// Heavy tools first pass through the opt-in rewarded-ad gate.
   void openPicker(BuildContext context) {
-    RewardGate.run(
+    CreditGate.run(
       context,
-      isHeavy: isHeavy,
+      creditToolId: creditToolId,
       toolName: name,
       proceed: () {
         RecentToolsService().record(id);
@@ -126,9 +134,9 @@ class ToolDef {
   /// the file→tool intellisense menu and the incoming-files chooser), skipping
   /// the picker. Heavy tools first pass through the opt-in rewarded-ad gate.
   void openWithFiles(BuildContext context, List<File> files) {
-    RewardGate.run(
+    CreditGate.run(
       context,
-      isHeavy: isHeavy,
+      creditToolId: creditToolId,
       toolName: name,
       proceed: () {
         RecentToolsService().record(id);
@@ -221,6 +229,49 @@ class ToolRegistry {
     ToolDef(id: 'img-flip', name: 'Flip Image', icon: Icons.flip, category: ToolCategories.imageStudio, route: AppRoutes.flipImageRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.webp'], isHeavy: true),
     ToolDef(id: 'img-border', name: 'Add Border', icon: Icons.border_outer, category: ToolCategories.imageStudio, route: AppRoutes.addBorderRoute, extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.webp'], isHeavy: true),
   ];
+
+  /// Maps a front-end [ToolDef.id] to the backend tool id whose price lives in the
+  /// server cost table (`tool_credit_costs`). Only tools that call a priced backend
+  /// endpoint are listed; unlisted tools are free / client-side. Used to show the cost
+  /// badge and the confirm-spend prompt. The server remains the source of truth — it
+  /// charges the real amount (incl. any size surcharge) regardless of this map.
+  static const Map<String, String> creditToolIds = {
+    // PDF
+    'compress': 'compress-pdf',
+    'optimize': 'optimize-pdf',
+    'n-up': 'n-up',
+    'resize-page': 'resize-page',
+    'scale-pdf': 'scale-pdf',
+    'watermark': 'watermark-pdf',
+    'grayscale': 'grayscale-pdf',
+    'header-footer': 'header-footer',
+    'page-numbers': 'page-numbers',
+    'crop': 'crop-pdf',
+    'stamp': 'stamp-pdf',
+    'mirror-pages': 'mirror-pdf',
+    'split-by-size': 'split-by-size',
+    'image-overlay': 'place-image',
+    'fill-form': 'fill-flatten',
+    'redact': 'redact-pdf',
+    // Convert
+    'pdf-to-jpg': 'pdf-to-jpg',
+    'image-to-pdf': 'image-to-pdf',
+    'pdf-to-word': 'pdf-to-word',
+    'pdf-to-excel': 'pdf-to-excel',
+    'pdf-to-pptx': 'pdf-to-pptx',
+    'extract-images': 'extract-images',
+    'extract-embedded': 'extract-embedded-files',
+    'extract-fonts': 'extract-fonts',
+    // Security
+    'protect': 'protect-pdf',
+    'unprotect': 'unprotect-pdf',
+    'repair': 'repair-pdf',
+    // Image studio
+    'img-compress': 'compress-image',
+    'img-to-jpg': 'convert-to-jpg',
+    'img-from-jpg': 'convert-from-jpg',
+    'img-filter': 'filter-image',
+  };
 
   /// Short descriptions keyed by tool id — shown by the info button on cards.
   static const Map<String, String> descriptions = {

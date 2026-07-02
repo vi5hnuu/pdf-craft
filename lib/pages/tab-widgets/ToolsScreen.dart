@@ -8,6 +8,7 @@ import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Debouncer.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/CreditBalanceChip.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
 
 /// Tools tab. Reads the data-driven [ToolRegistry] (single source of truth) and
 /// adds tool search + a "Recently used" shortcut row.
@@ -396,6 +397,37 @@ class ToolCard extends StatelessWidget {
                   ),
                 ),
               ),
+            // Credit-cost badge (top-right) — shown for paid tools once prices load.
+            Positioned(
+              top: -2,
+              right: -2,
+              child: AnimatedBuilder(
+                animation: CreditService(),
+                builder: (context, _) {
+                  final cost = tool.creditCost;
+                  if (cost <= 0) return const SizedBox.shrink();
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.toll, size: 10, color: accentColor),
+                        const SizedBox(width: 2),
+                        Text('$cost',
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: accentColor)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
             if (isFav)
               const Positioned(
                 bottom: 0,
