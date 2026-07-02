@@ -77,6 +77,24 @@ class AuthService extends ChangeNotifier {
     await _applyTokens(data);
   }
 
+  /// Upgrades the current guest into a full account, preserving the userId (and thus
+  /// the credit balance). The existing tokens stay valid; the user should verify e-mail.
+  /// Returns the server-facing next step message.
+  Future<String> convertGuest({
+    required String email,
+    required String password,
+    String? firstName,
+    String? lastName,
+  }) async {
+    final token = _accessToken;
+    if (token == null) throw AuthException('No active session.');
+    final data = await _api.convert(token,
+        email: email, password: password, firstName: firstName, lastName: lastName);
+    _user = AuthUser.fromJson(data);
+    notifyListeners();
+    return 'Account created. Check your e-mail to verify it.';
+  }
+
   Future<String> forgotPassword(String email) => _api.forgotPassword(email);
 
   /// Signs out to a fresh guest session so the app stays usable.

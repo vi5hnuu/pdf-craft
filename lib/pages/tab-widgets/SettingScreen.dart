@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/AuthService.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -103,6 +106,50 @@ class _SettingScreenState extends State<SettingScreen> {
       child: CustomScrollView(
         slivers: [
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+          // Account
+          _sectionHeader(theme, 'Account', Icons.person_outline),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Card(
+                child: AnimatedBuilder(
+                  animation: AuthService(),
+                  builder: (context, _) {
+                    final user = AuthService().user;
+                    final signedIn = AuthService().isSignedInFull;
+                    return ListTile(
+                      leading: Icon(signedIn
+                          ? Icons.verified_user_outlined
+                          : Icons.person_outline),
+                      title: Text(signedIn
+                          ? (user?.email ?? user?.username ?? 'Account')
+                          : 'Guest'),
+                      subtitle: Text(signedIn
+                          ? 'Signed in'
+                          : 'Sign in to save your credits & sync across devices'),
+                      trailing: signedIn
+                          ? TextButton(
+                              onPressed: () async {
+                                await AuthService().logout();
+                                await CreditService().load();
+                                NotificationService.showSnackbar(
+                                    text: 'Signed out.', color: Colors.orange);
+                              },
+                              child: const Text('Sign out'))
+                          : const Icon(Icons.chevron_right),
+                      onTap: signedIn
+                          ? null
+                          : () => GoRouter.of(context)
+                              .pushNamed(AppRoutes.authRoute.name),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // Appearance
           _sectionHeader(theme, 'Appearance', Icons.palette_outlined),
