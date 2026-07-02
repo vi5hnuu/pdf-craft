@@ -392,16 +392,6 @@ class ToolCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // Ad hint (top-right) for tools that require watching an ad. Hint only.
-            if (tool.isHeavy)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Tooltip(
-                  message: 'Requires watching a short ad',
-                  child: Icon(Icons.smart_display_outlined, size: 15, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
-                ),
-              ),
             if (isFav)
               const Positioned(
                 bottom: 0,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/utils/AdUnits.dart';
 
 class BannerAdd extends StatefulWidget {
@@ -21,11 +22,13 @@ class _BannerAddState extends State<BannerAdd> {
 
   @override
   Widget build(BuildContext context) {
+    if (ProService().isPro) return const SizedBox.shrink(); // no ads for Pro
     if(_bannerAd==null ) return const SizedBox.shrink();
     return SizedBox(height: AdSize.banner.height.toDouble(),child: AdWidget(ad: _bannerAd!));
   }
 
   void _loadAd() {
+    if (ProService().isPro) return; // don't request ads for Pro users
     final bannerAd = BannerAd(
       size: AdSize.banner,
       adUnitId: AdUnits.banner,

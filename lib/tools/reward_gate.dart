@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
-import 'package:pdf_craft/singletons/RewardedAdManager.dart';
-import 'package:pdf_craft/widgets/ConfirmDialog.dart';
 
-/// Opt-in rewarded-ad gate for "heavy" (server-side / expensive) tools.
+/// Tool launcher hook.
 ///
-/// Per AdMob policy rewarded ads must be user-initiated, so for heavy tools we
-/// ask first. The gated action unlocks ONLY if the user actually earns the
-/// reward (watches the ad). If no ad is available (e.g. offline) or the ad is
-/// closed early, the action does NOT proceed — otherwise users could bypass the
-/// gate simply by going offline. Light tools run immediately.
+/// Previously this **forced** heavy tools through a "watch an ad to continue"
+/// dialog. That was high friction, so the app moved to a freemium model:
+/// every tool now opens immediately. Monetization is handled elsewhere —
+/// non-intrusive interstitials on completion for free users, an optional
+/// "watch ad to support us" action, and a Pro upgrade that removes all ads
+/// ([ProService]). This shim is kept so tool-launch call sites stay unchanged.
 class RewardGate {
   RewardGate._();
 
@@ -19,34 +17,6 @@ class RewardGate {
     required String toolName,
     required VoidCallback proceed,
   }) async {
-    if (!isHeavy) {
-      proceed();
-      return;
-    }
-
-    final result = await ConfirmDialog.show(
-      context,
-      title: toolName,
-      message:
-          'This is an advanced operation. Watch a short ad to continue — it helps keep these tools free.',
-      confirmLabel: 'Watch ad',
-      cancelLabel: 'Not now',
-      icon: Icons.play_circle_outline,
-    );
-    if (!result.confirmed) return;
-
-    RewardedAdManager().show(
-      // Only unlock when the reward is genuinely earned.
-      onRewardEarned: () {
-        if (context.mounted) proceed();
-      },
-      // No ad / offline / closed early — do not unlock; tell the user why.
-      onUnavailable: () {
-        NotificationService.showSnackbar(
-          text: 'No ad available right now. Check your internet and try again.',
-          color: Colors.orange,
-        );
-      },
-    );
+    proceed();
   }
 }

@@ -85,6 +85,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
@@ -115,6 +116,7 @@ String? _requireFiles(BuildContext context, GoRouterState state) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeManager().init();
+  await ProService().load(); // load ad-free/Pro entitlement before first frame
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
