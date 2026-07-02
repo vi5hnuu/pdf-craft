@@ -7,6 +7,7 @@ import 'package:pdf_craft/singletons/RecentToolsService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Debouncer.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
+import 'package:pdf_craft/widgets/CreditBalanceChip.dart';
 
 /// Tools tab. Reads the data-driven [ToolRegistry] (single source of truth) and
 /// adds tool search + a "Recently used" shortcut row.
@@ -73,6 +74,9 @@ class _ToolsScreenState extends State<ToolsScreen> {
                       ],
                     ),
                   ),
+                  // Live credit balance → tap to earn/buy.
+                  const CreditBalanceChip(),
+                  const SizedBox(width: 4),
                   // Quick access to everything tools have produced.
                   IconButton(
                     icon: const Icon(Icons.folder_special_outlined),

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/HttpState.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/ToolResultHandler.dart';
@@ -62,6 +63,8 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
     if (s == null) return;
     if (s.done == true) {
       if (showInterstitial) AdsSingleton().dispatch(ShowInterstitialAd());
+      // A paid tool debited credits server-side — refresh the balance shown in the UI.
+      CreditService().refreshBalance();
       onToolSuccess(successMessage);
       final saved = s.extras?['savedFile'];
       if (saved is File) {
@@ -75,7 +78,19 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
         }
       }
     } else if (s.error != null) {
-      NotificationService.showSnackbar(text: s.error!, color: Colors.red);
+      // Surface a shortcut to top up when the failure is about credits (server 402).
+      final isCredit = s.error!.toLowerCase().contains('credit');
+      NotificationService.showSnackbar(
+        text: s.error!,
+        color: Colors.red,
+        action: isCredit
+            ? SnackBarAction(
+                label: 'Get credits',
+                onPressed: () =>
+                    GoRouter.of(context).pushNamed(AppRoutes.creditsRoute.name),
+              )
+            : null,
+      );
     }
   }
 
