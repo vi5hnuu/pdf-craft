@@ -19,6 +19,8 @@ class AuthApi {
     baseUrl: Constants.authBaseUrl,
     connectTimeout: const Duration(seconds: 20),
     receiveTimeout: const Duration(seconds: 30),
+    // Scope every token this app requests to our product (aud claim).
+    headers: {'X-Audience': Constants.apiAudience},
   ));
 
   /// POST /auth/guest → token bundle (data).

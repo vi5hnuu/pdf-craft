@@ -10,6 +10,10 @@ class Constants {
   static String get authBaseUrl => kDebugMode
       ? "http://10.25.118.20:8081/api/v1"
       : "https://auth.laxmi.solutions/api/v1";
+
+  // Audience this app requests its tokens for — must match pdf-studio's
+  // app.auth.expected-audience and be in the auth service's allowed-audiences.
+  static const String apiAudience = "pdf-studio-api";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
   static const String binDirPath = "storage/emulated/0/ilvPdfBin";
   static const String rootStoragePath = "storage/emulated/0";
