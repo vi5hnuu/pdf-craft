@@ -86,6 +86,8 @@ import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/ProService.dart';
+import 'package:pdf_craft/singletons/AuthService.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
@@ -117,6 +119,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeManager().init();
   await ProService().load(); // load ad-free/Pro entitlement before first frame
+  // Establish an auth session (guest on first launch) so product requests are authenticated.
+  // Resilient to offline launch — a token is (re)obtained lazily on the next online request.
+  try {
+    await AuthService().bootstrap();
+    await CreditService().load();
+  } catch (e) {
+    LoggerSingleton().logger.w('Auth/credit bootstrap deferred: $e');
+  }
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

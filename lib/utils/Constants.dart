@@ -5,6 +5,11 @@ class Constants {
   static String get baseUrl => kDebugMode
       ? "http://10.25.118.20:8082/api/v1"
       : "https://pdf-studio-api.laxmi.solutions/api/v1";
+
+  // Standalone auth service (issues the JWTs pdf-studio validates).
+  static String get authBaseUrl => kDebugMode
+      ? "http://10.25.118.20:8081/api/v1"
+      : "https://auth.laxmi.solutions/api/v1";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
   static const String binDirPath = "storage/emulated/0/ilvPdfBin";
   static const String rootStoragePath = "storage/emulated/0";
