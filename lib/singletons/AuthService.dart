@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:pdf_craft/models/auth/AuthUser.dart';
@@ -36,10 +38,31 @@ class AuthService extends ChangeNotifier {
       await _createGuest();
       return;
     }
-    // We have tokens; trust them until a request 401s and triggers a refresh.
-    // (Minimal profile until /me or the next auth response fills it in.)
+    // We have tokens; show a minimal profile immediately, then hydrate the real one
+    // from /me in the background (non-blocking, with a refresh fallback on 401).
     _user = AuthUser(id: userId, accountType: 'USER', authProvider: 'LOCAL', enabled: true);
     notifyListeners();
+    unawaited(_hydrateUser());
+  }
+
+  /// Fetches the real profile from /me and updates [user]; best-effort.
+  Future<void> _hydrateUser() async {
+    final token = _accessToken;
+    if (token == null) return;
+    try {
+      _user = AuthUser.fromJson(await _api.getMe(token));
+      notifyListeners();
+    } on AuthException catch (e) {
+      if (e.statusCode == 401) {
+        final refreshed = await refreshAccessToken();
+        if (refreshed != null) {
+          try {
+            _user = AuthUser.fromJson(await _api.getMe(refreshed));
+            notifyListeners();
+          } catch (_) {/* keep minimal profile */}
+        }
+      }
+    } catch (_) {/* keep minimal profile */}
   }
 
   Future<void> _createGuest() async {
@@ -96,6 +119,8 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<String> forgotPassword(String email) => _api.forgotPassword(email);
+
+  Future<String> reVerify(String email) => _api.reVerify(email);
 
   /// Signs out to a fresh guest session so the app stays usable.
   Future<void> logout() async {

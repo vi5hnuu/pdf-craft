@@ -33,6 +33,17 @@ class AuthApi {
   Future<Map<String, dynamic>> refresh(String refreshToken) =>
       _postData('/auth/refresh', {'refreshToken': refreshToken});
 
+  /// GET /user/me → the authenticated user's profile (data).
+  Future<Map<String, dynamic>> getMe(String accessToken) async {
+    try {
+      final res = await _dio.get('/user/me',
+          options: Options(headers: {'Authorization': 'Bearer $accessToken'}));
+      return (res.data['data'] as Map).cast<String, dynamic>();
+    } on DioException catch (e) {
+      throw _asAuthException(e);
+    }
+  }
+
   /// Register returns no tokens (account starts unverified) — returns the server message.
   Future<String> register({
     required String email,
