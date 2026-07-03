@@ -28,6 +28,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
   StreamSubscription<List<PurchaseDetails>>? _sub;
   List<ProductDetails> _products = [];
   bool _storeAvailable = false;
+  bool _initializingStore = true;
   bool _busy = false;
 
   @override
@@ -38,13 +39,17 @@ class _CreditsScreenState extends State<CreditsScreen> {
   }
 
   Future<void> _initStore() async {
-    _storeAvailable = await _iap.isAvailable();
-    if (_storeAvailable) {
-      final resp = await _iap.queryProductDetails(_productIds);
-      if (mounted) setState(() => _products = resp.productDetails);
-      _sub = _iap.purchaseStream.listen(_onPurchaseUpdates, onError: (_) {});
-    } else if (mounted) {
-      setState(() {});
+    try {
+      _storeAvailable = await _iap.isAvailable();
+      if (_storeAvailable) {
+        final resp = await _iap.queryProductDetails(_productIds);
+        _products = resp.productDetails;
+        _sub = _iap.purchaseStream.listen(_onPurchaseUpdates, onError: (_) {});
+      }
+    } catch (_) {
+      _storeAvailable = false;
+    } finally {
+      if (mounted) setState(() => _initializingStore = false);
     }
   }
 
@@ -109,7 +114,12 @@ class _CreditsScreenState extends State<CreditsScreen> {
             const SizedBox(height: 24),
             Text('Buy credits', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            if (!_storeAvailable)
+            if (_initializingStore)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (!_storeAvailable)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text('The store is unavailable right now. Please try again later.'),
