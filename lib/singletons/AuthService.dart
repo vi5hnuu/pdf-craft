@@ -118,8 +118,12 @@ class AuthService extends ChangeNotifier {
     String? firstName,
     String? lastName,
   }) async {
-    final token = _accessToken;
-    if (token == null) throw AuthException('No active session.');
+    // Ensure a (guest) session exists to convert. If launch happened offline the guest
+    // may not have been created yet — establish one now rather than failing outright.
+    final token = _accessToken ?? await ensureSession();
+    if (token == null) {
+      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+    }
     final data = await _api.convert(token,
         email: email, password: password, firstName: firstName, lastName: lastName);
     _user = AuthUser.fromJson(data);
