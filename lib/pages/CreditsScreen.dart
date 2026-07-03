@@ -6,6 +6,15 @@ import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 
+/// A credit pack the app sells. [defaultPrice] is a placeholder shown until the real
+/// localized price is fetched from Google Play (once the product is created there).
+class _Pack {
+  final String id;
+  final int credits;
+  final String defaultPrice;
+  const _Pack(this.id, this.credits, this.defaultPrice);
+}
+
 /// Credit wallet: shows the balance and the ways to top up — claim the daily free
 /// allowance, watch a rewarded ad, or buy a credit pack (Google Play INAPP). Purchases
 /// are verified server-side (the token is redeemed via [CreditService.redeemPurchase]).
@@ -17,16 +26,16 @@ class CreditsScreen extends StatefulWidget {
 }
 
 class _CreditsScreenState extends State<CreditsScreen> {
-  /// Credit-pack products; must match the Play Console INAPP product ids.
-  static const _productIds = <String>{
-    'pdfcraft_credits_10',
-    'pdfcraft_credits_30',
-    'pdfcraft_credits_60',
-  };
+  /// The packs the app offers. Ids must match the Play Console INAPP product ids.
+  static const _packs = <_Pack>[
+    _Pack('pdfcraft_credits_10', 10, '₹49'),
+    _Pack('pdfcraft_credits_30', 30, '₹129'),
+    _Pack('pdfcraft_credits_60', 60, '₹229'),
+  ];
 
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
-  List<ProductDetails> _products = [];
+  final Map<String, ProductDetails> _products = {}; // id -> details (when store has it)
   bool _storeAvailable = false;
   bool _initializingStore = true;
   bool _busy = false;
@@ -35,15 +44,18 @@ class _CreditsScreenState extends State<CreditsScreen> {
   void initState() {
     super.initState();
     _initStore();
-    CreditService().refreshBalance();
+    // Load balance + cost table (retries the startup load if it hadn't succeeded yet).
+    CreditService().load();
   }
 
   Future<void> _initStore() async {
     try {
       _storeAvailable = await _iap.isAvailable();
       if (_storeAvailable) {
-        final resp = await _iap.queryProductDetails(_productIds);
-        _products = resp.productDetails;
+        final resp = await _iap.queryProductDetails(_packs.map((p) => p.id).toSet());
+        for (final d in resp.productDetails) {
+          _products[d.id] = d;
+        }
         _sub = _iap.purchaseStream.listen(_onPurchaseUpdates, onError: (_) {});
       }
     } catch (_) {
@@ -65,7 +77,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
         } catch (e) {
           if (mounted) {
             NotificationService.showSnackbar(
-                text: 'Could not verify purchase. Contact support if charged.',
+                text: 'Could not verify purchase. Contact support if you were charged.',
                 color: Colors.red);
           }
         }
@@ -89,49 +101,55 @@ class _CreditsScreenState extends State<CreditsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Credits')),
-      body: AnimatedBuilder(
-        animation: CreditService(),
-        builder: (context, _) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _balanceCard(theme),
-            const SizedBox(height: 24),
-            Text('Earn free credits', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            _earnTile(
-              icon: Icons.calendar_today_outlined,
-              title: 'Claim daily credits',
-              subtitle: 'A few free credits every day',
-              onTap: _claimDaily,
-            ),
-            _earnTile(
-              icon: Icons.smart_display_outlined,
-              title: 'Watch an ad',
-              subtitle: 'Get credits for watching a short video',
-              onTap: _watchAd,
-            ),
-            const SizedBox(height: 24),
-            Text('Buy credits', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            if (_initializingStore)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (!_storeAvailable)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('The store is unavailable right now. Please try again later.'),
-              )
-            else if (_products.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('No credit packs available yet.'),
-              )
-            else
-              ..._sortedProducts().map(_packTile),
-          ],
+      appBar: AppBar(
+        title: const Text('Credits'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: () => CreditService().load(),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => CreditService().load(),
+        child: AnimatedBuilder(
+          animation: CreditService(),
+          builder: (context, _) => ListView(
+            padding: const EdgeInsets.all(16),
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              _balanceCard(theme),
+              const SizedBox(height: 24),
+              Text('Earn free credits', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              _earnTile(
+                icon: Icons.calendar_today_outlined,
+                title: 'Claim daily credits',
+                subtitle: 'A few free credits every day',
+                onTap: _claimDaily,
+              ),
+              _earnTile(
+                icon: Icons.smart_display_outlined,
+                title: 'Watch an ad',
+                subtitle: 'Get credits for watching a short video',
+                onTap: _watchAd,
+              ),
+              const SizedBox(height: 24),
+              Text('Buy credits', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              ..._packs.map((p) => _packTile(theme, p)),
+              if (!_initializingStore && !_storeAvailable)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'In-app purchases aren’t available on this device yet.',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -183,30 +201,28 @@ class _CreditsScreenState extends State<CreditsScreen> {
     );
   }
 
-  Widget _packTile(ProductDetails p) {
-    final credits = _creditsFor(p.id);
+  Widget _packTile(ThemeData theme, _Pack pack) {
+    final product = _products[pack.id]; // non-null once the Play product exists
+    final available = product != null;
+    final priceLabel = product?.price ?? pack.defaultPrice;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
-        leading: const Icon(Icons.toll_outlined),
-        title: Text('$credits credits'),
-        subtitle: Text(p.title),
-        trailing: FilledButton(
-          onPressed: _busy ? null : () => _buy(p),
-          child: Text(p.price),
-        ),
+        leading: Icon(Icons.toll_outlined, color: theme.colorScheme.primary),
+        title: Text('${pack.credits} credits'),
+        subtitle: Text(available ? 'One-time purchase' : 'Available soon'),
+        trailing: available
+            ? FilledButton(
+                onPressed: _busy ? null : () => _buy(product),
+                child: Text(priceLabel),
+              )
+            : OutlinedButton(
+                onPressed: null,
+                child: Text(priceLabel),
+              ),
       ),
     );
   }
-
-  List<ProductDetails> _sortedProducts() {
-    final list = [..._products];
-    list.sort((a, b) => _creditsFor(a.id).compareTo(_creditsFor(b.id)));
-    return list;
-  }
-
-  int _creditsFor(String productId) =>
-      int.tryParse(productId.split('_').last) ?? 0;
 
   Future<void> _claimDaily() async {
     setState(() => _busy = true);

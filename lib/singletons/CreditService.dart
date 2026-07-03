@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/DioSingleton.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -10,15 +10,24 @@ import 'package:pdf_craft/utils/Constants.dart';
 /// Talks to pdf-studio's `/credits/*` endpoints (authenticated via the shared Dio
 /// interceptor). Exposes the balance for the app bar and the cost lookup used to show
 /// price badges and confirm-spend dialogs. A [ChangeNotifier] so UI updates on change.
-class CreditService extends ChangeNotifier {
+class CreditService extends ChangeNotifier with WidgetsBindingObserver {
   static final CreditService _instance = CreditService._();
   CreditService._() {
     // Keep the balance in sync with the signed-in user: whenever the account changes
     // (login, logout, guest fallback, session expiry) reload it for the new user.
     AuthService().addListener(_onAuthChanged);
     _lastUserId = AuthService().user?.id;
+    // Refresh when the app returns to the foreground (e.g. after the backend comes up).
+    WidgetsBinding.instance.addObserver(this);
   }
   factory CreditService() => _instance;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loaded ? refreshBalance() : load();
+    }
+  }
 
   final _dio = DioSingleton().dio;
 
