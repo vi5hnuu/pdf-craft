@@ -32,6 +32,7 @@ import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/RecentsScreen.dart';
 import 'package:pdf_craft/pages/CreditsScreen.dart';
 import 'package:pdf_craft/pages/AuthScreen.dart';
+import 'package:pdf_craft/pages/AccountScreen.dart';
 import 'package:pdf_craft/pages/ResultsScreen.dart';
 import 'package:pdf_craft/pages/OrganizePagesView.dart';
 import 'package:pdf_craft/pages/ExtractPagesView.dart';
@@ -286,6 +287,17 @@ class _NestedTabNavigationExampleAppState
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const AuthScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.accountRoute.name,
+        path: AppRoutes.accountRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const AccountScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

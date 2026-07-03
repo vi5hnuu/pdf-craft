@@ -94,6 +94,7 @@ class AppRoutes{
   static AppRoute settingsRoute=AppRoute(name: 'setting', path: '/setting');
   static AppRoute creditsRoute=AppRoute(name: 'credits', path: '/credits');
   static AppRoute authRoute=AppRoute(name: 'auth', path: '/auth');
+  static AppRoute accountRoute=AppRoute(name: 'account', path: '/account');
 
 
 }

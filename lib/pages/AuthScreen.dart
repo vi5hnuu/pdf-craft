@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/auth/AuthApi.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
@@ -236,8 +238,11 @@ class _AuthScreenState extends State<AuthScreen> {
           password: _password.text,
           firstName: _name.text.trim().isEmpty ? null : _name.text.trim(),
         );
-        if (mounted) await _showVerifyEmailDialog(_email.text.trim());
-        if (mounted) Navigator.of(context).pop();
+        if (!mounted) return;
+        NotificationService.showSnackbar(
+            text: 'Account created — check your email to verify.', color: Colors.green);
+        // Land on the account hub so the "verify your email" path is front and centre.
+        context.pushReplacementNamed(AppRoutes.accountRoute.name);
       } else {
         await AuthService().login(_email.text.trim(), _password.text);
         await CreditService().load(); // switched account → reload its balance
@@ -279,40 +284,6 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       _fail('Could not send reset email.');
     }
-  }
-
-  /// Nudges the user to verify their e-mail, with a resend option. The account already
-  /// works (their guest session is preserved) — verification just confirms the address.
-  Future<void> _showVerifyEmailDialog(String email) {
-    return showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.mark_email_read_outlined, size: 40),
-        title: const Text('Verify your email'),
-        content: Text(
-            "We've sent a verification link to $email. Open it to confirm your address. "
-            'You can keep using the app in the meantime.'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              try {
-                await AuthService().reVerify(email);
-                NotificationService.showSnackbar(
-                    text: 'Verification email resent.', color: Colors.green);
-              } catch (_) {
-                NotificationService.showSnackbar(
-                    text: 'Could not resend right now.', color: Colors.red);
-              }
-            },
-            child: const Text('Resend'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _done(String message) {

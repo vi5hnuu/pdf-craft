@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
-import 'package:pdf_craft/singletons/CreditService.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -118,30 +116,32 @@ class _SettingScreenState extends State<SettingScreen> {
                   builder: (context, _) {
                     final user = AuthService().user;
                     final signedIn = AuthService().isSignedInFull;
+                    final unverified = signedIn && !(user?.enabled ?? true);
                     return ListTile(
-                      leading: Icon(signedIn
-                          ? Icons.verified_user_outlined
-                          : Icons.person_outline),
+                      leading: Icon(
+                        unverified
+                            ? Icons.mark_email_unread_outlined
+                            : signedIn
+                                ? Icons.verified_user_outlined
+                                : Icons.person_outline,
+                        color: unverified ? theme.colorScheme.error : null,
+                      ),
                       title: Text(signedIn
                           ? (user?.email ?? user?.username ?? 'Account')
                           : 'Guest'),
-                      subtitle: Text(signedIn
-                          ? 'Signed in'
-                          : 'Sign in to save your credits & sync across devices'),
-                      trailing: signedIn
-                          ? TextButton(
-                              onPressed: () async {
-                                await AuthService().logout();
-                                await CreditService().load();
-                                NotificationService.showSnackbar(
-                                    text: 'Signed out.', color: Colors.orange);
-                              },
-                              child: const Text('Sign out'))
-                          : const Icon(Icons.chevron_right),
-                      onTap: signedIn
-                          ? null
-                          : () => GoRouter.of(context)
-                              .pushNamed(AppRoutes.authRoute.name),
+                      subtitle: Text(
+                        unverified
+                            ? 'Email not verified — tap to verify'
+                            : signedIn
+                                ? 'Manage your account'
+                                : 'Sign in to save your credits & sync across devices',
+                        style: unverified
+                            ? TextStyle(color: theme.colorScheme.error)
+                            : null,
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => GoRouter.of(context)
+                          .pushNamed(AppRoutes.accountRoute.name),
                     );
                   },
                 ),
