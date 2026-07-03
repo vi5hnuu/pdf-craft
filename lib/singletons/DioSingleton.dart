@@ -19,7 +19,10 @@ class DioSingleton {
           ));
         }
         // Attach the current access token so pdf-studio can authenticate the request.
-        final token = AuthService().accessTokenSync;
+        // If none yet (cold start / first launch), establish one first so the request
+        // never goes out unauthenticated.
+        var token = AuthService().accessTokenSync;
+        token ??= await AuthService().ensureSession();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -39,6 +42,11 @@ class DioSingleton {
               final req = e.requestOptions;
               req.extra['__retried'] = true;
               req.headers['Authorization'] = 'Bearer $newToken';
+              // FormData bodies are single-use (their streams are consumed on send);
+              // clone before retrying or the re-upload would send an empty/corrupt body.
+              if (req.data is FormData) {
+                req.data = (req.data as FormData).clone();
+              }
               final response = await dio.fetch(req);
               return handler.resolve(response);
             } catch (retryErr) {

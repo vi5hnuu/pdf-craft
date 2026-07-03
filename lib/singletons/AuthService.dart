@@ -45,6 +45,15 @@ class AuthService extends ChangeNotifier {
     unawaited(_hydrateUser());
   }
 
+  /// Guarantees a usable access token exists, creating a guest session (or restoring
+  /// from a stored refresh token) if needed. Safe to call repeatedly and concurrently —
+  /// the underlying refresh is single-flighted. Used by the Dio interceptor so a request
+  /// never goes out token-less on a cold start.
+  Future<String?> ensureSession() async {
+    if (_accessToken != null) return _accessToken;
+    return refreshAccessToken();
+  }
+
   /// Fetches the real profile from /me and updates [user]; best-effort.
   Future<void> _hydrateUser() async {
     final token = _accessToken;

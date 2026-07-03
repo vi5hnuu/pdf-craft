@@ -1,8 +1,14 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 
 /// Persists the auth tokens in the platform keystore/keychain via
 /// flutter_secure_storage, so they survive restarts but are not readable by
 /// other apps or plain file access.
+///
+/// All operations are defensive: a keystore that misbehaves on some devices
+/// (corrupt entry, unsupported API level, locked keychain) must never brick auth.
+/// On failure reads return null and writes are dropped — the session still works
+/// in-memory for its lifetime; it just may not persist across restarts.
 class TokenStorage {
   static const _kAccess = 'auth_access_token';
   static const _kRefresh = 'auth_refresh_token';
@@ -17,26 +23,52 @@ class TokenStorage {
     required String refreshToken,
     required String userId,
   }) async {
-    await _storage.write(key: _kAccess, value: accessToken);
-    await _storage.write(key: _kRefresh, value: refreshToken);
-    await _storage.write(key: _kUserId, value: userId);
+    await _write(_kAccess, accessToken);
+    await _write(_kRefresh, refreshToken);
+    await _write(_kUserId, userId);
   }
 
-  Future<String?> get accessToken => _storage.read(key: _kAccess);
-  Future<String?> get refreshToken => _storage.read(key: _kRefresh);
-  Future<String?> get userId => _storage.read(key: _kUserId);
+  Future<String?> get accessToken => _read(_kAccess);
+  Future<String?> get refreshToken => _read(_kRefresh);
+  Future<String?> get userId => _read(_kUserId);
 
-  Future<void> updateAccessToken(String accessToken) =>
-      _storage.write(key: _kAccess, value: accessToken);
+  Future<void> updateAccessToken(String accessToken) => _write(_kAccess, accessToken);
 
   Future<void> updateTokens(String accessToken, String refreshToken) async {
-    await _storage.write(key: _kAccess, value: accessToken);
-    await _storage.write(key: _kRefresh, value: refreshToken);
+    await _write(_kAccess, accessToken);
+    await _write(_kRefresh, refreshToken);
   }
 
   Future<void> clear() async {
-    await _storage.delete(key: _kAccess);
-    await _storage.delete(key: _kRefresh);
-    await _storage.delete(key: _kUserId);
+    await _delete(_kAccess);
+    await _delete(_kRefresh);
+    await _delete(_kUserId);
+  }
+
+  // ── defensive wrappers ────────────────────────────────────────────────────────
+
+  Future<String?> _read(String key) async {
+    try {
+      return await _storage.read(key: key);
+    } catch (e) {
+      LoggerSingleton().logger.w('Secure storage read failed ($key): $e');
+      return null;
+    }
+  }
+
+  Future<void> _write(String key, String value) async {
+    try {
+      await _storage.write(key: key, value: value);
+    } catch (e) {
+      LoggerSingleton().logger.w('Secure storage write failed ($key): $e');
+    }
+  }
+
+  Future<void> _delete(String key) async {
+    try {
+      await _storage.delete(key: key);
+    } catch (e) {
+      LoggerSingleton().logger.w('Secure storage delete failed ($key): $e');
+    }
   }
 }

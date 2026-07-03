@@ -125,10 +125,11 @@ Future<void> main() async {
   // Resilient to offline launch — a token is (re)obtained lazily on the next online request.
   try {
     await AuthService().bootstrap();
-    await CreditService().load();
   } catch (e) {
-    LoggerSingleton().logger.w('Auth/credit bootstrap deferred: $e');
+    LoggerSingleton().logger.w('Auth bootstrap deferred: $e');
   }
+  // Load credits in the background so a slow/unreachable server never blocks the first frame.
+  unawaited(CreditService().load());
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
