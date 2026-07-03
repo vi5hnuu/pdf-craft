@@ -91,6 +91,25 @@ class AuthApi {
   Future<String> reVerify(String email) =>
       _postMessage('/auth/re-verify', {'email': email});
 
+  /// PATCH /user/me — update profile fields; returns the refreshed user (data).
+  Future<Map<String, dynamic>> updateProfile(
+    String accessToken, {
+    String? firstName,
+    String? lastName,
+  }) async {
+    try {
+      final res = await _dio.patch('/user/me',
+          data: {
+            if (firstName != null) 'firstName': firstName,
+            if (lastName != null) 'lastName': lastName,
+          },
+          options: Options(headers: {'Authorization': 'Bearer $accessToken'}));
+      return (res.data['data'] as Map).cast<String, dynamic>();
+    } on DioException catch (e) {
+      throw _asAuthException(e);
+    }
+  }
+
   /// PATCH /user/me/password — change password of a full (LOCAL) account.
   Future<void> changePassword(String accessToken, String oldPassword, String newPassword) async {
     try {

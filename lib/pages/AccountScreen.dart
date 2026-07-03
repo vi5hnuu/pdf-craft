@@ -127,6 +127,13 @@ class _AccountScreenState extends State<AccountScreen> {
         // Actions.
         Card(
           child: Column(children: [
+            ListTile(
+              leading: const Icon(Icons.badge_outlined),
+              title: const Text('Edit profile'),
+              subtitle: const Text('Change your name'),
+              onTap: _busy ? null : () => _editProfile(user),
+            ),
+            const Divider(height: 1, indent: 56),
             if (user.authProvider == 'LOCAL')
               ListTile(
                 leading: const Icon(Icons.password_outlined),
@@ -284,49 +291,112 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _editProfile(AuthUser user) async {
+    final firstC = TextEditingController(text: user.firstName ?? '');
+    final lastC = TextEditingController(text: user.lastName ?? '');
+    try {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Edit profile'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: firstC,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'First name'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: lastC,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Last name'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+          ],
+        ),
+      );
+      if (ok != true) return;
+      setState(() => _busy = true);
+      try {
+        await AuthService().updateProfile(
+            firstName: firstC.text.trim(), lastName: lastC.text.trim());
+        NotificationService.showSnackbar(text: 'Profile updated.', color: Colors.green);
+      } on AuthException catch (e) {
+        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+      } finally {
+        if (mounted) setState(() => _busy = false);
+      }
+    } finally {
+      firstC.dispose();
+      lastC.dispose();
+    }
+  }
+
   Future<void> _changePassword() async {
     final oldC = TextEditingController();
     final newC = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Change password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: oldC,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Current password'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: newC,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'New password (min 8)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Update')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    if (newC.text.length < 8) {
-      NotificationService.showSnackbar(
-          text: 'New password must be at least 8 characters.', color: Colors.red);
-      return;
-    }
-    setState(() => _busy = true);
     try {
-      await AuthService().changePassword(oldC.text, newC.text);
-      NotificationService.showSnackbar(text: 'Password updated.', color: Colors.green);
-    } on AuthException catch (e) {
-      NotificationService.showSnackbar(text: e.message, color: Colors.red);
+      var obscure = true;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setInner) => AlertDialog(
+            title: const Text('Change password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: oldC,
+                  obscureText: obscure,
+                  decoration: const InputDecoration(labelText: 'Current password'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newC,
+                  obscureText: obscure,
+                  decoration: InputDecoration(
+                    labelText: 'New password (min 8)',
+                    suffixIcon: IconButton(
+                      icon: Icon(obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
+                      onPressed: () => setInner(() => obscure = !obscure),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Update')),
+            ],
+          ),
+        ),
+      );
+      if (ok != true) return;
+      if (newC.text.length < 8) {
+        NotificationService.showSnackbar(
+            text: 'New password must be at least 8 characters.', color: Colors.red);
+        return;
+      }
+      setState(() => _busy = true);
+      try {
+        await AuthService().changePassword(oldC.text, newC.text);
+        NotificationService.showSnackbar(text: 'Password updated.', color: Colors.green);
+      } on AuthException catch (e) {
+        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+      } finally {
+        if (mounted) setState(() => _busy = false);
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      oldC.dispose();
+      newC.dispose();
     }
   }
 

@@ -153,6 +153,16 @@ class AuthService extends ChangeNotifier {
     return _user?.enabled ?? false;
   }
 
+  /// Updates the display name (and persists the refreshed profile).
+  Future<void> updateProfile({String? firstName, String? lastName}) async {
+    final token = _accessToken ?? await ensureSession();
+    if (token == null) {
+      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+    }
+    await _setUser(AuthUser.fromJson(
+        await _api.updateProfile(token, firstName: firstName, lastName: lastName)));
+  }
+
   /// Changes the password of a full (LOCAL) account.
   Future<void> changePassword(String oldPassword, String newPassword) async {
     final token = _accessToken ?? await ensureSession();
