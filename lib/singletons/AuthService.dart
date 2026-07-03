@@ -160,6 +160,15 @@ class AuthService extends ChangeNotifier {
       throw AuthException("Couldn't reach the server. Check your connection and try again.");
     }
     await _api.changePassword(token, oldPassword, newPassword);
+    // The server revokes every session (incl. this one's refresh token) on a password
+    // change. Re-establish a fresh session with the new password so the user isn't
+    // silently dropped to a guest when the current access token expires.
+    final email = _user?.email;
+    if (email != null) {
+      try {
+        await login(email, newPassword);
+      } catch (_) {/* non-fatal — they can sign in manually with the new password */}
+    }
   }
 
   /// Permanently deletes the account, then drops back to a fresh guest session.
@@ -170,20 +179,27 @@ class AuthService extends ChangeNotifier {
         await _api.deleteAccount(token);
       } catch (_) {/* fall through to local cleanup */}
     }
-    await _storage.clear();
-    _accessToken = null;
-    _user = null;
-    await _createGuest();
+    await _resetToGuest();
   }
 
   /// Signs out to a fresh guest session so the app stays usable.
   Future<void> logout() async {
     final refresh = await _storage.refreshToken;
     if (refresh != null) await _api.logout(refresh);
+    await _resetToGuest();
+  }
+
+  /// Clears local session state (reflecting it immediately) then re-establishes a guest
+  /// session. Resilient to being offline — a session is re-obtained lazily on the next
+  /// request via [ensureSession].
+  Future<void> _resetToGuest() async {
     await _storage.clear();
     _accessToken = null;
     _user = null;
-    await _createGuest();
+    notifyListeners();
+    try {
+      await _createGuest();
+    } catch (_) {/* lazily re-established later */}
   }
 
   // ── Token refresh (called by the Dio interceptor on 401) ───────────────────────
