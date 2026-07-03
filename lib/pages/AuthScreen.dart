@@ -249,12 +249,54 @@ class _AuthScreenState extends State<AuthScreen> {
         _done('Signed in.');
       }
     } on AuthException catch (e) {
-      _fail(e.message);
+      // Blocked because the e-mail isn't verified → give a real way to verify, not a dead-end toast.
+      if (!_createMode && _isVerifyError(e)) {
+        if (mounted) await _showVerifyPrompt(_email.text.trim());
+      } else {
+        _fail(e.message);
+      }
     } catch (e) {
       _fail('Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  bool _isVerifyError(AuthException e) =>
+      e.statusCode == 403 && e.message.toLowerCase().contains('verif');
+
+  /// Shown when sign-in is blocked by an unverified e-mail: explains how to verify and
+  /// lets the user resend the link right here (the only place they can act on it).
+  Future<void> _showVerifyPrompt(String email) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.mark_email_unread_outlined, size: 40),
+        title: const Text('Verify your email first'),
+        content: Text(
+            'Your email isn’t verified yet. We can resend the verification link to '
+            '${email.isEmpty ? 'your email' : email} — open it, tap “Verify email”, then sign in again.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Icons.send_outlined, size: 18),
+            label: const Text('Resend link'),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                final msg = await AuthService().reVerify(email);
+                NotificationService.showSnackbar(text: msg, color: Colors.green);
+              } on AuthException catch (e) {
+                NotificationService.showSnackbar(text: e.message, color: Colors.red);
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _google() async {
