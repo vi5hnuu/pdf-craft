@@ -286,7 +286,8 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.authRoute.path,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: const AuthScreen(),
+          child: AuthScreen(
+              initialCreateMode: state.uri.queryParameters['mode'] != 'signin'),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
@@ -988,8 +989,86 @@ class _NestedTabNavigationExampleAppState
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           routerConfig: _router,
+          // Surface a "session expired" prompt (sign in again / continue as guest)
+          // over whatever screen is showing.
+          builder: (context, child) =>
+              _SessionExpiryGate(child: child ?? const SizedBox.shrink()),
         ),
       ),
     );
   }
+}
+
+/// Watches [AuthService] and, when a signed-in account's session expires (the app has
+/// fallen back to a guest), prompts the user to sign in again or continue as a guest.
+class _SessionExpiryGate extends StatefulWidget {
+  final Widget child;
+  const _SessionExpiryGate({required this.child});
+
+  @override
+  State<_SessionExpiryGate> createState() => _SessionExpiryGateState();
+}
+
+class _SessionExpiryGateState extends State<_SessionExpiryGate> {
+  bool _showing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService().addListener(_onAuthChanged);
+  }
+
+  @override
+  void dispose() {
+    AuthService().removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (AuthService().sessionExpired && !_showing) {
+      _showing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _promptSessionExpired());
+    }
+  }
+
+  Future<void> _promptSessionExpired() async {
+    final ctx = _rootNavigatorKey.currentContext;
+    if (ctx == null) {
+      _showing = false;
+      return;
+    }
+    await showDialog<void>(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (dctx) => AlertDialog(
+        icon: const Icon(Icons.lock_clock_outlined, size: 40),
+        title: const Text('Session expired'),
+        content: const Text(
+            'You’ve been signed out. Sign in again to get back to your account, '
+            'or keep using PDF Craft as a guest.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              AuthService().acknowledgeSessionExpired();
+              Navigator.of(dctx).pop();
+            },
+            child: const Text('Continue as guest'),
+          ),
+          FilledButton(
+            onPressed: () {
+              AuthService().acknowledgeSessionExpired();
+              Navigator.of(dctx).pop();
+              GoRouter.of(ctx).pushNamed(AppRoutes.authRoute.name,
+                  queryParameters: {'mode': 'signin'});
+            },
+            child: const Text('Sign in again'),
+          ),
+        ],
+      ),
+    );
+    _showing = false;
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

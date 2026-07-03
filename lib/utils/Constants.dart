@@ -6,7 +6,7 @@ class Constants {
   //   - iOS simulator     → localhost / 127.0.0.1
   //   - Physical device   → your computer's LAN IP (e.g. 192.168.x.x) on the same Wi-Fi
   // Debug cleartext HTTP is permitted for any host (see network_security_config.xml).
-  static const String _devHost = "10.0.2.2";
+  static const String _devHost = "10.101.36.20";
 
   static String get baseUrl => kDebugMode
       ? "http://$_devHost:8082/api/v1"
@@ -20,6 +20,10 @@ class Constants {
   // Audience this app requests its tokens for — must match pdf-studio's
   // app.auth.expected-audience and be in the auth service's allowed-audiences.
   static const String apiAudience = "pdf-studio-api";
+
+  // Legal pages (shown on the create-account screen). Point these at your real pages.
+  static const String termsUrl = "https://laxmi.solutions/pdf-craft/terms";
+  static const String privacyUrl = "https://laxmi.solutions/pdf-craft/privacy";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
   static const String binDirPath = "storage/emulated/0/ilvPdfBin";
   static const String rootStoragePath = "storage/emulated/0";

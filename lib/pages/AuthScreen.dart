@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/services/auth/AuthApi.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
@@ -11,7 +13,9 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 /// converts the current guest (keeping their credits); "Sign in" switches to an
 /// existing account. Google sign-in is offered for one-tap access.
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  /// Start in create-account mode (default) or sign-in mode (e.g. from a session-expired prompt).
+  final bool initialCreateMode;
+  const AuthScreen({super.key, this.initialCreateMode = true});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -23,7 +27,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _password = TextEditingController();
   final _name = TextEditingController();
 
-  bool _createMode = true; // guests most often want to create/keep their account
+  late bool _createMode = widget.initialCreateMode;
   bool _busy = false;
   bool _obscure = true;
 
@@ -218,6 +222,10 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: cs.onSurfaceVariant),
                   ),
+                  if (_createMode) ...[
+                    const SizedBox(height: 12),
+                    _legalDisclaimer(theme),
+                  ],
                 ],
               ),
             ),
@@ -244,6 +252,12 @@ class _AuthScreenState extends State<AuthScreen> {
         // Land on the account hub so the "verify your email" path is front and centre.
         context.pushReplacementNamed(AppRoutes.accountRoute.name);
       } else {
+        // Signing in switches to an existing account. Warn a guest who'd leave credits behind
+        // (only "Create account" carries a guest's credits over).
+        if (AuthService().isGuest && CreditService().balance > 0) {
+          final go = await _confirmSwitch(CreditService().balance);
+          if (go != true) return;
+        }
         await AuthService().login(_email.text.trim(), _password.text);
         await CreditService().load(); // switched account → reload its balance
         _done('Signed in.');
@@ -315,16 +329,76 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  /// Confirms a sign-in that would leave a guest's credits behind.
+  Future<bool?> _confirmSwitch(int credits) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Switch to your account?'),
+        content: Text(
+            "You have $credits credit${credits == 1 ? '' : 's'} as a guest. Signing in switches "
+            "to your existing account and these guest credits won't carry over.\n\n"
+            'Tip: choose “Create an account” instead to keep them.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign in anyway')),
+        ],
+      ),
+    );
+  }
+
   Future<void> _forgotPassword() async {
-    if (_email.text.trim().isEmpty || !_email.text.contains('@')) {
-      _fail('Enter your email first.');
+    final email = _email.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      _fail('Enter your email above first.');
       return;
     }
     try {
-      final msg = await AuthService().forgotPassword(_email.text.trim());
-      NotificationService.showSnackbar(text: msg, color: Colors.green);
+      await AuthService().forgotPassword(email);
+      if (!mounted) return;
+      // Explain the next step — the reset itself completes via the emailed link.
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.mark_email_read_outlined, size: 40),
+          title: const Text('Check your email'),
+          content: Text(
+              'If an account exists for $email, we’ve sent a password-reset link. '
+              'Open it to choose a new password, then come back and sign in.'),
+          actions: [
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Got it')),
+          ],
+        ),
+      );
     } catch (e) {
-      _fail('Could not send reset email.');
+      _fail('Could not send reset email. Please try again.');
+    }
+  }
+
+  Widget _legalDisclaimer(ThemeData theme) {
+    final base = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    final link = base?.copyWith(
+        color: theme.colorScheme.primary, decoration: TextDecoration.underline);
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text('By creating an account you agree to our ', style: base),
+        GestureDetector(
+            onTap: () => _openUrl(Constants.termsUrl), child: Text('Terms', style: link)),
+        Text(' & ', style: base),
+        GestureDetector(
+            onTap: () => _openUrl(Constants.privacyUrl),
+            child: Text('Privacy Policy', style: link)),
+        Text('.', style: base),
+      ],
+    );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 

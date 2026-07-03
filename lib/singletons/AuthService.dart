@@ -25,11 +25,24 @@ class AuthService extends ChangeNotifier {
   AuthUser? _user;
   String? _accessToken; // in-memory copy for the sync interceptor read
   Future<String?>? _inFlightRefresh; // single-flight guard
+  bool _sessionExpired = false; // a full account's session just expired
 
   AuthUser? get user => _user;
   bool get isGuest => _user?.isGuest ?? true;
   bool get isSignedInFull => _user != null && !_user!.isGuest;
   String? get accessTokenSync => _accessToken;
+
+  /// True when a signed-in (full) account's session expired and the app fell back to a
+  /// guest. A top-level watcher surfaces a "sign in again / continue as guest" prompt.
+  bool get sessionExpired => _sessionExpired;
+
+  /// Dismisses the session-expired signal (after the user has chosen how to proceed).
+  void acknowledgeSessionExpired() {
+    if (_sessionExpired) {
+      _sessionExpired = false;
+      notifyListeners();
+    }
+  }
 
   /// Loads persisted tokens + the real stored profile, or creates a guest session if
   /// none exist. Never fabricates account state — a restored guest stays a guest until
@@ -226,6 +239,8 @@ class AuthService extends ChangeNotifier {
       await _createGuest();
       return _accessToken;
     }
+    // Remember whether a *full* account is expiring, before we overwrite _user.
+    final wasFull = _user != null && !_user!.isGuest;
     try {
       final data = await _api.refresh(refresh);
       await _applyTokens(data);
@@ -233,7 +248,13 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       LoggerSingleton().logger.w('Refresh failed, falling back to guest: $e');
       await _storage.clear();
-      await _createGuest();
+      await _createGuest(); // keep the app usable
+      // A real account just lost its session — flag it so the UI can offer to sign in
+      // again (rather than silently leaving them as a guest).
+      if (wasFull) {
+        _sessionExpired = true;
+        notifyListeners();
+      }
       return _accessToken;
     }
   }

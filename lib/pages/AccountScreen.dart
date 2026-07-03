@@ -23,8 +23,8 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   void initState() {
     super.initState();
-    // Pick up a verification that may have happened since we last loaded.
-    AuthService().refreshProfile();
+    // Pick up a verification that may have completed since we last loaded (full accounts only).
+    if (AuthService().isSignedInFull) AuthService().refreshProfile();
   }
 
   @override
