@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -30,18 +31,24 @@ class AuthService extends ChangeNotifier {
   bool get isSignedInFull => _user != null && !_user!.isGuest;
   String? get accessTokenSync => _accessToken;
 
-  /// Loads persisted tokens, or creates a guest session if none exist.
+  /// Loads persisted tokens + the real stored profile, or creates a guest session if
+  /// none exist. Never fabricates account state — a restored guest stays a guest until
+  /// the server says otherwise (hydration below just refreshes it).
   Future<void> bootstrap() async {
     _accessToken = await _storage.accessToken;
-    final userId = await _storage.userId;
-    if (_accessToken == null || userId == null) {
+    if (_accessToken == null) {
       await _createGuest();
       return;
     }
-    // We have tokens; show a minimal profile immediately, then hydrate the real one
-    // from /me in the background (non-blocking, with a refresh fallback on 401).
-    _user = AuthUser(id: userId, accountType: 'USER', authProvider: 'LOCAL', enabled: true);
+    // Restore the real stored profile (if any) so we never guess account state.
+    final storedUser = await _storage.userJson;
+    if (storedUser != null) {
+      try {
+        _user = AuthUser.fromJson((jsonDecode(storedUser) as Map).cast<String, dynamic>());
+      } catch (_) {/* corrupt — will be refreshed below */}
+    }
     notifyListeners();
+    // Refresh (or, if there was no stored profile, fetch) the real profile from the server.
     unawaited(_hydrateUser());
   }
 
@@ -59,19 +66,24 @@ class AuthService extends ChangeNotifier {
     final token = _accessToken;
     if (token == null) return;
     try {
-      _user = AuthUser.fromJson(await _api.getMe(token));
-      notifyListeners();
+      await _setUser(AuthUser.fromJson(await _api.getMe(token)));
     } on AuthException catch (e) {
       if (e.statusCode == 401) {
         final refreshed = await refreshAccessToken();
         if (refreshed != null) {
           try {
-            _user = AuthUser.fromJson(await _api.getMe(refreshed));
-            notifyListeners();
-          } catch (_) {/* keep minimal profile */}
+            await _setUser(AuthUser.fromJson(await _api.getMe(refreshed)));
+          } catch (_) {/* keep stored profile */}
         }
       }
-    } catch (_) {/* keep minimal profile */}
+    } catch (_) {/* keep stored profile */}
+  }
+
+  /// Sets the current user, persists it, and notifies listeners.
+  Future<void> _setUser(AuthUser user) async {
+    _user = user;
+    await _storage.saveUser(jsonEncode(user.toJson()));
+    notifyListeners();
   }
 
   Future<void> _createGuest() async {
@@ -126,8 +138,7 @@ class AuthService extends ChangeNotifier {
     }
     final data = await _api.convert(token,
         email: email, password: password, firstName: firstName, lastName: lastName);
-    _user = AuthUser.fromJson(data);
-    notifyListeners();
+    await _setUser(AuthUser.fromJson(data));
     return 'Account created. Check your e-mail to verify it.';
   }
 
@@ -206,10 +217,10 @@ class AuthService extends ChangeNotifier {
   Future<void> _applyTokens(Map<String, dynamic> data) async {
     final access = data['accessToken'] as String;
     final refresh = data['refreshToken'] as String;
-    final userJson = (data['user'] as Map).cast<String, dynamic>();
-    _user = AuthUser.fromJson(userJson);
+    _user = AuthUser.fromJson((data['user'] as Map).cast<String, dynamic>());
     _accessToken = access;
-    await _storage.save(accessToken: access, refreshToken: refresh, userId: _user!.id);
+    await _storage.save(
+        accessToken: access, refreshToken: refresh, userJson: jsonEncode(_user!.toJson()));
     notifyListeners();
   }
 }

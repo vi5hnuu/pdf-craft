@@ -32,4 +32,15 @@ class AuthUser {
         lastName: json['lastName'] as String?,
         enabled: json['enabled'] as bool? ?? false,
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'accountType': accountType,
+        'authProvider': authProvider,
+        'email': email,
+        'username': username,
+        'firstName': firstName,
+        'lastName': lastName,
+        'enabled': enabled,
+      };
 }

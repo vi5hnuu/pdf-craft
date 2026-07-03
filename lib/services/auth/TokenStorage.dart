@@ -12,25 +12,27 @@ import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 class TokenStorage {
   static const _kAccess = 'auth_access_token';
   static const _kRefresh = 'auth_refresh_token';
-  static const _kUserId = 'auth_user_id';
+  static const _kUser = 'auth_user_json';
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
   );
 
+  /// Persists tokens plus the real user profile (JSON) so a restart restores the
+  /// actual account state — never a guessed one.
   Future<void> save({
     required String accessToken,
     required String refreshToken,
-    required String userId,
+    required String userJson,
   }) async {
     await _write(_kAccess, accessToken);
     await _write(_kRefresh, refreshToken);
-    await _write(_kUserId, userId);
+    await _write(_kUser, userJson);
   }
 
   Future<String?> get accessToken => _read(_kAccess);
   Future<String?> get refreshToken => _read(_kRefresh);
-  Future<String?> get userId => _read(_kUserId);
+  Future<String?> get userJson => _read(_kUser);
 
   Future<void> updateAccessToken(String accessToken) => _write(_kAccess, accessToken);
 
@@ -39,10 +41,12 @@ class TokenStorage {
     await _write(_kRefresh, refreshToken);
   }
 
+  Future<void> saveUser(String userJson) => _write(_kUser, userJson);
+
   Future<void> clear() async {
     await _delete(_kAccess);
     await _delete(_kRefresh);
-    await _delete(_kUserId);
+    await _delete(_kUser);
   }
 
   // ── defensive wrappers ────────────────────────────────────────────────────────
