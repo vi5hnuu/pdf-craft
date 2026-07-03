@@ -1,14 +1,20 @@
 import 'package:flutter/foundation.dart';
 
 class Constants {
-  // Physical device: use the machine's LAN IP (emulator: 10.0.2.2)
+  // Dev host for the backends.
+  //   - Android emulator  → 10.0.2.2 (canonical alias for the host machine; never changes)
+  //   - iOS simulator     → localhost / 127.0.0.1
+  //   - Physical device   → your computer's LAN IP (e.g. 192.168.x.x) on the same Wi-Fi
+  // Debug cleartext HTTP is permitted for any host (see network_security_config.xml).
+  static const String _devHost = "10.0.2.2";
+
   static String get baseUrl => kDebugMode
-      ? "http://10.25.118.20:8082/api/v1"
+      ? "http://$_devHost:8082/api/v1"
       : "https://pdf-studio-api.laxmi.solutions/api/v1";
 
   // Standalone auth service (issues the JWTs pdf-studio validates).
   static String get authBaseUrl => kDebugMode
-      ? "http://10.25.118.20:8081/api/v1"
+      ? "http://$_devHost:8081/api/v1"
       : "https://auth.laxmi.solutions/api/v1";
 
   // Audience this app requests its tokens for — must match pdf-studio's
