@@ -91,6 +91,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/singletons/PurchaseService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
@@ -131,6 +132,9 @@ Future<void> main() async {
   }
   // Load credits in the background so a slow/unreachable server never blocks the first frame.
   unawaited(CreditService().load());
+  // Start the IAP lifecycle app-wide: recovers unfinished purchases and processes any
+  // purchase that completes while the credits screen isn't open.
+  unawaited(PurchaseService().init());
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

@@ -1,8 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/singletons/PurchaseService.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 
@@ -33,68 +31,14 @@ class _CreditsScreenState extends State<CreditsScreen> {
     _Pack('pdfcraft_credits_60', 60, '₹229'),
   ];
 
-  final InAppPurchase _iap = InAppPurchase.instance;
-  StreamSubscription<List<PurchaseDetails>>? _sub;
-  final Map<String, ProductDetails> _products = {}; // id -> details (when store has it)
-  bool _storeAvailable = false;
-  bool _initializingStore = true;
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _initStore();
-    // Load balance + cost table (retries the startup load if it hadn't succeeded yet).
+    // Ensure IAP is initialized (no-op if already) and refresh balance + costs.
+    PurchaseService().init();
     CreditService().load();
-  }
-
-  Future<void> _initStore() async {
-    try {
-      _storeAvailable = await _iap.isAvailable();
-      if (_storeAvailable) {
-        final resp = await _iap.queryProductDetails(_packs.map((p) => p.id).toSet());
-        for (final d in resp.productDetails) {
-          _products[d.id] = d;
-        }
-        _sub = _iap.purchaseStream.listen(_onPurchaseUpdates, onError: (_) {});
-      }
-    } catch (_) {
-      _storeAvailable = false;
-    } finally {
-      if (mounted) setState(() => _initializingStore = false);
-    }
-  }
-
-  Future<void> _onPurchaseUpdates(List<PurchaseDetails> purchases) async {
-    for (final p in purchases) {
-      if (p.status == PurchaseStatus.purchased || p.status == PurchaseStatus.restored) {
-        try {
-          await CreditService().redeemPurchase(
-              p.verificationData.serverVerificationData, p.productID);
-          if (mounted) {
-            NotificationService.showSnackbar(text: 'Credits added!', color: Colors.green);
-          }
-        } catch (e) {
-          if (mounted) {
-            NotificationService.showSnackbar(
-                text: 'Could not verify purchase. Contact support if you were charged.',
-                color: Colors.red);
-          }
-        }
-      }
-      if (p.status == PurchaseStatus.error && mounted) {
-        NotificationService.showSnackbar(text: 'Purchase failed.', color: Colors.red);
-      }
-      if (p.pendingCompletePurchase) {
-        await _iap.completePurchase(p);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
   }
 
   @override
@@ -114,7 +58,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
       body: RefreshIndicator(
         onRefresh: () => CreditService().load(),
         child: AnimatedBuilder(
-          animation: CreditService(),
+          animation: Listenable.merge([CreditService(), PurchaseService()]),
           builder: (context, _) => ListView(
             padding: const EdgeInsets.all(16),
             physics: const AlwaysScrollableScrollPhysics(),
@@ -139,7 +83,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
               Text('Buy credits', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               ..._packs.map((p) => _packTile(theme, p)),
-              if (!_initializingStore && !_storeAvailable)
+              if (PurchaseService().initialized && !PurchaseService().available)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
@@ -202,7 +146,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
   }
 
   Widget _packTile(ThemeData theme, _Pack pack) {
-    final product = _products[pack.id]; // non-null once the Play product exists
+    final product = PurchaseService().product(pack.id); // non-null once the Play product exists
     final available = product != null;
     final priceLabel = product?.price ?? pack.defaultPrice;
     return Card(
@@ -213,7 +157,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
         subtitle: Text(available ? 'One-time purchase' : 'Available soon'),
         trailing: available
             ? FilledButton(
-                onPressed: _busy ? null : () => _buy(product),
+                onPressed: _busy ? null : () => _buy(pack.id),
                 child: Text(priceLabel),
               )
             : OutlinedButton(
@@ -260,12 +204,12 @@ class _CreditsScreenState extends State<CreditsScreen> {
     );
   }
 
-  Future<void> _buy(ProductDetails product) async {
+  Future<void> _buy(String productId) async {
     setState(() => _busy = true);
     try {
-      await _iap.buyConsumable(purchaseParam: PurchaseParam(productDetails: product));
-    } catch (e) {
-      NotificationService.showSnackbar(text: 'Could not start purchase.', color: Colors.red);
+      // The result (credit grant) is handled globally by PurchaseService via the purchase
+      // stream, so it completes even if the user leaves this screen.
+      await PurchaseService().buy(productId);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

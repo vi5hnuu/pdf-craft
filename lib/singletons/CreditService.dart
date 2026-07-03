@@ -98,11 +98,26 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
     return (res.data['data']['granted'] as num).toInt();
   }
 
-  /// Redeems a verified Google Play purchase token for a credit pack.
-  Future<void> redeemPurchase(String purchaseToken, String productId) async {
-    final res = await _dio.post('${Constants.baseUrl}/credits/purchase',
-        data: {'purchaseToken': purchaseToken, 'productId': productId});
-    _balance = (res.data['data']['credits'] as num).toInt();
-    notifyListeners();
+  /// Redeems a Google Play purchase token for a credit pack (server verifies with Google).
+  ///
+  /// Returns `true` when the purchase is credited **or was already credited** (HTTP 409) —
+  /// i.e. it is safe to *finalize/consume* the purchase. Throws on transient or
+  /// verification failures, where the purchase should be left pending and retried later
+  /// (never consumed, or the user would be charged with no credits).
+  Future<bool> redeemPurchase(String purchaseToken, String productId) async {
+    try {
+      final res = await _dio.post('${Constants.baseUrl}/credits/purchase',
+          data: {'purchaseToken': purchaseToken, 'productId': productId});
+      _balance = (res.data['data']['credits'] as num).toInt();
+      notifyListeners();
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        // Already redeemed (e.g. a redelivered purchase) — the credits exist; finalize it.
+        refreshBalance();
+        return true;
+      }
+      rethrow; // transient / verification failure → keep pending, retry
+    }
   }
 }
