@@ -135,6 +135,36 @@ class AuthService extends ChangeNotifier {
 
   Future<String> reVerify(String email) => _api.reVerify(email);
 
+  /// Re-fetches the profile from the server (e.g. to pick up a just-completed e-mail
+  /// verification). Returns true once the account is verified/enabled.
+  Future<bool> refreshProfile() async {
+    await _hydrateUser();
+    return _user?.enabled ?? false;
+  }
+
+  /// Changes the password of a full (LOCAL) account.
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    final token = _accessToken ?? await ensureSession();
+    if (token == null) {
+      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+    }
+    await _api.changePassword(token, oldPassword, newPassword);
+  }
+
+  /// Permanently deletes the account, then drops back to a fresh guest session.
+  Future<void> deleteAccount() async {
+    final token = _accessToken;
+    if (token != null) {
+      try {
+        await _api.deleteAccount(token);
+      } catch (_) {/* fall through to local cleanup */}
+    }
+    await _storage.clear();
+    _accessToken = null;
+    _user = null;
+    await _createGuest();
+  }
+
   /// Signs out to a fresh guest session so the app stays usable.
   Future<void> logout() async {
     final refresh = await _storage.refreshToken;

@@ -70,15 +70,19 @@ class AuthApi {
     String? firstName,
     String? lastName,
   }) async {
-    final res = await _dio.post('/auth/convert',
-        data: {
-          'email': email,
-          'password': password,
-          if (firstName != null) 'firstName': firstName,
-          if (lastName != null) 'lastName': lastName,
-        },
-        options: Options(headers: {'Authorization': 'Bearer $accessToken'}));
-    return (res.data['data'] as Map).cast<String, dynamic>();
+    try {
+      final res = await _dio.post('/auth/convert',
+          data: {
+            'email': email,
+            'password': password,
+            if (firstName != null) 'firstName': firstName,
+            if (lastName != null) 'lastName': lastName,
+          },
+          options: Options(headers: {'Authorization': 'Bearer $accessToken'}));
+      return (res.data['data'] as Map).cast<String, dynamic>();
+    } on DioException catch (e) {
+      throw _asAuthException(e);
+    }
   }
 
   Future<String> forgotPassword(String email) =>
@@ -86,6 +90,27 @@ class AuthApi {
 
   Future<String> reVerify(String email) =>
       _postMessage('/auth/re-verify', {'email': email});
+
+  /// PATCH /user/me/password — change password of a full (LOCAL) account.
+  Future<void> changePassword(String accessToken, String oldPassword, String newPassword) async {
+    try {
+      await _dio.patch('/user/me/password',
+          data: {'oldPassword': oldPassword, 'newPassword': newPassword},
+          options: Options(headers: {'Authorization': 'Bearer $accessToken'}));
+    } on DioException catch (e) {
+      throw _asAuthException(e);
+    }
+  }
+
+  /// DELETE /user/me — soft-delete the current account.
+  Future<void> deleteAccount(String accessToken) async {
+    try {
+      await _dio.delete('/user/me',
+          options: Options(headers: {'Authorization': 'Bearer $accessToken'}));
+    } on DioException catch (e) {
+      throw _asAuthException(e);
+    }
+  }
 
   Future<void> logout(String refreshToken) async {
     try {
@@ -114,10 +139,32 @@ class AuthApi {
   }
 
   AuthException _asAuthException(DioException e) {
+    // Connection-level failures (server unreachable / timeout) → clear connectivity message
+    // instead of a generic error, so the user knows it's the network, not their input.
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+      case DioExceptionType.connectionError:
+        return AuthException(
+            "Couldn't reach the server. Check your connection and try again.");
+      default:
+        break;
+    }
+    // Prefer the server's human-readable message from the {success,message,data} envelope.
     final data = e.response?.data;
-    final msg = (data is Map && data['message'] is String)
-        ? data['message'] as String
-        : 'Network error. Please try again.';
-    return AuthException(msg, e.response?.statusCode);
+    if (data is Map && data['message'] is String) {
+      return AuthException(data['message'] as String, e.response?.statusCode);
+    }
+    // Fall back to a status-appropriate message.
+    final code = e.response?.statusCode ?? 0;
+    final fallback = switch (code) {
+      401 => 'Invalid credentials.',
+      403 => 'This action is not allowed.',
+      409 => 'That account already exists.',
+      >= 500 => 'The server had a problem. Please try again shortly.',
+      _ => 'Something went wrong. Please try again.',
+    };
+    return AuthException(fallback, e.response?.statusCode);
   }
 }
