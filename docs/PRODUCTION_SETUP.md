@@ -96,11 +96,20 @@ Without the key, `/credits/purchase` safely returns "could not verify" (no crash
 To claw back credits when a purchase is refunded/voided:
 
 1. Play Console → **Monetization setup → Real-time developer notifications**.
-2. Create a Pub/Sub topic + push subscription pointing at:
+2. Create a Pub/Sub topic + **push** subscription pointing at:
    `https://pdf-studio-api.laxmi.solutions/api/v1/credits/play-rtdn?secret=<PLAY_RTDN_SECRET>`
-3. Set `PLAY_RTDN_SECRET` on pdf-studio to the same secret (the webhook rejects
-   mismatches with 403). A voided one-time purchase then triggers
-   `CreditsService.revokeCreditsForToken`.
+3. Authenticate the push. The webhook accepts two mechanisms and **every configured one
+   must pass** (if none is configured it rejects, fail-closed):
+   - **OIDC token (recommended, strongest):** in the Pub/Sub subscription, enable
+     *Authentication*, choose a service account, and set the **audience** to the webhook
+     URL. Then set `PLAY_RTDN_AUDIENCE` (that audience) and optionally
+     `PLAY_RTDN_SERVICE_ACCOUNT` (the service-account email) on pdf-studio. Pub/Sub then
+     signs each push with a Google OIDC token that the service verifies.
+   - **Shared secret:** set `PLAY_RTDN_SECRET` on pdf-studio to match the `?secret=` in
+     the push URL.
+
+   A voided one-time purchase then triggers `CreditsService.revokeCreditsForToken`
+   (idempotent, exact-amount clawback).
 
 ## 5. Email (SMTP) — verification & password reset (required for email/password auth)
 
