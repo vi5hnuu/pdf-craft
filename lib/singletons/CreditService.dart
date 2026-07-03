@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/DioSingleton.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -11,7 +12,12 @@ import 'package:pdf_craft/utils/Constants.dart';
 /// price badges and confirm-spend dialogs. A [ChangeNotifier] so UI updates on change.
 class CreditService extends ChangeNotifier {
   static final CreditService _instance = CreditService._();
-  CreditService._();
+  CreditService._() {
+    // Keep the balance in sync with the signed-in user: whenever the account changes
+    // (login, logout, guest fallback, session expiry) reload it for the new user.
+    AuthService().addListener(_onAuthChanged);
+    _lastUserId = AuthService().user?.id;
+  }
   factory CreditService() => _instance;
 
   final _dio = DioSingleton().dio;
@@ -19,6 +25,15 @@ class CreditService extends ChangeNotifier {
   int _balance = 0;
   Map<String, int> _costs = {}; // toolId -> base credit cost
   bool _loaded = false;
+  String? _lastUserId;
+
+  void _onAuthChanged() {
+    final id = AuthService().user?.id;
+    if (id != _lastUserId) {
+      _lastUserId = id;
+      refreshBalance(); // different account → its own balance
+    }
+  }
 
   int get balance => _balance;
   bool get loaded => _loaded;

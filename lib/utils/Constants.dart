@@ -21,9 +21,9 @@ class Constants {
   // app.auth.expected-audience and be in the auth service's allowed-audiences.
   static const String apiAudience = "pdf-studio-api";
 
-  // Legal pages (shown on the create-account screen). Point these at your real pages.
-  static const String termsUrl = "https://laxmi.solutions/pdf-craft/terms";
-  static const String privacyUrl = "https://laxmi.solutions/pdf-craft/privacy";
+  // Legal pages (shown on the create-account screen), hosted on the legal site.
+  static const String termsUrl = "https://legal.laxmi.solutions/pdf-craft/terms-of-service";
+  static const String privacyUrl = "https://legal.laxmi.solutions/pdf-craft/privacy-policy";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
   static const String binDirPath = "storage/emulated/0/ilvPdfBin";
   static const String rootStoragePath = "storage/emulated/0";
