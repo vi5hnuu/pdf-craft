@@ -266,7 +266,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         if (e.type == DioExceptionType.cancel) {
           emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.GET_FORM_FIELDS)));
         } else {
-          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.error(error: e.message ?? 'Failed to read form fields'))));
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.fromDio(e, 'Failed to read form fields'))));
         }
       } catch (_) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, const HttpState.error(error: 'Failed to read form fields'))));
@@ -390,7 +390,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         if (e.type == DioExceptionType.cancel) {
           emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.ANALYZE_PDF)));
         } else {
-          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.error(error: e.message ?? 'Failed to analyze PDF'))));
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.fromDio(e, 'Failed to analyze PDF'))));
         }
       } catch (_) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, const HttpState.error(error: 'Failed to analyze PDF'))));
@@ -432,7 +432,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         final res = await _pdfService.getBookmarks(req: event.getBookmarks, cancelToken: event.cancelToken);
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.done(extras: {'bookmarks': res.data}))));
       } on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.error(error: e.message ?? 'Failed to get bookmarks'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.fromDio(e, 'Failed to get bookmarks'))));
       } catch (_) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, const HttpState.error(error: 'Failed to get bookmarks'))));
       }
@@ -445,7 +445,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         final res = await _pdfService.getMetadata(getMetadata: event.getMetadata, cancelToken: event.cancelToken);
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.done(extras: {'metadata': res.data}))));
       } on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.error(error: e.message ?? 'Failed to get metadata'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.fromDio(e, 'Failed to get metadata'))));
       } catch (_) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, const HttpState.error(error: 'Failed to get metadata'))));
       }
@@ -474,7 +474,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       if (e.type == DioExceptionType.cancel) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..remove(key)));
       } else {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.fromDio(e, error))));
       }
     } catch (_) {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: error))));
@@ -502,7 +502,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       if (e.type == DioExceptionType.cancel) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..remove(key)));
       } else {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: e.message ?? error))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.fromDio(e, error))));
       }
     } catch (_) {
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.error(error: error))));

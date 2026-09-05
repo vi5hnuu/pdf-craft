@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -25,6 +27,17 @@ class DioSingleton {
         token ??= await AuthService().ensureSession();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
+        }
+        // Give every mutating call a stable key so a retry — ours after a 401, or the
+        // user's after a timeout — is charged once, not twice. The server enforces this
+        // with a unique constraint on (userId, idempotencyKey); previously only the
+        // rewarded-ad call sent one, so a retried tool run was billed again.
+        //
+        // Assigned once per RequestOptions: a retry reuses the same object and therefore
+        // the same key, which is precisely what makes it idempotent.
+        if (options.method.toUpperCase() != 'GET' &&
+            !options.headers.containsKey('Idempotency-Key')) {
+          options.headers['Idempotency-Key'] = _idempotencyKey();
         }
         LoggerSingleton().logger.i('REQUEST [${options.method}] => PATH: ${options.path}');
         return handler.next(options);
@@ -62,5 +75,14 @@ class DioSingleton {
 
   factory DioSingleton() {
     return _instance;
+  }
+
+  /// Random enough that two devices never collide, short enough for the server's
+  /// idempotency_key column (VARCHAR(100)).
+  static String _idempotencyKey() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${DateTime.now().millisecondsSinceEpoch.toRadixString(16)}-$hex';
   }
 }

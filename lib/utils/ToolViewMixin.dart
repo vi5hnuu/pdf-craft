@@ -78,8 +78,9 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
         }
       }
     } else if (s.error != null) {
-      // Surface a shortcut to top up when the failure is about credits (server 402).
-      final isCredit = s.error!.toLowerCase().contains('credit');
+      // Keyed off the 402 status rather than searching the message for "credit", which
+      // broke as soon as the server reworded anything.
+      final isCredit = s.isOutOfCredits;
       NotificationService.showSnackbar(
         text: s.error!,
         color: Colors.red,

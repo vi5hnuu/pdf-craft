@@ -14,19 +14,30 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/routes.dart';
+import 'package:go_router/go_router.dart';
 
 enum _Tool {
-  grayscale('Grayscale', Icons.invert_colors, HttpStates.GRAYSCALE_PDF),
-  compress('Compress (recommended)', Icons.compress, HttpStates.COMPRESS_PDF),
-  repair('Repair', Icons.build_outlined, HttpStates.REPAIR_PDF),
-  flatten('Flatten', Icons.layers_clear_outlined, HttpStates.FLATTEN_PDF),
-  optimize('Optimize', Icons.auto_fix_high, HttpStates.OPTIMIZE_PDF),
-  removeBlankPages('Remove Blank Pages', Icons.delete_sweep_outlined, HttpStates.REMOVE_BLANK_PAGES);
+  grayscale('Grayscale', Icons.invert_colors, HttpStates.GRAYSCALE_PDF, 'grayscale-pdf'),
+  compress('Compress (recommended)', Icons.compress, HttpStates.COMPRESS_PDF, 'compress-pdf'),
+  repair('Repair', Icons.build_outlined, HttpStates.REPAIR_PDF, 'repair-pdf'),
+  flatten('Flatten', Icons.layers_clear_outlined, HttpStates.FLATTEN_PDF, 'flatten-pdf'),
+  optimize('Optimize', Icons.auto_fix_high, HttpStates.OPTIMIZE_PDF, 'optimize-pdf'),
+  removeBlankPages('Remove Blank Pages', Icons.delete_sweep_outlined,
+      HttpStates.REMOVE_BLANK_PAGES, 'remove-blank-pages');
 
   final String label;
   final IconData icon;
   final String stateKey;
-  const _Tool(this.label, this.icon, this.stateKey);
+
+  /// Backend tool id whose price lives in the server cost table. Batch runs this operation
+  /// once per file, so the real cost is this price multiplied by the file count — which
+  /// the screen previously never showed, letting a ten-file compress spend twenty credits
+  /// with no warning at all.
+  final String creditToolId;
+
+  const _Tool(this.label, this.icon, this.stateKey, this.creditToolId);
 }
 
 enum _FileStatus { pending, processing, done, error }
@@ -74,7 +85,14 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     }
   }
 
+  /// Total credits this run will spend: the per-file price times the number of files.
+  int get _totalCost => CreditService().costFor(_tool.creditToolId) * _items.length;
+
   Future<void> _startBatch() async {
+    // A batch is the one place where a single tap can spend a large number of credits, so
+    // it is confirmed as a whole rather than per file.
+    if (!await _confirmSpend()) return;
+
     setState(() {
       _running = true;
       _finished = false;
@@ -82,6 +100,68 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       _currentIndex = 0;
     });
     await _processNext();
+  }
+
+  /// Shows the run's total price and asks once. Returns false if the user declines or
+  /// cannot afford it (in which case they are offered the Credits screen).
+  Future<bool> _confirmSpend() async {
+    final total = _totalCost;
+    if (total <= 0) return true;
+
+    final balance = CreditService().balance;
+    final enough = balance >= total;
+    final perFile = CreditService().costFor(_tool.creditToolId);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('${_tool.label} — ${_items.length} files'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.toll, size: 20),
+                const SizedBox(width: 8),
+                Text('Uses $total credit${total > 1 ? 's' : ''}',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text('$perFile per file × ${_items.length} files',
+                style: Theme.of(ctx).textTheme.bodySmall),
+            const SizedBox(height: 8),
+            Text('Your balance: $balance'),
+            if (!enough) ...[
+              const SizedBox(height: 8),
+              Text('Not enough credits for this batch.',
+                  style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          if (!enough)
+            FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop(false);
+                GoRouter.of(context).pushNamed(AppRoutes.creditsRoute.name);
+              },
+              child: const Text('Get credits'),
+            )
+          else
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text('Use $total'),
+            ),
+        ],
+      ),
+    );
+    return confirmed == true;
   }
 
   Future<void> _processNext() async {

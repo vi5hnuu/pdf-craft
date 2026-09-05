@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
@@ -18,8 +20,24 @@ class CreditGate {
     required String? creditToolId,
     required String toolName,
     required VoidCallback proceed,
+    /// The files about to be processed, when they are already known. Supplying them lets
+    /// the dialog quote the size surcharge the server will actually apply instead of the
+    /// bare base price.
+    List<File>? files,
   }) async {
-    final cost = creditToolId == null ? 0 : CreditService().costFor(creditToolId);
+    if (creditToolId == null) {
+      proceed();
+      return;
+    }
+
+    final int sizeBytes = _totalBytes(files);
+    final cost = sizeBytes > 0
+        ? CreditService().costForSize(creditToolId, sizeBytes)
+        : CreditService().costFor(creditToolId);
+    // When the files are not known yet (the picker has not run), the price can still grow
+    // with size, so the dialog says "from N" rather than stating a figure it cannot promise.
+    final approximate = sizeBytes == 0 && CreditService().hasSizeSurcharge(creditToolId);
+
     if (cost <= 0) {
       proceed();
       return;
@@ -39,10 +57,18 @@ class CreditGate {
               children: [
                 const Icon(Icons.toll, size: 20),
                 const SizedBox(width: 8),
-                Text('Uses $cost credit${cost > 1 ? 's' : ''}',
+                Text(
+                    approximate
+                        ? 'Uses from $cost credit${cost > 1 ? 's' : ''}'
+                        : 'Uses $cost credit${cost > 1 ? 's' : ''}',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
+            if (approximate) ...[
+              const SizedBox(height: 4),
+              Text('Larger files may cost more.',
+                  style: Theme.of(ctx).textTheme.bodySmall),
+            ],
             const SizedBox(height: 8),
             Text('Your balance: $balance'),
             if (!enough) ...[
@@ -75,5 +101,19 @@ class CreditGate {
     );
 
     if (confirmed == true) proceed();
+  }
+
+  /// Total size of the selected files, or 0 when they are not known yet.
+  static int _totalBytes(List<File>? files) {
+    if (files == null || files.isEmpty) return 0;
+    var total = 0;
+    for (final file in files) {
+      try {
+        total += file.lengthSync();
+      } catch (_) {
+        // Unreadable here just means we quote the base price; the server is authoritative.
+      }
+    }
+    return total;
   }
 }

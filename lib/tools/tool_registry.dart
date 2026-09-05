@@ -138,6 +138,8 @@ class ToolDef {
       context,
       creditToolId: creditToolId,
       toolName: name,
+      files: files, // known here, so the quote includes any size surcharge
+
       proceed: () {
         RecentToolsService().record(id);
         // Pass a fresh, modifiable List<File> — selections come in as
@@ -251,8 +253,15 @@ class ToolRegistry {
     'mirror-pages': 'mirror-pdf',
     'split-by-size': 'split-by-size',
     'image-overlay': 'place-image',
-    'fill-form': 'fill-flatten',
+    // FormEditorView dispatches CreateFormEvent, not FillFlattenEvent — the previous
+    // mapping quoted the wrong tool's price.
+    'fill-form': 'create-form',
     'redact': 'redact-pdf',
+    // FlattenPdfView dispatches FlattenPdfEvent (and FillFlattenEvent when the PDF has a
+    // form), both priced; it was showing as free.
+    'flatten': 'flatten-pdf',
+    // AnnotatePdfView applies the annotation layer through the stamp endpoint.
+    'annotate': 'stamp-pdf',
     // Convert
     'pdf-to-jpg': 'pdf-to-jpg',
     'image-to-pdf': 'image-to-pdf',

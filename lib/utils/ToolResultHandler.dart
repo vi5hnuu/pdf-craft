@@ -26,7 +26,7 @@ mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
         actions: [
           TextButton(
             onPressed: () {
-              RateAppService().markRated(); // "not now" = mark rated to avoid spam
+              RateAppService().snooze(); // ask again later, rather than never again
               Navigator.pop(context);
             },
             child: const Text('Later'),

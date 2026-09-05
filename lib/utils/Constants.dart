@@ -6,7 +6,12 @@ class Constants {
   //   - iOS simulator     → localhost / 127.0.0.1
   //   - Physical device   → your computer's LAN IP (e.g. 192.168.x.x) on the same Wi-Fi
   // Debug cleartext HTTP is permitted for any host (see network_security_config.xml).
-  static const String _devHost = "10.101.36.20";
+  // 10.0.2.2 is the Android emulator's alias for the host machine and works on any
+  // developer's setup. Override with --dart-define=DEV_HOST=192.168.x.x when running on a
+  // physical device. It was previously hardcoded to one machine's LAN address, which broke
+  // for everyone else and on the emulator.
+  static const String _devHost =
+      String.fromEnvironment('DEV_HOST', defaultValue: '10.0.2.2');
 
   static String get baseUrl => kDebugMode
       ? "http://$_devHost:8082/api/v1"
