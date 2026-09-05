@@ -29,7 +29,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
   final _outFileNameC = TextEditingController();
   final _headerTextC  = TextEditingController();
   final _footerTextC  = TextEditingController();
-  final _fromPageC    = TextEditingController(text: '0');
+  final _fromPageC    = TextEditingController(text: '1');
   final _toPageC      = TextEditingController();
 
   int _fontSize = 12;
@@ -126,7 +126,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                             // Page range
                             Row(
                               children: [
-                                Expanded(child: _field(_fromPageC, 'From Page (0-indexed)')),
+                                Expanded(child: _field(_fromPageC, 'From Page')),
                                 const SizedBox(width: 12),
                                 Expanded(child: _field(_toPageC, 'To Page (optional)')),
                               ],
@@ -199,13 +199,23 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
         fontSize:       _fontSize,
         color:          ColorInfo(r: _color.red, g: _color.green, b: _color.blue, a: 255),
         fontName:       _fontName,
-        fromPage:       int.tryParse(_fromPageC.text) ?? 0,
-        toPage:         _toPageC.text.isNotEmpty ? int.tryParse(_toPageC.text) : null,
+        // Fields are 1-based because that is how readers count pages; the API is
+        // 0-indexed, so the conversion happens here rather than in the user's head.
+        fromPage:       _oneBasedToIndex(_fromPageC.text) ?? 0,
+        toPage:         _oneBasedToIndex(_toPageC.text),
         topPadding:     _topPadding,
         bottomPadding:  _bottomPadding,
         file: await MultipartFile.fromFile(widget.file.path),
       ),
     ));
+  }
+
+  /// Converts a 1-based page field to the 0-based index the API expects.
+  /// Returns null for an empty field so "optional" stays optional.
+  int? _oneBasedToIndex(String text) {
+    final parsed = int.tryParse(text.trim());
+    if (parsed == null) return null;
+    return parsed > 0 ? parsed - 1 : 0;
   }
 
   @override
