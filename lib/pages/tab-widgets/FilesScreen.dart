@@ -278,8 +278,17 @@ class _FilesScreenState extends State<FilesScreen> {
           _favoritePdfs = favorites;
         });
       } else {
-        NotificationService.showSnackbar(
-            text: 'Storage permission denied', color: Colors.red);
+        // A bare "denied" toast is a dead end once Android stops showing the dialog: the
+        // only way to grant is Settings, and nothing here said so. ErrorPage already has
+        // that recovery flow, so route to it rather than duplicating it.
+        if (!mounted) return;
+        if (await StoragePermissions.isPermanentlyDenied()) {
+          if (mounted) GoRouter.of(context).goNamed(AppRoutes.errorRoute.name);
+        } else {
+          NotificationService.showSnackbar(
+              text: 'Storage permission is needed to browse your files',
+              color: Colors.red);
+        }
       }
     } catch (e) {
       NotificationService.showSnackbar(
