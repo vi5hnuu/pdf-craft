@@ -34,6 +34,12 @@ class _MergePdfViewState extends State<MergePdfView> {
   }
 
   @override
+  void dispose() {
+    outFileNameC.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Merge PDF'), elevation: 5),
