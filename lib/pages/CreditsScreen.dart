@@ -184,14 +184,23 @@ class _CreditsScreenState extends State<CreditsScreen> {
   void _watchAd() {
     setState(() => _busy = true);
     RewardedAdManager().show(
+      // The reward is granted by Google's verification callback to the API, not by us,
+      // so this waits for the balance to move rather than asking for credits.
       onRewardEarned: () async {
-        final key = 'rw-${DateTime.now().millisecondsSinceEpoch}';
         try {
-          final granted = await CreditService().grantRewarded(key);
-          NotificationService.showSnackbar(text: 'Earned +$granted credits!', color: Colors.green);
-        } catch (e) {
+          final granted = await CreditService().awaitRewardedCredits();
+          if (granted > 0) {
+            NotificationService.showSnackbar(
+                text: 'Earned +$granted credits!', color: Colors.green);
+          } else {
+            NotificationService.showSnackbar(
+                text: 'Thanks for watching — your credits will appear shortly.',
+                color: Colors.orange);
+          }
+        } catch (_) {
           NotificationService.showSnackbar(
-              text: "You've hit today's ad-credit limit.", color: Colors.orange);
+              text: "Couldn't confirm your credits. Pull to refresh in a moment.",
+              color: Colors.orange);
         } finally {
           if (mounted) setState(() => _busy = false);
         }

@@ -100,13 +100,32 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
     return (res.data['data']['granted'] as num).toInt();
   }
 
-  /// Grants rewarded-ad credits. [idempotencyKey] dedupes a single ad impression.
-  Future<int> grantRewarded(String idempotencyKey) async {
-    final res = await _dio.post('${Constants.baseUrl}/credits/rewarded',
-        options: Options(headers: {'Idempotency-Key': idempotencyKey}));
-    _balance = (res.data['data']['credits'] as num).toInt();
-    notifyListeners();
-    return (res.data['data']['granted'] as num).toInt();
+  /// Waits for the credits an ad earned to land, and reports how many arrived.
+  ///
+  /// The client no longer grants these. AdMob calls the API's verification endpoint once
+  /// the ad genuinely completes, so the credit appears a moment later and out of band —
+  /// asking the server to grant would have meant trusting the client, which is exactly
+  /// what a modified build would abuse. This polls briefly for the balance to move.
+  ///
+  /// Returns the number of credits gained, or 0 if the callback has not arrived in time
+  /// (it may still land; the balance refreshes on the next read either way).
+  Future<int> awaitRewardedCredits({
+    Duration timeout = const Duration(seconds: 12),
+  }) async {
+    final before = _balance;
+    final deadline = DateTime.now().add(timeout);
+
+    // Google's callback is usually near-instant, so start tight and back off rather than
+    // hammering the API for the whole window.
+    var wait = const Duration(milliseconds: 700);
+    while (DateTime.now().isBefore(deadline)) {
+      await Future.delayed(wait);
+      await refreshBalance();
+      if (_balance > before) return _balance - before;
+      wait *= 2;
+      if (wait > const Duration(seconds: 3)) wait = const Duration(seconds: 3);
+    }
+    return 0;
   }
 
   /// Redeems a Google Play purchase token for a credit pack (server verifies with Google).

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/utils/AdUnits.dart';
 
 /// Manages a single cached Rewarded ad, shown (opt-in) before "heavy" /
@@ -52,6 +53,11 @@ class RewardedAdManager {
   /// offline / failed to show / closed early without earning), so the caller can
   /// surface an error and must NOT unlock. This closes the "go offline to skip
   /// the ad" bypass. Always preloads the next ad afterwards.
+  ///
+  /// Credits are **not** granted by the client. The ad carries this account's id as
+  /// AdMob's server-side-verification user id, and Google calls the API directly once
+  /// the ad genuinely completes; the API grants against that callback. [onRewardEarned]
+  /// therefore means "the reward is on its way", not "the balance has changed".
   void show({
     required VoidCallback onRewardEarned,
     required VoidCallback onUnavailable,
@@ -63,6 +69,14 @@ class RewardedAdManager {
       return;
     }
     _cachedAd = null;
+
+    // Tells Google which account to credit when it calls our verification endpoint.
+    // Without it the callback arrives with no user and nothing can be granted.
+    final userId = AuthService().user?.id;
+    if (userId != null && userId.isNotEmpty) {
+      ad.setServerSideOptions(ServerSideVerificationOptions(userId: userId));
+    }
+
     var earned = false;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
