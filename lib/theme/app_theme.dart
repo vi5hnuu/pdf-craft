@@ -56,6 +56,7 @@ class AppTheme {
           type: BottomNavigationBarType.fixed,
           elevation: 8,
         ),
+        visualDensity: VisualDensity.compact,
         textTheme: _poppinsDark(),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
@@ -78,7 +79,7 @@ class AppTheme {
             // Min height only (width 0) — forcing infinite width here made
             // FilledButtons crash inside Rows / dialog action bars. Screens that
             // want a full-width button wrap it in a double.infinity container.
-            minimumSize: const Size(0, 52),
+            minimumSize: const Size(0, 48),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
             textStyle: const TextStyle(
@@ -173,6 +174,7 @@ class AppTheme {
           type: BottomNavigationBarType.fixed,
           elevation: 8,
         ),
+        visualDensity: VisualDensity.compact,
         textTheme: _poppinsLight(),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
@@ -195,7 +197,7 @@ class AppTheme {
             // Min height only (width 0) — forcing infinite width here made
             // FilledButtons crash inside Rows / dialog action bars. Screens that
             // want a full-width button wrap it in a double.infinity container.
-            minimumSize: const Size(0, 52),
+            minimumSize: const Size(0, 48),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
             textStyle: const TextStyle(
