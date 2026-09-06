@@ -3,6 +3,7 @@ import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/PurchaseService.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// A credit pack the app sells. [defaultPrice] is a placeholder shown until the real
 /// localized price is fetched from Google Play (once the product is created there).
@@ -106,7 +107,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
         gradient: LinearGradient(
           colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.surface),
       ),
       child: Row(
         children: [

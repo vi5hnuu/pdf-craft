@@ -14,6 +14,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class HeaderFooterView extends StatefulWidget {
   final File file;
@@ -115,7 +116,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                                   onTap: _pickColor,
                                   child: Container(
                                     width: 36, height: 36,
-                                    decoration: BoxDecoration(color: _color, borderRadius: BorderRadius.circular(8), border: Border.all(color: theme.dividerColor)),
+                                    decoration: BoxDecoration(color: _color, borderRadius: BorderRadius.circular(AppRadius.surface), border: Border.all(color: theme.dividerColor)),
                                   ),
                                 ),
                                 const SizedBox(width: 8),

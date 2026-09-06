@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/widgets/RotatableItem.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class Thumbnail {
   bool? isLoading;
@@ -303,7 +304,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                                         border: Border.all(
                                             color: theme.dividerColor),
                                         borderRadius:
-                                            BorderRadius.circular(4),
+                                            BorderRadius.circular(AppRadius.surface),
                                       ),
                                       child: thumbnail?.isLoading == true
                                           ? const Center(
@@ -317,7 +318,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                                               : thumbnail?.image != null
                                                   ? ClipRRect(
                                                       borderRadius:
-                                                          BorderRadius.circular(3),
+                                                          BorderRadius.circular(AppRadius.surface),
                                                       child: Image.memory(
                                                           thumbnail!.image!.bytes,
                                                           fit: BoxFit.contain))

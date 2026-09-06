@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class DocumentScannerView extends StatefulWidget {
   @override
@@ -47,7 +48,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                         WidgetStateProperty.all<Color>(Colors.black),
                     shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.surface),
                       ),
                     ),
                   ),
@@ -67,7 +68,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                         WidgetStateProperty.all<Color>(Colors.black),
                     shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.surface),
                       ),
                     ),
                   ),

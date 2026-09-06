@@ -18,6 +18,7 @@ import 'package:pdf_craft/widgets/FileTile.dart';
 import 'package:pdf_craft/widgets/SelectionBar.dart';
 import 'package:pdf_craft/widgets/SortControls.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// File search across device storage, kept consistent with the Files browser:
 /// same type/sort/direction filters, the same per-file actions (long-press) and
@@ -144,7 +145,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   hintText: 'Search files',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(AppRadius.surface)),
                 ),
               ),
             ),

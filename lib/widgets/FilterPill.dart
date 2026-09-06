@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// A single small, consistent filter/sort chip used across the Files browser
 /// and Search so every chip (type, extension, sort field) looks identical.
@@ -31,7 +32,7 @@ class FilterPill extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? primary.withValues(alpha: 0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
               color: selected ? primary : theme.dividerColor, width: 1),
         ),

@@ -11,6 +11,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class NUpPdfView extends StatefulWidget {
   final File file;
@@ -110,7 +111,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: selected ? theme.colorScheme.primaryContainer : theme.cardColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
             border: Border.all(
               color: selected ? theme.colorScheme.primary : theme.dividerColor,
               width: selected ? 2 : 1,

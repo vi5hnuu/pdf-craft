@@ -19,6 +19,7 @@ import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 // ── Tool enum ─────────────────────────────────────────────────────────────────
 
@@ -816,7 +817,7 @@ class _AnnotationPainter extends CustomPainter {
         if (l.arrow) _drawArrowHead(canvas, l.from, l.to, l.color, l.width);
 
       case _StickyObj s:
-        final rRect = RRect.fromRectAndRadius(Rect.fromLTWH(s.pos.dx, s.pos.dy, 120, 80), const Radius.circular(6));
+        final rRect = RRect.fromRectAndRadius(Rect.fromLTWH(s.pos.dx, s.pos.dy, 120, 80), const Radius.circular(AppRadius.surface));
         canvas.drawRRect(rRect, Paint()..color = s.bgColor..style = PaintingStyle.fill);
         canvas.drawRRect(rRect, Paint()..color = Colors.black26..style = PaintingStyle.stroke..strokeWidth = 1);
         final tp = TextPainter(

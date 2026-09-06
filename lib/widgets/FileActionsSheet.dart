@@ -10,6 +10,7 @@ import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// A reusable bottom sheet of file-level actions (view, apply a tool, share,
 /// favorite, open externally), driven by [ToolRegistry] intellisense so the
@@ -31,7 +32,7 @@ class FileActionsSheet {
     return showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => _FileActionsBody(
           file: file, onChanged: onChanged, allowSelect: allowSelect),
     );
@@ -111,7 +112,7 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
                 margin: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                     color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(2)),
+                    borderRadius: BorderRadius.circular(AppRadius.surface)),
               ),
             ),
             Padding(

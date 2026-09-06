@@ -12,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 enum FieldType { text, multiline, checkbox, radio, dropdown, date, signature }
 
@@ -301,7 +302,7 @@ class _FormEditorViewState extends State<FormEditorView> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
               ),
               child: Text('Tap a field below to place it',
                   style: TextStyle(fontSize: 12.5, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
@@ -314,7 +315,7 @@ class _FormEditorViewState extends State<FormEditorView> {
   Widget _pagePill(ThemeData theme) {
     return Material(
       elevation: 2,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.surface),
       color: theme.colorScheme.surface,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -415,7 +416,7 @@ class _FormEditorViewState extends State<FormEditorView> {
           decoration: BoxDecoration(
             color: primary.withValues(alpha: isSel ? 0.12 : 0.06),
             border: Border.all(color: isSel ? primary : primary.withValues(alpha: 0.45), width: isSel ? 1.8 : 1),
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
           ),
           // A small type badge in the corner — no inline name label (less noise).
           child: Align(
@@ -424,7 +425,7 @@ class _FormEditorViewState extends State<FormEditorView> {
               padding: const EdgeInsets.all(1.5),
               decoration: BoxDecoration(
                 color: primary.withValues(alpha: isSel ? 0.9 : 0.5),
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(2), bottomRight: Radius.circular(4)),
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(AppRadius.surface), bottomRight: Radius.circular(AppRadius.surface)),
               ),
               child: Icon(f.type.icon, size: 10, color: Colors.white),
             ),
@@ -513,7 +514,7 @@ class _FormEditorViewState extends State<FormEditorView> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => _FieldPropertiesSheet(field: f),
     ).whenComplete(() {
       if (mounted) setState(() {}); // refresh badges/state after edits
@@ -588,14 +589,14 @@ class _FormEditorViewState extends State<FormEditorView> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.surface),
         onTap: () => _promptGroup(t),
         child: Container(
           width: 66,
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
             border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
           ),
           child: Column(
@@ -615,14 +616,14 @@ class _FormEditorViewState extends State<FormEditorView> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.surface),
         onTap: () => _addField(t),
         child: Container(
           width: 66,
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: theme.colorScheme.primary.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
             border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.18)),
           ),
           child: Column(

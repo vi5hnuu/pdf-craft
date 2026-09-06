@@ -18,6 +18,7 @@ import 'package:pdf_craft/widgets/FilterPill.dart';
 import 'package:pdf_craft/widgets/SelectionBar.dart';
 import 'package:pdf_craft/widgets/SortControls.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class DirectoryFilesListing extends StatefulWidget {
   final String directoryPath;
@@ -268,7 +269,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                         color: i == pathToDirectory.length - 1
                             ? primary.withValues(alpha: 0.12)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(AppRadius.surface),
                       ),
                       child: Text(
                         pathToDirectory[i].split('/').last.isEmpty
@@ -313,7 +314,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                       ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(AppRadius.surface)),
               ),
               onChanged: (v) => _filterDebouncer.run(() {
                 if (mounted) setState(() => _nameFilter = v);
@@ -377,7 +378,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     final isDir = file is Directory;
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -386,7 +387,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               width: 36,
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(AppRadius.surface)),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -457,7 +458,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -469,7 +470,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                 child: Container(
                   width: 36, height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(AppRadius.surface)),
                 ),
               ),
               _infoRow(Icons.insert_drive_file_outlined, 'Name', name, copyable: true),

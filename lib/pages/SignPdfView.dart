@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Create a signature — either by drawing it or importing an image — then
 /// navigate to PlaceImageView to drag/resize and stamp it onto the PDF.
@@ -75,7 +76,7 @@ class _SignPdfViewState extends State<SignPdfView> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.surface),
                     border: Border.all(color: theme.dividerColor),
                     boxShadow: [
                       BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),

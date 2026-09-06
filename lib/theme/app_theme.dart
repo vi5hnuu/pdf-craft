@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class AppTheme {
   AppTheme._();
@@ -58,13 +59,13 @@ class AppTheme {
         textTheme: _poppinsDark(),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
               borderSide: const BorderSide(color: Color(0xFF333333))),
           enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
               borderSide: const BorderSide(color: Color(0xFF333333))),
           focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
               borderSide: const BorderSide(color: _primary, width: 1.5)),
           labelStyle: const TextStyle(color: Color(0xFF888888)),
           fillColor: const Color(0xFF1A1A1A),
@@ -79,11 +80,44 @@ class AppTheme {
             // want a full-width button wrap it in a double.infinity container.
             minimumSize: const Size(0, 52),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
             textStyle: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5),
+          ),
+        ),
+        cardTheme: CardThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        dialogTheme: DialogThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        popupMenuTheme: PopupMenuThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        chipTheme: ChipThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.chipRadius),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
           ),
         ),
         sliderTheme: const SliderThemeData(
@@ -142,13 +176,13 @@ class AppTheme {
         textTheme: _poppinsLight(),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
               borderSide: const BorderSide(color: Color(0xFFDDDDDD))),
           enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
               borderSide: const BorderSide(color: Color(0xFFDDDDDD))),
           focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
               borderSide: const BorderSide(color: _primary, width: 1.5)),
           labelStyle: const TextStyle(color: Color(0xFF888888)),
           fillColor: Colors.white,
@@ -163,11 +197,44 @@ class AppTheme {
             // want a full-width button wrap it in a double.infinity container.
             minimumSize: const Size(0, 52),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
             textStyle: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5),
+          ),
+        ),
+        cardTheme: CardThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        dialogTheme: DialogThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        popupMenuTheme: PopupMenuThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        chipTheme: ChipThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.chipRadius),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.surfaceRadius),
           ),
         ),
         sliderTheme: const SliderThemeData(

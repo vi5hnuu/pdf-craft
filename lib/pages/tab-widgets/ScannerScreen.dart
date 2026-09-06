@@ -16,6 +16,7 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class ScannerScreen extends StatefulWidget {
   @override
@@ -228,7 +229,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       padding: const EdgeInsets.all(16),
       child: Card(
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.surface),
           onTap: () {
             // Open the scanned PDF
             final uri = _result!.pdf!.uri;
@@ -402,7 +403,7 @@ class _ScanCard extends StatelessWidget {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.surface),
                 ),
                 child: loading
                     ? SizedBox(

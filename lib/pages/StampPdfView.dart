@@ -12,6 +12,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class StampPdfView extends StatefulWidget {
   final File file;
@@ -80,7 +81,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                                 height: 100,
                                 decoration: BoxDecoration(
                                   color: theme.cardColor,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(AppRadius.surface),
                                   border: Border.all(color: theme.dividerColor),
                                 ),
                                 child: _stampFile != null

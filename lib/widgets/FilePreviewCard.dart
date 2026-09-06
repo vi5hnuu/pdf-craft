@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// A document-style file card used in the Recents / Favorites rows.
 ///
@@ -108,7 +109,7 @@ class _FilePreviewCardState extends State<FilePreviewCard> {
                   height: FilePreviewCard.cardHeight,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.surface),
                     border: Border.all(color: theme.dividerColor),
                     boxShadow: [
                       BoxShadow(

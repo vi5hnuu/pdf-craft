@@ -14,6 +14,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class WatermarkPdfView extends StatefulWidget {
   final File file;
@@ -96,7 +97,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                                   onTap: _pickColor,
                                   child: Container(
                                     width: 40, height: 40,
-                                    decoration: BoxDecoration(color: _pickedColor, borderRadius: BorderRadius.circular(8), border: Border.all(color: Theme.of(context).dividerColor)),
+                                    decoration: BoxDecoration(color: _pickedColor, borderRadius: BorderRadius.circular(AppRadius.surface), border: Border.all(color: Theme.of(context).dividerColor)),
                                   ),
                                 ),
                                 const SizedBox(width: 8),

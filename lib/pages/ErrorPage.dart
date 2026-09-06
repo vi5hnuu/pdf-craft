@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 enum ErrorReason { STORAGE_PERMISSION_DENIED }
 
@@ -105,7 +106,7 @@ class _ErrorpageState extends State<Errorpage> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.orange.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.surface),
                     ),
                     child: Row(children: [
                       const Icon(Icons.info_outline, size: 18, color: Colors.orange),
@@ -127,7 +128,7 @@ class _ErrorpageState extends State<Errorpage> {
                     onPressed: _requesting ? null : (_permanentlyDenied ? _openSettings : _requestPermission),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
                     ),
                     icon: _requesting
                         ? const SizedBox(
@@ -162,7 +163,7 @@ class _ErrorpageState extends State<Errorpage> {
             height: 34,
             decoration: BoxDecoration(
               color: primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(9),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
             ),
             child: Icon(icon, size: 18, color: primary),
           ),
