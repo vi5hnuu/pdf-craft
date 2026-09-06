@@ -12,6 +12,8 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/widgets/PdfEffectPreview.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -38,11 +40,27 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
   PdfFontName _fontName = PdfFontName.HELVETICA;
   double _topPadding = 20;
   double _bottomPadding = 20;
+  /// Page count, so {{total}} reads truthfully in the preview.
+  int? _pageCount;
 
   @override
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    _loadPageCount();
+  }
+
+  /// So {{total}} in the preview shows the document's real length rather than a placeholder.
+  Future<void> _loadPageCount() async {
+    try {
+      final doc = await PdfDocument.openFile(widget.file.path);
+      final count = doc.pagesCount;
+      await doc.close();
+      if (mounted) setState(() => _pageCount = count);
+    } catch (_) {
+      // Unreadable here is not worth surfacing: the preview simply shows 1, and the tool
+      // itself will report a real failure when it runs.
+    }
   }
 
   @override
@@ -77,6 +95,38 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Header and footer text was configured blind: size, colour, padding
+                            // and the dynamic tokens were all numbers with no way to see where
+                            // they landed until the file came back.
+                            PdfEffectPreview(
+                              filePath: widget.file.path,
+                              caption:
+                                  'Approximate placement on page 1 — font metrics differ slightly from the output',
+                              overlayBuilder: (ctx, canvas, pagePoints) {
+                                final scale = canvas.width / pagePoints.width;
+                                final size = _fontSize * scale;
+                                Widget line(String text, bool top) => Positioned(
+                                      left: 0,
+                                      right: 0,
+                                      top: top ? _topPadding * scale : null,
+                                      bottom: top ? null : _bottomPadding * scale,
+                                      child: Text(
+                                        _resolveTokens(text),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                            fontSize: size, color: _color, height: 1),
+                                      ),
+                                    );
+                                return Stack(children: [
+                                  if (_headerTextC.text.trim().isNotEmpty)
+                                    line(_headerTextC.text, true),
+                                  if (_footerTextC.text.trim().isNotEmpty)
+                                    line(_footerTextC.text, false),
+                                ]);
+                              },
+                            ),
+                            const SizedBox(height: 16),
                             _field(_outFileNameC, 'Output File Name (optional)'),
                             const SizedBox(height: 16),
                             _field(_headerTextC, 'Header Text'),
@@ -161,8 +211,39 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
 
   Widget _field(TextEditingController c, String label) => TextFormField(
         controller: c,
+        onChanged: (_) => setState(() {}),
         decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
       );
+
+  /// Substitutes the dynamic tokens the server understands, so the preview reads the way the
+  /// finished page will rather than showing the raw placeholders.
+  String _resolveTokens(String text) {
+    const page = 1;
+    final total = _pageCount ?? 1;
+    String roman(int n) {
+      const table = [
+        [1000, 'm'], [900, 'cm'], [500, 'd'], [400, 'cd'], [100, 'c'], [90, 'xc'],
+        [50, 'l'], [40, 'xl'], [10, 'x'], [9, 'ix'], [5, 'v'], [4, 'iv'], [1, 'i'],
+      ];
+      var rest = n;
+      final out = StringBuffer();
+      for (final row in table) {
+        while (rest >= (row[0] as int)) {
+          out.write(row[1]);
+          rest -= row[0] as int;
+        }
+      }
+      return out.toString();
+    }
+
+    return text
+        .replaceAll('{{page_of_total}}', '$page of $total')
+        .replaceAll('{{page/total}}', '$page/$total')
+        .replaceAll('{{page}}', '$page')
+        .replaceAll('{{total}}', '$total')
+        .replaceAll('{{ROMAN}}', roman(page).toUpperCase())
+        .replaceAll('{{roman}}', roman(page));
+  }
 
   Widget _labeledSlider(String label, double value, double min, double max, ValueChanged<double> onChanged) {
     return Column(
