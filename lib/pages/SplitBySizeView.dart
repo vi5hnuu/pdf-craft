@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/request/split-by-size.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/ToolResultHandler.dart';
 import 'package:pdf_craft/utils/ToolViewMixin.dart';

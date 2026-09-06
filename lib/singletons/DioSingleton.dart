@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/utils/NetworkUtils.dart';
 
@@ -44,6 +45,15 @@ class DioSingleton {
       },
       onResponse: (response, handler) async {
         LoggerSingleton().logger.i('RESPONSE [${response.statusCode}] => PATH: ${response.requestOptions.path}');
+        // Every charged response carries the balance left. Reading it here keeps the figure
+        // shown in the UI correct after any tool run: most tool screens handle their own
+        // completion and never asked for a refresh, so the balance went stale until
+        // something else happened to fetch it.
+        final remaining = response.headers.value('X-Credits-Remaining');
+        if (remaining != null) {
+          final value = int.tryParse(remaining);
+          if (value != null) CreditService().setBalance(value);
+        }
         return handler.next(response);
       },
       onError: (DioException e, handler) async {

@@ -70,6 +70,16 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  /// Records a balance the server has just reported.
+  ///
+  /// Used by the Dio interceptor, which sees `X-Credits-Remaining` on every charged
+  /// response — cheaper and more timely than each screen re-fetching after its own run.
+  void setBalance(int credits) {
+    if (credits == _balance) return;
+    _balance = credits;
+    notifyListeners();
+  }
+
   Future<void> refreshBalance() async {
     try {
       final res = await _dio.get('${Constants.baseUrl}/credits/balance');
