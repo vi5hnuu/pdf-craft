@@ -44,6 +44,13 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   }
 
   @override
+  void dispose() {
+    gapController.dispose();
+    outFileNameC.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

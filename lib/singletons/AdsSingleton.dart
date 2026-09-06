@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/utils/AdUnits.dart';
 
 abstract class AdEvent {}
@@ -30,6 +31,7 @@ class AdsSingleton {
 
   /// Loads an ad and stores it — does NOT show immediately.
   void _preload() {
+    if (ProService().isPro) return; // no ads for Pro users
     if (_isLoading || _cachedAd != null) return;
     _isLoading = true;
     InterstitialAd.load(
@@ -53,6 +55,7 @@ class AdsSingleton {
 
   /// Shows the cached ad (if ready), then preloads the next one.
   void _show() {
+    if (ProService().isPro) return; // no ads for Pro users
     if (_cachedAd == null) {
       _preload(); // try again for next time
       return;

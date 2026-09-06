@@ -13,6 +13,7 @@ import 'package:pdf_craft/widgets/ConfirmDialog.dart';
 import 'package:pdf_craft/widgets/InputDialog.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class PdfPreview extends StatefulWidget {
   final String pdfFilePath;
@@ -357,7 +358,7 @@ class _PdfPreviewState extends State<PdfPreview> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => _OutlineSheet(
         filePath: _path,
         onJump: (pageIndex) {
@@ -441,7 +442,7 @@ class _OutlineSheetState extends State<_OutlineSheet> {
               width: 36,
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: theme.dividerColor, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: theme.dividerColor, borderRadius: BorderRadius.circular(AppRadius.surface)),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

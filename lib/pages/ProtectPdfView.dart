@@ -43,6 +43,13 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   }
 
   @override
+  void dispose() {
+    outFileNameC.dispose();
+    _hintC.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

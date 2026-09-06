@@ -12,6 +12,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class StampPdfView extends StatefulWidget {
   final File file;
@@ -25,7 +26,7 @@ class _StampPdfViewState extends State<StampPdfView> {
   late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
 
   final _outFileNameC = TextEditingController();
-  final _fromPageC    = TextEditingController(text: '0');
+  final _fromPageC    = TextEditingController(text: '1');
   final _toPageC      = TextEditingController();
 
   File? _stampFile;
@@ -80,7 +81,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                                 height: 100,
                                 decoration: BoxDecoration(
                                   color: theme.cardColor,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(AppRadius.surface),
                                   border: Border.all(color: theme.dividerColor),
                                 ),
                                 child: _stampFile != null
@@ -110,7 +111,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                             // Page range
                             Row(
                               children: [
-                                Expanded(child: _field(_fromPageC, 'From Page (0-indexed)')),
+                                Expanded(child: _field(_fromPageC, 'From Page')),
                                 const SizedBox(width: 12),
                                 Expanded(child: _field(_toPageC, 'To Page (optional)')),
                               ],
@@ -160,12 +161,22 @@ class _StampPdfViewState extends State<StampPdfView> {
       stampPdf: StampPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         opacity:     _opacity,
-        fromPage:    int.tryParse(_fromPageC.text) ?? 0,
-        toPage:      _toPageC.text.isNotEmpty ? int.tryParse(_toPageC.text) : null,
+        // Fields are 1-based because that is how readers count pages; the API is
+        // 0-indexed, so the conversion happens here rather than in the user's head.
+        fromPage:    _oneBasedToIndex(_fromPageC.text) ?? 0,
+        toPage:      _oneBasedToIndex(_toPageC.text),
         file:  await MultipartFile.fromFile(widget.file.path),
         stamp: await MultipartFile.fromFile(_stampFile!.path),
       ),
     ));
+  }
+
+  /// Converts a 1-based page field to the 0-based index the API expects.
+  /// Returns null for an empty field so "optional" stays optional.
+  int? _oneBasedToIndex(String text) {
+    final parsed = int.tryParse(text.trim());
+    if (parsed == null) return null;
+    return parsed > 0 ? parsed - 1 : 0;
   }
 
   @override

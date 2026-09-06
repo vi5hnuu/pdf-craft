@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class StorageTile extends StatelessWidget {
   final String leadingIconSvgPath;
@@ -24,7 +25,7 @@ class StorageTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       elevation: 0,
       color: theme.cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
       child: ListTile(
         onTap: onTap,
         contentPadding:
@@ -34,7 +35,7 @@ class StorageTile extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             color: primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
           ),
           child: Padding(
             padding: const EdgeInsets.all(10),

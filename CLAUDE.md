@@ -4,9 +4,11 @@
 4. commit after every bug/features implementation
    and commit message should only include whats done and nothing else and never push commits
    do not add message like 'Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>' in commits
-
+5. App size should be as minimal as possible
 Always work in plan mode for big features/fixes
 add proper comments in respective repos for better understanding in future
 
 backend : /Users/vishnu/IdeaProjects/pdf-studio-api
 frontend web repo : /Users/vishnu/WebstormProjects/pdf-studio
+
+DO large and critical work in plan mode.

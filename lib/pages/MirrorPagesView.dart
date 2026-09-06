@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/enums/mirror-direction.dart';
 import 'package:pdf_craft/models/request/mirror-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/ToolResultHandler.dart';
 import 'package:pdf_craft/utils/ToolViewMixin.dart';

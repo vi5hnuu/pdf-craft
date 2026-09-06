@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Allows cleartext HTTP to emulator host (10.0.2.2) in debug builds only -->
+<!-- DEBUG builds only: permit cleartext HTTP to local dev backends.
+     Emulator reaches the host machine at 10.0.2.2; a physical device uses the
+     host's LAN IP. base-config permits cleartext for any host so whichever dev
+     address you point Constants.baseUrl / authBaseUrl at will work in debug.
+     Release builds are unaffected (they use HTTPS, no cleartext). -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">10.0.2.2</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="true"/>
 </network-security-config>

@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class _Thumbnail {
   final bool isLoading;
@@ -236,7 +237,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                   border: Border.all(
                     color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.surface),
                 ),
                 child: thumbnail == null || thumbnail.isLoading
                     ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
@@ -244,7 +245,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                         ? const Center(child: Icon(Icons.broken_image_outlined))
                         : thumbnail.image != null
                             ? ClipRRect(
-                                borderRadius: BorderRadius.circular(7),
+                                borderRadius: BorderRadius.circular(AppRadius.surface),
                                 child: Image.memory(thumbnail.image!.bytes, fit: BoxFit.fitWidth),
                               )
                             : const SizedBox.shrink(),

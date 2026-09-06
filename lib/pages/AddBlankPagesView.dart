@@ -24,7 +24,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
   late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
 
   final _outFileNameC = TextEditingController();
-  // Comma-separated list of 0-indexed positions
+  // Comma-separated page numbers (1-based) to insert a blank page before.
   final _positionsC   = TextEditingController();
 
   // A4 dimensions in points (595 x 842) — used as defaults
@@ -72,7 +72,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                             const SizedBox(height: 16),
                             _field(
                               _positionsC,
-                              'Insert After Pages (0-indexed, comma-separated)',
+                              'Insert blank before pages (e.g. 1, 3, 5)',
                               hint: 'e.g. 0,2,5 inserts after pages 1, 3, 6',
                             ),
                             const SizedBox(height: 20),
@@ -147,7 +147,8 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
     _bloc.add(AddBlankPagesEvent(
       addBlankPages: AddBlankPages(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
-        positions:   positions,
+        // Fields are 1-based ("before page N"); the API takes 0-based insertion points.
+        positions:   positions.map((p) => p > 0 ? p - 1 : 0).toList(),
         pageWidth:   _pageWidth,
         pageHeight:  _pageHeight,
         file: await MultipartFile.fromFile(widget.file.path),

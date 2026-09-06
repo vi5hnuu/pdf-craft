@@ -11,6 +11,7 @@ import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 enum _FileFilter { all, pdf, images, docs, other }
 
@@ -220,7 +221,7 @@ class _DriveScreenState extends State<DriveScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -533,7 +534,7 @@ class _DriveScreenState extends State<DriveScreen> {
     }
     return Container(
       width: 40, height: 40,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.surface)),
       child: Icon(icon, color: bg == Colors.grey.shade200 ? Colors.grey : null),
     );
   }

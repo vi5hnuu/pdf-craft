@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:pdf_craft/models/HttpState.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Full-screen, branded processing overlay driven by an [HttpState].
 ///
@@ -50,7 +51,7 @@ class ProcessingOverlay extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.25),
@@ -78,7 +79,7 @@ class ProcessingOverlay extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
                 child: LinearProgressIndicator(
                   // Determinate while uploading; indeterminate while the server works.
                   value: uploading ? progress : null,

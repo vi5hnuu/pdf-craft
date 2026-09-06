@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// A reusable thumbnail grid for multi-selecting pages of a [PdfDocument].
 ///
@@ -44,7 +45,7 @@ class PageSelectorGrid extends StatelessWidget {
           onTap: () => onToggle(i),
           child: Stack(children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.surface),
               child: PdfPageThumbnail(
                 key: ValueKey('sel_thumb_$i'),
                 document: document,
@@ -58,7 +59,7 @@ class PageSelectorGrid extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.surface),
                     border: Border.all(color: accent, width: 2),
                   ),
                   child: const Center(
@@ -75,7 +76,7 @@ class PageSelectorGrid extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.black54,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.surface),
                   ),
                   child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 11)),
                 ),

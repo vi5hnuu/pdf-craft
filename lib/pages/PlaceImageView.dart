@@ -15,6 +15,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 enum _Mode { place, zoom }
 
@@ -298,7 +299,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
                   Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(AppRadius.surface)),
                       child: const Text(
                         'Select an image above\nto position it on this page',
                         textAlign: TextAlign.center,

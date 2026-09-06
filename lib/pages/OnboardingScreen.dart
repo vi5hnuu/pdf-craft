@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -121,7 +122,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: _currentPage == i
                               ? primary
                               : primary.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.surface),
                         ),
                       );
                     }),

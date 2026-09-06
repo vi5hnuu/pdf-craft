@@ -37,6 +37,12 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
   }
 
   @override
+  void dispose() {
+    outFileNameC.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final md=MediaQuery.of(context);
 

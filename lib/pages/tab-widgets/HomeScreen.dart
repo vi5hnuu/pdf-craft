@@ -7,6 +7,7 @@ import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -157,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.surface),
           border: Border.all(color: theme.dividerColor),
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -187,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
         width: 40, height: 40,
         decoration: BoxDecoration(
           color: isPdf ? Colors.red.shade100 : Colors.teal.shade100,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.surface),
         ),
         child: Icon(
           isPdf ? Icons.picture_as_pdf_outlined : Icons.image_outlined,

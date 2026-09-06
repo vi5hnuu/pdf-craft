@@ -30,6 +30,9 @@ import 'package:pdf_craft/pages/ReorderPdfView.dart';
 import 'package:pdf_craft/pages/RotatePdfView.dart';
 import 'package:pdf_craft/pages/SearchScreen.dart';
 import 'package:pdf_craft/pages/RecentsScreen.dart';
+import 'package:pdf_craft/pages/CreditsScreen.dart';
+import 'package:pdf_craft/pages/AuthScreen.dart';
+import 'package:pdf_craft/pages/AccountScreen.dart';
 import 'package:pdf_craft/pages/ResultsScreen.dart';
 import 'package:pdf_craft/pages/OrganizePagesView.dart';
 import 'package:pdf_craft/pages/ExtractPagesView.dart';
@@ -85,6 +88,10 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/singletons/ProService.dart';
+import 'package:pdf_craft/singletons/AuthService.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/singletons/PurchaseService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
@@ -115,6 +122,19 @@ String? _requireFiles(BuildContext context, GoRouterState state) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeManager().init();
+  await ProService().load(); // load ad-free/Pro entitlement before first frame
+  // Establish an auth session (guest on first launch) so product requests are authenticated.
+  // Resilient to offline launch — a token is (re)obtained lazily on the next online request.
+  try {
+    await AuthService().bootstrap();
+  } catch (e) {
+    LoggerSingleton().logger.w('Auth bootstrap deferred: $e');
+  }
+  // Load credits in the background so a slow/unreachable server never blocks the first frame.
+  unawaited(CreditService().load());
+  // Start the IAP lifecycle app-wide: recovers unfinished purchases and processes any
+  // purchase that completes while the credits screen isn't open.
+  unawaited(PurchaseService().init());
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -249,6 +269,40 @@ class _NestedTabNavigationExampleAppState
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: SearchScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.creditsRoute.name,
+        path: AppRoutes.creditsRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const CreditsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.authRoute.name,
+        path: AppRoutes.authRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: AuthScreen(
+              initialCreateMode: state.uri.queryParameters['mode'] != 'signin'),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        name: AppRoutes.accountRoute.name,
+        path: AppRoutes.accountRoute.path,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const AccountScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
@@ -939,8 +993,86 @@ class _NestedTabNavigationExampleAppState
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           routerConfig: _router,
+          // Surface a "session expired" prompt (sign in again / continue as guest)
+          // over whatever screen is showing.
+          builder: (context, child) =>
+              _SessionExpiryGate(child: child ?? const SizedBox.shrink()),
         ),
       ),
     );
   }
+}
+
+/// Watches [AuthService] and, when a signed-in account's session expires (the app has
+/// fallen back to a guest), prompts the user to sign in again or continue as a guest.
+class _SessionExpiryGate extends StatefulWidget {
+  final Widget child;
+  const _SessionExpiryGate({required this.child});
+
+  @override
+  State<_SessionExpiryGate> createState() => _SessionExpiryGateState();
+}
+
+class _SessionExpiryGateState extends State<_SessionExpiryGate> {
+  bool _showing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService().addListener(_onAuthChanged);
+  }
+
+  @override
+  void dispose() {
+    AuthService().removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (AuthService().sessionExpired && !_showing) {
+      _showing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _promptSessionExpired());
+    }
+  }
+
+  Future<void> _promptSessionExpired() async {
+    final ctx = _rootNavigatorKey.currentContext;
+    if (ctx == null) {
+      _showing = false;
+      return;
+    }
+    await showDialog<void>(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (dctx) => AlertDialog(
+        icon: const Icon(Icons.lock_clock_outlined, size: 40),
+        title: const Text('Session expired'),
+        content: const Text(
+            'You’ve been signed out. Sign in again to get back to your account, '
+            'or keep using PDF Craft as a guest.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              AuthService().acknowledgeSessionExpired();
+              Navigator.of(dctx).pop();
+            },
+            child: const Text('Continue as guest'),
+          ),
+          FilledButton(
+            onPressed: () {
+              AuthService().acknowledgeSessionExpired();
+              Navigator.of(dctx).pop();
+              GoRouter.of(ctx).pushNamed(AppRoutes.authRoute.name,
+                  queryParameters: {'mode': 'signin'});
+            },
+            child: const Text('Sign in again'),
+          ),
+        ],
+      ),
+    );
+    _showing = false;
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

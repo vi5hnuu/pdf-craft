@@ -8,6 +8,7 @@ import 'package:pdf_craft/models/request/get-metadata.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class PdfInfoView extends StatefulWidget {
   final File file;
@@ -76,7 +77,7 @@ class _PdfInfoViewState extends State<PdfInfoView> {
               // File name header
               Container(
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(AppRadius.surface)),
                 child: Row(
                   children: [
                     Icon(Icons.picture_as_pdf, color: theme.colorScheme.primary, size: 32),

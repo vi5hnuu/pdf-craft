@@ -245,6 +245,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
   void _showAddDialog() {
     final titleC = TextEditingController();
     final pageC = TextEditingController(text: '1');
+    // Controllers created for a dialog are disposed when it closes; otherwise every open
+    // leaks a pair.
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -274,13 +276,17 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      titleC.dispose();
+      pageC.dispose();
+    });
   }
 
   void _showEditDialog(int index) {
     final item = _bookmarks[index];
     final titleC = TextEditingController(text: item.title);
     final pageC = TextEditingController(text: '${item.pageIndex + 1}');
+    // Disposed when the dialog closes, as above.
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -310,7 +316,10 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      titleC.dispose();
+      pageC.dispose();
+    });
   }
 
   Future<void> _onSave() async {

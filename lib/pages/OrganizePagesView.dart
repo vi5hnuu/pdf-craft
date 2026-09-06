@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/ToolViewMixin.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Visual page organiser: drag to reorder and tap ✕ to delete pages on a single
 /// thumbnail list, then export. Commits via the existing reorder endpoint, whose
@@ -158,13 +159,13 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Material(
             elevation: 1,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Row(children: [
                 // Thumbnail (cached after first render).
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.surface),
                   child: Container(
                     width: 54,
                     height: 72,

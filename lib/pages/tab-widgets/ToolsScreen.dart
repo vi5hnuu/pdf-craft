@@ -7,6 +7,9 @@ import 'package:pdf_craft/singletons/RecentToolsService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Debouncer.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
+import 'package:pdf_craft/widgets/CreditBalanceChip.dart';
+import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Tools tab. Reads the data-driven [ToolRegistry] (single source of truth) and
 /// adds tool search + a "Recently used" shortcut row.
@@ -73,6 +76,9 @@ class _ToolsScreenState extends State<ToolsScreen> {
                       ],
                     ),
                   ),
+                  // Live credit balance → tap to earn/buy.
+                  const CreditBalanceChip(),
+                  const SizedBox(width: 4),
                   // Quick access to everything tools have produced.
                   IconButton(
                     icon: const Icon(Icons.folder_special_outlined),
@@ -105,7 +111,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                         )
                       : null,
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(AppRadius.surface)),
                 ),
                 onChanged: (v) => _debouncer.run(() {
                   if (mounted) setState(() => _query = v);
@@ -282,7 +288,7 @@ class _CategorySection extends StatelessWidget {
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: category.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.surface),
                 ),
                 child: Icon(category.icon, color: category.color, size: 18),
               ),
@@ -343,7 +349,7 @@ class ToolCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.surface),
           border: Border.all(color: theme.dividerColor),
         ),
         padding: const EdgeInsets.all(12),
@@ -360,7 +366,7 @@ class ToolCard extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.surface),
                   ),
                   child: Icon(tool.icon, color: accentColor, size: 26),
                 ),
@@ -392,16 +398,37 @@ class ToolCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // Ad hint (top-right) for tools that require watching an ad. Hint only.
-            if (tool.isHeavy)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Tooltip(
-                  message: 'Requires watching a short ad',
-                  child: Icon(Icons.smart_display_outlined, size: 15, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
-                ),
+            // Credit-cost badge (top-right) — shown for paid tools once prices load.
+            Positioned(
+              top: -2,
+              right: -2,
+              child: AnimatedBuilder(
+                animation: CreditService(),
+                builder: (context, _) {
+                  final cost = tool.creditCost;
+                  if (cost <= 0) return const SizedBox.shrink();
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.surface),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.toll, size: 10, color: accentColor),
+                        const SizedBox(width: 2),
+                        Text('$cost',
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: accentColor)),
+                      ],
+                    ),
+                  );
+                },
               ),
+            ),
             if (isFav)
               const Positioned(
                 bottom: 0,

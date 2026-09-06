@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class DuplicatePagesView extends StatefulWidget {
   final File file;
@@ -136,7 +137,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
       }),
       child: Stack(children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.surface),
           child: PdfPageThumbnail(
             document: _doc!,
             pageNumber: i + 1,
@@ -150,14 +151,14 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.blue.withValues(alpha: 0.30),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
                 border: Border.all(color: Colors.blue, width: 2),
               ),
               child: Center(
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.surface),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -182,7 +183,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: Colors.black54,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
               ),
               child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 11)),
             ),

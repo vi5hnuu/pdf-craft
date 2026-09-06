@@ -11,6 +11,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class MergePdfView extends StatefulWidget {
   final List<File> files;
@@ -31,6 +32,12 @@ class _MergePdfViewState extends State<MergePdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    outFileNameC.dispose();
+    super.dispose();
   }
 
   @override
@@ -92,7 +99,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                       padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 2),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6),side: BorderSide(color: Theme.of(context).dividerColor)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface),side: BorderSide(color: Theme.of(context).dividerColor)),
                         title: Text(
                           Utility.fileName(file: file),
                           style: const TextStyle(overflow: TextOverflow.ellipsis),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/state/selection/SelectionService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Bottom action bar shown while a cross-folder selection is active. Lets the
 /// user review/clear the selection and apply an applicable tool. Shared by the
@@ -57,7 +58,7 @@ void showToolsForSelection(BuildContext context) {
   showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
     builder: (_) => SafeArea(
       child: applicable.isEmpty
           ? const Padding(
@@ -106,7 +107,7 @@ void showManageSelections(BuildContext context) {
   showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
     builder: (_) => SafeArea(
       child: AnimatedBuilder(
         animation: SelectionService(),

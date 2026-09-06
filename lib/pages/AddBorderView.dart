@@ -7,11 +7,11 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/request/border-image.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/ToolResultHandler.dart';
 import 'package:pdf_craft/utils/ToolViewMixin.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Add Border: frames an image with a solid coloured border.
 class AddBorderView extends StatefulWidget {
@@ -90,7 +90,7 @@ class _AddBorderViewState extends State<AddBorderView>
                           height: 36,
                           decoration: BoxDecoration(
                             color: _color,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.surface),
                             border: Border.all(color: theme.dividerColor),
                           ),
                         ),

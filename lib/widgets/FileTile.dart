@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pdf_craft/singletons/FavoritesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class FileTile extends StatefulWidget {
   final FileSystemEntity file;
@@ -109,7 +110,7 @@ class _FileTileState extends State<FileTile> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       elevation: 0,
       color: theme.cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
       child: ListTile(
         enabled: widget.enabled,
         selected: widget.selected,
@@ -125,7 +126,7 @@ class _FileTileState extends State<FileTile> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
           ),
           child: fileIcon != null
               ? Padding(

@@ -8,6 +8,7 @@ import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -73,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 112,
                 decoration: BoxDecoration(
                   color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(AppRadius.surface),
                   boxShadow: [
                     BoxShadow(
                       color: primary.withValues(alpha: 0.18),

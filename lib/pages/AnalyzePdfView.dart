@@ -10,6 +10,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Analyze PDF: a read-only report bundling page/word counts and detected
 /// blank / duplicate / landscape pages plus embedded-resource counts.
@@ -118,7 +119,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.surface),
                   border: Border.all(color: theme.dividerColor),
                 ),
                 child: Row(children: [
