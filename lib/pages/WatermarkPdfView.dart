@@ -14,6 +14,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/widgets/PdfEffectPreview.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class WatermarkPdfView extends StatefulWidget {
@@ -40,6 +41,21 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+  }
+
+  /// Where the watermark sits, mirroring the server's start/center/end placement.
+  Alignment _previewAlignment() {
+    final x = switch (_horizontalPos) {
+      WatermarkPosition.START => -1.0,
+      WatermarkPosition.END => 1.0,
+      _ => 0.0,
+    };
+    final y = switch (_verticalPos) {
+      WatermarkPosition.START => -1.0,
+      WatermarkPosition.END => 1.0,
+      _ => 0.0,
+    };
+    return Alignment(x, y);
   }
 
   @override
@@ -73,6 +89,41 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            PdfEffectPreview(
+                              filePath: widget.file.path,
+                              caption:
+                                  'Approximate placement — font metrics differ slightly from the output',
+                              overlayBuilder: (ctx, canvas, pagePoints) {
+                                final text = _textC.text.isEmpty
+                                    ? 'CONFIDENTIAL'
+                                    : _textC.text;
+                                final pt = double.tryParse(_fontSizeC.text) ?? 48;
+                                // The size is in PDF points, so scale it by how much the page
+                                // was shrunk to fit — otherwise it reads far too large here.
+                                final scaled = pt * (canvas.width / pagePoints.width);
+                                return Align(
+                                  alignment: _previewAlignment(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Transform.rotate(
+                                      angle: -_angle * 3.1415926535 / 180,
+                                      child: Text(
+                                        text,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.visible,
+                                        style: TextStyle(
+                                          fontSize: scaled,
+                                          fontWeight: FontWeight.bold,
+                                          color: _pickedColor
+                                              .withValues(alpha: _opacity),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
                             TextFormField(
                               controller: _outFileNameC,
                               decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
@@ -80,12 +131,14 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _textC,
+                              onChanged: (_) => setState(() {}),
                               decoration: const InputDecoration(labelText: 'Watermark Text', border: OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _fontSizeC,
                               keyboardType: TextInputType.number,
+                              onChanged: (_) => setState(() {}),
                               decoration: const InputDecoration(labelText: 'Font Size', border: OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
