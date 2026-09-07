@@ -30,7 +30,11 @@ class PdfToJpgMeta{
   final Direction? direction;//if image is single -> join horizontally or vertically
   final int? imageGap; // gap if single=true
 
-  PdfToJpgMeta({required this.out_file_name,required this.quality,required this.single,required this.direction,this.imageGap}){
+  /// 0-indexed pages to apply this to. Empty means the whole document, which is what this
+  /// tool did before it could be narrowed.
+  final List<int> pages;
+
+  PdfToJpgMeta({required this.out_file_name,required this.quality,required this.single,required this.direction,this.imageGap,this.pages = const []}){
     if(single && (direction==null || imageGap==null)) throw Exception("for single image direction/imageGap cannot be null");
     if(!single && (direction!=null || imageGap!=null)) throw Exception("for multiple images direction/imageGap should be null");
   }
@@ -42,6 +46,7 @@ class PdfToJpgMeta{
       "single":single,
       "direction":direction?.direction,
       "image_gap":imageGap,
+      if (pages.isNotEmpty) "pages": pages,
     };
   }
 }
