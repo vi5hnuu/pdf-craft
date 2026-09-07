@@ -71,7 +71,10 @@ class _CropPdfViewState extends State<CropPdfView> {
     }
   }
 
-  // Margin values in PDF points, computed from fractions × page dimension
+  // Shown to the user so the numbers are legible. Only for display: these are measured against
+  // the page in the preview, and the document's other pages may be a different size — which is
+  // why the request now carries the fractions themselves and lets the server resolve them
+  // against each page.
   double get _marginTopPt => _cropTop * _pageHeightPt;
   double get _marginBottomPt => _cropBottom * _pageHeightPt;
   double get _marginLeftPt => _cropLeft * _pageWidthPt;
@@ -394,6 +397,10 @@ class _CropPdfViewState extends State<CropPdfView> {
         outFileName: _outFileNameC.text.trim().isEmpty
             ? 'cropped_file'
             : _outFileNameC.text.trim(),
+        keepXFrac: _cropLeft,
+        keepYFrac: _cropTop,
+        keepWidthFrac: 1 - _cropLeft - _cropRight,
+        keepHeightFrac: 1 - _cropTop - _cropBottom,
         marginTop: _marginTopPt,
         marginBottom: _marginBottomPt,
         marginLeft: _marginLeftPt,
