@@ -65,8 +65,8 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
       if (showInterstitial) AdsSingleton().dispatch(ShowInterstitialAd());
       // A paid tool debited credits server-side — refresh the balance shown in the UI.
       CreditService().refreshBalance();
-      onToolSuccess(successMessage);
       final saved = s.extras?['savedFile'];
+      onToolSuccess(successMessage, output: saved is File ? saved : null);
       if (saved is File) {
         if (onDone != null) {
           onDone(saved);

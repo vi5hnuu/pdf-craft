@@ -14,6 +14,7 @@ import 'package:pdf_craft/widgets/InputDialog.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/NextToolSheet.dart';
 
 class PdfPreview extends StatefulWidget {
   final String pdfFilePath;
@@ -140,9 +141,21 @@ class _PdfPreviewState extends State<PdfPreview> {
                   _rename();
                 case 'save_copy':
                   _saveCopyToDownloads();
+                case 'next_tool':
+                  NextToolSheet.show(context, File(_path));
               }
             },
             itemBuilder: (_) => const [
+              // A tool's result used to end here: running a second tool on it meant leaving,
+              // opening the file browser and finding the output again by name.
+              PopupMenuItem(
+                value: 'next_tool',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.auto_awesome_motion_outlined),
+                  title: Text('Use in another tool'),
+                ),
+              ),
               PopupMenuItem(
                 value: 'rename',
                 child: ListTile(
