@@ -9,6 +9,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/ToolResultHandler.dart';
 import 'package:pdf_craft/utils/ToolViewMixin.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/widgets/PageRangeSelector.dart';
 
 /// Scale PDF: scales page size and content uniformly by a percentage.
 class ScalePdfView extends StatefulWidget {
@@ -21,7 +22,10 @@ class ScalePdfView extends StatefulWidget {
 
 class _ScalePdfViewState extends State<ScalePdfView>
     with ToolResultHandler, ToolViewMixin {
-  double _percent = 100; // 25%..200%
+  double _percent = 100;
+  /// 0-indexed pages the tool applies to. Empty means the whole document.
+  final Set<int> _pages = <int>{};
+ // 25%..200%
 
   @override
   void initState() {
@@ -47,7 +51,10 @@ class _ScalePdfViewState extends State<ScalePdfView>
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  // Scrollable because the page selector expands to a thumbnail grid, which
+                  // overflows a fixed column on a short screen.
+                  child: SingleChildScrollView(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Scale: ${_percent.round()}%',
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
@@ -70,7 +77,18 @@ class _ScalePdfViewState extends State<ScalePdfView>
                           onSelected: (_) => setState(() => _percent = p),
                         ),
                     ]),
-                  ]),
+                    const SizedBox(height: 20),
+                    PageRangeSelector(
+                      file: widget.file,
+                      selected: _pages,
+                      onChanged: (pages) => setState(() {
+                        _pages
+                          ..clear()
+                          ..addAll(pages);
+                      }),
+                    ),
+                    ]),
+                  ),
                 ),
               ),
               Container(
@@ -98,7 +116,7 @@ class _ScalePdfViewState extends State<ScalePdfView>
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
     runTool((cancelToken) => ScalePdfEvent(
-          scalePdf: ScalePdf(scale: _percent / 100.0, file: file),
+          scalePdf: ScalePdf(scale: _percent / 100.0, pages: _pages.toList()..sort(), file: file),
           cancelToken: cancelToken,
         ));
   }

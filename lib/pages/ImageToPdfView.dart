@@ -28,6 +28,11 @@ class ImageToPdfView extends StatefulWidget {
 class _ImageToPdfViewState extends State<ImageToPdfView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   CancelToken? _cancelToken;
+
+  /// Page geometry for the generated document. A4 rather than one point per pixel, which
+  /// produced pages several feet across from an ordinary photo.
+  String _pageSize = 'A4';
+  String _orientation = 'AUTO';
   final TextEditingController outFileNameC=TextEditingController();
 
   @override
@@ -113,6 +118,44 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                     );
                   },
                 )),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Row(children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _pageSize,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                            labelText: 'Page size', border: OutlineInputBorder(), isDense: true),
+                        items: const [
+                          DropdownMenuItem(value: 'A4', child: Text('A4')),
+                          DropdownMenuItem(value: 'LETTER', child: Text('US Letter')),
+                          DropdownMenuItem(value: 'LEGAL', child: Text('US Legal')),
+                          DropdownMenuItem(value: 'MATCH_IMAGE', child: Text('Match each image')),
+                        ],
+                        onChanged: (v) => setState(() => _pageSize = v ?? 'A4'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _orientation,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                            labelText: 'Orientation', border: OutlineInputBorder(), isDense: true),
+                        // Meaningless when each page simply takes its image's dimensions.
+                        items: const [
+                          DropdownMenuItem(value: 'AUTO', child: Text('Match image')),
+                          DropdownMenuItem(value: 'PORTRAIT', child: Text('Portrait')),
+                          DropdownMenuItem(value: 'LANDSCAPE', child: Text('Landscape')),
+                        ],
+                        onChanged: _pageSize == 'MATCH_IMAGE'
+                            ? null
+                            : (v) => setState(() => _orientation = v ?? 'AUTO'),
+                      ),
+                    ),
+                  ]),
+                ),
                 Container(
                   padding: const EdgeInsets.all(16),
                   width: double.infinity,
@@ -140,6 +183,13 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
   void _onConvertToPdf() async {
     _cancelToken = CancelToken();
     final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
-    bloc.add(ImageToPdfEvent(imageToPdf: ImageToPdf(out_file_name: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text, files: files), cancelToken: _cancelToken));
+    bloc.add(ImageToPdfEvent(
+        imageToPdf: ImageToPdf(
+          out_file_name: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text,
+          pageSize: _pageSize,
+          orientation: _orientation,
+          files: files,
+        ),
+        cancelToken: _cancelToken));
   }
 }
