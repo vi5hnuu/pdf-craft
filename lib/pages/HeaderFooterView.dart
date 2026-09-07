@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -17,6 +18,7 @@ import 'package:pdf_craft/widgets/PdfEffectPreview.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/singletons/ToolSettingsService.dart';
 
 class HeaderFooterView extends StatefulWidget {
   final File file;
@@ -43,11 +45,56 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
   /// Page count, so {{total}} reads truthfully in the preview.
   int? _pageCount;
 
+  /// Registered in the tool registry; also the key the settings are stored under.
+  static const _toolId = 'header-footer';
+
   @override
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
     _loadPageCount();
+    _restoreSettings();
+  }
+
+  /// Reapplies the last configuration. Stamping the same header across a set of documents used
+  /// to mean retyping both lines and resetting four controls each time.
+  ///
+  /// The page range is deliberately not restored: a range chosen for one document says nothing
+  /// about the next.
+  Future<void> _restoreSettings() async {
+    final saved = await ToolSettingsService().load(_toolId);
+    if (saved.isEmpty || !mounted) return;
+    setState(() {
+      _headerTextC.text = ToolSettingsService.read(saved, 'headerText', _headerTextC.text);
+      _footerTextC.text = ToolSettingsService.read(saved, 'footerText', _footerTextC.text);
+      _fontSize = ToolSettingsService.read(saved, 'fontSize', _fontSize);
+      _color = Color(ToolSettingsService.read(saved, 'color', _color.toARGB32()));
+      _topPadding = ToolSettingsService.read(saved, 'topPadding', _topPadding);
+      _bottomPadding = ToolSettingsService.read(saved, 'bottomPadding', _bottomPadding);
+    });
+  }
+
+  Future<void> _rememberSettings() => ToolSettingsService().save(_toolId, {
+        'headerText': _headerTextC.text,
+        'footerText': _footerTextC.text,
+        'fontSize': _fontSize,
+        'color': _color.toARGB32(),
+        'topPadding': _topPadding,
+        'bottomPadding': _bottomPadding,
+      });
+
+  /// Restores the defaults and forgets what was stored, so remembering is never a one-way door.
+  Future<void> _resetSettings() async {
+    await ToolSettingsService().clear(_toolId);
+    if (!mounted) return;
+    setState(() {
+      _headerTextC.clear();
+      _footerTextC.clear();
+      _fontSize = 12;
+      _color = Colors.black;
+      _topPadding = 20;
+      _bottomPadding = 20;
+    });
   }
 
   /// So {{total}} in the preview shows the document's real length rather than a placeholder.
@@ -186,6 +233,14 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                             // Padding sliders
                             _labeledSlider('Top Padding', _topPadding, 0, 80, (v) => setState(() => _topPadding = v)),
                             _labeledSlider('Bottom Padding', _bottomPadding, 0, 80, (v) => setState(() => _bottomPadding = v)),
+                            // Settings are remembered, so there has to be a way back out of them.
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                onPressed: _resetSettings,
+                                child: const Text('Reset to defaults'),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -273,6 +328,9 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
   }
 
   void _onApply() async {
+    // Saved on use rather than on every keystroke: what the user actually ran with is the
+    // configuration worth restoring next time.
+    unawaited(_rememberSettings());
     _bloc.add(HeaderFooterEvent(
       headerFooter: HeaderFooter(
         outFileName:    _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
