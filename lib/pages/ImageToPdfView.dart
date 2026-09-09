@@ -105,7 +105,18 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                         child: Flex(
                           direction: Axis.horizontal,
                           children: [
-                            Image.file(file,width: md.size.width*0.25,fit: BoxFit.fitWidth,errorBuilder: (context, error, stackTrace) => Icon(Icons.error),),
+                            Image.file(
+                              file,
+                              width: md.size.width * 0.25,
+                              fit: BoxFit.fitWidth,
+                              // A reorderable list of full-resolution camera photos decoded at
+                              // their native size is tens of megabytes each; bound the decode to
+                              // the thumbnail actually drawn.
+                              cacheWidth: (md.size.width * 0.25 *
+                                      MediaQuery.devicePixelRatioOf(context))
+                                  .round(),
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+                            ),
                             Flexible(child: Padding(
                               padding: const EdgeInsets.all(12.0),
                               child: Row(children: [

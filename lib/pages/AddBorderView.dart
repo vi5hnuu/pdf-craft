@@ -61,7 +61,14 @@ class _AddBorderViewState extends State<AddBorderView>
                           // Preview border (scaled down visually).
                           padding: EdgeInsets.all(_width / 4),
                           color: _color,
-                          child: Image.file(widget.file, fit: BoxFit.contain),
+                          child: Image.file(
+                            widget.file,
+                            fit: BoxFit.contain,
+                            // The source is a user's photo, often far larger than this preview.
+                            cacheWidth: (MediaQuery.sizeOf(context).width *
+                                    MediaQuery.devicePixelRatioOf(context))
+                                .round(),
+                          ),
                         ),
                       ),
                     ),

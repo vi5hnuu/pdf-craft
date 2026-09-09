@@ -276,6 +276,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
               Image.file(
                 File(images[index]),
                 fit: BoxFit.contain,
+                // Scanned pages come off the camera at full sensor resolution.
+                cacheWidth: (MediaQuery.sizeOf(context).width *
+                        MediaQuery.devicePixelRatioOf(context))
+                    .round(),
                 errorBuilder: (_, __, ___) =>
                     const SizedBox(height: 120, child: Center(child: Icon(Icons.broken_image))),
               ),

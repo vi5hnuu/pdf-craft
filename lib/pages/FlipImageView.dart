@@ -59,7 +59,14 @@ class _FlipImageViewState extends State<FlipImageView>
                           transform: _horizontal
                               ? Matrix4.diagonal3Values(-1, 1, 1)
                               : Matrix4.diagonal3Values(1, -1, 1),
-                          child: Image.file(widget.file, fit: BoxFit.contain),
+                          child: Image.file(
+                            widget.file,
+                            fit: BoxFit.contain,
+                            // The source is a user's photo, often far larger than this preview.
+                            cacheWidth: (MediaQuery.sizeOf(context).width *
+                                    MediaQuery.devicePixelRatioOf(context))
+                                .round(),
+                          ),
                         ),
                       ),
                     ),
