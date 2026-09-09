@@ -4,6 +4,7 @@ import 'package:pdf_craft/singletons/PurchaseService.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/utils/AdUnits.dart';
 
 /// A credit pack the app sells. [defaultPrice] is a placeholder shown until the real
 /// localized price is fetched from Google Play (once the product is created there).
@@ -74,12 +75,15 @@ class _CreditsScreenState extends State<CreditsScreen> {
                 subtitle: 'A few free credits every day',
                 onTap: _claimDaily,
               ),
-              _earnTile(
-                icon: Icons.smart_display_outlined,
-                title: 'Watch an ad',
-                subtitle: 'Get credits for watching a short video',
-                onTap: _watchAd,
-              ),
+              // Hidden when no rewarded unit is configured, rather than offering a way to
+              // earn credits that always fails.
+              if (AdUnits.rewardedAvailable)
+                _earnTile(
+                  icon: Icons.smart_display_outlined,
+                  title: 'Watch an ad',
+                  subtitle: 'Get credits for watching a short video',
+                  onTap: _watchAd,
+                ),
               const SizedBox(height: 24),
               Text('Buy credits', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),

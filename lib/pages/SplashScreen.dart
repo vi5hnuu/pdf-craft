@@ -9,6 +9,7 @@ import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/AppLogo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -84,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ],
                 ),
                 padding: const EdgeInsets.all(20),
-                child: Image.asset('assets/logo.webp', fit: BoxFit.contain),
+                child: const AppLogo(fit: BoxFit.contain),
               ),
               const SizedBox(height: 24),
               Text(

@@ -92,6 +92,8 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     // A batch is the one place where a single tap can spend a large number of credits, so
     // it is confirmed as a whole rather than per file.
     if (!await _confirmSpend()) return;
+    // The confirmation is a dialog the user can dismiss by leaving the screen entirely.
+    if (!mounted) return;
 
     setState(() {
       _running = true;

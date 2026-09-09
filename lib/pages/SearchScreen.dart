@@ -19,6 +19,7 @@ import 'package:pdf_craft/widgets/SelectionBar.dart';
 import 'package:pdf_craft/widgets/SortControls.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/AppLogo.dart';
 
 /// File search across device storage, kept consistent with the Files browser:
 /// same type/sort/direction filters, the same per-file actions (long-press) and
@@ -125,8 +126,7 @@ class _SearchScreenState extends State<SearchScreen> {
           elevation: 5,
           leading: Padding(
             padding: const EdgeInsets.only(left: 16.0),
-            child: Image.asset("assets/logo.webp",
-                fit: BoxFit.fitWidth, width: 124),
+            child: const AppLogo(width: 112, fit: BoxFit.fitWidth),
           ),
           leadingWidth: 112,
           bottom: PreferredSize(
