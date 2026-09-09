@@ -136,9 +136,12 @@ class _CropPdfViewState extends State<CropPdfView> {
                       children: [
                         Text('Apply to', style: theme.textTheme.bodySmall),
                         const Spacer(),
-                        TextButton(
-                          onPressed: _pickPages,
-                          child: Text('$_pageSummary · change'),
+                        Flexible(
+                          child: TextButton(
+                            onPressed: _pickPages,
+                            child: Text('$_pageSummary · change',
+                                overflow: TextOverflow.ellipsis),
+                          ),
                         ),
                       ],
                     ),

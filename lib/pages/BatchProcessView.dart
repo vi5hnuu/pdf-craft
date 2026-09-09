@@ -277,7 +277,11 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                                 children: [
                                   Icon(t.icon, size: 18, color: primary),
                                   const SizedBox(width: 8),
-                                  Text(t.label),
+                                  // "Remove Blank Pages" overruns the closed dropdown on a
+                                  // narrow screen.
+                                  Flexible(
+                                    child: Text(t.label, overflow: TextOverflow.ellipsis),
+                                  ),
                                 ],
                               ),
                             ))

@@ -217,7 +217,11 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                Text('${_color.red}, ${_color.green}, ${_color.blue}', style: const TextStyle(fontSize: 12)),
+                                Builder(builder: (_) {
+                                  final rgb = ColorInfo.fromColor(_color);
+                                  return Text('${rgb.r}, ${rgb.g}, ${rgb.b}',
+                                      style: const TextStyle(fontSize: 12));
+                                }),
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -337,7 +341,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
         headerText:     _headerTextC.text.isNotEmpty  ? _headerTextC.text  : null,
         footerText:     _footerTextC.text.isNotEmpty  ? _footerTextC.text  : null,
         fontSize:       _fontSize,
-        color:          ColorInfo(r: _color.red, g: _color.green, b: _color.blue, a: 255),
+        color:          ColorInfo.fromColor(_color),
         fontName:       _fontName,
         // Fields are 1-based because that is how readers count pages; the API is
         // 0-indexed, so the conversion happens here rather than in the user's head.

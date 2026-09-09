@@ -256,12 +256,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                               _fillColor.b,
                             ),
                             onColorChanged: (color) {
-                              setState(() => _fillColor = ColorInfo(
-                                    r: color.red,
-                                    g: color.green,
-                                    b: color.blue,
-                                    a: color.alpha,
-                                  ));
+                              setState(() => _fillColor = ColorInfo.fromColor(color));
                             },
                           ),
                           const SizedBox(height: 20),

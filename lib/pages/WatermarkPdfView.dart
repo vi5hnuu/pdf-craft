@@ -284,7 +284,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'watermarked_file',
         text: _textC.text.isEmpty ? 'CONFIDENTIAL' : _textC.text,
         fontSize: int.tryParse(_fontSizeC.text) ?? 48,
-        color: ColorInfo(r: _pickedColor.red, g: _pickedColor.green, b: _pickedColor.blue, a: _pickedColor.alpha),
+        color: ColorInfo.fromColor(_pickedColor),
         opacity: _opacity,
         angle: _angle,
         verticalPosition: _verticalPos,
