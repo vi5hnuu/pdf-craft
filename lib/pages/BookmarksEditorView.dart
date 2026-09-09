@@ -15,6 +15,7 @@ import 'package:pdf_craft/utils/ToolResultHandler.dart';
 import 'package:pdf_craft/utils/ToolViewMixin.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/utils/ReorderUtils.dart';
 
 class BookmarksEditorView extends StatefulWidget {
   final File file;
@@ -180,12 +181,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
     return ReorderableListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _bookmarks.length,
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          if (newIndex > oldIndex) newIndex--;
-          final item = _bookmarks.removeAt(oldIndex);
-          _bookmarks.insert(newIndex, item);
-        });
+      onReorderItem: (oldIndex, newIndex) {
+        setState(() => ReorderUtils.moveInPlace(_bookmarks, oldIndex, newIndex));
       },
       itemBuilder: (context, i) {
         final item = _bookmarks[i];

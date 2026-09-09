@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/utils/ReorderUtils.dart';
 
 class MergePdfView extends StatefulWidget {
   final List<File> files;
@@ -72,7 +73,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 SizedBox(height: 12,),
                 Expanded(child: ReorderableListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  onReorder: _reorder,
+                  onReorderItem: _reorder,
                   scrollDirection: Axis.vertical,
                   itemCount: widget.files.length,
                   header: Padding(
@@ -120,13 +121,7 @@ class _MergePdfViewState extends State<MergePdfView> {
   }
 
   void _reorder(oldIndex, newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final File file = widget.files.removeAt(oldIndex);
-      widget.files.insert(newIndex, file);
-    });
+    setState(() => ReorderUtils.moveInPlace(widget.files, oldIndex, newIndex));
   }
 
   void _startMerge() async {

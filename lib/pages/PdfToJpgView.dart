@@ -103,7 +103,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                               Flexible(
                                 child: DropdownButtonFormField(
                                     
-                                    decoration: InputDecoration(border: OutlineInputBorder()),value: qualityDpi,
+                                    decoration: InputDecoration(border: OutlineInputBorder()),initialValue: qualityDpi,
                                     items: Quality.values.map((quality)=>DropdownMenuItem(child: Text(quality.name.capitalize()),value: quality.dpi,)).toList(), onChanged: (value){
                                   if(value!=null) setState(() =>qualityDpi=value);
                                 }),
@@ -145,7 +145,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                               SizedBox(width: 16,),
                               Flexible(child: DropdownButtonFormField(
                                   
-                                  decoration: InputDecoration(border: OutlineInputBorder()),value: direction,items: Direction.values.map((direction)=>DropdownMenuItem(child: Text(direction.name.capitalize(),),value: direction.direction,)).toList(), onChanged: (value){
+                                  decoration: InputDecoration(border: OutlineInputBorder()),initialValue: direction,items: Direction.values.map((direction)=>DropdownMenuItem(child: Text(direction.name.capitalize(),),value: direction.direction,)).toList(), onChanged: (value){
                                 if(value!=null) setState(()=>direction=value);
                               }))
                             ],

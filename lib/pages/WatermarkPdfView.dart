@@ -252,7 +252,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
 
   Widget _buildDropdown(String label, WatermarkPosition value, ValueChanged<WatermarkPosition?> onChanged) {
     return DropdownButtonFormField<WatermarkPosition>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
       items: WatermarkPosition.values.map((p) => DropdownMenuItem(value: p, child: Text(p.displayName))).toList(),
       onChanged: onChanged,

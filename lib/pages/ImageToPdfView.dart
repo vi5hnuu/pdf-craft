@@ -13,6 +13,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/utils/ReorderUtils.dart';
 
 class ImageToPdfView extends StatefulWidget {
   final List<File> files;
@@ -79,7 +80,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 ),
                 Expanded(child: ReorderableListView.builder(
                   padding: EdgeInsets.symmetric(vertical: 8),
-                  onReorder: _reorder,
+                  onReorderItem: _reorder,
                   scrollDirection: Axis.vertical,
                   itemCount: widget.files.length,
                   header: Padding(
@@ -182,13 +183,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
   }
 
   void _reorder(oldIndex, newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final File file = widget.files.removeAt(oldIndex);
-      widget.files.insert(newIndex, file);
-    });
+    setState(() => ReorderUtils.moveInPlace(widget.files, oldIndex, newIndex));
   }
 
   void _onConvertToPdf() async {

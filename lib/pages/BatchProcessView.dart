@@ -268,7 +268,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                   Text('Tool', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<_Tool>(
-                    value: _tool,
+                    initialValue: _tool,
                     decoration: const InputDecoration(border: OutlineInputBorder()),
                     items: _Tool.values
                         .map((t) => DropdownMenuItem(

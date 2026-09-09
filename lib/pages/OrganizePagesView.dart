@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/PdfPageThumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/utils/ReorderUtils.dart';
 
 /// Visual page organiser: drag to reorder and tap ✕ to delete pages on a single
 /// thumbnail list, then export. Commits via the existing reorder endpoint, whose
@@ -145,12 +146,8 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
     return ReorderableListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _order.length,
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          if (newIndex > oldIndex) newIndex--;
-          final item = _order.removeAt(oldIndex);
-          _order.insert(newIndex, item);
-        });
+      onReorderItem: (oldIndex, newIndex) {
+        setState(() => ReorderUtils.moveInPlace(_order, oldIndex, newIndex));
       },
       itemBuilder: (context, i) {
         final original = _order[i];

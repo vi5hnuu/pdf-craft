@@ -185,7 +185,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<PdfFontName>(
-                                    value: _fontName,
+                                    initialValue: _fontName,
                                     decoration: const InputDecoration(labelText: 'Font', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
                                     items: PdfFontName.values.map((f) => DropdownMenuItem(value: f, child: Text(f.displayName, style: const TextStyle(fontSize: 13)))).toList(),
                                     onChanged: (v) => setState(() => _fontName = v!),

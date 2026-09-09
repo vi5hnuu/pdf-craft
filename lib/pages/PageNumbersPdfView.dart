@@ -105,7 +105,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           const SizedBox(height: 8),
                           DropdownButtonFormField<PageNoType>(
                             decoration: const InputDecoration(border: OutlineInputBorder()),
-                            value: _pageNoType,
+                            initialValue: _pageNoType,
                             items: PageNoType.values
                                 .map((t) => DropdownMenuItem(
                                       value: t,
@@ -124,7 +124,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           DropdownButtonFormField<FontName>(
                             decoration: const InputDecoration(border: OutlineInputBorder()),
                             menuMaxHeight: 300,
-                            value: _fontName,
+                            initialValue: _fontName,
                             items: FontName.values
                                 .map((f) => DropdownMenuItem(
                                       value: f,
@@ -162,7 +162,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                                     labelText: 'Vertical',
                                     border: OutlineInputBorder(),
                                   ),
-                                  value: _verticalPosition,
+                                  initialValue: _verticalPosition,
                                   items: PositionInfo.values
                                       .map((p) => DropdownMenuItem(
                                             value: p,
@@ -181,7 +181,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                                     labelText: 'Horizontal',
                                     border: OutlineInputBorder(),
                                   ),
-                                  value: _horizontalPosition,
+                                  initialValue: _horizontalPosition,
                                   items: PositionInfo.values
                                       .map((p) => DropdownMenuItem(
                                             value: p,
