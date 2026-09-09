@@ -59,14 +59,24 @@ class _ResizePageViewState extends State<ResizePageView>
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Target size', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    for (final s in PageSizePreset.values)
-                      RadioListTile<PageSizePreset>(
-                        value: s,
-                        groupValue: _size,
-                        onChanged: (v) => setState(() => _size = v!),
-                        title: Text(s.label),
-                        subtitle: Text(s.dimensions),
+                    // RadioGroup supplies the selection to the tiles below it. Besides
+                    // replacing the deprecated per-tile groupValue/onChanged, it gives the set
+                    // arrow-key navigation, which loose radios never had.
+                    RadioGroup<PageSizePreset>(
+                      groupValue: _size,
+                      onChanged: (v) => setState(() => _size = v ?? _size),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final s in PageSizePreset.values)
+                            RadioListTile<PageSizePreset>(
+                              value: s,
+                              title: Text(s.label),
+                              subtitle: Text(s.dimensions),
+                            ),
+                        ],
                       ),
+                    ),
                     const SizedBox(height: 20),
                     PageRangeSelector(
                       file: widget.file,

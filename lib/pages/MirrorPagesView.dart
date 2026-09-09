@@ -51,14 +51,24 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Flip direction', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    for (final d in MirrorDirection.values)
-                      RadioListTile<MirrorDirection>(
-                        value: d,
-                        groupValue: _direction,
-                        onChanged: (v) => setState(() => _direction = v!),
-                        title: Text(d.label),
-                        secondary: Icon(d == MirrorDirection.horizontal ? Icons.flip : Icons.flip_camera_android),
+                    // RadioGroup supplies the selection to the tiles below it. Besides
+                    // replacing the deprecated per-tile groupValue/onChanged, it gives the set
+                    // arrow-key navigation, which loose radios never had.
+                    RadioGroup<MirrorDirection>(
+                      groupValue: _direction,
+                      onChanged: (v) => setState(() => _direction = v ?? _direction),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final d in MirrorDirection.values)
+                            RadioListTile<MirrorDirection>(
+                              value: d,
+                              title: Text(d.label),
+                              secondary: Icon(d == MirrorDirection.horizontal ? Icons.flip : Icons.flip_camera_android),
+                            ),
+                        ],
                       ),
+                    ),
                   ]),
                 ),
               ),
