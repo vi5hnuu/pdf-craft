@@ -521,6 +521,9 @@ class _PlaceImageViewState extends State<PlaceImageView> {
         yFrac: y,
         widthFrac: w,
         heightFrac: h,
+        // The server keeps the image's proportions by default. Unlocking the aspect here is a
+        // deliberate choice to distort it, so it has to be passed on or it would be undone.
+        stretch: !_lockAspect,
         file: await MultipartFile.fromFile(widget.pdfFile.path),
         image: MultipartFile.fromBytes(
           _imageBytes!,

@@ -59,24 +59,39 @@ class _FlipImageViewState extends State<FlipImageView>
                           transform: _horizontal
                               ? Matrix4.diagonal3Values(-1, 1, 1)
                               : Matrix4.diagonal3Values(1, -1, 1),
-                          child: Image.file(widget.file, fit: BoxFit.contain),
+                          child: Image.file(
+                            widget.file,
+                            fit: BoxFit.contain,
+                            // The source is a user's photo, often far larger than this preview.
+                            cacheWidth: (MediaQuery.sizeOf(context).width *
+                                    MediaQuery.devicePixelRatioOf(context))
+                                .round(),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    RadioListTile<bool>(
-                      value: true,
+                    // RadioGroup supplies the selection to the tiles below it. Besides
+                    // replacing the deprecated per-tile groupValue/onChanged, it gives the set
+                    // arrow-key navigation, which loose radios never had.
+                    RadioGroup<bool>(
                       groupValue: _horizontal,
-                      onChanged: (v) => setState(() => _horizontal = v!),
-                      title: const Text('Horizontal (mirror left–right)'),
-                      secondary: const Icon(Icons.flip),
-                    ),
-                    RadioListTile<bool>(
-                      value: false,
-                      groupValue: _horizontal,
-                      onChanged: (v) => setState(() => _horizontal = v!),
-                      title: const Text('Vertical (mirror top–bottom)'),
-                      secondary: const Icon(Icons.flip_camera_android),
+                      onChanged: (v) => setState(() => _horizontal = v ?? _horizontal),
+                      child: const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          RadioListTile<bool>(
+                            value: true,
+                            title: Text('Horizontal (mirror left–right)'),
+                            secondary: Icon(Icons.flip),
+                          ),
+                          RadioListTile<bool>(
+                            value: false,
+                            title: Text('Vertical (mirror top–bottom)'),
+                            secondary: Icon(Icons.flip_camera_android),
+                          ),
+                        ],
+                      ),
                     ),
                   ]),
                 ),

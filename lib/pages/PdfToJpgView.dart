@@ -16,6 +16,7 @@ import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/widgets/PageRangeSelector.dart';
 
 class PdfToJpgView extends StatefulWidget {
   final File file;
@@ -31,6 +32,9 @@ class PdfToJpgView extends StatefulWidget {
 class _PdfToJpgViewState extends State<PdfToJpgView> {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   CancelToken? _cancelToken;
+
+  /// 0-indexed pages to render. Empty means the whole document.
+  final Set<int> _pages = <int>{};
   TextEditingController gapController=TextEditingController();
   int qualityDpi=Quality.LOW.dpi;
   bool isSingle=false;
@@ -99,7 +103,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                               Flexible(
                                 child: DropdownButtonFormField(
                                     
-                                    decoration: InputDecoration(border: OutlineInputBorder()),value: qualityDpi,
+                                    decoration: InputDecoration(border: OutlineInputBorder()),initialValue: qualityDpi,
                                     items: Quality.values.map((quality)=>DropdownMenuItem(child: Text(quality.name.capitalize()),value: quality.dpi,)).toList(), onChanged: (value){
                                   if(value!=null) setState(() =>qualityDpi=value);
                                 }),
@@ -141,7 +145,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                               SizedBox(width: 16,),
                               Flexible(child: DropdownButtonFormField(
                                   
-                                  decoration: InputDecoration(border: OutlineInputBorder()),value: direction,items: Direction.values.map((direction)=>DropdownMenuItem(child: Text(direction.name.capitalize(),),value: direction.direction,)).toList(), onChanged: (value){
+                                  decoration: InputDecoration(border: OutlineInputBorder()),initialValue: direction,items: Direction.values.map((direction)=>DropdownMenuItem(child: Text(direction.name.capitalize(),),value: direction.direction,)).toList(), onChanged: (value){
                                 if(value!=null) setState(()=>direction=value);
                               }))
                             ],
@@ -151,6 +155,20 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                           if(isSingle && direction==Direction.VERTICAL.direction) Image.asset("assets/tools/image-vertical-list.png",fit: BoxFit.fitWidth,),
                         ],
                       ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    // Rendering is the costliest thing this tool does, so converting 200 pages
+                    // to get one was expensive in both time and credits.
+                    child: PageRangeSelector(
+                      file: widget.file,
+                      selected: _pages,
+                      onChanged: (pages) => setState(() {
+                        _pages
+                          ..clear()
+                          ..addAll(pages);
+                      }),
                     ),
                   ),
                   Container(
@@ -170,7 +188,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   void _onPdfToJpf() async {
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
-    bloc.add(PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(out_file_name: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null)), cancelToken: _cancelToken));
+    bloc.add(PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(out_file_name: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null, pages: _pages.toList()..sort())), cancelToken: _cancelToken));
   }
 
   void _openFile(File file) {

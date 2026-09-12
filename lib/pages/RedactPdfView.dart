@@ -34,6 +34,8 @@ class _RedactPdfViewState extends State<RedactPdfView> {
   bool _loadingPage = true;
 
   final Map<int, List<_RedactRegion>> _pageRects = {};
+  /// Canvas size each page's boxes were drawn against, keyed by 1-based page number.
+  final Map<int, Size> _pageCanvas = {};
   List<_RedactRegion> get _rects => _pageRects[_currentPage] ??= [];
 
   String? _selectedId;
@@ -42,10 +44,6 @@ class _RedactPdfViewState extends State<RedactPdfView> {
   // In-progress draw rectangle.
   Offset? _dragStart;
   Offset? _dragEnd;
-
-  // Rendered page size, for canvas→PDF-point conversion on save.
-  double _lastImgW = 0;
-  double _lastImgH = 0;
 
   static const double _minSize = 12;
 
@@ -177,8 +175,11 @@ class _RedactPdfViewState extends State<RedactPdfView> {
         imgH = canvasH;
         imgW = canvasH * pageAspect;
       }
-      _lastImgW = imgW;
-      _lastImgH = imgH;
+      // Per page, not just the last one: the canvas is fitted to each page's own aspect, so a
+      // document with pages of different shapes lays each of them out at a different size. Boxes
+      // are stored in canvas pixels, and turning them into fractions at save time needs the
+      // canvas they were actually drawn on.
+      _pageCanvas[_currentPage] = Size(imgW, imgH);
 
       return Center(
         child: SizedBox(
@@ -291,16 +292,20 @@ class _RedactPdfViewState extends State<RedactPdfView> {
 
   Future<void> _onSave() async {
     final regions = <RedactRegion>[];
-    final scaleX = _pageWidthPt / _lastImgW;
-    final scaleY = _pageHeightPt / _lastImgH;
+    // Fractions of the rendered page, not points. The scale factors used before belonged to
+    // whichever page was open when Save was pressed, and were applied to the boxes of every
+    // page — so on a document whose pages differ in size, bars drawn earlier landed in the
+    // wrong place and left the content they were meant to remove visible.
     _pageRects.forEach((page, rects) {
+      final canvas = _pageCanvas[page];
+      if (canvas == null || canvas.width <= 0 || canvas.height <= 0) return;
       for (final r in rects) {
         regions.add(RedactRegion(
           page: page - 1,
-          x: r.rect.left * scaleX,
-          y: r.rect.top * scaleY,
-          width: r.rect.width * scaleX,
-          height: r.rect.height * scaleY,
+          xFrac: r.rect.left / canvas.width,
+          yFrac: r.rect.top / canvas.height,
+          widthFrac: r.rect.width / canvas.width,
+          heightFrac: r.rect.height / canvas.height,
         ));
       }
     });

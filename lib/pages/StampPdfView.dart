@@ -98,7 +98,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                                         children: [
                                           Icon(Icons.picture_as_pdf_outlined, size: 36, color: theme.colorScheme.primary),
                                           const SizedBox(height: 6),
-                                          const Text('Tap to select stamp PDF', style: TextStyle(fontSize: 13)),
+                                          const Text('Tap to select a stamp image or PDF', style: TextStyle(fontSize: 13)),
                                         ],
                                       ),
                               ),
@@ -145,10 +145,11 @@ class _StampPdfViewState extends State<StampPdfView> {
       );
 
   void _pickStamp() async {
-    // Backend stamps PDF-on-PDF; image support not yet implemented server-side
+    // The stamp may be an image or a one-page PDF; the server identifies which from its bytes.
+    // A PNG with transparency is what most people actually want here — a logo or a signature.
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf'],
+      allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'],
     );
     if (result != null && result.files.single.path != null) {
       setState(() => _stampFile = File(result.files.single.path!));

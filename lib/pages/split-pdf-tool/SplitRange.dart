@@ -159,6 +159,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     //reset ranges if fixed-range changed
     if(_pageRanges.isNotEmpty && (_pageRanges.first.to-_pageRanges.first.from+1)!=fixedRange){
       await _removeErrorThumbnails();
+      if (!mounted) return;
       setState(()=>_pageRanges.clear());
     }
 
@@ -272,6 +273,8 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   _addRange(RangeModel rangeNew) async{//this from,to are real pageNo
     if(rangeNew.from>rangeNew.to) return;
     await _tryLoadingRange(document!, rangeNew.from, rangeNew.to);
+    // Thumbnails are rendered off the main isolate, so this returns long after the tap.
+    if (!mounted) return;
     setState(()=>_pageRanges=_mergeGroups(_pageRanges..add(rangeNew)));
     widget.onRangeChange(_pageRanges);
   }

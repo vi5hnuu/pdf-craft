@@ -105,7 +105,12 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                     child: const Text('Images [0]:')),
               ),
               SizedBox(
-                  height: 400, child: Image.file(File(_result!.images!.first))),
+                  height: 400,
+                  child: Image.file(
+                    File(_result!.images!.first),
+                    // Straight off the camera, shown 400 logical pixels tall.
+                    cacheHeight: (400 * MediaQuery.devicePixelRatioOf(context)).round(),
+                  )),
             ],
           ],
         ),

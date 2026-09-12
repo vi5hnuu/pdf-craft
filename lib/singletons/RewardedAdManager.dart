@@ -9,9 +9,10 @@ import 'package:pdf_craft/utils/AdUnits.dart';
 ///
 /// Mirrors [AppOpenAdManager]: load/cache, show, then preload the next.
 class RewardedAdManager {
-  // Ad unit id (test in debug; in release uses the production unit from
-  // [AdUnits.rewarded] — currently still the test id, replace before launch).
-  static String get _adUnitId => AdUnits.rewarded;
+  /// Null when no production unit is configured, in which case nothing is loaded and the
+  /// feature reports itself unavailable — the alternative, falling back to the test unit,
+  /// serves Google's sample ads to real users and breaches the AdMob policy.
+  static String? get _adUnitId => AdUnits.rewarded;
 
   RewardedAd? _cachedAd;
   bool _isLoading = false;
@@ -26,9 +27,15 @@ class RewardedAdManager {
   /// Requires MobileAds to be initialized first.
   void loadAd() {
     if (_isLoading || _cachedAd != null) return;
+    final adUnitId = _adUnitId;
+    if (adUnitId == null) {
+      LoggerSingleton().logger.w(
+          'Rewarded ads disabled: no production ad unit is configured (AdUnits._prodRewarded).');
+      return;
+    }
     _isLoading = true;
     RewardedAd.load(
-      adUnitId: _adUnitId,
+      adUnitId: adUnitId,
       request: const AdRequest(keywords: [
         'pdf', 'document', 'compress', 'convert', 'merge', 'scanner'
       ]),

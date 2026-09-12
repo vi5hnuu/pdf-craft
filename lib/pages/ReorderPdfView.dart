@@ -14,6 +14,7 @@ import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/utils/ReorderUtils.dart';
 
 class _Thumbnail {
   final bool isLoading;
@@ -196,7 +197,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     return ReorderableListView.builder(
       scrollController: _scrollController,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      onReorder: _reorder,
+      onReorderItem: _reorder,
       itemCount: _thumbnails.length,
       header: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -282,11 +283,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   }
 
   void _reorder(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) newIndex -= 1;
-      final removed = _pageIndexes.removeAt(oldIndex);
-      _pageIndexes.insert(newIndex, removed);
-    });
+    setState(() => ReorderUtils.moveInPlace(_pageIndexes, oldIndex, newIndex));
   }
 
   Future<void> _onReorderPages() async {

@@ -108,6 +108,7 @@ flutter:
   assets:
    - assets/lottie/
    - assets/logo.webp
+   - assets/logo_light.webp
    - assets/icons/
    - assets/tools/
    - assets/file-types/

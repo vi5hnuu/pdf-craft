@@ -1,14 +1,33 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/RateAppService.dart';
+import 'package:pdf_craft/widgets/NextToolSheet.dart';
 
 /// Shared helpers for tool view success/error/offline handling.
 /// Shows the rate-app dialog after N successful completions.
 mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
 
   /// Call on successful tool completion.
-  void onToolSuccess(String message) async {
-    NotificationService.showSnackbar(text: message, color: Colors.green);
+  ///
+  /// When the tool produced a file, the confirmation carries a way straight into the next tool.
+  /// Without it the result was a dead end: continuing meant leaving the screen, opening the file
+  /// browser and finding the output again by name.
+  void onToolSuccess(String message, {File? output}) async {
+    NotificationService.showSnackbar(
+      text: message,
+      color: Colors.green,
+      action: output == null
+          ? null
+          : SnackBarAction(
+              label: 'Next tool',
+              textColor: Colors.white,
+              onPressed: () {
+                if (mounted) NextToolSheet.show(context, output);
+              },
+            ),
+    );
     final shouldRate = await RateAppService().recordSuccess();
     if (shouldRate && mounted) _showRateDialog();
   }

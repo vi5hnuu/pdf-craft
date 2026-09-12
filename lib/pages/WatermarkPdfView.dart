@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -16,6 +17,7 @@ import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdf_craft/widgets/PdfEffectPreview.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/singletons/ToolSettingsService.dart';
 
 class WatermarkPdfView extends StatefulWidget {
   final File file;
@@ -37,10 +39,64 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
   WatermarkPosition _horizontalPos = WatermarkPosition.CENTER;
   Color _pickedColor = Colors.red;
 
+  /// Registered in the tool registry; also the key the settings are stored under.
+  static const _toolId = 'watermark';
+
   @override
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    _restoreSettings();
+  }
+
+  /// Reapplies the last configuration. Applying the same watermark across a set of documents
+  /// used to mean retyping the text and resetting five controls on every one of them.
+  Future<void> _restoreSettings() async {
+    final saved = await ToolSettingsService().load(_toolId);
+    if (saved.isEmpty || !mounted) return;
+    setState(() {
+      _textC.text = ToolSettingsService.read(saved, 'text', _textC.text);
+      _fontSizeC.text = ToolSettingsService.read(saved, 'fontSize', _fontSizeC.text);
+      _opacity = ToolSettingsService.read(saved, 'opacity', _opacity);
+      _angle = ToolSettingsService.read(saved, 'angle', _angle);
+      _pickedColor = Color(ToolSettingsService.read(saved, 'color', _pickedColor.toARGB32()));
+      _verticalPos = _positionFrom(saved['verticalPos'], _verticalPos);
+      _horizontalPos = _positionFrom(saved['horizontalPos'], _horizontalPos);
+    });
+  }
+
+  /// A stored name that no longer matches any position falls back rather than throwing.
+  WatermarkPosition _positionFrom(Object? name, WatermarkPosition fallback) {
+    for (final position in WatermarkPosition.values) {
+      if (position.name == name) return position;
+    }
+    return fallback;
+  }
+
+  Future<void> _rememberSettings() => ToolSettingsService().save(_toolId, {
+        'text': _textC.text,
+        'fontSize': _fontSizeC.text,
+        'opacity': _opacity,
+        'angle': _angle,
+        'color': _pickedColor.toARGB32(),
+        'verticalPos': _verticalPos.name,
+        'horizontalPos': _horizontalPos.name,
+      });
+
+  /// Restores the tool's defaults and forgets what was stored, so remembering is never a
+  /// one-way door.
+  Future<void> _resetSettings() async {
+    await ToolSettingsService().clear(_toolId);
+    if (!mounted) return;
+    setState(() {
+      _textC.text = 'CONFIDENTIAL';
+      _fontSizeC.text = '48';
+      _opacity = 0.3;
+      _angle = 45;
+      _verticalPos = WatermarkPosition.CENTER;
+      _horizontalPos = WatermarkPosition.CENTER;
+      _pickedColor = Colors.red;
+    });
   }
 
   /// Where the watermark sits, mirroring the server's start/center/end placement.
@@ -166,6 +222,15 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                             _buildDropdown('Vertical Position', _verticalPos, (v) => setState(() => _verticalPos = v!)),
                             const SizedBox(height: 8),
                             _buildDropdown('Horizontal Position', _horizontalPos, (v) => setState(() => _horizontalPos = v!)),
+                            const SizedBox(height: 4),
+                            // Settings are remembered, so there has to be a way back out of them.
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                onPressed: _resetSettings,
+                                child: const Text('Reset to defaults'),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -187,7 +252,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
 
   Widget _buildDropdown(String label, WatermarkPosition value, ValueChanged<WatermarkPosition?> onChanged) {
     return DropdownButtonFormField<WatermarkPosition>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
       items: WatermarkPosition.values.map((p) => DropdownMenuItem(value: p, child: Text(p.displayName))).toList(),
       onChanged: onChanged,
@@ -211,12 +276,15 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
   }
 
   void _onWatermark() async {
+    // Saved on use rather than on every keystroke: what the user actually ran with is the
+    // configuration worth restoring next time.
+    unawaited(_rememberSettings());
     bloc.add(WatermarkPdfEvent(
       watermarkPdf: WatermarkPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'watermarked_file',
         text: _textC.text.isEmpty ? 'CONFIDENTIAL' : _textC.text,
         fontSize: int.tryParse(_fontSizeC.text) ?? 48,
-        color: ColorInfo(r: _pickedColor.red, g: _pickedColor.green, b: _pickedColor.blue, a: _pickedColor.alpha),
+        color: ColorInfo.fromColor(_pickedColor),
         opacity: _opacity,
         angle: _angle,
         verticalPosition: _verticalPos,

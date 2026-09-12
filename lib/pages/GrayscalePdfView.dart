@@ -11,6 +11,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/widgets/PageRangeSelector.dart';
 
 class GrayscalePdfView extends StatefulWidget {
   final File file;
@@ -24,6 +25,9 @@ class GrayscalePdfView extends StatefulWidget {
 class _GrayscalePdfViewState extends State<GrayscalePdfView> {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
+
+  /// 0-indexed pages to convert. Empty means the whole document.
+  final Set<int> _pages = <int>{};
 
   @override
   void initState() {
@@ -59,13 +63,25 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Convert all pages of your PDF to grayscale to reduce file size and ink usage when printing.',
+                      'Converts pages to grayscale to reduce file size and ink when printing. '
+                      'Converted pages become images, so their text is no longer selectable; '
+                      'pages outside your selection are left untouched.',
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _outFileNameC,
                       decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 20),
+                    PageRangeSelector(
+                      file: widget.file,
+                      selected: _pages,
+                      onChanged: (pages) => setState(() {
+                        _pages
+                          ..clear()
+                          ..addAll(pages);
+                      }),
                     ),
                     const Spacer(),
                     SizedBox(
@@ -87,6 +103,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
     bloc.add(GrayscalePdfEvent(
       grayscalePdf: GrayscalePdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'grayscale_file',
+        pages: _pages.toList()..sort(),
         file: await MultipartFile.fromFile(widget.file.path),
       ),
     ));

@@ -10,6 +10,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:pdf_craft/widgets/PageRangeSelector.dart';
 
 class ExtractTextView extends StatefulWidget {
   final File file;
@@ -23,6 +24,9 @@ class ExtractTextView extends StatefulWidget {
 class _ExtractTextViewState extends State<ExtractTextView> {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
+  /// 0-indexed pages the tool applies to. Empty means the whole document.
+  final Set<int> _pages = <int>{};
+
   CancelToken? _cancelToken;
 
   @override
@@ -59,13 +63,24 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Extract all text content from your PDF into a text file.',
+                      'Extracts the text of your PDF into a text file. Narrow it to a few pages '
+                      'if you only need part of the document.',
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _outFileNameC,
                       decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 20),
+                    PageRangeSelector(
+                      file: widget.file,
+                      selected: _pages,
+                      onChanged: (pages) => setState(() {
+                        _pages
+                          ..clear()
+                          ..addAll(pages);
+                      }),
                     ),
                     const Spacer(),
                     SizedBox(
@@ -89,6 +104,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
     bloc.add(ExtractTextEvent(
       extractText: ExtractText(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'extracted_text',
+        pages: _pages.toList()..sort(),
         file: file,
       ),
       cancelToken: _cancelToken,

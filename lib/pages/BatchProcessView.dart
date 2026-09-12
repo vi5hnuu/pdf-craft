@@ -92,6 +92,8 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     // A batch is the one place where a single tap can spend a large number of credits, so
     // it is confirmed as a whole rather than per file.
     if (!await _confirmSpend()) return;
+    // The confirmation is a dialog the user can dismiss by leaving the screen entirely.
+    if (!mounted) return;
 
     setState(() {
       _running = true;
@@ -266,7 +268,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                   Text('Tool', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<_Tool>(
-                    value: _tool,
+                    initialValue: _tool,
                     decoration: const InputDecoration(border: OutlineInputBorder()),
                     items: _Tool.values
                         .map((t) => DropdownMenuItem(
@@ -275,7 +277,11 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                                 children: [
                                   Icon(t.icon, size: 18, color: primary),
                                   const SizedBox(width: 8),
-                                  Text(t.label),
+                                  // "Remove Blank Pages" overruns the closed dropdown on a
+                                  // narrow screen.
+                                  Flexible(
+                                    child: Text(t.label, overflow: TextOverflow.ellipsis),
+                                  ),
                                 ],
                               ),
                             ))

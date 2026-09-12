@@ -56,7 +56,14 @@ class _RotateImageViewState extends State<RotateImageView>
                       child: Center(
                         child: RotatedBox(
                           quarterTurns: _angle ~/ 90,
-                          child: Image.file(widget.file, fit: BoxFit.contain),
+                          child: Image.file(
+                            widget.file,
+                            fit: BoxFit.contain,
+                            // The source is a user's photo, often far larger than this preview.
+                            cacheWidth: (MediaQuery.sizeOf(context).width *
+                                    MediaQuery.devicePixelRatioOf(context))
+                                .round(),
+                          ),
                         ),
                       ),
                     ),

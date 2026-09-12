@@ -51,6 +51,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Future<void> _setTheme(ThemeMode mode) async {
     await ThemeManager().setMode(mode);
+    if (!mounted) return;
     setState(() => _themeMode = mode);
   }
 

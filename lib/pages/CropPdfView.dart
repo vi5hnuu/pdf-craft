@@ -12,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/widgets/PageRangeSelector.dart';
 
 class CropPdfView extends StatefulWidget {
   final File file;
@@ -24,6 +25,9 @@ class CropPdfView extends StatefulWidget {
 class _CropPdfViewState extends State<CropPdfView> {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
+
+  /// 0-indexed pages to crop. Empty means the whole document.
+  final Set<int> _pages = <int>{};
 
   PdfPageImage? _pageImage;
   double _pageWidthPt = 595.0;  // fallback A4
@@ -67,7 +71,10 @@ class _CropPdfViewState extends State<CropPdfView> {
     }
   }
 
-  // Margin values in PDF points, computed from fractions × page dimension
+  // Shown to the user so the numbers are legible. Only for display: these are measured against
+  // the page in the preview, and the document's other pages may be a different size — which is
+  // why the request now carries the fractions themselves and lets the server resolve them
+  // against each page.
   double get _marginTopPt => _cropTop * _pageHeightPt;
   double get _marginBottomPt => _cropBottom * _pageHeightPt;
   double get _marginLeftPt => _cropLeft * _pageWidthPt;
@@ -122,6 +129,21 @@ class _CropPdfViewState extends State<CropPdfView> {
                       'Drag the blue handles inward — the shaded area is removed.',
                       style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                    ),
+                    // Presented as a sheet rather than inline: the canvas below deliberately
+                    // fills the rest of the screen so dragging a handle never fights a scroll.
+                    Row(
+                      children: [
+                        Text('Apply to', style: theme.textTheme.bodySmall),
+                        const Spacer(),
+                        Flexible(
+                          child: TextButton(
+                            onPressed: _pickPages,
+                            child: Text('$_pageSummary · change',
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -351,16 +373,42 @@ class _CropPdfViewState extends State<CropPdfView> {
         ],
       );
 
+  String get _pageSummary {
+    if (_pages.isEmpty) return 'All pages';
+    if (_pages.length == 1) return 'Page ${_pages.first + 1}';
+    final sorted = _pages.toList()..sort();
+    return '${sorted.length} pages';
+  }
+
+  Future<void> _pickPages() async {
+    final chosen = await PageRangeSelector.show(
+      context,
+      file: widget.file,
+      selected: _pages,
+    );
+    if (chosen == null || !mounted) return;
+    setState(() {
+      _pages
+        ..clear()
+        ..addAll(chosen);
+    });
+  }
+
   void _onCrop() async {
     bloc.add(CropPdfEvent(
       cropPdf: CropPdf(
         outFileName: _outFileNameC.text.trim().isEmpty
             ? 'cropped_file'
             : _outFileNameC.text.trim(),
+        keepXFrac: _cropLeft,
+        keepYFrac: _cropTop,
+        keepWidthFrac: 1 - _cropLeft - _cropRight,
+        keepHeightFrac: 1 - _cropTop - _cropBottom,
         marginTop: _marginTopPt,
         marginBottom: _marginBottomPt,
         marginLeft: _marginLeftPt,
         marginRight: _marginRightPt,
+        pages: _pages.toList()..sort(),
         file: await MultipartFile.fromFile(widget.file.path),
       ),
     ));

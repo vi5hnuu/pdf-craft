@@ -5,6 +5,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RateAppService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
+import 'package:pdf_craft/widgets/AppLogo.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -35,14 +36,16 @@ class _MainScreenState extends State<MainScreen> {
       ),
       listener: (context, state) async {
         final should = await RateAppService().recordSuccess();
-        if (should && mounted) _showRateDialog(context);
+        // The dialog is opened on the listener's own context, so that is what has to still be
+        // mounted; the State's `mounted` says nothing about it.
+        if (should && context.mounted) _showRateDialog(context);
       },
       child: Scaffold(
       body: widget.navigationShell,
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Image.asset('assets/logo.webp', fit: BoxFit.fitWidth, width: 124),
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 16.0),
+          child: AppLogo(width: 112, fit: BoxFit.fitWidth),
         ),
         leadingWidth: 112,
         actions: [

@@ -693,6 +693,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
             opacity: 1.0,
             fromPage: pageNo - 1,
             toPage: pageNo - 1,
+            // The capture covers the whole page, so say so. Without a placement the stamp is
+            // drawn at its natural size — and this one is captured at three times the canvas
+            // resolution, so it went on far larger than the page it belonged to.
+            xFrac: 0,
+            yFrac: 0,
+            widthFrac: 1,
+            heightFrac: 1,
             file: await MultipartFile.fromFile(inputFile.path),
             stamp: await MultipartFile.fromFile(
                 stampFile.path, contentType: DioMediaType.parse('image/png')),

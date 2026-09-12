@@ -73,12 +73,21 @@ class _CompressPdfViewState extends State<CompressPdfView> {
                             const SizedBox(height: 24),
                             const Text('Compression Level', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 12),
-                            ...CompressionLevel.values.map((level) => RadioListTile<CompressionLevel>(
-                              title: Text(level.displayName),
-                              value: level,
+                            // RadioGroup supplies the selection to the tiles below it, and
+                            // gives the set arrow-key navigation that loose radios never had.
+                            RadioGroup<CompressionLevel>(
                               groupValue: _level,
-                              onChanged: (v) => setState(() => _level = v!),
-                            )),
+                              onChanged: (v) => setState(() => _level = v ?? _level),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: CompressionLevel.values
+                                    .map((level) => RadioListTile<CompressionLevel>(
+                                          title: Text(level.displayName),
+                                          value: level,
+                                        ))
+                                    .toList(),
+                              ),
+                            ),
                           ],
                         ),
                       ),

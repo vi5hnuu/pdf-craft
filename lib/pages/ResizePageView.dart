@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/ToolResultHandler.dart';
 import 'package:pdf_craft/utils/ToolViewMixin.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
+import 'package:pdf_craft/widgets/PageRangeSelector.dart';
 
 /// Resize Page Size: reflows every page onto a standard size (A4 / Letter /
 /// Legal), scaling the content to fit and centering it.
@@ -24,6 +25,9 @@ class ResizePageView extends StatefulWidget {
 class _ResizePageViewState extends State<ResizePageView>
     with ToolResultHandler, ToolViewMixin {
   PageSizePreset _size = PageSizePreset.a4;
+  /// 0-indexed pages the tool applies to. Empty means the whole document.
+  final Set<int> _pages = <int>{};
+
 
   @override
   void initState() {
@@ -49,18 +53,42 @@ class _ResizePageViewState extends State<ResizePageView>
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  // Scrollable because the page selector expands to a thumbnail grid, which
+                  // overflows a fixed column on a short screen.
+                  child: SingleChildScrollView(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Target size', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    for (final s in PageSizePreset.values)
-                      RadioListTile<PageSizePreset>(
-                        value: s,
-                        groupValue: _size,
-                        onChanged: (v) => setState(() => _size = v!),
-                        title: Text(s.label),
-                        subtitle: Text(s.dimensions),
+                    // RadioGroup supplies the selection to the tiles below it. Besides
+                    // replacing the deprecated per-tile groupValue/onChanged, it gives the set
+                    // arrow-key navigation, which loose radios never had.
+                    RadioGroup<PageSizePreset>(
+                      groupValue: _size,
+                      onChanged: (v) => setState(() => _size = v ?? _size),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final s in PageSizePreset.values)
+                            RadioListTile<PageSizePreset>(
+                              value: s,
+                              title: Text(s.label),
+                              subtitle: Text(s.dimensions),
+                            ),
+                        ],
                       ),
-                  ]),
+                    ),
+                    const SizedBox(height: 20),
+                    PageRangeSelector(
+                      file: widget.file,
+                      selected: _pages,
+                      onChanged: (pages) => setState(() {
+                        _pages
+                          ..clear()
+                          ..addAll(pages);
+                      }),
+                    ),
+                    ]),
+                  ),
                 ),
               ),
               Container(
@@ -88,7 +116,7 @@ class _ResizePageViewState extends State<ResizePageView>
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
     runTool((cancelToken) => ResizePageEvent(
-          resizePage: ResizePage(size: _size, file: file),
+          resizePage: ResizePage(size: _size, pages: _pages.toList()..sort(), file: file),
           cancelToken: cancelToken,
         ));
   }

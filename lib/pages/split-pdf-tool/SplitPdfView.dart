@@ -43,6 +43,12 @@ class _SplitPdfViewState extends State<SplitPdfView> {
   }
 
   @override
+  void dispose() {
+    outFileNameC.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final router=GoRouter.of(context);
 

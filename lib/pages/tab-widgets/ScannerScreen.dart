@@ -276,6 +276,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
               Image.file(
                 File(images[index]),
                 fit: BoxFit.contain,
+                // Scanned pages come off the camera at full sensor resolution.
+                cacheWidth: (MediaQuery.sizeOf(context).width *
+                        MediaQuery.devicePixelRatioOf(context))
+                    .round(),
                 errorBuilder: (_, __, ___) =>
                     const SizedBox(height: 120, child: Center(child: Icon(Icons.broken_image))),
               ),
@@ -307,6 +311,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ),
       );
       final result = await _documentScanner?.scanDocument();
+      // Scanning hands control to another activity and can take minutes, which is ample time
+      // for this screen to be disposed before the result comes back.
+      if (!mounted) return;
       AdsSingleton().dispatch(LoadInterstitialAd());
       setState(() {
         _result = result;
