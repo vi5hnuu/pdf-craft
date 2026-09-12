@@ -20,7 +20,7 @@ class Constants {
   // Standalone auth service (issues the JWTs pdf-studio validates).
   static String get authBaseUrl => kDebugMode
       ? "http://$_devHost:8081/api/v1"
-      : "https://auth.laxmi.solutions/api/v1";
+      : "https://pdf-studio-auth.laxmi.solutions";
 
   // Audience this app requests its tokens for — must match pdf-studio's
   // app.auth.expected-audience and be in the auth service's allowed-audiences.
