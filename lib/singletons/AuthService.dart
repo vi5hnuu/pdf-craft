@@ -26,6 +26,7 @@ class AuthService extends ChangeNotifier {
   AuthUser? _user;
   String? _accessToken; // in-memory copy for the sync interceptor read
   Future<String?>? _inFlightRefresh; // single-flight guard
+  Future<void>? _bootstrapping; // single-flight guard for bootstrap()
   bool _sessionExpired = false; // a full account's session just expired
 
   AuthUser? get user => _user;
@@ -48,10 +49,19 @@ class AuthService extends ChangeNotifier {
   /// Loads persisted tokens + the real stored profile, or creates a guest session if
   /// none exist. Never fabricates account state — a restored guest stays a guest until
   /// the server says otherwise (hydration below just refreshes it).
-  Future<void> bootstrap() async {
+  ///
+  /// Not awaited before the first frame (it used to be, and a slow or unreachable auth server
+  /// kept the app on a blank launch screen until the 20s connect timeout). Single-flighted so
+  /// [ensureSession] can wait for it instead of racing it.
+  Future<void> bootstrap() => _bootstrapping ??= _bootstrap();
+
+  Future<void> _bootstrap() async {
     _accessToken = await _storage.accessToken;
     if (_accessToken == null) {
-      await _createGuest();
+      // Through the single-flighted refresh (it creates a guest when there is no refresh token),
+      // so a request that asks for a session at the same moment shares this call rather than
+      // creating a second guest account.
+      await refreshAccessToken();
       return;
     }
     // Restore the real stored profile (if any) so we never guess account state.
@@ -71,6 +81,14 @@ class AuthService extends ChangeNotifier {
   /// the underlying refresh is single-flighted. Used by the Dio interceptor so a request
   /// never goes out token-less on a cold start.
   Future<String?> ensureSession() async {
+    // Let a still-running bootstrap finish first (it may be restoring a stored token), so an
+    // early request doesn't trigger a needless refresh or a duplicate guest.
+    final bootstrapping = _bootstrapping;
+    if (bootstrapping != null) {
+      try {
+        await bootstrapping;
+      } catch (_) {/* offline at launch — fall through and try again below */}
+    }
     if (_accessToken != null) return _accessToken;
     return refreshAccessToken();
   }

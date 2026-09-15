@@ -128,13 +128,13 @@ Future<void> main() async {
   await ThemeManager().init();
   await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame
-  // Establish an auth session (guest on first launch) so product requests are authenticated.
-  // Resilient to offline launch — a token is (re)obtained lazily on the next online request.
-  try {
-    await AuthService().bootstrap();
-  } catch (e) {
+  // Establish an auth session (guest on first launch) in the background. This used to be
+  // awaited here, so a slow or unreachable auth server held the first frame until the 20s
+  // connect timeout (measured on a release build: first frame at +20.4s). Requests don't need
+  // it to finish first — the Dio interceptor calls ensureSession(), which waits for it.
+  unawaited(AuthService().bootstrap().catchError((Object e) {
     LoggerSingleton().logger.w('Auth bootstrap deferred: $e');
-  }
+  }));
   // Load credits in the background so a slow/unreachable server never blocks the first frame.
   unawaited(CreditService().load());
   // Start the IAP lifecycle app-wide: recovers unfinished purchases and processes any
