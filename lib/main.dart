@@ -225,6 +225,15 @@ class _NestedTabNavigationExampleAppState
     navigatorKey: _rootNavigatorKey, //navigator = 1
     initialLocation: AppRoutes.splashRoute.path,
     redirect: (context, state) async {
+      // Splash, onboarding and the permission page itself never need storage access. Gating
+      // them sent brand-new users to the permission wall before they had seen the intro (and
+      // skipped the splash's ad initialisation).
+      final path = state.matchedLocation;
+      if (path == AppRoutes.splashRoute.path ||
+          path == AppRoutes.onboardingRoute.path ||
+          path == AppRoutes.errorRoute.path) {
+        return null;
+      }
       final granted=await StoragePermissions.isStoragePermissionGranted();
       if(granted) return null;
       return AppRoutes.errorRoute.path;
