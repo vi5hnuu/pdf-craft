@@ -9,6 +9,7 @@ import 'package:pdf_craft/singletons/RecentToolsService.dart';
 import 'package:pdf_craft/tools/credit_gate.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/UploadLimits.dart';
 
 /// A tool category (used for grouping + accent colour on the Tools screen).
 class ToolCategory {
@@ -70,6 +71,10 @@ class ToolDef {
   /// Extra payload merged into the route arguments (e.g. Image Studio op).
   final Map<String, dynamic>? extra;
 
+  /// Whether the tool uploads its input to the server. Drives the client-side upload size
+  /// check ([UploadLimits]) — tools that work purely on-device must not be blocked by it.
+  final bool uploads;
+
   /// Short, human description of what the tool does (shown via the info button
   /// on the tool card). Looked up by [id] so the tool list stays terse.
   String get description => ToolRegistry.descriptions[id] ?? '';
@@ -93,6 +98,7 @@ class ToolDef {
     this.maxSelection = 1,
     this.isHeavy = false,
     this.extra,
+    this.uploads = true,
   });
 
   /// True when this tool can run on a selection of [count] files whose
@@ -124,6 +130,7 @@ class ToolDef {
             minSelection: multiSelect ? minSelection : null,
             limitToExtensions: extensions,
             extra: extra,
+            enforceUploadLimits: uploads,
           ),
         );
       },
@@ -133,7 +140,11 @@ class ToolDef {
   /// Opens the tool directly with an already-chosen [files] selection (used by
   /// the file→tool intellisense menu and the incoming-files chooser), skipping
   /// the picker. Heavy tools first pass through the opt-in rewarded-ad gate.
-  void openWithFiles(BuildContext context, List<File> files) {
+  void openWithFiles(BuildContext context, List<File> files) async {
+    // Fail fast on files the server would reject for size — before quoting a price or
+    // starting a long upload that can only end in an error.
+    if (uploads && !await UploadLimits.ensureWithinLimits(context, files)) return;
+    if (!context.mounted) return;
     CreditGate.run(
       context,
       creditToolId: creditToolId,
@@ -185,7 +196,7 @@ class ToolRegistry {
     ToolDef(id: 'redact', name: 'Redact PDF', icon: Icons.hide_source, category: ToolCategories.pdf, route: AppRoutes.redactPdfRoute, extensions: _pdf),
     ToolDef(id: 'duplicate-pages', name: 'Duplicate Pages', icon: Icons.copy_all, category: ToolCategories.pdf, route: AppRoutes.duplicatePagesRoute, extensions: _pdf),
     ToolDef(id: 'bookmarks', name: 'Bookmarks', icon: Icons.bookmark_outline, category: ToolCategories.pdf, route: AppRoutes.bookmarksEditorRoute, extensions: _pdf),
-    ToolDef(id: 'compare', name: 'Compare PDF', icon: Icons.compare, category: ToolCategories.pdf, route: AppRoutes.pdfCompareRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: 2),
+    ToolDef(id: 'compare', name: 'Compare PDF', icon: Icons.compare, category: ToolCategories.pdf, route: AppRoutes.pdfCompareRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: 2, uploads: false), // renders both PDFs on-device
 
     // ---- Enhance ----
     ToolDef(id: 'compress', name: 'Compress PDF', icon: Icons.compress, category: ToolCategories.enhance, route: AppRoutes.compressPdfRoute, extensions: _pdf, isHeavy: true),

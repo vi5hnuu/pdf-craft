@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/utils/UploadLimits.dart';
 
 /// Confirm-spend gate for paid tools.
 ///
@@ -30,7 +31,7 @@ class CreditGate {
       return;
     }
 
-    final int sizeBytes = _totalBytes(files);
+    final int sizeBytes = UploadLimits.totalBytes(files);
     final cost = sizeBytes > 0
         ? CreditService().costForSize(creditToolId, sizeBytes)
         : CreditService().costFor(creditToolId);
@@ -101,19 +102,5 @@ class CreditGate {
     );
 
     if (confirmed == true) proceed();
-  }
-
-  /// Total size of the selected files, or 0 when they are not known yet.
-  static int _totalBytes(List<File>? files) {
-    if (files == null || files.isEmpty) return 0;
-    var total = 0;
-    for (final file in files) {
-      try {
-        total += file.lengthSync();
-      } catch (_) {
-        // Unreadable here just means we quote the base price; the server is authoritative.
-      }
-    }
-    return total;
   }
 }

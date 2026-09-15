@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/utils/UploadLimits.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
 
@@ -31,7 +32,13 @@ class _FilesManagementState extends State<FilesManagement> {
       body: SafeArea(
         child: Flex(direction: Axis.vertical,
         children: [
-          Expanded(child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files){
+          Expanded(child: DirectoryFilesListing(minSelection: widget.config.minSelection,onDoneSelection: widget.config.multiSelect==null ? null : (files) async {
+            // Stop here — before the tool opens — if the server would reject the upload for size.
+            if (widget.config.enforceUploadLimits &&
+                !await UploadLimits.ensureWithinLimits(context, files)) {
+              return;
+            }
+            if (!context.mounted) return;
             final Map<String, dynamic> mergedResult = {'files': files};
             if (widget.config.extra != null) mergedResult.addAll(widget.config.extra!);
             if(widget.config.redirectPath==null) {
