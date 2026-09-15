@@ -40,12 +40,14 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Future<void> _loadProcessedStats() async {
+    // Async listing and sizes: opening Settings used to walk the output folder synchronously on
+    // the UI thread, which janked the screen transition when the folder was large.
     final dir = Directory(Constants.processedDirPath);
-    if (!dir.existsSync()) return;
-    final files = dir.listSync().whereType<File>().toList();
+    if (!await dir.exists()) return;
+    final files = await dir.list().where((e) => e is File).cast<File>().toList();
     int totalBytes = 0;
     for (final f in files) {
-      try { totalBytes += f.lengthSync(); } catch (_) {}
+      try { totalBytes += await f.length(); } catch (_) {}
     }
     if (mounted) {
       setState(() {

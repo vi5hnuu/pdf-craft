@@ -35,19 +35,23 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   Future<void> _load() async {
     final dir = Directory(Constants.processedDirPath);
-    if (!dir.existsSync()) {
+    if (!await dir.exists()) {
       if (mounted) setState(() => _files = []);
       return;
     }
-    final files = dir.listSync().whereType<File>().toList();
-    // Newest first by modified time.
-    files.sort((a, b) {
+    final files = await dir.list().where((e) => e is File).cast<File>().toList();
+    // Stat each file once, asynchronously, then sort newest first by the cached times. The
+    // comparator used to call statSync() twice per comparison — O(n log n) blocking file-system
+    // calls on the UI thread, which stalled the screen with many results.
+    final modified = <String, DateTime>{};
+    await Future.wait(files.map((f) async {
       try {
-        return b.statSync().modified.compareTo(a.statSync().modified);
+        modified[f.path] = (await f.stat()).modified;
       } catch (_) {
-        return 0;
+        modified[f.path] = DateTime.fromMillisecondsSinceEpoch(0);
       }
-    });
+    }));
+    files.sort((a, b) => modified[b.path]!.compareTo(modified[a.path]!));
     if (mounted) setState(() => _files = files);
   }
 
