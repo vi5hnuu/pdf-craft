@@ -44,3 +44,5 @@ app.*.map.json
 
 # Local Play Console notes (not part of the app)
 console.txt
+# Local audit reports (not part of the app)
+docs/audit/
