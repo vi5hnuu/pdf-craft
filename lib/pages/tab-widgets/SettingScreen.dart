@@ -7,6 +7,8 @@ import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/LocaleManager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -181,6 +183,31 @@ class _SettingScreenState extends State<SettingScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
+          // Language — System follows the device; English / हिन्दी override it.
+          _sectionHeader(theme, L10n.of(context).settingsLanguage, Icons.translate),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Card(
+                child: ListenableBuilder(
+                  listenable: LocaleManager(),
+                  builder: (context, _) {
+                    final l = L10n.of(context);
+                    return Column(children: [
+                      _languageTile(theme, AppLanguage.system, l.languageSystem, Icons.phone_android_outlined),
+                      const Divider(height: 1, indent: 56),
+                      _languageTile(theme, AppLanguage.english, l.languageEnglish, Icons.abc),
+                      const Divider(height: 1, indent: 56),
+                      _languageTile(theme, AppLanguage.hindi, l.languageHindi, Icons.translate),
+                    ]);
+                  },
+                ),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
           // Storage
           _sectionHeader(theme, 'Storage', Icons.folder_outlined),
           SliverToBoxAdapter(
@@ -304,6 +331,16 @@ class _SettingScreenState extends State<SettingScreen> {
                   color: theme.colorScheme.primary, letterSpacing: 0.8)),
         ]),
       ),
+    );
+  }
+
+  Widget _languageTile(ThemeData theme, AppLanguage language, String label, IconData icon) {
+    final selected = LocaleManager().language == language;
+    return ListTile(
+      leading: Icon(icon, color: selected ? theme.colorScheme.primary : null),
+      title: Text(label),
+      trailing: selected ? Icon(Icons.check, color: theme.colorScheme.primary) : null,
+      onTap: () => LocaleManager().setLanguage(language),
     );
   }
 

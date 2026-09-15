@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RateAppService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
-import 'package:pdf_craft/theme/theme_manager.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/LocaleManager.dart';
 import 'package:pdf_craft/widgets/AppLogo.dart';
 
 class MainScreen extends StatefulWidget {
@@ -49,20 +50,21 @@ class _MainScreenState extends State<MainScreen> {
         ),
         leadingWidth: 112,
         actions: [
+          // Quick language switch: English ⇄ हिन्दी. It replaces the theme menu that used to sit
+          // here, which only duplicated Settings → Appearance. The label shows the language the
+          // tap switches *to*.
           ListenableBuilder(
-            listenable: ThemeManager(),
-            builder: (context, _) => PopupMenuButton<ThemeMode>(
-              icon: const Icon(Icons.palette_outlined),
-              tooltip: 'Theme',
-              onSelected: (mode) => ThemeManager().setMode(mode),
-              itemBuilder: (context) => [
-                _themeMenuItem(
-                    context, ThemeMode.dark, 'Dark Mode', Icons.dark_mode),
-                _themeMenuItem(
-                    context, ThemeMode.light, 'Light Mode', Icons.light_mode),
-                _themeMenuItem(context, ThemeMode.system, 'System Default',
-                    Icons.settings_suggest),
-              ],
+            listenable: LocaleManager(),
+            builder: (context, _) => Tooltip(
+              message: L10n.of(context).switchLanguageTooltip,
+              child: TextButton(
+                onPressed: () => LocaleManager().toggleEnglishHindi(),
+                child: Text(
+                  LocaleManager().isHindi ? 'EN' : 'हि',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
+                ),
+              ),
             ),
           ),
           IconButton(
@@ -137,25 +139,6 @@ class _MainScreenState extends State<MainScreen> {
             },
             child: const Text('Rate Now'),
           ),
-        ],
-      ),
-    );
-  }
-
-  PopupMenuItem<ThemeMode> _themeMenuItem(
-      BuildContext context, ThemeMode mode, String label, IconData icon) {
-    final current = ThemeManager().mode;
-    return PopupMenuItem<ThemeMode>(
-      value: mode,
-      child: Row(
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 12),
-          Text(label),
-          if (current == mode) ...[
-            const Spacer(),
-            Icon(Icons.check, size: 16, color: Theme.of(context).colorScheme.primary),
-          ],
         ],
       ),
     );
