@@ -16,6 +16,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/NextToolSheet.dart';
 import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 
 class PdfPreview extends StatefulWidget {
   final String pdfFilePath;
@@ -113,22 +114,22 @@ class _PdfPreviewState extends State<PdfPreview> {
           if (_controller != null)
             IconButton(
               icon: const Icon(Icons.list_alt_outlined),
-              tooltip: 'Bookmarks',
+              tooltip: L10n.of(context).bookmarks,
               onPressed: _showOutline,
             ),
           IconButton(
             icon: Icon(_nightMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
-            tooltip: _nightMode ? 'Day mode' : 'Night mode',
+            tooltip: _nightMode ? L10n.of(context).dayMode : L10n.of(context).nightMode,
             onPressed: () => setState(() => _nightMode = !_nightMode),
           ),
           IconButton(
             icon: const Icon(Icons.cloud_upload_outlined),
-            tooltip: 'Upload to Drive',
+            tooltip: L10n.of(context).uploadToDrive,
             onPressed: _uploadToDrive,
           ),
           IconButton(
             icon: const Icon(Icons.share_outlined),
-            tooltip: 'Share',
+            tooltip: L10n.of(context).actionShare,
             // The share sheet leaves the app; coming back from it is not a resume worth an ad.
             onPressed: () => FullScreenAdPolicy()
                 .runExternal(() => Share.shareXFiles([XFile(_path)])),
@@ -148,39 +149,39 @@ class _PdfPreviewState extends State<PdfPreview> {
                   NextToolSheet.show(context, File(_path));
               }
             },
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               // A tool's result used to end here: running a second tool on it meant leaving,
               // opening the file browser and finding the output again by name.
               PopupMenuItem(
                 value: 'next_tool',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.auto_awesome_motion_outlined),
-                  title: Text('Use in another tool'),
+                  leading: const Icon(Icons.auto_awesome_motion_outlined),
+                  title: Text(L10n.of(context).useInAnotherTool),
                 ),
               ),
               PopupMenuItem(
                 value: 'rename',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.drive_file_rename_outline),
-                  title: Text('Rename'),
+                  leading: const Icon(Icons.drive_file_rename_outline),
+                  title: Text(L10n.of(context).rename),
                 ),
               ),
               PopupMenuItem(
                 value: 'save_copy',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.download_outlined),
-                  title: Text('Save a copy to Downloads'),
+                  leading: const Icon(Icons.download_outlined),
+                  title: Text(L10n.of(context).saveCopyToDownloads),
                 ),
               ),
               PopupMenuItem(
                 value: 'external',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.open_in_new),
-                  title: Text('Open in external viewer'),
+                  leading: const Icon(Icons.open_in_new),
+                  title: Text(L10n.of(context).openInExternalViewer),
                 ),
               ),
             ],
@@ -199,7 +200,7 @@ class _PdfPreviewState extends State<PdfPreview> {
                 if (!zoomedIn) return const SizedBox.shrink();
                 return FloatingActionButton.small(
                   heroTag: 'resetZoom',
-                  tooltip: 'Fit to screen',
+                  tooltip: L10n.of(context).fitToScreen,
                   onPressed: _resetZoom,
                   child: const Icon(Icons.zoom_out_map),
                 );
@@ -283,26 +284,26 @@ class _PdfPreviewState extends State<PdfPreview> {
 
     final newBase = await InputDialog.show(
       context,
-      title: 'Rename file',
-      label: 'New name',
+      title: L10n.of(context).renameFile,
+      label: L10n.of(context).newName,
       initial: base,
-      confirmLabel: 'Rename',
+      confirmLabel: L10n.of(context).rename,
     );
     if (newBase == null || newBase.trim().isEmpty || newBase.trim() == base) return;
 
     final dir = File(_path).parent.path;
     final newPath = '$dir/${newBase.trim()}$ext';
     if (File(newPath).existsSync()) {
-      NotificationService.showSnackbar(text: 'A file with that name already exists', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.fileExists, color: Colors.red);
       return;
     }
     try {
       await File(_path).rename(newPath);
       if (!mounted) return;
       setState(() => _path = newPath);
-      NotificationService.showSnackbar(text: 'Renamed', color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.renamedSuccessfully, color: Colors.green);
     } catch (_) {
-      NotificationService.showSnackbar(text: 'Could not rename file', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.renameFailed, color: Colors.red);
     }
   }
 
@@ -321,9 +322,9 @@ class _PdfPreviewState extends State<PdfPreview> {
         dest = '${dir.path}/$base-${DateTime.now().millisecondsSinceEpoch}$ext';
       }
       await File(_path).copy(dest);
-      NotificationService.showSnackbar(text: 'Saved to Downloads', color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.savedToDownloads, color: Colors.green);
     } catch (_) {
-      NotificationService.showSnackbar(text: 'Could not save to Downloads', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.saveToDownloadsFailed, color: Colors.red);
     }
   }
 
@@ -335,10 +336,9 @@ class _PdfPreviewState extends State<PdfPreview> {
     if (!skip) {
       final result = await ConfirmDialog.show(
         context,
-        title: 'Upload to Google Drive',
-        message:
-            'A copy of this PDF will be uploaded to your Google Drive (in a "PDF Craft" folder). You can review or switch your account on the next screen.',
-        confirmLabel: 'Continue',
+        title: L10n.of(context).uploadToDriveTitle,
+        message: L10n.of(context).uploadToDriveBody,
+        confirmLabel: L10n.of(context).continueLabel,
         icon: Icons.cloud_upload_outlined,
         showDontAskAgain: true,
       );
@@ -357,10 +357,10 @@ class _PdfPreviewState extends State<PdfPreview> {
   Future<void> _askForPasswordAndRetry(BuildContext context) async {
     final newPassword = await InputDialog.show(
       context,
-      title: 'Password Required',
-      label: 'Enter PDF password',
+      title: L10n.of(context).passwordRequired,
+      label: L10n.of(context).enterPdfPassword,
       obscure: true,
-      confirmLabel: 'Open',
+      confirmLabel: L10n.of(context).actionOpen,
     );
     if (newPassword != null) {
       _password = newPassword.isEmpty ? null : newPassword;
@@ -389,7 +389,7 @@ class _PdfPreviewState extends State<PdfPreview> {
   Future<void> _showJumpToPageDialog(int totalPages) async {
     final input = await InputDialog.show(
       context,
-      title: 'Go to Page',
+      title: L10n.of(context).goToPage,
       hint: '1 – $totalPages',
       keyboardType: TextInputType.number,
       confirmLabel: 'Go',
@@ -435,7 +435,7 @@ class _OutlineSheetState extends State<_OutlineSheet> {
     for (final item in raw) {
       if (item is! Map) continue;
       into.add(_OutlineItem(
-        title: (item['title'] as String?)?.trim().isNotEmpty == true ? item['title'] as String : 'Untitled',
+        title: (item['title'] as String?)?.trim().isNotEmpty == true ? item['title'] as String : L10n.of(context).untitled,
         pageIndex: (item['pageIndex'] as num?)?.toInt() ?? 0,
         depth: depth,
       ));
@@ -466,7 +466,7 @@ class _OutlineSheetState extends State<_OutlineSheet> {
               child: Row(children: [
                 Icon(Icons.bookmark_outline, size: 18, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                const Text('Bookmarks', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(L10n.of(context).bookmarks, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ]),
             ),
             const Divider(height: 1),
@@ -483,7 +483,7 @@ class _OutlineSheetState extends State<_OutlineSheet> {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'This PDF has no bookmarks.\nAdd some with the Bookmarks tool.',
+                          L10n.of(context).noBookmarks,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyMedium
                               ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
@@ -501,7 +501,7 @@ class _OutlineSheetState extends State<_OutlineSheet> {
                         contentPadding: EdgeInsets.only(left: 16 + item.depth * 18.0, right: 16),
                         leading: Icon(Icons.bookmark_outline, size: 18, color: theme.colorScheme.primary),
                         title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        trailing: Text('p.${item.pageIndex + 1}',
+                        trailing: Text(L10n.of(context).pageShort(item.pageIndex + 1),
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
                         onTap: () => widget.onJump(item.pageIndex),
@@ -555,14 +555,13 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'This PDF is locked',
+              L10n.of(context).pdfLocked,
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              "It looks password-protected or couldn't be opened. Enter the "
-              'password to view it here, or open it in another app.',
+              L10n.of(context).pdfLockedBody,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
@@ -573,7 +572,7 @@ class _ErrorState extends StatelessWidget {
               width: double.infinity,
               child: FilledButton.icon(
                 icon: const Icon(Icons.lock_open_outlined, size: 18),
-                label: const Text('Enter password'),
+                label: Text(L10n.of(context).enterPassword),
                 onPressed: onRetryWithPassword,
               ),
             ),
@@ -582,7 +581,7 @@ class _ErrorState extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text('Open in another app'),
+                label: Text(L10n.of(context).openInAnotherApp),
                 onPressed: () => OpenFile.open(
                   filePath,
                   type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*',

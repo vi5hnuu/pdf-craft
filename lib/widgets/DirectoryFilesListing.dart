@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
@@ -135,7 +137,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           return Stack(children: [
             if (!state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES))
               (state.files.isEmpty
-                  ? const Center(child: Text('No files found'))
+                  ? Center(child: Text(L10n.of(context).noFilesFound))
                   : Flex(
                       direction: Axis.vertical,
                       children: [
@@ -145,7 +147,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                           child: sortedFiles.isEmpty
                               ? Center(
                                   child: Text(
-                                    'No matching files',
+                                    L10n.of(context).noMatchingFiles,
                                     style: TextStyle(
                                         color: theme.colorScheme.onSurface
                                             .withValues(alpha: 0.5)),
@@ -209,7 +211,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                                         : () => widget
                                             .onDoneSelection!(selectedFiles),
                                     child:
-                                        const Text('Complete Selection'),
+                                        Text(L10n.of(context).completeSelection),
                                   ),
                                 )
                               : null,
@@ -272,8 +274,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                         borderRadius: BorderRadius.circular(AppRadius.surface),
                       ),
                       child: Text(
-                        pathToDirectory[i].split('/').last.isEmpty
-                            ? 'Root'
+                        // The storage root's last segment is "0" (/storage/emulated/0), which
+                        // meant nothing to users — name it instead.
+                        pathToDirectory[i] == Constants.rootStoragePath ||
+                                pathToDirectory[i].split('/').last.isEmpty
+                            ? L10n.of(context).storageInternal
                             : pathToDirectory[i].split('/').last,
                         style: TextStyle(
                           fontSize: 12,
@@ -300,7 +305,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               style: const TextStyle(fontSize: 13),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Filter by name',
+                hintText: L10n.of(context).filterByName,
                 prefixIcon: const Icon(Icons.search, size: 18),
                 suffixIcon: _nameFilter.isEmpty
                     ? null
@@ -342,7 +347,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                     color: theme.dividerColor,
                   ),
                   FilterPill(
-                      label: 'All',
+                      label: L10n.of(context).filterAll,
                       selected: _extFilter == null,
                       onTap: () => setState(() => _extFilter = null)),
                   for (final ext in availableExts) ...[
@@ -402,7 +407,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ListTile(
                 leading: const Icon(Icons.check_circle_outline),
                 title: Text(
-                    _isFileSelected(file) ? 'Deselect' : 'Select for tools'),
+                    _isFileSelected(file)
+                        ? L10n.of(context).fileDeselect
+                        : L10n.of(context).fileSelectForTools),
                 onTap: () {
                   Navigator.pop(context);
                   SelectionService().toggle(file as File);
@@ -410,7 +417,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: Text('Rename ${isDir ? 'Folder' : 'File'}'),
+              title: Text(isDir ? L10n.of(context).renameFolder : L10n.of(context).renameFile),
               onTap: () {
                 Navigator.pop(context);
                 _renameFile(file);
@@ -419,7 +426,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
             if (!isDir) ...[
               ListTile(
                 leading: const Icon(Icons.copy_outlined),
-                title: const Text('Copy to…'),
+                title: Text(L10n.of(context).copyTo),
                 onTap: () {
                   Navigator.pop(context);
                   _copyOrMove(file as File, move: false);
@@ -427,7 +434,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ),
               ListTile(
                 leading: const Icon(Icons.drive_file_move_outlined),
-                title: const Text('Move to…'),
+                title: Text(L10n.of(context).moveTo),
                 onTap: () {
                   Navigator.pop(context);
                   _copyOrMove(file as File, move: true);
@@ -435,7 +442,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
               ),
               ListTile(
                 leading: const Icon(Icons.info_outline),
-                title: const Text('File Info'),
+                title: Text(L10n.of(context).fileInfo),
                 onTap: () {
                   Navigator.pop(context);
                   _showFileInfo(file as File);
@@ -453,8 +460,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     final stat = file.statSync();
     final name = file.path.split('/').last;
     final size = Utility.bytesToSize(file.lengthSync());
-    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    String fmt(DateTime d) => '${d.day} ${months[d.month - 1]} ${d.year}  ${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}';
+    // Dates in the app's language (month names were hard-coded in English).
+    final dateFormat =
+        DateFormat.yMMMd(Localizations.localeOf(context).toLanguageTag()).add_Hm();
+    String fmt(DateTime d) => dateFormat.format(d);
+    final l = L10n.of(context);
 
     showModalBottomSheet(
       context: context,
@@ -473,15 +483,15 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                   decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(AppRadius.surface)),
                 ),
               ),
-              _infoRow(Icons.insert_drive_file_outlined, 'Name', name, copyable: true),
+              _infoRow(Icons.insert_drive_file_outlined, l.sortName, name, copyable: true),
               const SizedBox(height: 12),
-              _infoRow(Icons.folder_outlined, 'Path', file.path, copyable: true),
+              _infoRow(Icons.folder_outlined, l.infoPath, file.path, copyable: true),
               const SizedBox(height: 12),
-              _infoRow(Icons.data_usage_outlined, 'Size', size),
+              _infoRow(Icons.data_usage_outlined, l.sortSize, size),
               const SizedBox(height: 12),
-              _infoRow(Icons.schedule_outlined, 'Modified', fmt(stat.modified)),
+              _infoRow(Icons.schedule_outlined, l.infoModified, fmt(stat.modified)),
               const SizedBox(height: 12),
-              _infoRow(Icons.add_circle_outline, 'Created', fmt(stat.changed)),
+              _infoRow(Icons.add_circle_outline, l.infoCreated, fmt(stat.changed)),
             ],
           ),
         ),
@@ -512,11 +522,11 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.copy, size: 16),
-            tooltip: 'Copy',
+            tooltip: L10n.of(context).copy,
             onPressed: () {
               Clipboard.setData(ClipboardData(text: value));
               NotificationService.showSnackbar(
-                  text: 'Copied to clipboard', color: Colors.green);
+                  text: L10n.current.copiedToClipboard, color: Colors.green);
             },
           ),
       ],
@@ -537,14 +547,14 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     try {
       if (move) {
         await file.rename(destPath);
-        NotificationService.showSnackbar(text: 'Moved to $destDir', color: Colors.green);
+        NotificationService.showSnackbar(text: L10n.current.movedTo(destDir), color: Colors.green);
       } else {
         await file.copy(destPath);
-        NotificationService.showSnackbar(text: 'Copied to $destDir', color: Colors.green);
+        NotificationService.showSnackbar(text: L10n.current.copiedTo(destDir), color: Colors.green);
       }
       _loadDirectoryFiles(pathToDirectory.last);
     } catch (e) {
-      NotificationService.showSnackbar(text: 'Operation failed', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.operationFailed, color: Colors.red);
     }
   }
 
@@ -570,9 +580,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
       await entity.rename(newPath);
       // Refresh listing
       _loadDirectoryFiles(pathToDirectory.last);
-      NotificationService.showSnackbar(text: 'Renamed successfully', color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.renamedSuccessfully, color: Colors.green);
     } catch (e) {
-      NotificationService.showSnackbar(text: 'Failed to rename', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.renameFailed, color: Colors.red);
     }
   }
 
@@ -624,7 +634,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
       }
     } catch (e) {
       NotificationService.showSnackbar(
-          text: "Something went wrong",
+          text: L10n.current.errSomethingWrong,
           color: Colors.red,
           showCloseIcon: true);
     }
@@ -662,14 +672,14 @@ class _RenameDialogState extends State<_RenameDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Rename ${widget.isFile ? 'File' : 'Folder'}'),
+      title: Text(widget.isFile ? L10n.of(context).renameFile : L10n.of(context).renameFolder),
       content: TextField(
         controller: _controller,
         autofocus: true,
         maxLines: 1,
         textInputAction: TextInputAction.done,
         decoration: InputDecoration(
-          labelText: 'New name',
+          labelText: L10n.of(context).newName,
           suffixText: widget.ext,
           isDense: true,
           border: const OutlineInputBorder(),
@@ -679,8 +689,8 @@ class _RenameDialogState extends State<_RenameDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel')),
-        FilledButton(onPressed: _submit, child: const Text('Rename')),
+            child: Text(L10n.of(context).cancel)),
+        FilledButton(onPressed: _submit, child: Text(L10n.of(context).rename)),
       ],
     );
   }
@@ -723,7 +733,9 @@ class _FolderPickerDialogState extends State<_FolderPickerDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final folderName = _currentPath.split('/').last.isEmpty ? 'Root' : _currentPath.split('/').last;
+    final folderName = _currentPath == widget.startPath || _currentPath.split('/').last.isEmpty
+        ? L10n.of(context).storageInternal
+        : _currentPath.split('/').last;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
@@ -767,7 +779,7 @@ class _FolderPickerDialogState extends State<_FolderPickerDialog> {
                 ? const Center(child: CircularProgressIndicator())
                 : _dirs.isEmpty
                     ? Center(
-                        child: Text('No sub-folders',
+                        child: Text(L10n.of(context).noSubfolders,
                             style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
                       )
                     : ListView.builder(
@@ -802,7 +814,7 @@ class _FolderPickerDialogState extends State<_FolderPickerDialog> {
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: () => Navigator.pop(context, _currentPath),
-                  child: const Text('Select'),
+                  child: Text(L10n.of(context).select),
                 ),
               ],
             ),

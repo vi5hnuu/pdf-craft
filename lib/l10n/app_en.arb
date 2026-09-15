@@ -607,5 +607,71 @@
   "errToolFailed": "Couldn't process your file. Please try again.",
   "errLoadFolder": "Couldn't open this folder.",
   "errMoveFile": "Couldn't move the file.",
-  "errDeleteFile": "Couldn't delete the file."
+  "errDeleteFile": "Couldn't delete the file.",
+  "noFilesFound": "No files found",
+  "completeSelection": "Complete Selection",
+  "filterByName": "Filter by name",
+  "renameFile": "Rename file",
+  "renameFolder": "Rename folder",
+  "copyTo": "Copy to…",
+  "moveTo": "Move to…",
+  "fileInfo": "File info",
+  "infoPath": "Path",
+  "infoModified": "Modified",
+  "infoCreated": "Created",
+  "copy": "Copy",
+  "copiedToClipboard": "Copied to clipboard",
+  "movedTo": "Moved to {path}",
+  "@movedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "copiedTo": "Copied to {path}",
+  "@copiedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "operationFailed": "Operation failed",
+  "renamedSuccessfully": "Renamed successfully",
+  "renameFailed": "Failed to rename",
+  "newName": "New name",
+  "rename": "Rename",
+  "noSubfolders": "No sub-folders",
+  "select": "Select",
+  "bookmarks": "Bookmarks",
+  "dayMode": "Day mode",
+  "nightMode": "Night mode",
+  "uploadToDrive": "Upload to Drive",
+  "fitToScreen": "Fit to screen",
+  "useInAnotherTool": "Use in another tool",
+  "saveCopyToDownloads": "Save a copy to Downloads",
+  "fileExists": "A file with that name already exists",
+  "savedToDownloads": "Saved to Downloads",
+  "saveToDownloadsFailed": "Could not save to Downloads",
+  "uploadToDriveTitle": "Upload to Google Drive",
+  "uploadToDriveBody": "A copy of this PDF will be uploaded to your Google Drive (in a “PDF Craft” folder). You can review or switch your account on the next screen.",
+  "continueLabel": "Continue",
+  "passwordRequired": "Password required",
+  "enterPdfPassword": "Enter PDF password",
+  "goToPage": "Go to page",
+  "untitled": "Untitled",
+  "noBookmarks": "This PDF has no bookmarks.\nAdd some with the Bookmarks tool.",
+  "pdfLocked": "This PDF is locked",
+  "pdfLockedBody": "It looks password-protected or couldn't be opened. Enter the password to view it here, or open it in another app.",
+  "enterPassword": "Enter password",
+  "openInAnotherApp": "Open in another app",
+  "pageShort": "p.{number}",
+  "@pageShort": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  }
 }
