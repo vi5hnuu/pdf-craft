@@ -24,9 +24,11 @@ void main() {
   });
 
   test('placeholders match between languages', () {
-    final placeholder = RegExp(r'\{(\w+)');
+    // A real placeholder is an identifier directly followed by `}` or `,` ("{count}",
+    // "{count, plural"). Plural branch bodies like "=1{You have…" start with ordinary words and
+    // must not be mistaken for placeholders.
+    final placeholder = RegExp(r'\{([A-Za-z_]\w*)\s*[,}]');
     for (final key in keys(en)) {
-      // Plural/select bodies repeat words in braces; compare the first-level argument names.
       Set<String> names(String s) => placeholder.allMatches(s).map((m) => m.group(1)!).toSet();
       final enNames = names(en[key] as String);
       final hiNames = names(hi[key] as String);
