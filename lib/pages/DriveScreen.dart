@@ -76,7 +76,9 @@ class _DriveScreenState extends State<DriveScreen> {
   Future<void> _tryRestoreSession() async {
     setState(() => _signingIn = true);
     try {
-      await _drive.signIn();
+      // Silent only: opening the Cloud tab used to launch the Google account picker on its own.
+      // Users who never connected Drive now just see the "Connect Google Drive" prompt.
+      await _drive.restoreSession();
       if (_drive.isSignedIn) await Future.wait([_loadFiles(), _loadStorage()]);
     } catch (_) {}
     finally {
