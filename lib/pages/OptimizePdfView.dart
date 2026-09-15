@@ -86,9 +86,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                       ]),
                       const SizedBox(height: 8),
                       Text(
-                        '• Removes embedded page thumbnails\n'
-                        '• Re-compresses document streams\n'
-                        '• Reduces file size without quality loss',
+                        L10n.of(context).optimizeExplainer,
                         style: theme.textTheme.bodySmall?.copyWith(height: 1.6),
                       ),
                     ]),

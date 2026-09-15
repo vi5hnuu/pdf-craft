@@ -1393,5 +1393,8 @@
   "previewUnavailable": "This file can't be previewed, but the tool will still process it.",
   "imageOverlayTitle": "Image Overlay",
   "bookmarksEmptyHint": "Bookmarks are stored inside the PDF itself. Add some below, then Save to embed them — they'll travel with the file.",
-  "compressRecommended": "Compress (recommended)"
+  "compressRecommended": "Compress (recommended)",
+  "optimizeExplainer": "• Removes embedded page thumbnails\n• Re-compresses document streams\n• Reduces file size without quality loss",
+  "placeImageEmpty": "Select an image above\nto position it on this page",
+  "qrEmptyHint": "Enter a URL or text above\nto generate a QR code"
 }

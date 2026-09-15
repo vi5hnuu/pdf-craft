@@ -301,8 +301,8 @@ class _PlaceImageViewState extends State<PlaceImageView> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(AppRadius.surface)),
-                      child: const Text(
-                        'Select an image above\nto position it on this page',
+                      child: Text(
+                        L10n.of(context).placeImageEmpty,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white),
                       ),

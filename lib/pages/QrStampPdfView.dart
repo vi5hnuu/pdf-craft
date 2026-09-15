@@ -98,7 +98,7 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
                       Icon(Icons.qr_code_2, size: 80, color: theme.colorScheme.outlineVariant),
                       const SizedBox(height: 12),
                       Text(
-                        'Enter a URL or text above\nto generate a QR code',
+                        L10n.of(context).qrEmptyHint,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: theme.colorScheme.outlineVariant),
                       ),
