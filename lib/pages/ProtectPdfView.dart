@@ -34,6 +34,9 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   final TextEditingController _hintC=TextEditingController();
   String ownerPassword="";
   String userPassword="";
+  // Passwords are masked by default; each field has its own show/hide toggle.
+  bool _obscureOwner = true;
+  bool _obscureUser = true;
   final List<UserAccessPermission> userPermissions=[];
 
   @override
@@ -101,15 +104,44 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                                 ),
                               ),
                               SizedBox(height: 16,),
-                              TextFormField(keyboardType: TextInputType.number,
-                                decoration: InputDecoration(labelText: "Owner Password",border: OutlineInputBorder()),
+                              // Both passwords were shown in plain text on a numeric keyboard, and the
+                              // disabled button never said why. Now masked, full keyboard, and the
+                              // 10-character rule is stated up front.
+                              TextFormField(
+                                keyboardType: TextInputType.visiblePassword,
+                                obscureText: _obscureOwner,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                decoration: InputDecoration(
+                                  labelText: "Owner Password",
+                                  helperText: "At least 10 characters",
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    tooltip: _obscureOwner ? 'Show password' : 'Hide password',
+                                    icon: Icon(_obscureOwner ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                    onPressed: () => setState(() => _obscureOwner = !_obscureOwner),
+                                  ),
+                                ),
                                 onChanged:(value) => setState(()=>ownerPassword=value),
                                 validator:(value) {
                                   return value!=null && value.length>=10 ? null : "Min 10 character required";
                                 } ,),
                               SizedBox(height: 16,),
-                              TextFormField(keyboardType: TextInputType.number,
-                                decoration: InputDecoration(labelText: "User password",border: OutlineInputBorder()),
+                              TextFormField(
+                                keyboardType: TextInputType.visiblePassword,
+                                obscureText: _obscureUser,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                decoration: InputDecoration(
+                                  labelText: "User password",
+                                  helperText: "At least 10 characters",
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    tooltip: _obscureUser ? 'Show password' : 'Hide password',
+                                    icon: Icon(_obscureUser ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                    onPressed: () => setState(() => _obscureUser = !_obscureUser),
+                                  ),
+                                ),
                                 onChanged:(value) => setState(()=>userPassword=value),
                                 validator:(value) {
                                   return value!=null && value.length>=10 ? null : "Min 10 character required";

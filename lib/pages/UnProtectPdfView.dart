@@ -29,6 +29,8 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   TextEditingController outputFileNameC=TextEditingController();
   String password="";
   String? _passwordHint;
+  // The password is masked by default, with a show/hide toggle.
+  bool _obscure = true;
 
   @override
   void initState() {
@@ -91,8 +93,20 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                        ),
                        SizedBox(height: 12),
                      ],
-                     TextFormField(keyboardType: TextInputType.text,
-                         decoration: InputDecoration(labelText: "password",border: OutlineInputBorder()),
+                     TextFormField(
+                         keyboardType: TextInputType.visiblePassword,
+                         obscureText: _obscure,
+                         autocorrect: false,
+                         enableSuggestions: false,
+                         decoration: InputDecoration(
+                           labelText: "Password",
+                           border: OutlineInputBorder(),
+                           suffixIcon: IconButton(
+                             tooltip: _obscure ? 'Show password' : 'Hide password',
+                             icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                             onPressed: () => setState(() => _obscure = !_obscure),
+                           ),
+                         ),
                          onChanged: (value) => setState(()=>password=value)),
                      SizedBox(height: 16,),
                      FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text("Remove password"))
