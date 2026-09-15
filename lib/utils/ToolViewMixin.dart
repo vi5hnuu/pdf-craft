@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/HttpState.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -86,7 +87,7 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
         color: Colors.red,
         action: isCredit
             ? SnackBarAction(
-                label: 'Get credits',
+                label: L10n.current.gateGetCredits,
                 onPressed: () =>
                     GoRouter.of(context).pushNamed(AppRoutes.creditsRoute.name),
               )

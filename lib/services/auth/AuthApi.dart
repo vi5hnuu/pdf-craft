@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 
 /// Thrown when the auth service rejects a request; [message] is the human-readable
@@ -165,8 +166,7 @@ class AuthApi {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
-        return AuthException(
-            "Couldn't reach the server. Check your connection and try again.");
+        return AuthException(L10n.current.errUnreachable);
       default:
         break;
     }
@@ -178,11 +178,11 @@ class AuthApi {
     // Fall back to a status-appropriate message.
     final code = e.response?.statusCode ?? 0;
     final fallback = switch (code) {
-      401 => 'Invalid credentials.',
-      403 => 'This action is not allowed.',
-      409 => 'That account already exists.',
-      >= 500 => 'The server had a problem. Please try again shortly.',
-      _ => 'Something went wrong. Please try again.',
+      401 => L10n.current.authInvalidCredentials,
+      403 => L10n.current.authNotAllowed,
+      409 => L10n.current.authAccountExists,
+      >= 500 => L10n.current.authServerProblem,
+      _ => L10n.current.authSomethingWrong,
     };
     return AuthException(fallback, e.response?.statusCode);
   }

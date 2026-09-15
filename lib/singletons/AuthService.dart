@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/auth/AuthUser.dart';
 import 'package:pdf_craft/services/auth/AuthApi.dart';
 import 'package:pdf_craft/services/auth/TokenStorage.dart';
@@ -146,10 +147,10 @@ class AuthService extends ChangeNotifier {
     final googleSignIn = GoogleSignIn(scopes: const ['email']);
     // The account picker is a separate activity; returning from it must not trigger an ad.
     final account = await FullScreenAdPolicy().runExternal(() => googleSignIn.signIn());
-    if (account == null) throw AuthException('Google sign-in cancelled.');
+    if (account == null) throw AuthException(L10n.current.authGoogleCancelled);
     final auth = await account.authentication;
     final idToken = auth.idToken;
-    if (idToken == null) throw AuthException('Could not obtain Google credentials.');
+    if (idToken == null) throw AuthException(L10n.current.authGoogleNoCreds);
     final data = await _api.googleLogin(idToken);
     await _applyTokens(data);
   }
@@ -167,12 +168,12 @@ class AuthService extends ChangeNotifier {
     // may not have been created yet — establish one now rather than failing outright.
     final token = _accessToken ?? await ensureSession();
     if (token == null) {
-      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+      throw AuthException(L10n.current.errUnreachable);
     }
     final data = await _api.convert(token,
         email: email, password: password, firstName: firstName, lastName: lastName);
     await _setUser(AuthUser.fromJson(data));
-    return 'Account created. Check your e-mail to verify it.';
+    return L10n.current.authVerifyEmailSent;
   }
 
   Future<String> forgotPassword(String email) => _api.forgotPassword(email);
@@ -190,7 +191,7 @@ class AuthService extends ChangeNotifier {
   Future<void> updateProfile({String? firstName, String? lastName}) async {
     final token = _accessToken ?? await ensureSession();
     if (token == null) {
-      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+      throw AuthException(L10n.current.errUnreachable);
     }
     await _setUser(AuthUser.fromJson(
         await _api.updateProfile(token, firstName: firstName, lastName: lastName)));
@@ -200,7 +201,7 @@ class AuthService extends ChangeNotifier {
   Future<void> changePassword(String oldPassword, String newPassword) async {
     final token = _accessToken ?? await ensureSession();
     if (token == null) {
-      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+      throw AuthException(L10n.current.errUnreachable);
     }
     await _api.changePassword(token, oldPassword, newPassword);
     // The server revokes every session (incl. this one's refresh token) on a password

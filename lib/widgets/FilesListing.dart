@@ -57,9 +57,9 @@ class FilesListing extends StatelessWidget {
     final filename = file.path.split('/').last;
     final result = await ConfirmDialog.show(
       context,
-      title: 'Delete File',
+      title: L10n.current.deleteFileTitle,
       message: L10n.current.confirmDeleteFile(filename),
-      confirmLabel: 'Delete',
+      confirmLabel: L10n.current.delete,
       destructive: true,
     );
     if (!result.confirmed || !context.mounted) return;

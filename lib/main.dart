@@ -565,7 +565,7 @@ class _NestedTabNavigationExampleAppState
           return PlaceImageView(
             pdfFile: extra['file'] as File,
             preloadedImageBytes: extra['imageBytes'] as Uint8List?,
-            title: extra['title'] as String? ?? 'Place Image',
+            title: extra['title'] as String? ?? L10n.of(context).placeImage,
           );
         },
       ),
@@ -577,7 +577,7 @@ class _NestedTabNavigationExampleAppState
         name: AppRoutes.imageOverlayRoute.name,
         builder: (context, state) => PlaceImageView(
           pdfFile: ((state.extra as Map)['files'] as List<File>).first,
-          title: 'Image Overlay',
+          title: L10n.of(context).imageOverlayTitle,
         ),
       ),
       // Image Studio: extra has 'files' list + 'op' ImageStudioOp

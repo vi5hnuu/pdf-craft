@@ -22,18 +22,17 @@ class PermissionInfoDialog extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Text(
-            "This app requires certain permissions to function properly.",
+            L10n.of(context).permDialogIntro,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
           Text(
-            "We need access to files and media to provide features like organizing your documents. "
-                "We do not read, delete, or harm your files without your explicit permission.",
+            L10n.of(context).permDialogBody,
             textAlign: TextAlign.justify,
           ),
           SizedBox(height: 8),
           Text(
-            "Your privacy is our priority. We do not collect, store, or share any of your personal information.",
+            L10n.of(context).permDialogPrivacy,
             textAlign: TextAlign.justify,
             style: TextStyle(color: Colors.grey),
           ),
