@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -25,9 +27,9 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
   double _sensitivity = 0.95;
 
   String get _sensitivityLabel {
-    if (_sensitivity >= 0.97) return 'High — removes lightly used pages';
-    if (_sensitivity >= 0.92) return 'Medium — removes mostly blank pages';
-    return 'Low — removes only fully blank pages';
+    if (_sensitivity >= 0.97) return L10n.of(context).sensitivityHigh;
+    if (_sensitivity >= 0.92) return L10n.of(context).sensitivityMedium;
+    return L10n.of(context).sensitivityLow;
   }
 
   String _sizeLabel = '';
@@ -47,7 +49,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
     final filename = widget.file.path.split('/').last;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Remove Blank Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'remove-blanks'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REMOVE_BLANK_PAGES] != c.httpStates[HttpStates.REMOVE_BLANK_PAGES],
         listenWhen: (p, c) => p.httpStates[HttpStates.REMOVE_BLANK_PAGES] != c.httpStates[HttpStates.REMOVE_BLANK_PAGES],
@@ -55,7 +57,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
           final s = state.httpStates[HttpStates.REMOVE_BLANK_PAGES];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Blank pages removed', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.blankPagesRemoved, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -81,7 +83,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Detection Sensitivity', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(L10n.of(context).detectionSensitivity, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Slider(
                   value: _sensitivity,
@@ -100,12 +102,12 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                     icon: loading
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.delete_sweep_outlined),
-                    label: Text(loading ? 'Processing…' : 'Remove Blank Pages'),
+                    label: Text(loading ? L10n.of(context).processingEllipsis : ToolStrings.name(context, 'remove-blanks')),
                   ),
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.REMOVE_BLANK_PAGES], label: 'Removing blank pages'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.REMOVE_BLANK_PAGES], label: L10n.of(context).procWorking),
           ]);
         },
       ),

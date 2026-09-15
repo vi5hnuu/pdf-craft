@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/routes.dart';
@@ -66,11 +68,11 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Bookmarks'),
+        title: Text(ToolStrings.name(context, 'bookmarks')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_box_outlined),
-            tooltip: 'Add bookmark',
+            tooltip: L10n.of(context).addBookmark,
             onPressed: () => _showAddDialog(),
           ),
         ],
@@ -98,13 +100,13 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
             }
           } else if (getState?.error != null) {
             setState(() => _loadedOnce = true);
-            NotificationService.showSnackbar(text: 'Could not load bookmarks', color: Colors.red);
+            NotificationService.showSnackbar(text: L10n.current.bookmarksLoadFailed, color: Colors.red);
           }
 
           final editState = state.httpStates[HttpStates.EDIT_BOOKMARKS];
           if (editState?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            onToolSuccess('Bookmarks saved');
+            onToolSuccess(L10n.current.bookmarksSaved);
             final saved = editState?.extras?['savedFile'];
             if (saved is File) {
               // Keep editing the saved output and re-load so the user sees the
@@ -112,10 +114,10 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               setState(() => _file = saved);
               _loadBookmarks();
               NotificationService.showSnackbar(
-                text: 'Saved. Bookmarks are embedded in the PDF.',
+                text: L10n.current.bookmarksSaved,
                 color: Colors.green,
                 action: SnackBarAction(
-                  label: 'VIEW PDF',
+                  label: L10n.current.viewPdf,
                   textColor: Colors.white,
                   onPressed: () => GoRouter.of(context).pushNamed(
                     AppRoutes.pdfFilePreviewRoute.name,
@@ -143,7 +145,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               ),
               _buildSaveBar(theme, saving),
             ]),
-            processingOverlay(editState, label: 'Saving bookmarks'),
+            processingOverlay(editState, label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -155,13 +157,12 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.bookmark_border, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
         const SizedBox(height: 12),
-        const Text('No bookmarks in this PDF', style: TextStyle(fontWeight: FontWeight.w600)),
+        Text(L10n.of(context).noBookmarksInPdf, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: Text(
-            'Bookmarks are stored inside the PDF itself. Add some below, then '
-            'Save to embed them — they\'ll travel with the file.',
+            L10n.of(context).bookmarksEmptyHint,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
@@ -170,7 +171,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
         const SizedBox(height: 14),
         FilledButton.icon(
           icon: const Icon(Icons.add),
-          label: const Text('Add first bookmark'),
+          label: Text(L10n.of(context).addFirstBookmark),
           onPressed: _showAddDialog,
         ),
       ]),
@@ -192,27 +193,27 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
           contentPadding: EdgeInsets.only(left: 16 + item.indent * 20.0, right: 8),
           leading: Icon(Icons.bookmark_outline, color: theme.colorScheme.primary),
           title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text('Page ${item.pageIndex + 1}'),
+          subtitle: Text(L10n.of(context).pageNumber(item.pageIndex + 1)),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             // Indent / dedent — mutate in place so the item keeps its key.
             IconButton(
               icon: const Icon(Icons.format_indent_increase, size: 18),
-              tooltip: 'Indent (make child)',
+              tooltip: L10n.of(context).indentChild,
               onPressed: item.indent < 3 ? () => setState(() => item.indent++) : null,
             ),
             IconButton(
               icon: const Icon(Icons.format_indent_decrease, size: 18),
-              tooltip: 'Dedent (move up)',
+              tooltip: L10n.of(context).dedentUp,
               onPressed: item.indent > 0 ? () => setState(() => item.indent--) : null,
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 20),
-              tooltip: 'Rename',
+              tooltip: L10n.of(context).rename,
               onPressed: () => _showEditDialog(i),
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-              tooltip: 'Delete',
+              tooltip: L10n.of(context).delete,
               onPressed: () => setState(() => _bookmarks.removeAt(i)),
             ),
           ]),
@@ -234,7 +235,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
         icon: loading
             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : const Icon(Icons.save_alt),
-        label: const Text('Save Bookmarks'),
+        label: Text(L10n.of(context).saveBookmarks),
       ),
     );
   }
@@ -247,18 +248,18 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Bookmark'),
+        title: Text(L10n.of(context).addBookmarkTitle),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: titleC, decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder())),
+          TextField(controller: titleC, decoration: InputDecoration(labelText: L10n.of(context).titleLabel, border: const OutlineInputBorder())),
           const SizedBox(height: 12),
           TextField(
             controller: pageC,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Page (1–$_totalPages)', border: const OutlineInputBorder()),
+            decoration: InputDecoration(labelText: L10n.of(context).pageOfTotal(_totalPages), border: const OutlineInputBorder()),
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () {
               final page = (int.tryParse(pageC.text) ?? 1).clamp(1, _totalPages) - 1;
@@ -269,7 +270,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               )));
               Navigator.pop(ctx);
             },
-            child: const Text('Add'),
+            child: Text(L10n.of(context).add),
           ),
         ],
       ),
@@ -287,18 +288,18 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Bookmark'),
+        title: Text(L10n.of(context).editBookmarkTitle),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: titleC, decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder())),
+          TextField(controller: titleC, decoration: InputDecoration(labelText: L10n.of(context).titleLabel, border: const OutlineInputBorder())),
           const SizedBox(height: 12),
           TextField(
             controller: pageC,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Page (1–$_totalPages)', border: const OutlineInputBorder()),
+            decoration: InputDecoration(labelText: L10n.of(context).pageOfTotal(_totalPages), border: const OutlineInputBorder()),
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () {
               final page = (int.tryParse(pageC.text) ?? 1).clamp(1, _totalPages) - 1;
@@ -309,7 +310,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               });
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(L10n.of(context).actionSave),
           ),
         ],
       ),

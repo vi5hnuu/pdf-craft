@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Page one of a document with a tool's effect drawn over it.
@@ -107,7 +108,7 @@ class _PdfEffectPreviewState extends State<PdfEffectPreview> {
         height: 64,
         child: Center(
           child: Text(
-            "This file can't be previewed, but the tool will still process it.",
+            L10n.of(context).previewUnavailable,
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,

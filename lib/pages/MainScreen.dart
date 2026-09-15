@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RateAppService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
-import 'package:pdf_craft/theme/theme_manager.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/LocaleManager.dart';
 import 'package:pdf_craft/widgets/AppLogo.dart';
 
 class MainScreen extends StatefulWidget {
@@ -49,29 +50,31 @@ class _MainScreenState extends State<MainScreen> {
         ),
         leadingWidth: 112,
         actions: [
+          // Quick language switch: English ⇄ हिन्दी. It replaces the theme menu that used to sit
+          // here, which only duplicated Settings → Appearance. The label shows the language the
+          // tap switches *to*.
           ListenableBuilder(
-            listenable: ThemeManager(),
-            builder: (context, _) => PopupMenuButton<ThemeMode>(
-              icon: const Icon(Icons.palette_outlined),
-              tooltip: 'Theme',
-              onSelected: (mode) => ThemeManager().setMode(mode),
-              itemBuilder: (context) => [
-                _themeMenuItem(
-                    context, ThemeMode.dark, 'Dark Mode', Icons.dark_mode),
-                _themeMenuItem(
-                    context, ThemeMode.light, 'Light Mode', Icons.light_mode),
-                _themeMenuItem(context, ThemeMode.system, 'System Default',
-                    Icons.settings_suggest),
-              ],
+            listenable: LocaleManager(),
+            builder: (context, _) => Tooltip(
+              message: L10n.of(context).switchLanguageTooltip,
+              child: TextButton(
+                onPressed: () => LocaleManager().toggleEnglishHindi(),
+                child: Text(
+                  LocaleManager().isHindi ? 'EN' : 'हि',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
+                ),
+              ),
             ),
           ),
           IconButton(
+            tooltip: L10n.of(context).actionSearch,
             onPressed: () =>
                 GoRouter.of(context).pushNamed(AppRoutes.searchRoute.name),
             icon: const Icon(Icons.search),
           ),
           IconButton(
-            tooltip: 'Settings',
+            tooltip: L10n.of(context).actionSettings,
             onPressed: () =>
                 GoRouter.of(context).pushNamed(AppRoutes.settingsRoute.name),
             icon: const Icon(Icons.settings_outlined),
@@ -85,23 +88,23 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         iconSize: 24,
         showUnselectedLabels: true,
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-              icon: Icon(Icons.folder_copy_outlined),
-              label: 'Files',
-              activeIcon: Icon(Icons.folder)),
+              icon: const Icon(Icons.folder_copy_outlined),
+              label: L10n.of(context).navFiles,
+              activeIcon: const Icon(Icons.folder)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.auto_fix_high_outlined),
-              label: 'Tools',
-              activeIcon: Icon(Icons.auto_fix_high)),
+              icon: const Icon(Icons.auto_fix_high_outlined),
+              label: L10n.of(context).navTools,
+              activeIcon: const Icon(Icons.auto_fix_high)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.document_scanner_outlined),
-              label: 'Scanner',
-              activeIcon: Icon(Icons.document_scanner)),
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: L10n.of(context).navScanner,
+              activeIcon: const Icon(Icons.document_scanner)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.cloud_outlined),
-              label: 'Cloud',
-              activeIcon: Icon(Icons.cloud)),
+              icon: const Icon(Icons.cloud_outlined),
+              label: L10n.of(context).navCloud,
+              activeIcon: const Icon(Icons.cloud)),
         ],
         currentIndex: widget.navigationShell.currentIndex,
         onTap: _onTap,
@@ -115,18 +118,19 @@ class _MainScreenState extends State<MainScreen> {
       context: ctx,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text('Enjoying PDF Craft?'),
-        content: const Text(
-          'You\'ve processed several files! If you find this app useful, please take a moment to rate it — it helps a lot.',
-          style: TextStyle(height: 1.5),
+        title: Text(L10n.of(ctx).rateTitle),
+        content: Text(
+          L10n.of(ctx).rateBody,
+          style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              RateAppService().markRated();
+              // "Later" asks again after more uses; it used to opt the user out permanently.
+              RateAppService().snooze();
               Navigator.pop(ctx);
             },
-            child: const Text('Later'),
+            child: Text(L10n.of(ctx).rateLater),
           ),
           FilledButton(
             onPressed: () async {
@@ -134,27 +138,8 @@ class _MainScreenState extends State<MainScreen> {
               await RateAppService().openPlayStore();
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Rate Now'),
+            child: Text(L10n.of(ctx).rateNow),
           ),
-        ],
-      ),
-    );
-  }
-
-  PopupMenuItem<ThemeMode> _themeMenuItem(
-      BuildContext context, ThemeMode mode, String label, IconData icon) {
-    final current = ThemeManager().mode;
-    return PopupMenuItem<ThemeMode>(
-      value: mode,
-      child: Row(
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 12),
-          Text(label),
-          if (current == mode) ...[
-            const Spacer(),
-            Icon(Icons.check, size: 16, color: Theme.of(context).colorScheme.primary),
-          ],
         ],
       ),
     );

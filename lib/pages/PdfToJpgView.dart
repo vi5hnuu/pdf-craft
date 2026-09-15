@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/direction.dart';
 import 'package:pdf_craft/models/enums/quality.dart';
@@ -58,7 +60,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pdf To Jpg'),
+        title: Text(ToolStrings.name(context, 'pdf-to-jpg')),
         elevation: 5,
       ),
       body: BlocConsumer<PdfBloc,PdfState>(
@@ -69,7 +71,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
         if(httpState?.done==true){
           AdsSingleton().dispatch(ShowInterstitialAd());
           final file=httpState?.extras?['savedFile'];
-          NotificationService.showSnackbar(text: "Page to Jpeg Successfull",color: Colors.green);
+          NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
           if(file is File) _openFile(file);
         }else if(httpState?.error!=null){
           NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -85,7 +87,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: TextFormField(keyboardType: TextInputType.text,
-                      decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                       controller: outFileNameC),
                   ),
                   Expanded(
@@ -98,7 +100,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text("Image Quality",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                              Text(L10n.of(context).imageQuality, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               SizedBox(width: 12),
                               Flexible(
                                 child: DropdownButtonFormField(
@@ -114,7 +116,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                           if(isSingle) Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text("Image Gap",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                              Text(L10n.of(context).imageGap, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               SizedBox(width: 12),
                               Flexible(
                                 child: TextFormField(keyboardType: TextInputType.number,
@@ -122,7 +124,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                                     controller: gapController,
                                     validator: (value){
                                       final val=int.tryParse(gapController.value.text);
-                                      return val!=null && val>0 ? null : "Invalid gap";
+                                      return val!=null && val>0 ? null : L10n.of(context).invalidGap;
                                     }),
                               ),
                             ],
@@ -132,7 +134,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                             padding: const EdgeInsets.only(bottom: 16.0),
                             child: Row(
                               children: [
-                                Text("Generate Single Image ",style: TextStyle(fontSize: 20),),
+                                Text(L10n.of(context).generateSingleImage, style: const TextStyle(fontSize: 20)),
                                 SizedBox(width: 16,),
                                 Switch(value: isSingle, onChanged: (value)=>setState(() =>isSingle=value))
                               ],
@@ -141,7 +143,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                           AnimatedOpacity(opacity: isSingle ? 1 : 0, duration: Duration(milliseconds: 300),child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text("Join Images ",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold),),
+                              Text(L10n.of(context).joinImages, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               SizedBox(width: 16,),
                               Flexible(child: DropdownButtonFormField(
                                   
@@ -174,11 +176,11 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   Container(
                     padding: EdgeInsets.all(16),
                     width: double.infinity,
-                    child: FilledButton(onPressed: (isSingle && direction==null) ? null : _onPdfToJpf, child: const Text("Convert to JPG")),
+                    child: FilledButton(onPressed: (isSingle && direction==null) ? null : _onPdfToJpf, child: Text(ToolStrings.name(context, 'pdf-to-jpg'))),
                   )
                 ],),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.PDF_TO_JPG], label: 'Converting to images', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.PDF_TO_JPG], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
           ],
         );
       },),

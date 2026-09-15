@@ -1,0 +1,1400 @@
+{
+  "@@locale": "en",
+  "appName": "PDF Craft",
+  "settingsLanguage": "Language",
+  "languageSystem": "System default",
+  "languageEnglish": "English",
+  "languageHindi": "हिन्दी",
+  "switchLanguageTooltip": "Switch language",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "gotIt": "Got it",
+  "refresh": "Refresh",
+  "signOut": "Sign out",
+  "loading": "Loading…",
+  "unknown": "Unknown",
+  "discard": "Discard",
+  "seeMore": "See more",
+  "favorites": "Favorites",
+  "recent": "Recent",
+  "applyATool": "Apply a tool",
+  "outputFileName": "Output File Name",
+  "actionOpen": "Open",
+  "actionSave": "Save",
+  "actionShare": "Share",
+  "actionSearch": "Search",
+  "actionSettings": "Settings",
+  "errSomethingWrong": "Something went wrong",
+  "pageNumber": "Page {number}",
+  "@pageNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "savedTo": "Saved to {path}",
+  "@savedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSave": "Failed to save: {error}",
+  "@failedToSave": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "navFiles": "Files",
+  "navTools": "Tools",
+  "navScanner": "Scanner",
+  "navCloud": "Cloud",
+  "rateTitle": "Enjoying PDF Craft?",
+  "rateBody": "You've processed several files! If you find this app useful, please take a moment to rate it — it helps a lot.",
+  "rateLater": "Later",
+  "rateNow": "Rate Now",
+  "filesRecentFiles": "Recent Files",
+  "filesMyStorage": "My Storage",
+  "storageInternal": "Internal Storage",
+  "storageDownloads": "Downloads",
+  "storageDocuments": "Documents",
+  "storageProcessed": "Processed Files",
+  "errStoragePermissionNeeded": "Storage permission is needed to browse your files",
+  "noRecentFiles": "No recent files",
+  "toolsAllTools": "All Tools",
+  "toolsCount": "({count})",
+  "@toolsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "toolsSearchHint": "Search tools",
+  "toolsNoneFound": "No tools found",
+  "toolsRecentlyUsed": "Recently used",
+  "toolAddedToFavorites": "{name} added to favorites",
+  "@toolAddedToFavorites": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toolRemovedFromFavorites": "{name} removed from favorites",
+  "@toolRemovedFromFavorites": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scanTitle": "Document Scanner",
+  "scanSubtitle": "Scan physical documents with your camera or import from gallery.",
+  "scanToPdf": "Scan to PDF",
+  "scanToPdfDesc": "Creates a multi-page PDF from scanned pages.",
+  "scanToJpeg": "Scan to JPEG",
+  "scanToJpegDesc": "Saves each page as a separate JPEG image.",
+  "scanTip": "Tip: You can import from your gallery as well as scan with the camera.",
+  "scanPdfDocument": "Scanned PDF Document",
+  "scanImagesCount": "{count, plural, =1{1 scanned image} other{{count} scanned images}}",
+  "@scanImagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanSavePdf": "Save PDF",
+  "scanMergeToPdf": "Merge to PDF",
+  "scanPdfReady": "Scanned PDF ready",
+  "scanTapToPreview": "Tap to preview • Press “Save PDF” to save",
+  "scanCancelledOrFailed": "Scan cancelled or failed",
+  "scanImagesMerged": "Images merged to PDF",
+  "scanCreatingPdf": "Creating your PDF",
+  "googleDrive": "Google Drive",
+  "driveSignInFailed": "Sign-in failed",
+  "driveLoadFailed": "Failed to load Drive files",
+  "driveUploaded": "Uploaded to Google Drive",
+  "driveUploadFailed": "Upload failed: {error}",
+  "@driveUploadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveDownloaded": "Downloaded to processed folder",
+  "driveDownloadFailed": "Download failed: {error}",
+  "@driveDownloadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveCouldNotOpen": "Could not open: {error}",
+  "@driveCouldNotOpen": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveCouldNotFetch": "Could not fetch file: {error}",
+  "@driveCouldNotFetch": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveNoToolsForType": "No tools available for this file type",
+  "driveShareFailed": "Share failed: {error}",
+  "@driveShareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveUploading": "Uploading…",
+  "driveUploadFile": "Upload File",
+  "driveConnect": "Connect Google Drive",
+  "driveConnectBody": "Sign in to upload, download and manage your Drive files.",
+  "driveSignInWithGoogle": "Sign in with Google",
+  "driveStorageUsed": "{used} of {total} used",
+  "@driveStorageUsed": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "driveNoFiles": "No files in your Drive",
+  "driveNoFilesOfType": "No {type} found",
+  "@driveNoFilesOfType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "filterAll": "All",
+  "filterPdf": "PDF",
+  "filterPdfs": "PDFs",
+  "filterImages": "Images",
+  "filterDocs": "Docs",
+  "filterDocuments": "Documents",
+  "filterOther": "Other",
+  "searchFilesHint": "Search files",
+  "searching": "Searching…",
+  "noMatchingFiles": "No matching files",
+  "filesFound": "{count, plural, =1{1 file found} other{{count} files found}}",
+  "@filesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultsTitle": "Results",
+  "resultsClearTitle": "Clear results",
+  "resultsClearBody": "Delete all {count} output files? This cannot be undone.",
+  "@resultsClearBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultsCleared": "Results cleared",
+  "clearAll": "Clear all",
+  "resultsEmpty": "No results yet",
+  "resultsEmptyBody": "Files you create with any tool will appear here for quick access.",
+  "splashTagline": "Your complete PDF toolkit",
+  "onbTitle1": "All Your PDF Tools",
+  "onbBody1": "Merge, split, rotate, compress, reorder, and much more — everything you need for PDFs in one place.",
+  "onbTitle2": "Scan & Convert",
+  "onbBody2": "Scan physical documents with your camera and instantly convert images to PDFs.",
+  "onbTitle3": "Organize Your Files",
+  "onbBody3": "Browse your storage, bookmark favorites, and access recently opened files — all from one screen.",
+  "onbSkip": "Skip",
+  "onbNext": "Next",
+  "onbGetStarted": "Get Started",
+  "permTitle": "Allow file access",
+  "permBody": "PDF Craft works with the PDFs and images already on your device. Grant file access so you can browse, open and save your documents.",
+  "permBenefitBrowse": "Browse & open your PDFs and images",
+  "permBenefitSave": "Save tool results back to your storage",
+  "permBenefitPrivate": "Files stay on your device until you use a tool",
+  "permTurnedOff": "Access was turned off. Enable “All files access” (or Storage) for PDF Craft in system Settings.",
+  "permRequesting": "Requesting…",
+  "permOpenSettings": "Open Settings",
+  "permAllow": "Allow access",
+  "permDenied": "Permission denied",
+  "errGenericTitle": "Something Went Wrong",
+  "errGenericBody": "An unexpected error occurred. Please try going back.",
+  "goBack": "Go Back",
+  "close": "Close",
+  "clear": "Clear",
+  "update": "Update",
+  "guest": "Guest",
+  "actionView": "View",
+  "openExternally": "Open externally",
+  "settingsSectionAccount": "Account",
+  "settingsEmailNotVerified": "Email not verified — tap to verify",
+  "settingsManageAccount": "Manage your account",
+  "settingsSignInPrompt": "Sign in to save your credits & sync across devices",
+  "settingsSectionAppearance": "Appearance",
+  "themeSystem": "System Default",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "settingsSectionStorage": "Storage",
+  "settingsProcessedFolder": "Processed Files Folder",
+  "settingsProcessedSummary": "{count} files · {size} · tap to view",
+  "@settingsProcessedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsPasswordHints": "Password Hints",
+  "settingsPasswordHintsSub": "Saved hints for protected PDFs",
+  "settingsSectionPrivacy": "Privacy & Data",
+  "settingsPrivacyBody": "Tools run on our secure server so results are identical on every device. Files are sent over an encrypted (HTTPS) connection, processed, and removed afterwards — we don't keep your documents.",
+  "settingsSectionAbout": "About",
+  "settingsAboutSubtitle": "PDF & Image toolkit",
+  "settingsAppIntro": "App Intro",
+  "settingsAppIntroSub": "Replay the welcome walkthrough",
+  "settingsVersion": "Version",
+  "settingsClearProcessedTitle": "Clear Processed Files",
+  "settingsClearProcessedBody": "Delete all {count} files in the processed folder?",
+  "@settingsClearProcessedBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsProcessedCleared": "Processed files cleared",
+  "settingsPasswordHintsCleared": "Password hints cleared",
+  "authCreateTitle": "Create your account",
+  "authSignInTitle": "Welcome back",
+  "authCreateSubtitle": "Keep your credits safe and sync across devices.",
+  "authSignInSubtitle": "Sign in to your PDF Craft account.",
+  "authNameOptional": "Name (optional)",
+  "authEmail": "Email",
+  "authInvalidEmail": "Enter a valid email",
+  "authPassword": "Password",
+  "authPasswordMin": "At least 8 characters",
+  "authForgotPassword": "Forgot password?",
+  "authCreateAccount": "Create account",
+  "authSignIn": "Sign in",
+  "authOr": "or",
+  "authContinueGoogle": "Continue with Google",
+  "authHaveAccount": "Already have an account? ",
+  "authNoAccount": "Don't have an account? ",
+  "authCreateOne": "Create one",
+  "authGuestNote": "You can keep using PDF Craft as a guest.",
+  "authAccountCreated": "Account created — check your email to verify.",
+  "authSignedIn": "Signed in.",
+  "authSomethingWrong": "Something went wrong. Please try again.",
+  "authVerifyFirstTitle": "Verify your email first",
+  "authVerifyFirstBody": "Your email isn’t verified yet. We can resend the verification link to {email} — open it, tap “Verify email”, then sign in again.",
+  "@authVerifyFirstBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "yourEmail": "your email",
+  "authResendLink": "Resend link",
+  "authSignedInGoogle": "Signed in with Google.",
+  "authGoogleFailed": "Google sign-in failed.",
+  "authSwitchTitle": "Switch to your account?",
+  "authSwitchCredits": "{count, plural, =1{You have 1 credit as a guest.} other{You have {count} credits as a guest.}}",
+  "@authSwitchCredits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "authSwitchBody": "Signing in switches to your existing account and these guest credits won't carry over.\n\nTip: choose “Create account” instead to keep them.",
+  "authSignInAnyway": "Sign in anyway",
+  "authEnterEmailFirst": "Enter your email above first.",
+  "authCheckEmailTitle": "Check your email",
+  "authResetSentBody": "If an account exists for {email}, we’ve sent a password-reset link. Open it to choose a new password, then come back and sign in.",
+  "@authResetSentBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authResetFailed": "Could not send reset email. Please try again.",
+  "authLegalPrefix": "By creating an account you agree to our ",
+  "authLegalTerms": "Terms",
+  "authLegalAnd": " & ",
+  "authLegalPrivacy": "Privacy Policy",
+  "authLegalSuffix": ".",
+  "accountGuestTitle": "You’re using PDF Craft as a guest",
+  "accountGuestBody": "Create a free account to keep your credits safe and sync across devices.",
+  "accountCreateOrSignIn": "Create account or sign in",
+  "accountYourAccount": "Your account",
+  "accountEditProfile": "Edit profile",
+  "accountChangeName": "Change your name",
+  "accountChangePassword": "Change password",
+  "accountDelete": "Delete account",
+  "accountVerifyTitle": "Verify your email",
+  "accountVerifyBody": "We sent a link to {email}. Open it, tap “Verify email”, then come back and tap “I’ve verified”. Check spam if you don’t see it.",
+  "@accountVerifyBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "accountResend": "Resend",
+  "accountIveVerified": "I've verified",
+  "accountEmailVerified": "Email verified",
+  "accountFullySetUp": "Your account is fully set up.",
+  "credits": "Credits",
+  "creditsAvailable": "{count} available",
+  "@creditsAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountGoogle": "Google account",
+  "accountEmail": "Email account",
+  "accountVerificationSent": "Verification email sent to {email}.",
+  "@accountVerificationSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "accountVerifiedAllSet": "Email verified — you’re all set!",
+  "accountNotVerifiedYet": "Not verified yet. Open the link in your email, then try again.",
+  "firstName": "First name",
+  "lastName": "Last name",
+  "accountProfileUpdated": "Profile updated.",
+  "accountCurrentPassword": "Current password",
+  "accountNewPassword": "New password (min 8)",
+  "accountPasswordTooShort": "New password must be at least 8 characters.",
+  "accountPasswordUpdated": "Password updated.",
+  "accountSignedOut": "Signed out.",
+  "accountDeleteTitle": "Delete account?",
+  "accountDeleteBody": "This permanently deletes your account. Your credits and profile cannot be recovered. You’ll continue as a guest.",
+  "accountDeleted": "Account deleted.",
+  "creditsEarnFree": "Earn free credits",
+  "creditsClaimDaily": "Claim daily credits",
+  "creditsClaimDailySub": "A few free credits every day",
+  "creditsWatchAd": "Watch an ad",
+  "creditsWatchAdSub": "Get credits for watching a short video",
+  "creditsBuy": "Buy credits",
+  "creditsIapUnavailable": "In-app purchases aren’t available on this device yet.",
+  "creditsYourBalance": "Your balance",
+  "creditsCount": "{count, plural, =1{1 credit} other{{count} credits}}",
+  "@creditsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "creditsOneTime": "One-time purchase",
+  "creditsAvailableSoon": "Available soon",
+  "creditsClaimed": "Claimed +{count} credits!",
+  "@creditsClaimed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "creditsAlreadyClaimed": "Already claimed today. Come back tomorrow.",
+  "creditsEarned": "Earned +{count} credits!",
+  "@creditsEarned": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "creditsThanksWatching": "Thanks for watching — your credits will appear shortly.",
+  "creditsCouldNotConfirm": "Couldn't confirm your credits. Pull to refresh in a moment.",
+  "creditsNoAd": "No ad available right now. Try again shortly.",
+  "sessionExpiredTitle": "Session expired",
+  "sessionExpiredBody": "You’ve been signed out. Sign in again to get back to your account, or keep using PDF Craft as a guest.",
+  "sessionContinueGuest": "Continue as guest",
+  "sessionSignInAgain": "Sign in again",
+  "incomingTitle": "Open with PDF Craft",
+  "incomingReceived": "{count, plural, =1{1 file received} other{{count} files received}}",
+  "@incomingReceived": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "incomingNoTools": "No in-app tools apply to these files.",
+  "confirm": "Confirm",
+  "ok": "OK",
+  "dontAskAgain": "Don't ask me again",
+  "chooseFiles": "Choose files",
+  "selManage": "Manage selection",
+  "selNoToolsApply": "No tools apply to this selection",
+  "selApplyTo": "{count, plural, =1{Apply to 1 file} other{Apply to {count} files}}",
+  "@selApplyTo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selNoFiles": "No files selected",
+  "selCount": "{count} selected",
+  "@selCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nextToolTitle": "Use this file in another tool",
+  "nextToolNone": "No other tool accepts this kind of file.",
+  "procUploading": "Uploading {percent}%",
+  "@procUploading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "procProcessing": "Processing on our servers…",
+  "procWorking": "Working on it",
+  "procSecure": "Sent securely · removed after processing",
+  "fileSelectForTools": "Select for tools",
+  "fileDeselect": "Deselect",
+  "favAdd": "Add to favorites",
+  "favRemove": "Remove from favorites",
+  "openInExternalViewer": "Open in external viewer",
+  "gateUsesCredits": "{count, plural, =1{Uses 1 credit} other{Uses {count} credits}}",
+  "@gateUsesCredits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gateUsesFromCredits": "{count, plural, =1{Uses from 1 credit} other{Uses from {count} credits}}",
+  "@gateUsesFromCredits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gateLargerFiles": "Larger files may cost more.",
+  "gateBalance": "Your balance: {count}",
+  "@gateBalance": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gateNotEnough": "Not enough credits for this tool.",
+  "gateGetCredits": "Get credits",
+  "gateUse": "Use {count}",
+  "@gateUse": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadTooLargeTitle": "File too large",
+  "uploadCombinedTooLarge": "The selected files add up to {size}. Tools can process up to {limit} at a time — select fewer files.",
+  "@uploadCombinedTooLarge": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFileTooLarge": "“{name}” is {size}. Tools can process files up to {limit}.",
+  "@uploadFileTooLarge": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "sortLabel": "Sort",
+  "sortName": "Name",
+  "sortDate": "Date",
+  "sortSize": "Size",
+  "sortAsc": "Asc",
+  "sortDesc": "Desc",
+  "rangeApplyTo": "Apply to",
+  "rangeEveryPage": "Every page",
+  "done": "Done",
+  "rangeReadError": "Could not read the pages of this file.",
+  "rangeAllPages": "All pages",
+  "rangeSomePages": "{count} pages ({first}–{last})",
+  "@rangeSomePages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "int"
+      },
+      "last": {
+        "type": "int"
+      }
+    }
+  },
+  "rangeSummaryDone": "{summary} · done",
+  "@rangeSummaryDone": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeSummaryChange": "{summary} · change",
+  "@rangeSummaryChange": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeClearAll": "Clear — apply to every page",
+  "errUnreachable": "Couldn't reach the server. Check your connection and try again.",
+  "errTimeout": "The server took too long to respond. Please try again.",
+  "errTooLarge": "This file is larger than the upload limit. Try a smaller file.",
+  "errInterrupted": "Upload interrupted — the file may be too large or the connection dropped. Please try again.",
+  "errNoInternet": "No internet connection. Please check your network.",
+  "errToolFailed": "Couldn't process your file. Please try again.",
+  "errLoadFolder": "Couldn't open this folder.",
+  "errMoveFile": "Couldn't move the file.",
+  "errDeleteFile": "Couldn't delete the file.",
+  "noFilesFound": "No files found",
+  "completeSelection": "Complete Selection",
+  "filterByName": "Filter by name",
+  "renameFile": "Rename file",
+  "renameFolder": "Rename folder",
+  "copyTo": "Copy to…",
+  "moveTo": "Move to…",
+  "fileInfo": "File info",
+  "infoPath": "Path",
+  "infoModified": "Modified",
+  "infoCreated": "Created",
+  "copy": "Copy",
+  "copiedToClipboard": "Copied to clipboard",
+  "movedTo": "Moved to {path}",
+  "@movedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "copiedTo": "Copied to {path}",
+  "@copiedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "operationFailed": "Operation failed",
+  "renamedSuccessfully": "Renamed successfully",
+  "renameFailed": "Failed to rename",
+  "newName": "New name",
+  "rename": "Rename",
+  "noSubfolders": "No sub-folders",
+  "select": "Select",
+  "bookmarks": "Bookmarks",
+  "dayMode": "Day mode",
+  "nightMode": "Night mode",
+  "uploadToDrive": "Upload to Drive",
+  "fitToScreen": "Fit to screen",
+  "useInAnotherTool": "Use in another tool",
+  "saveCopyToDownloads": "Save a copy to Downloads",
+  "fileExists": "A file with that name already exists",
+  "savedToDownloads": "Saved to Downloads",
+  "saveToDownloadsFailed": "Could not save to Downloads",
+  "uploadToDriveTitle": "Upload to Google Drive",
+  "uploadToDriveBody": "A copy of this PDF will be uploaded to your Google Drive (in a “PDF Craft” folder). You can review or switch your account on the next screen.",
+  "continueLabel": "Continue",
+  "passwordRequired": "Password required",
+  "enterPdfPassword": "Enter PDF password",
+  "goToPage": "Go to page",
+  "untitled": "Untitled",
+  "noBookmarks": "This PDF has no bookmarks.\nAdd some with the Bookmarks tool.",
+  "pdfLocked": "This PDF is locked",
+  "pdfLockedBody": "It looks password-protected or couldn't be opened. Enter the password to view it here, or open it in another app.",
+  "enterPassword": "Enter password",
+  "openInAnotherApp": "Open in another app",
+  "pageShort": "p.{number}",
+  "@pageShort": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "toolCatPdfTools": "PDF Tools",
+  "toolCatEnhance": "Enhance",
+  "toolCatConvert": "Convert",
+  "toolCatSecurity": "Security",
+  "toolCatBatch": "Batch",
+  "toolCatImageStudio": "Image Studio",
+  "toolNameMerge": "Merge PDF",
+  "toolDescMerge": "Combine several PDFs into one file, in the order you choose.",
+  "toolNameSplit": "Split PDF",
+  "toolDescSplit": "Split a PDF into parts by page ranges, fixed size, or bookmarks.",
+  "toolNameReorder": "Reorder Pages",
+  "toolDescReorder": "Rearrange the pages of a PDF by dragging them.",
+  "toolNameOrganize": "Organize Pages",
+  "toolDescOrganize": "Visually reorder and delete pages on a thumbnail grid.",
+  "toolNameExtractPages": "Extract Pages",
+  "toolDescExtractPages": "Pick pages to keep and export them as a new PDF.",
+  "toolNameDeletePages": "Delete Pages",
+  "toolDescDeletePages": "Remove selected pages and keep the rest.",
+  "toolNameReversePages": "Reverse Pages",
+  "toolDescReversePages": "Flip the page order so the last page comes first.",
+  "toolNameMirrorPages": "Mirror Pages",
+  "toolDescMirrorPages": "Flip pages horizontally or vertically (a mirror image).",
+  "toolNameInsertPdf": "Insert PDF",
+  "toolDescInsertPdf": "Insert another PDF into this one after a chosen page.",
+  "toolNameSplitBySize": "Split by Size",
+  "toolDescSplitBySize": "Break a PDF into parts each below a size you set.",
+  "toolNameRotate": "Rotate PDF",
+  "toolDescRotate": "Rotate all or selected pages by any angle.",
+  "toolNamePageNumbers": "Page Numbers",
+  "toolDescPageNumbers": "Add page numbers with position and style options.",
+  "toolNameCrop": "Crop PDF",
+  "toolDescCrop": "Trim page margins by dragging crop handles.",
+  "toolNameAddBlank": "Add Blank Pages",
+  "toolDescAddBlank": "Insert blank pages at chosen positions.",
+  "toolNameStamp": "Stamp PDF",
+  "toolDescStamp": "Stamp text or an image onto pages.",
+  "toolNameQrStamp": "QR Stamp",
+  "toolDescQrStamp": "Generate a QR code and stamp it onto the PDF.",
+  "toolNameImageOverlay": "Image Overlay",
+  "toolDescImageOverlay": "Place and size an image anywhere on a page.",
+  "toolNameAnnotate": "Annotate PDF",
+  "toolDescAnnotate": "Draw, highlight and add notes on the PDF.",
+  "toolNameFillForm": "Form Editor",
+  "toolDescFillForm": "Build a fillable form — add text, checkbox, radio and more.",
+  "toolNamePdfInfo": "PDF Info",
+  "toolDescPdfInfo": "View the PDF's metadata (title, author, dates).",
+  "toolNameAnalyze": "Analyze PDF",
+  "toolDescAnalyze": "Report page/word counts and blank, duplicate & landscape pages.",
+  "toolNameReplacePages": "Replace Pages",
+  "toolDescReplacePages": "Replace a page range with the pages of another PDF.",
+  "toolNameSign": "Sign PDF",
+  "toolDescSign": "Draw or import a signature and place it on the PDF.",
+  "toolNameRedact": "Redact PDF",
+  "toolDescRedact": "Cover sensitive areas with black boxes, permanently.",
+  "toolNameDuplicatePages": "Duplicate Pages",
+  "toolDescDuplicatePages": "Duplicate selected pages, with per-page copy counts.",
+  "toolNameBookmarks": "Bookmarks",
+  "toolDescBookmarks": "View and edit the PDF's bookmark outline.",
+  "toolNameCompare": "Compare PDF",
+  "toolDescCompare": "Compare two PDFs side by side.",
+  "toolNameCompress": "Compress PDF",
+  "toolDescCompress": "Reduce file size by compressing the PDF.",
+  "toolNameOptimize": "Optimize PDF",
+  "toolDescOptimize": "Optimize and clean up the PDF to shrink it.",
+  "toolNameRemoveBlanks": "Remove Blanks",
+  "toolDescRemoveBlanks": "Detect and remove blank pages.",
+  "toolNameNUp": "N-Up Layout",
+  "toolDescNUp": "Place multiple pages per sheet (2-up / 4-up).",
+  "toolNameResizePage": "Resize Page Size",
+  "toolDescResizePage": "Reflow pages onto A4, Letter or Legal size.",
+  "toolNameScalePdf": "Scale PDF",
+  "toolDescScalePdf": "Scale page size and content by a percentage.",
+  "toolNameWatermark": "Watermark",
+  "toolDescWatermark": "Add a text or image watermark across pages.",
+  "toolNameGrayscale": "Grayscale",
+  "toolDescGrayscale": "Convert the PDF to grayscale.",
+  "toolNameExtractText": "Extract Text",
+  "toolDescExtractText": "Extract all text from the PDF.",
+  "toolNameHeaderFooter": "Header/Footer",
+  "toolDescHeaderFooter": "Add headers and footers with page tokens.",
+  "toolNameEditMetadata": "Edit Metadata",
+  "toolDescEditMetadata": "Edit the PDF's title, author and other metadata.",
+  "toolNamePdfToJpg": "PDF to JPG",
+  "toolDescPdfToJpg": "Convert PDF pages to JPG images.",
+  "toolNameExtractImages": "Extract Images",
+  "toolDescExtractImages": "Pull embedded images out of the PDF as a ZIP.",
+  "toolNameExtractEmbedded": "Extract Attachments",
+  "toolDescExtractEmbedded": "Extract file attachments embedded in the PDF.",
+  "toolNameExtractFonts": "Extract Fonts",
+  "toolDescExtractFonts": "Extract embedded fonts as a ZIP.",
+  "toolNameImageToPdf": "Image to PDF",
+  "toolDescImageToPdf": "Combine images into a single PDF.",
+  "toolNamePdfToWord": "PDF to Word",
+  "toolDescPdfToWord": "Convert the PDF to an editable Word document.",
+  "toolNamePdfToExcel": "PDF to Excel",
+  "toolDescPdfToExcel": "Convert the PDF's text into an Excel spreadsheet.",
+  "toolNamePdfToPptx": "PDF to PowerPoint",
+  "toolDescPdfToPptx": "Convert the PDF into a PowerPoint presentation.",
+  "toolNameProtect": "Protect PDF",
+  "toolDescProtect": "Password-protect the PDF and set permissions.",
+  "toolNameUnprotect": "Unprotect PDF",
+  "toolDescUnprotect": "Remove the password from a protected PDF.",
+  "toolNameRepair": "Repair PDF",
+  "toolDescRepair": "Attempt to repair a damaged or unreadable PDF.",
+  "toolNameFlatten": "Flatten PDF",
+  "toolDescFlatten": "Fill existing form fields, then flatten them into the page.",
+  "toolNameRemoveMetadata": "Remove Metadata",
+  "toolDescRemoveMetadata": "Strip identifying metadata from the PDF.",
+  "toolNameSanitize": "Sanitize PDF",
+  "toolDescSanitize": "Remove JavaScript, attachments and actions from the PDF.",
+  "toolNameBatch": "Batch Process",
+  "toolDescBatch": "Apply one tool to many PDFs at once.",
+  "toolNameImgCompress": "Compress Image",
+  "toolDescImgCompress": "Compress an image to a smaller JPEG.",
+  "toolNameImgToJpg": "Convert to JPG",
+  "toolDescImgToJpg": "Convert an image to JPEG.",
+  "toolNameImgFromJpg": "Convert from JPG",
+  "toolDescImgFromJpg": "Convert a JPEG to PNG or another format.",
+  "toolNameImgResize": "Resize Image",
+  "toolDescImgResize": "Resize an image to specific dimensions.",
+  "toolNameImgFilter": "Image Filters",
+  "toolDescImgFilter": "Apply filters like grayscale, sepia or sharpen.",
+  "toolNameImgRotate": "Rotate Image",
+  "toolDescImgRotate": "Rotate an image in 90° steps.",
+  "toolNameImgFlip": "Flip Image",
+  "toolDescImgFlip": "Mirror an image horizontally or vertically.",
+  "toolNameImgBorder": "Add Border",
+  "toolDescImgBorder": "Add a coloured border around an image.",
+  "toolDone": "Done — saved to your files.",
+  "annotateAddText": "Add text",
+  "annotateTitlePage": "{tool} — p.{current}/{total}",
+  "@annotateTitlePage": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "batchDialogTitle": "{tool} — {count} files",
+  "@batchDialogTitle": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchAppBarTitle": "{tool} ({count} files)",
+  "@batchAppBarTitle": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "formGroupTitle": "{type} group",
+  "@formGroupTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "add": "Add",
+  "create": "Create",
+  "change": "Change",
+  "preview": "Preview",
+  "required": "Required",
+  "undo": "Undo",
+  "redo": "Redo",
+  "zoom": "Zoom",
+  "moreColors": "More colors",
+  "fill": "Fill",
+  "sizeColon": "Size:",
+  "bold": "Bold",
+  "annotateTapToPlaceNote": "Tap on the page to place a sticky note",
+  "enterTextHint": "Enter text…",
+  "addStickyNote": "Add Sticky Note",
+  "noteTextHint": "Note text…",
+  "placeSticky": "Place Sticky",
+  "pickColor": "Pick color",
+  "fillColor": "Fill color",
+  "annotationsSaved": "Annotations saved",
+  "saveFailedWith": "Save failed: {error}",
+  "@saveFailedWith": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addBookmark": "Add bookmark",
+  "bookmarksLoadFailed": "Could not load bookmarks",
+  "bookmarksSaved": "Saved. Bookmarks are embedded in the PDF.",
+  "viewPdf": "VIEW PDF",
+  "noBookmarksInPdf": "No bookmarks in this PDF",
+  "addFirstBookmark": "Add first bookmark",
+  "indentChild": "Indent (make child)",
+  "dedentUp": "Dedent (move up)",
+  "saveBookmarks": "Save bookmarks",
+  "addBookmarkTitle": "Add bookmark",
+  "editBookmarkTitle": "Edit bookmark",
+  "titleLabel": "Title",
+  "pageOfTotal": "Page (1–{total})",
+  "@pageOfTotal": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tabCompress": "Compress",
+  "tabToJpg": "To JPG",
+  "tabFromJpg": "From JPG",
+  "tabResize": "Resize",
+  "tabFilters": "Filters",
+  "imageSaved": "Image saved to processed folder",
+  "filteredImageSaved": "Filtered image saved",
+  "jpegQuality": "JPEG quality: {value}%",
+  "@jpegQuality": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "outputJpegQuality": "Output JPEG quality: {value}%",
+  "@outputJpegQuality": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "targetFormat": "Target format",
+  "widthPx": "Width (px)",
+  "heightPx": "Height (px)",
+  "maintainAspect": "Maintain aspect ratio",
+  "filterLabel": "Filter",
+  "intensity": "Intensity: {value}",
+  "@intensity": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "enterDimension": "Enter at least one dimension",
+  "allPagesAngle": "All pages angle",
+  "angleHint": "Angle (any value, e.g. 45, 90, 270)",
+  "perPageAngle": "Per-page angle override",
+  "pageNo": "Page no.",
+  "angleLabel": "Angle",
+  "invalidPageNumber": "Invalid page number",
+  "invalidAngle": "Invalid angle",
+  "watermarkText": "Watermark text",
+  "fontSize": "Font size",
+  "colorColon": "Color: ",
+  "opacityValue": "Opacity: {value}",
+  "@opacityValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "angleValue": "Angle: {value}°",
+  "@angleValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDefaults": "Reset to defaults",
+  "optionLabelsHint": "Enter option labels, separated by commas.",
+  "formCreated": "Fillable form created",
+  "tapFieldToPlace": "Tap a field below to place it",
+  "imgPageSize": "Page size",
+  "usLetter": "US Letter",
+  "usLegal": "US Legal",
+  "matchEachImage": "Match each image",
+  "orientation": "Orientation",
+  "matchImage": "Match image",
+  "portrait": "Portrait",
+  "landscape": "Landscape",
+  "reorderFilesTitle": "Reorder files ",
+  "longPressToDrag": "( long press to drag )",
+  "batchNotEnough": "Not enough credits for this batch.",
+  "batchComplete": "Batch complete: {done} succeeded, {failed} failed",
+  "@batchComplete": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "toolLabel": "Tool",
+  "runAgain": "Run again",
+  "fileNameLabel": "File name",
+  "passwordHintOptional": "Password hint (optional)",
+  "passwordHintExample": "e.g. My birthday year",
+  "ownerPassword": "Owner password",
+  "userPassword": "User password",
+  "atLeast10Chars": "At least 10 characters",
+  "userPermissions": "User permissions",
+  "vertical": "Vertical",
+  "horizontal": "Horizontal",
+  "fromPage": "From page",
+  "toPageOptional": "To page (optional)",
+  "invalidFontSize": "Invalid font size (min 4)",
+  "fontLabel": "Font",
+  "textColorColon": "Text color:",
+  "pickTextColor": "Pick text color",
+  "signHere": "Sign here",
+  "importLabel": "Import",
+  "placeOnPdf": "Place on PDF",
+  "signatureCaptureFailed": "Could not capture signature",
+  "imageQuality": "Image quality",
+  "imageGap": "Image gap",
+  "generateSingleImage": "Generate single image",
+  "joinImages": "Join images",
+  "sideBySide": "Side by side",
+  "overlayLabel": "Overlay",
+  "doc1": "Doc 1",
+  "doc2": "Doc 2",
+  "overlayLoadFailed": "Could not load pages for overlay",
+  "pageOfPages": "Page {current} / {total}",
+  "@pageOfPages": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "outputFileNameOptional": "Output file name (optional)",
+  "flattenFieldsCount": "{count, plural, =1{This PDF has 1 fillable field} other{This PDF has {count} fillable fields}}",
+  "@flattenFieldsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "flattenHint": "Fill any you like, then flatten to bake the values in permanently.",
+  "signatureNotFillable": "Signature field — not fillable here",
+  "pageSizePoints": "Page size (points)",
+  "pageSizeHint": "A4 = 595 × 842 pt, Letter = 612 × 792 pt",
+  "widthPt": "Width (pt)",
+  "heightPt": "Height (pt)",
+  "enterPagePosition": "Enter at least one page position",
+  "splitByRanges": "Split by ranges",
+  "splitByRangesSub": "Add custom ranges",
+  "fixedRanges": "Fixed ranges",
+  "fixedRangesSub": "Assign a fixed range",
+  "deletePagesTitle": "Delete pages",
+  "deletePagesSub": "Remove individual pages or a range of pages",
+  "splitByBookmark": "Split by bookmark",
+  "splitByBookmarkSub": "Creates one PDF per top-level chapter/bookmark; the PDF must have an outline",
+  "extractAllPages": "Extract all pages",
+  "extractAllPagesSub": "Every page becomes a separate PDF file",
+  "swapBaseReplacement": "Swap base / replacement",
+  "rangeToReplace": "Range to replace",
+  "replaceSummary": "Base has {pages} pages. Replacing pages {from}–{to}.",
+  "@replaceSummary": {
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      },
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "readingBaseDoc": "Reading base document…",
+  "replaceAndSave": "Replace & save",
+  "qrUrlLabel": "URL or text for QR code",
+  "positionQrOnPdf": "Position QR on PDF",
+  "failedWith": "Failed: {error}",
+  "@failedWith": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "needAtLeastOnePage": "A PDF needs at least one page",
+  "reset": "Reset",
+  "removePage": "Remove page",
+  "exportPdf": "Export PDF",
+  "widthLabel": "Width",
+  "colorPlain": "Colour",
+  "min10Chars": "Minimum 10 characters required",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "willHaveOwnerPermissions": "⚠️ Will have owner permissions ⚠️",
+  "passwordHintTitle": "Password hint",
+  "passwordLabel": "Password",
+  "removePassword": "Remove password",
+  "quickActions": "Quick Actions",
+  "recentlyProcessed": "Recently Processed",
+  "noProcessedFilesYet": "No processed files yet",
+  "purchaseCouldNotStart": "Could not start purchase.",
+  "purchaseFailed": "Purchase failed. You have not been charged.",
+  "creditsAdded": "Credits added!",
+  "purchaseVerifying": "Verifying your purchase… credits will appear shortly.",
+  "fileDeleteSuccess": "File deleted.",
+  "deletingFile": "Deleting file…",
+  "confirmDeleteFile": "Permanently delete \"{name}\"?\nThis cannot be undone.",
+  "@confirmDeleteFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequest": "Permission Request",
+  "decline": "Decline",
+  "grantPermission": "Grant Permission",
+  "documentScanner": "Document Scanner",
+  "pdfDocumentLabel": "PDF Document:",
+  "imagesLabel": "Images:",
+  "applyTo": "Apply to",
+  "failedToLoadPdf": "Failed to load PDF",
+  "reorderPagesTitle": "Reorder pages ",
+  "swapBaseInsert": "Swap base / insert",
+  "insertPosition": "Insert position",
+  "insertAndSave": "Insert & save",
+  "resetZoom": "Reset zoom",
+  "confirmPlacement": "Confirm placement",
+  "undoLastRegion": "Undo last region",
+  "clearPage": "Clear page",
+  "sanitizeIntro": "Remove active and unsafe content before sharing.",
+  "sanitizeWillStrip": "This will strip:",
+  "sanitizeUnchanged": "The visible page content is unchanged.",
+  "sanJavascript": "JavaScript",
+  "sanEmbeddedFiles": "Embedded / attached files",
+  "sanActions": "Open & event actions",
+  "sanMetadata": "Document metadata",
+  "scalePercent": "Scale: {percent}%",
+  "@scalePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "scaleHelp": "Both the page size and its content are scaled by this amount.",
+  "maxSizePerPart": "Maximum size per part",
+  "splitZip": "Split (ZIP)",
+  "tapToSelectStamp": "Tap to select a stamp image or PDF",
+  "compressionLevel": "Compression Level",
+  "pagesDuplicated": "Pages duplicated",
+  "flipHorizontalDesc": "Horizontal (mirror left–right)",
+  "flipVerticalDesc": "Vertical (mirror top–bottom)",
+  "grayscaleDone": "PDF converted to grayscale",
+  "optimizeDone": "PDF optimized",
+  "whatThisDoes": "What this does",
+  "rangeLabel": "Range",
+  "toLabel": "To",
+  "addRange": "Add Range",
+  "retry": "Retry",
+  "noAnalysisAvailable": "No analysis available",
+  "selectPagesToRemove": "Select the pages to remove.",
+  "selectPagesToKeep": "Select the pages to keep.",
+  "documentProperties": "Document Properties",
+  "saveMetadata": "Save metadata",
+  "extractAttachments": "Extract attachments",
+  "extractFilesZip": "Extract files (ZIP)",
+  "extractEmbeddedFonts": "Extract embedded fonts",
+  "extractFontsZip": "Extract fonts (ZIP)",
+  "extractEmbeddedImages": "Extract embedded images",
+  "extractImagesZip": "Extract images (ZIP)",
+  "flipDirection": "Flip direction",
+  "nUpDone": "N-up PDF created",
+  "pagesPerSheet": "Pages per Sheet",
+  "extensionAutoAdded": "Extension is added automatically",
+  "blankPagesRemoved": "Blank pages removed",
+  "detectionSensitivity": "Detection Sensitivity",
+  "followingWillBeRemoved": "The following will be removed:",
+  "metaTitle": "Title",
+  "metaAuthor": "Author",
+  "metaSubjectKeywords": "Subject & Keywords",
+  "metaCreatorProducer": "Creator & Producer app",
+  "metaDates": "Creation & modified dates",
+  "metaXmp": "XMP metadata",
+  "reverseOrderLabel": "Reverse the page order",
+  "reverseAndSave": "Reverse & save",
+  "rotationLabel": "Rotation",
+  "targetSize": "Target size",
+  "resizeTo": "Resize to {size}",
+  "@resizeTo": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "typeFieldLabel": "{type} field",
+  "@typeFieldLabel": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "compressionExtreme": "Extreme (smallest size)",
+  "compressionRecommended": "Recommended (balanced)",
+  "compressionLow": "Low (best quality)",
+  "positionStart": "Start",
+  "positionCenter": "Center",
+  "positionEnd": "End",
+  "fieldText": "Text",
+  "fieldParagraph": "Paragraph",
+  "fieldCheckbox": "Checkbox",
+  "fieldRadio": "Radio",
+  "fieldDropdown": "Dropdown",
+  "fieldDate": "Date",
+  "fieldSignature": "Signature",
+  "perFilePerCount": "{perFile} per file × {count} files",
+  "@perFilePerCount": {
+    "placeholders": {
+      "perFile": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "organizeSummary": "{removed, plural, =1{1 page will be removed} other{{removed} pages will be removed}} · {kept} kept",
+  "@organizeSummary": {
+    "placeholders": {
+      "removed": {
+        "type": "int"
+      },
+      "kept": {
+        "type": "int"
+      }
+    }
+  },
+  "opacityPercent": "Opacity: {percent}%",
+  "@opacityPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "topPadding": "Top Padding",
+  "bottomPadding": "Bottom Padding",
+  "insertBlankBefore": "Insert blank before pages (e.g. 1, 3, 5)",
+  "insertBlankHint": "e.g. 0,2,5 inserts after pages 1, 3, 6",
+  "borderAdded": "Border added",
+  "blankPagesLabel": "Blank pages",
+  "landscapePages": "Landscape pages",
+  "duplicatePageGroups": "Duplicate page groups",
+  "none": "None",
+  "saving": "Saving…",
+  "saveAnnotations": "Save annotations",
+  "failedToPrepareFile": "Failed to prepare file",
+  "processingEllipsis": "Processing…",
+  "startBatch": "Start batch",
+  "compressingPdf": "Compressing your PDF",
+  "cropHint": "Drag the blue handles inward — the shaded area is removed.",
+  "pagesDeleted": "Pages deleted",
+  "selectPagesToDelete": "Select pages to delete",
+  "keepAtLeastOnePage": "Keep at least one page",
+  "duplicateHint": "Tap a page to select it, then set how many copies of that page to add.",
+  "duplicatingPages": "Duplicating pages",
+  "selectPagesToDuplicate": "Select pages to duplicate",
+  "keywordsCommaSeparated": "Keywords (comma-separated)",
+  "creatorApplication": "Creator Application",
+  "embeddedFilesExtracted": "Embedded files extracted",
+  "extractFilesHint": "Some PDFs carry attached files (spreadsheets, other PDFs, etc.). These are collected into a ZIP. If there are none, you'll be told.",
+  "fontsExtracted": "Fonts extracted",
+  "extractFontsHint": "Embedded font programs are collected into a ZIP (.ttf / .otf / .pfb). Fonts that are only referenced (not embedded) can't be extracted.",
+  "imagesExtracted": "Images extracted",
+  "extractImagesHint": "All raster images found in this PDF are collected into a ZIP file (as PNGs). Vector graphics and text are not included.",
+  "pagesExtracted": "Pages extracted",
+  "selectPagesToExtract": "Select pages to extract",
+  "extractNPages": "{count, plural, =1{Extract 1 page} other{Extract {count} pages}}",
+  "@extractNPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "extractTextHint": "Extracts the text of your PDF into a text file. Narrow it to a few pages if you only need part of the document.",
+  "flatteningPdf": "Flattening your PDF",
+  "flattenExplainer": "Flattening merges interactive form fields and annotations into static page content. The result is no longer editable but displays consistently everywhere.",
+  "fillAndFlatten": "Fill & flatten",
+  "imageFlipped": "Image flipped",
+  "creatingForm": "Creating fillable form",
+  "radioGroup": "Radio group",
+  "checkGroup": "Check group",
+  "fieldName": "Field name",
+  "optionValue": "Option value",
+  "optionsCommaSeparated": "Options (comma-separated)",
+  "defaultValue": "Default value",
+  "selectedByDefault": "Selected by default",
+  "checkedByDefault": "Checked by default",
+  "grayscaleExplainer": "Converts pages to grayscale to reduce file size and ink when printing. Converted pages become images, so their text is no longer selectable; pages outside your selection are left untouched.",
+  "approxPlacementPage1": "Approximate placement on page 1 — font metrics differ slightly from the output",
+  "headerText": "Header Text",
+  "footerText": "Footer Text",
+  "qualityHigh": "High quality — minimal compression",
+  "qualityBalanced": "Good balance of quality and size",
+  "qualityNoticeable": "Noticeable compression — smaller file",
+  "qualityAggressive": "Aggressive compression — smallest file",
+  "jpgTransparencyNote": "PNG and other images with transparency will be composited on a white background.",
+  "fromJpgNote": "PNG supports transparency and is lossless. BMP is uncompressed.",
+  "resizeOneDimensionNote": "Enter only one dimension — the other is computed proportionally.",
+  "applyFilter": "Apply filter",
+  "pdfInserted": "PDF inserted",
+  "baseDocument": "Base document",
+  "insertThis": "Insert this",
+  "atTheVeryBeginning": "At the very beginning",
+  "pagesMirrored": "Pages mirrored",
+  "nUpLandscapeSide": "Landscape, side by side",
+  "nUpPortraitGrid": "Portrait, 2×2 grid",
+  "optimizing": "Optimizing…",
+  "pagesOrganized": "Pages organized",
+  "pageNumberFormat": "Page Number Format",
+  "pageRange": "Page Range",
+  "textColor": "Text Color",
+  "invalidGap": "Invalid gap",
+  "convertToWord": "Convert to Word",
+  "convertToExcel": "Convert to Excel",
+  "convertToPowerPoint": "Convert to PowerPoint",
+  "pdfToWordDesc": "Extracts text from your PDF and creates a .docx Word document with preserved paragraph structure.",
+  "pdfToExcelDesc": "Extracts text from each PDF page into a separate sheet, splitting columns on whitespace.",
+  "pdfToPptxDesc": "Creates one PowerPoint slide per PDF page with extracted text in a text box.",
+  "officeNote": "Note: Text-extraction based — images and complex layouts are not reproduced.",
+  "convertingPdf": "Converting your PDF",
+  "placeImage": "Place Image",
+  "switchToPlaceMode": "Switch to Place mode",
+  "switchToZoomMode": "Switch to Zoom mode",
+  "selectImageToPlace": "Select image to place",
+  "changeImage": "Change image",
+  "zoomModeHint": "Zoom mode — pinch or scroll to zoom",
+  "placeModeHint": "Place mode — drag image or handles",
+  "placeQrCode": "Place QR Code",
+  "redactHint": "Drag on an empty area to draw a box. Tap a box to move, resize (corner) or delete it.",
+  "redactingPdf": "Redacting your PDF",
+  "redactingEllipsis": "Redacting…",
+  "applyRedactions": "Apply redactions",
+  "sensitivityHigh": "High — removes lightly used pages",
+  "sensitivityMedium": "Medium — removes mostly blank pages",
+  "sensitivityLow": "Low — removes only fully blank pages",
+  "metadataRemoved": "Metadata removed",
+  "removeMetadataIntro": "Strip identifying information from this PDF before you share it.",
+  "removeMetadataNote": "The page content is not changed. Note: text visible on the page itself is not metadata — use Redact for that.",
+  "repairExplainer": "Repair attempts to fix common PDF corruption issues such as broken cross-references, malformed streams, and invalid object structures.",
+  "pagesReplaced": "Pages replaced",
+  "replaceWith": "Replace with",
+  "pagesResized": "Pages resized",
+  "pageOrderReversed": "Page order reversed",
+  "readingDocument": "Reading document…",
+  "imageRotated": "Image rotated",
+  "rotateAllHint": "All pages will rotate at this angle. Override per page below.",
+  "rotateSwapHint": "Width and height swap to fit rotated content.",
+  "rotateKeepHint": "Page size stays the same; content rotates within it.",
+  "previewApproximate": "Preview is approximate — actual PDF may differ.",
+  "rotatingPdf": "Rotating your PDF",
+  "thumbnailFailed": "failed to render thumbnail",
+  "pdfSanitized": "PDF sanitized",
+  "pdfScaled": "PDF scaled",
+  "signHint": "Draw your signature below, or import one from your device.",
+  "placeSignature": "Place Signature",
+  "splitBySizeHint": "Each output PDF will be at or below this size. A single page larger than the limit becomes its own part.",
+  "approxPlacement": "Approximate placement — font metrics differ slightly from the output",
+  "verticalPosition": "Vertical Position",
+  "horizontalPosition": "Horizontal Position",
+  "invalidFixedRange": "Invalid fixed range",
+  "imageStudioTitle": "Image Studio",
+  "authInvalidCredentials": "Invalid credentials.",
+  "authNotAllowed": "This action is not allowed.",
+  "authAccountExists": "That account already exists.",
+  "authServerProblem": "The server had a problem. Please try again shortly.",
+  "authGoogleCancelled": "Google sign-in cancelled.",
+  "authGoogleNoCreds": "Could not obtain Google credentials.",
+  "authVerifyEmailSent": "Account created. Check your e-mail to verify it.",
+  "permDialogIntro": "This app requires certain permissions to function properly.",
+  "permDialogBody": "We need access to files and media to provide features like organizing your documents. We do not read, delete, or harm your files without your explicit permission.",
+  "permDialogPrivacy": "Your privacy is our priority. We do not collect, store, or share any of your personal information.",
+  "deleteFileTitle": "Delete File",
+  "filesPermissionDenied": "Permission denied",
+  "filesInvalidDirectory": "Invalid directory path",
+  "filesLoadFailed": "Failed to load directory files",
+  "filesNoSuchDirectory": "No such directory exists",
+  "filesNotInSource": "File does not exist in the source directory",
+  "filesFileNotExist": "File does not exist",
+  "filesMoveFailed": "Failed to move file",
+  "filesDeleteFailed": "Failed to delete the file",
+  "previewUnavailable": "This file can't be previewed, but the tool will still process it.",
+  "imageOverlayTitle": "Image Overlay",
+  "bookmarksEmptyHint": "Bookmarks are stored inside the PDF itself. Add some below, then Save to embed them — they'll travel with the file.",
+  "compressRecommended": "Compress (recommended)",
+  "optimizeExplainer": "• Removes embedded page thumbnails\n• Re-compresses document streams\n• Reduces file size without quality loss",
+  "placeImageEmpty": "Select an image above\nto position it on this page",
+  "qrEmptyHint": "Enter a URL or text above\nto generate a QR code"
+}

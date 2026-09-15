@@ -5,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -42,7 +44,7 @@ class _StampPdfViewState extends State<StampPdfView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Stamp PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'stamp')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.STAMP_PDF] != c.httpStates[HttpStates.STAMP_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.STAMP_PDF] != c.httpStates[HttpStates.STAMP_PDF],
@@ -50,7 +52,7 @@ class _StampPdfViewState extends State<StampPdfView> {
           final s = state.httpStates[HttpStates.STAMP_PDF];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'PDF stamped successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -70,10 +72,10 @@ class _StampPdfViewState extends State<StampPdfView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _field(_outFileNameC, 'Output File Name (optional)'),
+                            _field(_outFileNameC, L10n.of(context).outputFileNameOptional),
                             const SizedBox(height: 20),
                             // Stamp PDF picker
-                            const Text('Stamp PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text(ToolStrings.name(context, 'stamp'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                             const SizedBox(height: 8),
                             GestureDetector(
                               onTap: _pickStamp,
@@ -98,14 +100,14 @@ class _StampPdfViewState extends State<StampPdfView> {
                                         children: [
                                           Icon(Icons.picture_as_pdf_outlined, size: 36, color: theme.colorScheme.primary),
                                           const SizedBox(height: 6),
-                                          const Text('Tap to select a stamp image or PDF', style: TextStyle(fontSize: 13)),
+                                          Text(L10n.of(context).tapToSelectStamp, style: const TextStyle(fontSize: 13)),
                                         ],
                                       ),
                               ),
                             ),
                             const SizedBox(height: 20),
                             // Opacity
-                            Text('Opacity: ${(_opacity * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 14)),
+                            Text(L10n.of(context).opacityPercent((_opacity * 100).round()), style: const TextStyle(fontSize: 14)),
                             Slider(min: 0.05, max: 1.0, divisions: 19, value: _opacity, onChanged: (v) => setState(() => _opacity = v)),
                             const SizedBox(height: 12),
                             // Page range
@@ -113,7 +115,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                               children: [
                                 Expanded(child: _field(_fromPageC, 'From Page')),
                                 const SizedBox(width: 12),
-                                Expanded(child: _field(_toPageC, 'To Page (optional)')),
+                                Expanded(child: _field(_toPageC, L10n.of(context).toPageOptional)),
                               ],
                             ),
                           ],
@@ -125,13 +127,13 @@ class _StampPdfViewState extends State<StampPdfView> {
                       child: FilledButton.icon(
                         onPressed: _stampFile != null ? _onStamp : null,
                         icon: const Icon(Icons.photo_filter),
-                        label: const Text('Stamp PDF'),
+                        label: Text(ToolStrings.name(context, 'stamp')),
                       ),
                     ),
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: 'Stamping your PDF'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: L10n.of(context).procWorking),
             ],
           );
         },

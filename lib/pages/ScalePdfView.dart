@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/scale-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -38,12 +40,12 @@ class _ScalePdfViewState extends State<ScalePdfView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Scale PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'scale-pdf'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.SCALE_PDF] != c.httpStates[HttpStates.SCALE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.SCALE_PDF] != c.httpStates[HttpStates.SCALE_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.SCALE_PDF], successMessage: 'PDF scaled'),
+            handleToolState(state.httpStates[HttpStates.SCALE_PDF], successMessage: L10n.of(context).pdfScaled),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.SCALE_PDF]?.loading == true;
           return Stack(children: [
@@ -55,10 +57,10 @@ class _ScalePdfViewState extends State<ScalePdfView>
                   // overflows a fixed column on a short screen.
                   child: SingleChildScrollView(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Scale: ${_percent.round()}%',
+                    Text(L10n.of(context).scalePercent(_percent.round()),
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
-                    Text('Both the page size and its content are scaled by this amount.',
+                    Text(L10n.of(context).scaleHelp,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                     Slider(
@@ -101,11 +103,11 @@ class _ScalePdfViewState extends State<ScalePdfView>
                 child: FilledButton.icon(
                   onPressed: (loading || _percent == 100) ? null : _onScale,
                   icon: const Icon(Icons.photo_size_select_large),
-                  label: const Text('Scale PDF'),
+                  label: Text(ToolStrings.name(context, 'scale-pdf')),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.SCALE_PDF], label: 'Scaling your PDF'),
+            processingOverlay(state.httpStates[HttpStates.SCALE_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

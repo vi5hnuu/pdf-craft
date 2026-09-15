@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -117,7 +119,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     final md = MediaQuery.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reorder PDF Pages'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'reorder')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
@@ -125,7 +127,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
           final httpState = state.httpStates[HttpStates.REORDER_PDF];
           if (httpState?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Reorder successful', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (httpState?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -145,8 +147,8 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(
                       keyboardType: TextInputType.text,
-                      decoration: const InputDecoration(
-                        labelText: 'Output File Name',
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).outputFileName,
                         border: OutlineInputBorder(),
                       ),
                       controller: _outFileNameC,
@@ -164,12 +166,12 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                     ),
                     child: FilledButton(
                       onPressed: _document != null ? _onReorderPages : null,
-                      child: const Text('Reorder PDF Pages'),
+                      child: Text(ToolStrings.name(context, 'reorder')),
                     ),
                   ),
                 ],
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.REORDER_PDF], label: 'Saving new order'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.REORDER_PDF], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -179,10 +181,10 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
 
   Widget _buildBody(ThemeData theme, MediaQueryData md) {
     if (_docError) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(24),
-          child: Text('Failed to load PDF', style: TextStyle(color: Colors.red)),
+          child: Text(L10n.of(context).failedToLoadPdf, style: TextStyle(color: Colors.red)),
         ),
       );
     }
@@ -203,7 +205,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: RichText(
           text: TextSpan(
-            text: 'Reorder Pages ',
+            text: L10n.of(context).reorderPagesTitle,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -211,7 +213,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
             ),
             children: [
               TextSpan(
-                text: ' (long press to drag)',
+                text: L10n.of(context).longPressToDrag,
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -268,7 +270,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                         ),
                       ),
                       Text(
-                        'Page $pageNo',
+                        L10n.of(context).pageNumber(pageNo),
                         style: const TextStyle(fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
                       ),
                     ],

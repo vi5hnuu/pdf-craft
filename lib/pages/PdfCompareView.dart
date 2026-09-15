@@ -1,3 +1,5 @@
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -79,15 +81,15 @@ class _PdfCompareViewState extends State<PdfCompareView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Compare PDFs'),
+        title: Text(ToolStrings.name(context, 'compare')),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: SegmentedButton<_CompareMode>(
-              segments: const [
-                ButtonSegment(value: _CompareMode.sideBySide, label: Text('Side by Side'), icon: Icon(Icons.view_agenda_outlined)),
-                ButtonSegment(value: _CompareMode.overlay, label: Text('Overlay'), icon: Icon(Icons.layers_outlined)),
+              segments: [
+                ButtonSegment(value: _CompareMode.sideBySide, label: Text(L10n.of(context).sideBySide), icon: Icon(Icons.view_agenda_outlined)),
+                ButtonSegment(value: _CompareMode.overlay, label: Text(L10n.of(context).overlayLabel), icon: Icon(Icons.layers_outlined)),
               ],
               selected: {_mode},
               onSelectionChanged: (s) {
@@ -108,14 +110,14 @@ class _PdfCompareViewState extends State<PdfCompareView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(children: [
-              Text('Doc 1', style: theme.textTheme.bodySmall),
+              Text(L10n.of(context).doc1, style: theme.textTheme.bodySmall),
               Expanded(
                 child: Slider(
                   value: _blendOpacity,
                   onChanged: (v) => setState(() => _blendOpacity = v),
                 ),
               ),
-              Text('Doc 2', style: theme.textTheme.bodySmall),
+              Text(L10n.of(context).doc2, style: theme.textTheme.bodySmall),
             ]),
           ),
         _buildPageNav(theme),
@@ -149,7 +151,7 @@ class _PdfCompareViewState extends State<PdfCompareView> {
   Widget _buildOverlay(ThemeData theme) {
     if (_loadingOverlay) return const Center(child: CircularProgressIndicator());
     if (_overlayImg1 == null || _overlayImg2 == null) {
-      return const Center(child: Text('Could not load pages for overlay'));
+      return Center(child: Text(L10n.of(context).overlayLoadFailed));
     }
     return Center(
       child: Stack(alignment: Alignment.center, children: [
@@ -186,7 +188,7 @@ class _PdfCompareViewState extends State<PdfCompareView> {
           icon: const Icon(Icons.chevron_left),
           onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
         ),
-        Text('Page $_currentPage / $maxPage'),
+        Text(L10n.of(context).pageOfPages(_currentPage, maxPage)),
         IconButton(
           icon: const Icon(Icons.chevron_right),
           onPressed: _currentPage < maxPage ? () => _goToPage(_currentPage + 1) : null,

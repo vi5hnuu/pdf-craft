@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 
 /// Result of [ConfirmDialog.show].
 class ConfirmResult {
@@ -23,8 +24,9 @@ class ConfirmResult {
 class ConfirmDialog extends StatefulWidget {
   final String title;
   final String message;
-  final String confirmLabel;
-  final String cancelLabel;
+  /// Button labels; null uses the translated "Confirm" / "Cancel".
+  final String? confirmLabel;
+  final String? cancelLabel;
   final bool destructive;
   final bool showDontAskAgain;
   final IconData? icon;
@@ -33,8 +35,8 @@ class ConfirmDialog extends StatefulWidget {
     super.key,
     required this.title,
     required this.message,
-    this.confirmLabel = 'Confirm',
-    this.cancelLabel = 'Cancel',
+    this.confirmLabel,
+    this.cancelLabel,
     this.destructive = false,
     this.showDontAskAgain = false,
     this.icon,
@@ -46,8 +48,8 @@ class ConfirmDialog extends StatefulWidget {
     BuildContext context, {
     required String title,
     required String message,
-    String confirmLabel = 'Confirm',
-    String cancelLabel = 'Cancel',
+    String? confirmLabel,
+    String? cancelLabel,
     bool destructive = false,
     bool showDontAskAgain = false,
     IconData? icon,
@@ -106,7 +108,7 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
               dense: true,
-              title: const Text("Don't ask me again"),
+              title: Text(L10n.of(context).dontAskAgain),
             ),
           ],
         ],
@@ -115,7 +117,7 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
         TextButton(
           onPressed: () =>
               Navigator.of(context).pop(ConfirmResult(false, _dontAskAgain)),
-          child: Text(widget.cancelLabel),
+          child: Text(widget.cancelLabel ?? L10n.of(context).cancel),
         ),
         ElevatedButton(
           style: widget.destructive
@@ -126,7 +128,7 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
               : null,
           onPressed: () =>
               Navigator.of(context).pop(ConfirmResult(true, _dontAskAgain)),
-          child: Text(widget.confirmLabel),
+          child: Text(widget.confirmLabel ?? L10n.of(context).confirm),
         ),
       ],
     );

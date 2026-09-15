@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -77,7 +78,7 @@ class _ErrorpageState extends State<Errorpage> {
                 ),
                 const SizedBox(height: 28),
                 Text(
-                  'Allow file access',
+                  L10n.of(context).permTitle,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface,
@@ -86,8 +87,7 @@ class _ErrorpageState extends State<Errorpage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'PDF Craft works with the PDFs and images already on your device. '
-                  'Grant file access so you can browse, open and save your documents.',
+                  L10n.of(context).permBody,
                   style: TextStyle(
                     fontSize: 15,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
@@ -97,9 +97,9 @@ class _ErrorpageState extends State<Errorpage> {
                 ),
                 const SizedBox(height: 28),
                 // What the permission unlocks.
-                _benefit(theme, primary, Icons.folder_open_outlined, 'Browse & open your PDFs and images'),
-                _benefit(theme, primary, Icons.save_alt_outlined, 'Save tool results back to your storage'),
-                _benefit(theme, primary, Icons.shield_outlined, 'Files stay on your device until you use a tool'),
+                _benefit(theme, primary, Icons.folder_open_outlined, L10n.of(context).permBenefitBrowse),
+                _benefit(theme, primary, Icons.save_alt_outlined, L10n.of(context).permBenefitSave),
+                _benefit(theme, primary, Icons.shield_outlined, L10n.of(context).permBenefitPrivate),
                 if (_permanentlyDenied) ...[
                   const SizedBox(height: 20),
                   Container(
@@ -113,8 +113,7 @@ class _ErrorpageState extends State<Errorpage> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Access was turned off. Enable “All files access” (or Storage) for '
-                          'PDF Craft in system Settings.',
+                          L10n.of(context).permTurnedOff,
                           style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
                         ),
                       ),
@@ -139,8 +138,8 @@ class _ErrorpageState extends State<Errorpage> {
                         : Icon(_permanentlyDenied ? Icons.settings_outlined : Icons.check_circle_outline),
                     label: Text(
                       _requesting
-                          ? 'Requesting…'
-                          : (_permanentlyDenied ? 'Open Settings' : 'Allow access'),
+                          ? L10n.of(context).permRequesting
+                          : (_permanentlyDenied ? L10n.of(context).permOpenSettings : L10n.of(context).permAllow),
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -191,15 +190,12 @@ class _ErrorpageState extends State<Errorpage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                LottieBuilder.asset(
-                  'assets/lottie/error.json',
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.contain,
-                ),
+                // A static icon instead of a Lottie animation: this rarely shown fallback was
+                // the app's only Lottie use, and the package added ~0.7 MB to the APK.
+                Icon(Icons.error_outline_rounded, size: 96, color: theme.colorScheme.error),
                 const SizedBox(height: 32),
                 Text(
-                  'Something Went Wrong',
+                  L10n.of(context).errGenericTitle,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -209,7 +205,7 @@ class _ErrorpageState extends State<Errorpage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'An unexpected error occurred. Please try going back.',
+                  L10n.of(context).errGenericBody,
                   style: TextStyle(
                     fontSize: 15,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
@@ -221,7 +217,7 @@ class _ErrorpageState extends State<Errorpage> {
                 FilledButton.icon(
                   onPressed: () => GoRouter.of(context).pop(),
                   icon: const Icon(Icons.arrow_back),
-                  label: const Text('Go Back'),
+                  label: Text(L10n.of(context).goBack),
                 ),
               ],
             ),
@@ -245,7 +241,7 @@ class _ErrorpageState extends State<Errorpage> {
         setState(() => _permanentlyDenied = permanentlyDenied);
         if (!permanentlyDenied) {
           NotificationService.showSnackbar(
-              text: 'Permission denied', color: Colors.red);
+              text: L10n.current.permDenied, color: Colors.red);
         }
       }
     } finally {
@@ -254,7 +250,8 @@ class _ErrorpageState extends State<Errorpage> {
   }
 
   Future<void> _openSettings() async {
-    await openAppSettings();
+    // System Settings is another app; returning after granting access must not show an ad.
+    await FullScreenAdPolicy().runExternal(() => openAppSettings());
     // Re-check on return; proceed if the user enabled it in Settings.
     final granted = await StoragePermissions.isStoragePermissionGranted();
     if (!mounted) return;

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
+/// A storage location row on the Files tab (Internal Storage, Downloads, …).
+///
+/// Uses a Material icon. It used to render four small SVG files, which was the app's only
+/// reason to ship flutter_svg (plus its vector-graphics/XML parsing dependencies) — a few
+/// hundred KB of APK size for four icons.
 class StorageTile extends StatelessWidget {
-  final String leadingIconSvgPath;
+  final IconData icon;
   final String title;
   final Widget trailing;
   final VoidCallback? onTap;
@@ -11,7 +15,7 @@ class StorageTile extends StatelessWidget {
   const StorageTile({
     super.key,
     this.onTap,
-    required this.leadingIconSvgPath,
+    required this.icon,
     required this.title,
     required this.trailing,
   });
@@ -37,10 +41,7 @@ class StorageTile extends StatelessWidget {
             color: primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppRadius.surface),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: SvgPicture.asset(leadingIconSvgPath, fit: BoxFit.contain),
-          ),
+          child: Icon(icon, color: primary, size: 24),
         ),
         title: Text(
           title,

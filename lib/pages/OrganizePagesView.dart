@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -61,7 +63,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
 
   void _deleteAt(int i) {
     if (_order.length <= 1) {
-      NotificationService.showSnackbar(text: 'A PDF needs at least one page', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.needAtLeastOnePage, color: Colors.orange);
       return;
     }
     setState(() => _order.removeAt(i));
@@ -99,12 +101,12 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Organize Pages'),
+        title: Text(ToolStrings.name(context, 'organize')),
         actions: [
           if (_order.length != _totalPages)
             TextButton(
               onPressed: _reset,
-              child: Text('Reset', style: TextStyle(color: theme.colorScheme.primary)),
+              child: Text(L10n.of(context).reset, style: TextStyle(color: theme.colorScheme.primary)),
             ),
         ],
       ),
@@ -114,7 +116,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: 'Pages organized'),
+            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: L10n.of(context).pagesOrganized),
         builder: (context, state) {
           if (_loadError) {
             return const Center(child: Icon(Icons.error_outline, color: Colors.red, size: 40));
@@ -129,13 +131,13 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                   width: double.infinity,
                   color: theme.colorScheme.primary.withValues(alpha: 0.08),
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Text('$removed page${removed == 1 ? '' : 's'} will be removed · ${_order.length} kept',
+                  child: Text(L10n.of(context).organizeSummary(removed, _order.length),
                       style: theme.textTheme.bodySmall),
                 ),
               Expanded(child: _buildList(theme)),
               _buildSaveBar(theme, state.httpStates[HttpStates.REORDER_PDF]?.loading == true),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: 'Saving organized PDF'),
+            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -179,12 +181,12 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text('Page ${original + 1}',
+                  child: Text(L10n.of(context).pageNumber(original + 1),
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  tooltip: 'Remove page',
+                  tooltip: L10n.of(context).removePage,
                   onPressed: () => _deleteAt(i),
                 ),
                 ReorderableDragStartListener(
@@ -213,7 +215,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
       child: FilledButton.icon(
         onPressed: loading ? null : _onSave,
         icon: const Icon(Icons.save_alt),
-        label: const Text('Export PDF'),
+        label: Text(L10n.of(context).exportPdf),
       ),
     );
   }

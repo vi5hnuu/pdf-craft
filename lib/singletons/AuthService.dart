@@ -3,9 +3,11 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/auth/AuthUser.dart';
 import 'package:pdf_craft/services/auth/AuthApi.dart';
 import 'package:pdf_craft/services/auth/TokenStorage.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 
 /// Owns the app's authentication state and tokens.
@@ -25,6 +27,7 @@ class AuthService extends ChangeNotifier {
   AuthUser? _user;
   String? _accessToken; // in-memory copy for the sync interceptor read
   Future<String?>? _inFlightRefresh; // single-flight guard
+  Future<void>? _bootstrapping; // single-flight guard for bootstrap()
   bool _sessionExpired = false; // a full account's session just expired
 
   AuthUser? get user => _user;
@@ -47,10 +50,19 @@ class AuthService extends ChangeNotifier {
   /// Loads persisted tokens + the real stored profile, or creates a guest session if
   /// none exist. Never fabricates account state — a restored guest stays a guest until
   /// the server says otherwise (hydration below just refreshes it).
-  Future<void> bootstrap() async {
+  ///
+  /// Not awaited before the first frame (it used to be, and a slow or unreachable auth server
+  /// kept the app on a blank launch screen until the 20s connect timeout). Single-flighted so
+  /// [ensureSession] can wait for it instead of racing it.
+  Future<void> bootstrap() => _bootstrapping ??= _bootstrap();
+
+  Future<void> _bootstrap() async {
     _accessToken = await _storage.accessToken;
     if (_accessToken == null) {
-      await _createGuest();
+      // Through the single-flighted refresh (it creates a guest when there is no refresh token),
+      // so a request that asks for a session at the same moment shares this call rather than
+      // creating a second guest account.
+      await refreshAccessToken();
       return;
     }
     // Restore the real stored profile (if any) so we never guess account state.
@@ -70,6 +82,14 @@ class AuthService extends ChangeNotifier {
   /// the underlying refresh is single-flighted. Used by the Dio interceptor so a request
   /// never goes out token-less on a cold start.
   Future<String?> ensureSession() async {
+    // Let a still-running bootstrap finish first (it may be restoring a stored token), so an
+    // early request doesn't trigger a needless refresh or a duplicate guest.
+    final bootstrapping = _bootstrapping;
+    if (bootstrapping != null) {
+      try {
+        await bootstrapping;
+      } catch (_) {/* offline at launch — fall through and try again below */}
+    }
     if (_accessToken != null) return _accessToken;
     return refreshAccessToken();
   }
@@ -125,11 +145,12 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn(scopes: const ['email']);
-    final account = await googleSignIn.signIn();
-    if (account == null) throw AuthException('Google sign-in cancelled.');
+    // The account picker is a separate activity; returning from it must not trigger an ad.
+    final account = await FullScreenAdPolicy().runExternal(() => googleSignIn.signIn());
+    if (account == null) throw AuthException(L10n.current.authGoogleCancelled);
     final auth = await account.authentication;
     final idToken = auth.idToken;
-    if (idToken == null) throw AuthException('Could not obtain Google credentials.');
+    if (idToken == null) throw AuthException(L10n.current.authGoogleNoCreds);
     final data = await _api.googleLogin(idToken);
     await _applyTokens(data);
   }
@@ -147,12 +168,12 @@ class AuthService extends ChangeNotifier {
     // may not have been created yet — establish one now rather than failing outright.
     final token = _accessToken ?? await ensureSession();
     if (token == null) {
-      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+      throw AuthException(L10n.current.errUnreachable);
     }
     final data = await _api.convert(token,
         email: email, password: password, firstName: firstName, lastName: lastName);
     await _setUser(AuthUser.fromJson(data));
-    return 'Account created. Check your e-mail to verify it.';
+    return L10n.current.authVerifyEmailSent;
   }
 
   Future<String> forgotPassword(String email) => _api.forgotPassword(email);
@@ -170,7 +191,7 @@ class AuthService extends ChangeNotifier {
   Future<void> updateProfile({String? firstName, String? lastName}) async {
     final token = _accessToken ?? await ensureSession();
     if (token == null) {
-      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+      throw AuthException(L10n.current.errUnreachable);
     }
     await _setUser(AuthUser.fromJson(
         await _api.updateProfile(token, firstName: firstName, lastName: lastName)));
@@ -180,7 +201,7 @@ class AuthService extends ChangeNotifier {
   Future<void> changePassword(String oldPassword, String newPassword) async {
     final token = _accessToken ?? await ensureSession();
     if (token == null) {
-      throw AuthException("Couldn't reach the server. Check your connection and try again.");
+      throw AuthException(L10n.current.errUnreachable);
     }
     await _api.changePassword(token, oldPassword, newPassword);
     // The server revokes every session (incl. this one's refresh token) on a password

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/split-by-size.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -46,7 +48,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Split by Size')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'split-by-size'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.SPLIT_BY_SIZE] != c.httpStates[HttpStates.SPLIT_BY_SIZE],
         listenWhen: (p, c) => p.httpStates[HttpStates.SPLIT_BY_SIZE] != c.httpStates[HttpStates.SPLIT_BY_SIZE],
@@ -64,12 +66,11 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Maximum size per part',
+                    Text(L10n.of(context).maxSizePerPart,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     Text(
-                      'Each output PDF will be at or below this size. A single page larger than the '
-                      'limit becomes its own part.',
+                      L10n.of(context).splitBySizeHint,
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),
                     ),
@@ -78,8 +79,8 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                       controller: _sizeC,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                      decoration: const InputDecoration(
-                        labelText: 'Size',
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).sortSize,
                         suffixText: 'MB',
                         border: OutlineInputBorder(),
                         isDense: true,
@@ -108,11 +109,11 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                 child: FilledButton.icon(
                   onPressed: valid && !loading ? _onSplit : null,
                   icon: const Icon(Icons.call_split),
-                  label: const Text('Split (ZIP)'),
+                  label: Text(L10n.of(context).splitZip),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.SPLIT_BY_SIZE], label: 'Splitting your PDF'),
+            processingOverlay(state.httpStates[HttpStates.SPLIT_BY_SIZE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

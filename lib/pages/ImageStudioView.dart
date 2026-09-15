@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' as img_studio;
 import 'package:pdf_craft/models/request/filter-image.dart' as fi;
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -60,16 +62,16 @@ class _ImageStudioViewState extends State<ImageStudioView>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Image Studio'),
+        title: Text(L10n.of(context).toolCatImageStudio),
         bottom: TabBar(
           controller: _tabC,
           isScrollable: true,
-          tabs: const [
-            Tab(icon: Icon(Icons.compress), text: 'Compress'),
-            Tab(icon: Icon(Icons.image), text: 'To JPG'),
-            Tab(icon: Icon(Icons.swap_horiz), text: 'From JPG'),
-            Tab(icon: Icon(Icons.photo_size_select_large), text: 'Resize'),
-            Tab(icon: Icon(Icons.auto_fix_high), text: 'Filters'),
+          tabs: [
+            Tab(icon: const Icon(Icons.compress), text: L10n.of(context).tabCompress),
+            Tab(icon: const Icon(Icons.image), text: L10n.of(context).tabToJpg),
+            Tab(icon: const Icon(Icons.swap_horiz), text: L10n.of(context).tabFromJpg),
+            Tab(icon: const Icon(Icons.photo_size_select_large), text: L10n.of(context).tabResize),
+            Tab(icon: const Icon(Icons.auto_fix_high), text: L10n.of(context).tabFilters),
           ],
         ),
       ),
@@ -84,14 +86,14 @@ class _ImageStudioViewState extends State<ImageStudioView>
           final s = state.httpStates[HttpStates.IMAGE_STUDIO];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Image saved to processed folder', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.imageSaved, color: Colors.green);
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
           }
           final fs = state.httpStates[HttpStates.FILTER_IMAGE];
           if (fs?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Filtered image saved', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.filteredImageSaved, color: Colors.green);
           } else if (fs?.error != null) {
             NotificationService.showSnackbar(text: fs!.error!, color: Colors.red);
           }
@@ -129,7 +131,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO] ?? state.httpStates[HttpStates.FILTER_IMAGE], label: 'Processing your image'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO] ?? state.httpStates[HttpStates.FILTER_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -142,7 +144,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('JPEG Quality: $_compressQuality%', style: theme.textTheme.bodyMedium),
+        Text(L10n.of(context).jpegQuality(_compressQuality), style: theme.textTheme.bodyMedium),
         Slider(
           value: _compressQuality.toDouble(),
           min: 1, max: 100, divisions: 99,
@@ -151,16 +153,16 @@ class _ImageStudioViewState extends State<ImageStudioView>
         const SizedBox(height: 8),
         _qualityHint(theme, _compressQuality),
         const Spacer(),
-        _submitButton(loading, 'Compress Image', Icons.compress, _onCompress),
+        _submitButton(loading, ToolStrings.name(context, 'img-compress'), Icons.compress, _onCompress),
       ]),
     );
   }
 
   Widget _qualityHint(ThemeData theme, int quality) {
-    final hint = quality >= 90 ? 'High quality — minimal compression'
-        : quality >= 70 ? 'Good balance of quality and size'
-        : quality >= 50 ? 'Noticeable compression — smaller file'
-        : 'Aggressive compression — smallest file';
+    final hint = quality >= 90 ? L10n.of(context).qualityHigh
+        : quality >= 70 ? L10n.of(context).qualityBalanced
+        : quality >= 50 ? L10n.of(context).qualityNoticeable
+        : L10n.of(context).qualityAggressive;
     return Text(hint, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant));
   }
 
@@ -170,7 +172,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Output JPEG Quality: $_toJpgQuality%', style: theme.textTheme.bodyMedium),
+        Text(L10n.of(context).outputJpegQuality(_toJpgQuality), style: theme.textTheme.bodyMedium),
         Slider(
           value: _toJpgQuality.toDouble(),
           min: 1, max: 100, divisions: 99,
@@ -180,11 +182,11 @@ class _ImageStudioViewState extends State<ImageStudioView>
         _qualityHint(theme, _toJpgQuality),
         const SizedBox(height: 8),
         Text(
-          'PNG and other images with transparency will be composited on a white background.',
+          L10n.of(context).jpgTransparencyNote,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outlineVariant),
         ),
         const Spacer(),
-        _submitButton(loading, 'Convert to JPG', Icons.image, _onConvertToJpg),
+        _submitButton(loading, ToolStrings.name(context, 'img-to-jpg'), Icons.image, _onConvertToJpg),
       ]),
     );
   }
@@ -195,7 +197,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Target Format', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+        Text(L10n.of(context).targetFormat, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Row(children: [
           _formatChip('PNG', theme),
@@ -204,11 +206,11 @@ class _ImageStudioViewState extends State<ImageStudioView>
         ]),
         const SizedBox(height: 12),
         Text(
-          'PNG supports transparency and is lossless. BMP is uncompressed.',
+          L10n.of(context).fromJpgNote,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outlineVariant),
         ),
         const Spacer(),
-        _submitButton(loading, 'Convert from JPG', Icons.swap_horiz, _onConvertFromJpg),
+        _submitButton(loading, ToolStrings.name(context, 'img-from-jpg'), Icons.swap_horiz, _onConvertFromJpg),
       ]),
     );
   }
@@ -233,7 +235,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
             child: TextFormField(
               controller: _widthC,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Width (px)', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: L10n.of(context).widthPx, border: const OutlineInputBorder()),
             ),
           ),
           const SizedBox(width: 12),
@@ -241,7 +243,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
             child: TextFormField(
               controller: _heightC,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Height (px)', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: L10n.of(context).heightPx, border: const OutlineInputBorder()),
             ),
           ),
         ]),
@@ -249,18 +251,18 @@ class _ImageStudioViewState extends State<ImageStudioView>
         Row(children: [
           Switch(value: _maintainAspect, onChanged: (v) => setState(() => _maintainAspect = v)),
           const SizedBox(width: 8),
-          const Text('Maintain aspect ratio'),
+          Text(L10n.of(context).maintainAspect),
         ]),
         if (_maintainAspect)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Enter only one dimension — the other is computed proportionally.',
+              L10n.of(context).resizeOneDimensionNote,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outlineVariant),
             ),
           ),
         const Spacer(),
-        _submitButton(loading, 'Resize Image', Icons.photo_size_select_large, _onResize),
+        _submitButton(loading, ToolStrings.name(context, 'img-resize'), Icons.photo_size_select_large, _onResize),
       ]),
     );
   }
@@ -282,7 +284,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Filter', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+        Text(L10n.of(context).filterLabel, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8, runSpacing: 8,
@@ -294,7 +296,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
         ),
         if (showIntensity) ...[
           const SizedBox(height: 16),
-          Text('Intensity: ${_filterIntensity.toStringAsFixed(1)}',
+          Text(L10n.of(context).intensity(_filterIntensity.toStringAsFixed(1)),
               style: theme.textTheme.bodyMedium),
           Slider(
             value: _filterIntensity,
@@ -303,7 +305,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
           ),
         ],
         const Spacer(),
-        _submitButton(loading, 'Apply Filter', Icons.auto_fix_high, _onFilter),
+        _submitButton(loading, L10n.of(context).applyFilter, Icons.auto_fix_high, _onFilter),
       ]),
     );
   }
@@ -368,7 +370,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     final w = int.tryParse(_widthC.text.trim());
     final h = int.tryParse(_heightC.text.trim());
     if (w == null && h == null) {
-      NotificationService.showSnackbar(text: 'Enter at least one dimension', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.enterDimension, color: Colors.orange);
       return;
     }
     BlocProvider.of<PdfBloc>(context).add(ResizeImageEvent(

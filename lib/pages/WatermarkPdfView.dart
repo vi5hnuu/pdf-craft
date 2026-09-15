@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/enum_labels.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/color-info.dart';
 import 'package:pdf_craft/models/enums/position.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
@@ -117,7 +120,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Watermark PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'watermark')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.WATERMARK_PDF] != c.httpStates[HttpStates.WATERMARK_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.WATERMARK_PDF] != c.httpStates[HttpStates.WATERMARK_PDF],
@@ -125,7 +128,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
           final s = state.httpStates[HttpStates.WATERMARK_PDF];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Watermark applied successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -148,7 +151,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                             PdfEffectPreview(
                               filePath: widget.file.path,
                               caption:
-                                  'Approximate placement — font metrics differ slightly from the output',
+                                  L10n.of(context).approxPlacement,
                               overlayBuilder: (ctx, canvas, pagePoints) {
                                 final text = _textC.text.isEmpty
                                     ? 'CONFIDENTIAL'
@@ -182,25 +185,25 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _outFileNameC,
-                              decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: const OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _textC,
                               onChanged: (_) => setState(() {}),
-                              decoration: const InputDecoration(labelText: 'Watermark Text', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).watermarkText, border: const OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _fontSizeC,
                               keyboardType: TextInputType.number,
                               onChanged: (_) => setState(() {}),
-                              decoration: const InputDecoration(labelText: 'Font Size', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).fontSize, border: const OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                const Text('Color: '),
+                                Text(L10n.of(context).colorColon),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,
@@ -210,25 +213,25 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                TextButton(onPressed: _pickColor, child: const Text('Change')),
+                                TextButton(onPressed: _pickColor, child: Text(L10n.of(context).change)),
                               ],
                             ),
                             const SizedBox(height: 16),
-                            Text('Opacity: ${_opacity.toStringAsFixed(2)}'),
+                            Text(L10n.of(context).opacityValue(_opacity.toStringAsFixed(2))),
                             Slider(value: _opacity, min: 0.05, max: 1.0, divisions: 19, onChanged: (v) => setState(() => _opacity = v)),
-                            Text('Angle: ${_angle.toStringAsFixed(0)}°'),
+                            Text(L10n.of(context).angleValue(_angle.toStringAsFixed(0))),
                             Slider(value: _angle, min: 0, max: 360, divisions: 36, onChanged: (v) => setState(() => _angle = v)),
                             const SizedBox(height: 8),
-                            _buildDropdown('Vertical Position', _verticalPos, (v) => setState(() => _verticalPos = v!)),
+                            _buildDropdown(L10n.of(context).verticalPosition, _verticalPos, (v) => setState(() => _verticalPos = v!)),
                             const SizedBox(height: 8),
-                            _buildDropdown('Horizontal Position', _horizontalPos, (v) => setState(() => _horizontalPos = v!)),
+                            _buildDropdown(L10n.of(context).horizontalPosition, _horizontalPos, (v) => setState(() => _horizontalPos = v!)),
                             const SizedBox(height: 4),
                             // Settings are remembered, so there has to be a way back out of them.
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton(
                                 onPressed: _resetSettings,
-                                child: const Text('Reset to defaults'),
+                                child: Text(L10n.of(context).resetDefaults),
                               ),
                             ),
                           ],
@@ -237,12 +240,12 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                     ),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(onPressed: _onWatermark, child: const Text('Apply Watermark')),
+                      child: FilledButton(onPressed: _onWatermark, child: Text(ToolStrings.name(context, 'watermark'))),
                     ),
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.WATERMARK_PDF], label: 'Adding watermark'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.WATERMARK_PDF], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -254,7 +257,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
     return DropdownButtonFormField<WatermarkPosition>(
       initialValue: value,
       decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-      items: WatermarkPosition.values.map((p) => DropdownMenuItem(value: p, child: Text(p.displayName))).toList(),
+      items: WatermarkPosition.values.map((p) => DropdownMenuItem(value: p, child: Text(p.localizedLabel(context)))).toList(),
       onChanged: onChanged,
     );
   }
@@ -263,14 +266,14 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Pick a color'),
+        title: Text(L10n.of(context).pickColor),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: _pickedColor,
             onColorChanged: (c) => setState(() => _pickedColor = c),
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done))],
       ),
     );
   }

@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -29,6 +31,8 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   TextEditingController outputFileNameC=TextEditingController();
   String password="";
   String? _passwordHint;
+  // The password is masked by default, with a show/hide toggle.
+  bool _obscure = true;
 
   @override
   void initState() {
@@ -53,7 +57,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('UnProtect Pdf'),
+        title: Text(ToolStrings.name(context, 'unprotect')),
         elevation: 5,
       ),
       body:BlocConsumer<PdfBloc,PdfState>(
@@ -63,7 +67,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
             final httpState=state.httpStates[HttpStates.UNPROTECT_PDF];
             if(httpState?.done==true){
               AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: "UnProtected file successfully",color: Colors.green);
+              NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
               if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
             }else if(httpState?.error!=null){
               NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -78,28 +82,40 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                    mainAxisSize: MainAxisSize.max,
                    children:[
                      TextFormField(keyboardType: TextInputType.text,
-                       decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                       decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                        controller: outputFileNameC,),
                      SizedBox(height: 12,),
                      if (_passwordHint != null) ...[
                        Card(
                          child: ListTile(
                            leading: Icon(Icons.lightbulb_outline, color: Colors.amber),
-                           title: Text('Password Hint'),
+                           title: Text(L10n.of(context).passwordHintTitle),
                            subtitle: Text(_passwordHint!),
                          ),
                        ),
                        SizedBox(height: 12),
                      ],
-                     TextFormField(keyboardType: TextInputType.text,
-                         decoration: InputDecoration(labelText: "password",border: OutlineInputBorder()),
+                     TextFormField(
+                         keyboardType: TextInputType.visiblePassword,
+                         obscureText: _obscure,
+                         autocorrect: false,
+                         enableSuggestions: false,
+                         decoration: InputDecoration(
+                           labelText: L10n.of(context).passwordLabel,
+                           border: OutlineInputBorder(),
+                           suffixIcon: IconButton(
+                             tooltip: _obscure ? L10n.of(context).showPassword : L10n.of(context).hidePassword,
+                             icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                             onPressed: () => setState(() => _obscure = !_obscure),
+                           ),
+                         ),
                          onChanged: (value) => setState(()=>password=value)),
                      SizedBox(height: 16,),
-                     FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text("Remove password"))
+                     FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text(L10n.of(context).removePassword))
                    ],
                  ),
                ),
-               LoadingOverlay(httpState: state.httpStates[HttpStates.UNPROTECT_PDF], label: 'Removing password'),
+               LoadingOverlay(httpState: state.httpStates[HttpStates.UNPROTECT_PDF], label: L10n.of(context).procWorking),
              ],
            );
           },),

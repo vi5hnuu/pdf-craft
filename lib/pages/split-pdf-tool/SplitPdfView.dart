@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitConfig.dart';
@@ -54,7 +56,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Split Pdf'),
+        title: Text(ToolStrings.name(context, 'split')),
         elevation: 5,
       ),
       body: PopScope(
@@ -70,7 +72,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
               final httpState=state.httpStates[HttpStates.SPLIT_PDF];
               if(httpState?.done==true){
                 final file=httpState?.extras?['savedFile'];
-                NotificationService.showSnackbar(text: "Splitting Pdf Successfull",color: Colors.green);
+                NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
                 if(file is File) OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]);
               }else if(httpState?.error!=null){
                 NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -83,7 +85,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(keyboardType: TextInputType.text,
-                        decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: L10n.of(context).outputFileName ,border: OutlineInputBorder()),
                         controller: outFileNameC),
                   ),
                   if(type==null || type==SplitType.EXTRACT_ALL_PAGES || type==SplitType.SPLIT_BY_BOOKMARK)
@@ -94,11 +96,11 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                     padding: const EdgeInsets.all(16.0),
                     child: FilledButton(
                       onPressed: type==null || (![SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK].contains(type) && ranges.isEmpty) ? null : _onExtractAllPages,
-                      child: const Text("Split Pdf Pages"),
+                      child: Text(ToolStrings.name(context, 'split')),
                     ),
                   )
                 ],),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.SPLIT_PDF], label: 'Splitting your PDF'),
+                LoadingOverlay(httpState: state.httpStates[HttpStates.SPLIT_PDF], label: L10n.of(context).procWorking),
               ],
             );
           },

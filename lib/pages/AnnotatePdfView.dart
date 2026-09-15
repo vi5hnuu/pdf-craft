@@ -9,6 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -184,13 +186,16 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Annotate${_totalPages > 0 ? ' — P.$_currentPage/$_totalPages' : ''}'),
+        title: Text(_totalPages > 0
+            ? L10n.of(context).annotateTitlePage(
+                ToolStrings.name(context, 'annotate'), _currentPage, _totalPages)
+            : ToolStrings.name(context, 'annotate')),
         actions: [
-          IconButton(icon: const Icon(Icons.undo), tooltip: 'Undo', onPressed: _undoStack.isEmpty ? null : _undo),
-          IconButton(icon: const Icon(Icons.redo), tooltip: 'Redo', onPressed: _redoStack.isEmpty ? null : _redo),
+          IconButton(icon: const Icon(Icons.undo), tooltip: L10n.of(context).undo, onPressed: _undoStack.isEmpty ? null : _undo),
+          IconButton(icon: const Icon(Icons.redo), tooltip: L10n.of(context).redo, onPressed: _redoStack.isEmpty ? null : _redo),
           IconButton(
             icon: Icon(_zoomMode ? Icons.zoom_out : Icons.zoom_in, color: _zoomMode ? theme.colorScheme.primary : null),
-            tooltip: 'Zoom',
+            tooltip: L10n.of(context).zoom,
             onPressed: () => setState(() => _zoomMode = !_zoomMode),
           ),
         ],
@@ -214,7 +219,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
               _buildOptionsPanel(theme),
               _buildSaveBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: 'Stamping your PDF'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -404,12 +409,12 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
         const SizedBox(width: 4),
         IconButton(
           icon: const Icon(Icons.color_lens_outlined, size: 22),
-          tooltip: 'More colors',
+          tooltip: L10n.of(context).moreColors,
           onPressed: _showColorPicker,
         ),
         const Spacer(),
         if (_isShapeTool(_tool)) ...[
-          const Text('Fill', style: TextStyle(fontSize: 12)),
+          Text(L10n.of(context).fill, style: const TextStyle(fontSize: 12)),
           Switch(value: _useFill, onChanged: (v) => setState(() => _useFill = v)),
           if (_useFill)
             GestureDetector(
@@ -426,7 +431,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
         ],
       ]),
       Row(children: [
-        const Text('Size:', style: TextStyle(fontSize: 12)),
+        Text(L10n.of(context).sizeColon, style: const TextStyle(fontSize: 12)),
         Expanded(
           child: Slider(
             value: _strokeWidth.clamp(1, 20),
@@ -455,7 +460,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
           )),
       IconButton(icon: const Icon(Icons.color_lens_outlined, size: 20), onPressed: _showColorPicker),
       const SizedBox(width: 8),
-      const Text('Size:', style: TextStyle(fontSize: 12)),
+      Text(L10n.of(context).sizeColon, style: const TextStyle(fontSize: 12)),
       Expanded(
         child: Slider(
           value: _fontSize.clamp(8, 72),
@@ -465,7 +470,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
       ),
       IconButton(
         icon: Icon(Icons.format_bold, color: _boldText ? theme.colorScheme.primary : null),
-        tooltip: 'Bold',
+        tooltip: L10n.of(context).bold,
         onPressed: () => setState(() => _boldText = !_boldText),
       ),
     ]);
@@ -475,7 +480,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     return Row(children: [
       const Icon(Icons.info_outline, size: 16, color: Colors.grey),
       const SizedBox(width: 8),
-      Text('Tap on the page to place a sticky note', style: theme.textTheme.bodySmall),
+      Text(L10n.of(context).annotateTapToPlaceNote, style: theme.textTheme.bodySmall),
     ]);
   }
 
@@ -515,7 +520,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
         icon: _saving
             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : const Icon(Icons.save_alt),
-        label: Text(_saving ? 'Saving…' : 'Save Annotations'),
+        label: Text(_saving ? L10n.of(context).saving : L10n.of(context).saveAnnotations),
       ),
     );
   }
@@ -527,15 +532,15 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Text'),
+        title: Text(L10n.of(ctx).annotateAddText),
         content: TextField(
           controller: textC,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'Enter text…', border: OutlineInputBorder()),
+          decoration: InputDecoration(hintText: L10n.of(context).enterTextHint, border: const OutlineInputBorder()),
           maxLines: 3,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () {
               if (textC.text.isNotEmpty) {
@@ -547,7 +552,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
               }
               Navigator.pop(ctx);
             },
-            child: const Text('Add'),
+            child: Text(L10n.of(context).add),
           ),
         ],
       ),
@@ -565,12 +570,12 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Add Sticky Note', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(L10n.of(context).addStickyNote, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             TextField(
               controller: textC,
               autofocus: true,
-              decoration: const InputDecoration(hintText: 'Note text…', border: OutlineInputBorder()),
+              decoration: InputDecoration(hintText: L10n.of(context).noteTextHint, border: const OutlineInputBorder()),
               maxLines: 3,
             ),
             const SizedBox(height: 12),
@@ -600,7 +605,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
                   }
                   Navigator.pop(ctx);
                 },
-                child: const Text('Place Sticky'),
+                child: Text(L10n.of(context).placeSticky),
               ),
             ),
           ]),
@@ -614,16 +619,16 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Pick color'),
+        title: Text(L10n.of(context).pickColor),
         content: ColorPicker(
           pickerColor: picked,
           onColorChanged: (c) => picked = c,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () { setState(() => _strokeColor = picked); Navigator.pop(ctx); },
-            child: const Text('Select'),
+            child: Text(L10n.of(context).select),
           ),
         ],
       ),
@@ -635,16 +640,16 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Fill color'),
+        title: Text(L10n.of(context).fillColor),
         content: ColorPicker(
           pickerColor: picked,
           onColorChanged: (c) => picked = c,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () { setState(() => _fillColor = picked); Navigator.pop(ctx); },
-            child: const Text('Select'),
+            child: Text(L10n.of(context).select),
           ),
         ],
       ),
@@ -717,13 +722,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
 
       if (!mounted) return;
       AdsSingleton().dispatch(ShowInterstitialAd());
-      NotificationService.showSnackbar(text: 'Annotations saved', color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.annotationsSaved, color: Colors.green);
       GoRouter.of(context).pushNamed(
         AppRoutes.pdfFilePreviewRoute.name,
         pathParameters: {'pdfFilePath': inputFile.path},
       );
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Save failed: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.saveFailedWith('$e'), color: Colors.red);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

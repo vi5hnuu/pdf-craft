@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/merge-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -44,7 +46,7 @@ class _MergePdfViewState extends State<MergePdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Merge PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'merge')), elevation: 5),
       body: BlocConsumer<PdfBloc,PdfState>(
         listenWhen: (previous, current) => previous.httpStates[HttpStates.MERGE_PDF]!=current.httpStates[HttpStates.MERGE_PDF],
         buildWhen: (previous, current) => previous.httpStates[HttpStates.MERGE_PDF]!=current.httpStates[HttpStates.MERGE_PDF],
@@ -52,7 +54,7 @@ class _MergePdfViewState extends State<MergePdfView> {
           final httpState=state.httpStates[HttpStates.MERGE_PDF];
           if(httpState?.done==true){
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: "Merge Successfull",color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
             if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
           }else if(httpState?.error!=null){
             NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -67,7 +69,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(keyboardType: TextInputType.text,
-                    decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                     controller: outFileNameC),
                 ),
                 SizedBox(height: 12,),
@@ -79,12 +81,12 @@ class _MergePdfViewState extends State<MergePdfView> {
                   header: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: RichText(
-                      text: const TextSpan(
-                        text: 'Reorder File ',
+                      text: TextSpan(
+                        text: L10n.of(context).reorderFilesTitle,
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
-                            text: '( long press to drag )',
+                            text: L10n.of(context).longPressToDrag,
                             style: TextStyle(fontSize: 12),
                           ),
                         ],
@@ -110,10 +112,10 @@ class _MergePdfViewState extends State<MergePdfView> {
                     );
                   },
                 )),
-                Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge PDFs")),)
+                Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: Text(ToolStrings.name(context, 'merge'))),)
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF], label: 'Merging your PDFs', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
           ],
         );
       },),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/FavoritesService.dart';
 import 'package:pdf_craft/state/selection/SelectionService.dart';
@@ -126,15 +127,15 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
             const Divider(height: 1),
             ListTile(
               leading: Icon(_isPdf ? Icons.visibility : Icons.open_in_new),
-              title: Text(_isPdf ? 'View' : 'Open externally'),
+              title: Text(_isPdf ? L10n.of(context).actionView : L10n.of(context).openExternally),
               onTap: _view,
             ),
             if (widget.allowSelect)
               ListTile(
                 leading: const Icon(Icons.check_circle_outline),
                 title: Text(SelectionService().contains(widget.file.path)
-                    ? 'Deselect'
-                    : 'Select for tools'),
+                    ? L10n.of(context).fileDeselect
+                    : L10n.of(context).fileSelectForTools),
                 onTap: () {
                   Navigator.pop(context);
                   SelectionService().toggle(widget.file);
@@ -145,12 +146,12 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
                   _isFavorite ? Icons.star : Icons.star_border,
                   color: _isFavorite ? Colors.amber : null),
               title:
-                  Text(_isFavorite ? 'Remove from favorites' : 'Add to favorites'),
+                  Text(_isFavorite ? L10n.of(context).favRemove : L10n.of(context).favAdd),
               onTap: _toggleFavorite,
             ),
             ListTile(
               leading: const Icon(Icons.share_outlined),
-              title: const Text('Share'),
+              title: Text(L10n.of(context).actionShare),
               onTap: () {
                 Navigator.pop(context);
                 Share.shareXFiles([XFile(widget.file.path)]);
@@ -159,7 +160,7 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
             if (_isPdf)
               ListTile(
                 leading: const Icon(Icons.open_in_new),
-                title: const Text('Open in external viewer'),
+                title: Text(L10n.of(context).openInExternalViewer),
                 onTap: () {
                   Navigator.pop(context);
                   _openExternally();
@@ -169,7 +170,7 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
               const Divider(height: 1),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text('Apply a tool',
+                child: Text(L10n.of(context).applyATool,
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
@@ -178,7 +179,7 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
               ),
               ...tools.map((tool) => ListTile(
                     leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.name),
+                    title: Text(tool.localizedName(context)),
                     onTap: () {
                       Navigator.pop(context);
                       tool.openWithFiles(context, [widget.file]);

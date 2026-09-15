@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/create-form.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -25,6 +27,16 @@ extension FieldTypeX on FieldType {
         FieldType.dropdown => 'Dropdown',
         FieldType.date => 'Date',
         FieldType.signature => 'Signature',
+      };
+  /// Localized label for the UI; `label` above stays English for logs and wire use.
+  String localizedLabel(BuildContext context) => switch (this) {
+        FieldType.text => L10n.of(context).fieldText,
+        FieldType.multiline => L10n.of(context).fieldParagraph,
+        FieldType.checkbox => L10n.of(context).fieldCheckbox,
+        FieldType.radio => L10n.of(context).fieldRadio,
+        FieldType.dropdown => L10n.of(context).fieldDropdown,
+        FieldType.date => L10n.of(context).fieldDate,
+        FieldType.signature => L10n.of(context).fieldSignature,
       };
   IconData get icon => switch (this) {
         FieldType.text => Icons.text_fields,
@@ -192,17 +204,17 @@ class _FormEditorViewState extends State<FormEditorView> {
     final labels = await showDialog<List<String>>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('${type.label} group'),
+        title: Text(L10n.of(ctx).formGroupTitle(type.localizedLabel(ctx))),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Enter option labels, separated by commas.', style: TextStyle(fontSize: 13)),
+          Text(L10n.of(context).optionLabelsHint, style: const TextStyle(fontSize: 13)),
           const SizedBox(height: 12),
           TextField(controller: controller, autofocus: true, decoration: const InputDecoration(border: OutlineInputBorder())),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
-            child: const Text('Add'),
+            child: Text(L10n.of(context).add),
           ),
         ],
       ),
@@ -215,11 +227,11 @@ class _FormEditorViewState extends State<FormEditorView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Form Editor'),
+        title: Text(ToolStrings.name(context, 'fill-form')),
         actions: [
           IconButton(
             icon: const Icon(Icons.fit_screen_outlined),
-            tooltip: 'Fit to screen',
+            tooltip: L10n.of(context).fitToScreen,
             onPressed: () => setState(() => _tc.value = Matrix4.identity()),
           ),
           // Primary action — enabled once there's at least one field and no
@@ -232,7 +244,7 @@ class _FormEditorViewState extends State<FormEditorView> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: FilledButton(
                   onPressed: (_totalFields > 0 && !busy) ? _onSave : null,
-                  child: const Text('Create'),
+                  child: Text(L10n.of(context).create),
                 ),
               );
             },
@@ -246,7 +258,7 @@ class _FormEditorViewState extends State<FormEditorView> {
           final s = state.httpStates[HttpStates.CREATE_FORM];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Fillable form created', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.formCreated, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -269,7 +281,7 @@ class _FormEditorViewState extends State<FormEditorView> {
             ]),
             LoadingOverlay(
               httpState: state.httpStates[HttpStates.CREATE_FORM],
-              label: 'Creating fillable form',
+              label: L10n.of(context).creatingForm,
               onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
             ),
           ]);
@@ -304,7 +316,7 @@ class _FormEditorViewState extends State<FormEditorView> {
                 color: theme.colorScheme.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(AppRadius.surface),
               ),
-              child: Text('Tap a field below to place it',
+              child: Text(L10n.of(context).tapFieldToPlace,
                   style: TextStyle(fontSize: 12.5, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
             ),
           ),
@@ -576,8 +588,8 @@ class _FormEditorViewState extends State<FormEditorView> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             children: [
               for (final t in FieldType.values) _paletteItem(theme, t),
-              _paletteGroupItem(theme, FieldType.radio, 'Radio group', Icons.radio_button_checked),
-              _paletteGroupItem(theme, FieldType.checkbox, 'Check group', Icons.checklist),
+              _paletteGroupItem(theme, FieldType.radio, L10n.of(context).radioGroup, Icons.radio_button_checked),
+              _paletteGroupItem(theme, FieldType.checkbox, L10n.of(context).checkGroup, Icons.checklist),
             ],
           ),
         ),
@@ -631,7 +643,7 @@ class _FormEditorViewState extends State<FormEditorView> {
             children: [
               Icon(t.icon, size: 22, color: theme.colorScheme.primary),
               const SizedBox(height: 4),
-              Text(t.label, style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+              Text(t.localizedLabel(context), style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
             ],
           ),
         ),
@@ -687,39 +699,39 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
         Row(children: [
           Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Text('${f.type.label} field', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Text(L10n.of(context).typeFieldLabel(f.type.localizedLabel(context)), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
         ]),
         const SizedBox(height: 12),
-        _field(_name, 'Field name', (v) => f.name = v),
+        _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
         if (f.type == FieldType.radio) ...[
-          _field(_group, 'Radio group', (v) => f.group = v),
-          _field(_export, 'Option value', (v) => f.exportValue = v),
+          _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
+          _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
         ],
         if (f.type.hasOptions)
-          _field(_options, 'Options (comma-separated)',
+          _field(_options, L10n.of(context).optionsCommaSeparated,
               (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
-        if (f.type.hasValue) _field(_value, 'Default value', (v) => f.value = v),
+        if (f.type.hasValue) _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
         if (f.type.hasValue)
           _field(_fontSize, 'Font size (0 = auto)', (v) => f.fontSize = double.tryParse(v) ?? 0,
               keyboard: TextInputType.number),
         if (f.type.isToggle)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(f.type == FieldType.radio ? 'Selected by default' : 'Checked by default'),
+            title: Text(f.type == FieldType.radio ? L10n.of(context).selectedByDefault : L10n.of(context).checkedByDefault),
             value: f.checked,
             onChanged: (v) => setState(() => f.checked = v),
           ),
         const SizedBox(height: 4),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Required'),
+          title: Text(L10n.of(context).required),
           value: f.required,
           onChanged: (v) => setState(() => f.required = v),
         ),
         const SizedBox(height: 4),
         SizedBox(
           width: double.infinity,
-          child: FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
+          child: FilledButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done)),
         ),
       ]),
     );

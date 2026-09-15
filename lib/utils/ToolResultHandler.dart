@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
-import 'package:pdf_craft/singletons/RateAppService.dart';
 import 'package:pdf_craft/widgets/NextToolSheet.dart';
 
-/// Shared helpers for tool view success/error/offline handling.
-/// Shows the rate-app dialog after N successful completions.
+/// Shared success feedback for tool views.
+///
+/// The rate-app prompt is intentionally **not** handled here. MainScreen's app-wide PdfBloc
+/// listener already records every tool success (including screens that don't use this mixin);
+/// recording here as well counted each success twice and could stack two different rate dialogs.
 mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
 
   /// Call on successful tool completion.
@@ -14,7 +16,7 @@ mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
   /// When the tool produced a file, the confirmation carries a way straight into the next tool.
   /// Without it the result was a dead end: continuing meant leaving the screen, opening the file
   /// browser and finding the output again by name.
-  void onToolSuccess(String message, {File? output}) async {
+  void onToolSuccess(String message, {File? output}) {
     NotificationService.showSnackbar(
       text: message,
       color: Colors.green,
@@ -27,39 +29,6 @@ mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
                 if (mounted) NextToolSheet.show(context, output);
               },
             ),
-    );
-    final shouldRate = await RateAppService().recordSuccess();
-    if (shouldRate && mounted) _showRateDialog();
-  }
-
-  void _showRateDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text('Enjoying PDF Craft?'),
-        content: const Text(
-          'You\'ve processed several files! If you find this app useful, please take a moment to rate it. It helps a lot.',
-          style: TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              RateAppService().snooze(); // ask again later, rather than never again
-              Navigator.pop(context);
-            },
-            child: const Text('Later'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await RateAppService().markRated();
-              await RateAppService().openPlayStore();
-              if (mounted) Navigator.pop(context);
-            },
-            child: const Text('Rate Now'),
-          ),
-        ],
-      ),
     );
   }
 }

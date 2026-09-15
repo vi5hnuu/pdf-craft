@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/n-up.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -41,7 +43,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
     final filename = widget.file.path.split('/').last;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('N-Up Layout')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'n-up'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.N_UP_PDF] != c.httpStates[HttpStates.N_UP_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.N_UP_PDF] != c.httpStates[HttpStates.N_UP_PDF],
@@ -49,7 +51,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
           final s = state.httpStates[HttpStates.N_UP_PDF];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'N-up PDF created', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.nUpDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -74,12 +76,12 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Pages per Sheet', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(L10n.of(context).pagesPerSheet, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 Row(children: [
-                  _layoutOption(theme, 2, '2-Up', 'Landscape, side by side', Icons.view_agenda_outlined),
+                  _layoutOption(theme, 2, '2-Up', L10n.of(context).nUpLandscapeSide, Icons.view_agenda_outlined),
                   const SizedBox(width: 12),
-                  _layoutOption(theme, 4, '4-Up', 'Portrait, 2×2 grid', Icons.grid_view_outlined),
+                  _layoutOption(theme, 4, '4-Up', L10n.of(context).nUpPortraitGrid, Icons.grid_view_outlined),
                 ]),
                 const Spacer(),
                 SizedBox(
@@ -94,7 +96,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.N_UP_PDF], label: 'Building N-up layout'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.N_UP_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

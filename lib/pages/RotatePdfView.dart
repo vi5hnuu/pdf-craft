@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/routes.dart';
@@ -85,7 +87,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     final primary = theme.colorScheme.primary;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rotate PDF Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'rotate'))),
       body: FutureBuilder(
         future: _pdfController.document,
         builder: (context, snapshot) {
@@ -107,7 +109,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
               if (httpState?.done == true) {
                 AdsSingleton().dispatch(ShowInterstitialAd());
                 NotificationService.showSnackbar(
-                    text: 'Rotate Successful', color: Colors.green);
+                    text: L10n.current.toolDone, color: Colors.green);
                 if (httpState?.extras?['savedFile'] is File) {
                   GoRouter.of(context).pushNamed(
                     AppRoutes.pdfFilePreviewRoute.name,
@@ -137,8 +139,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                             // Output file name
                             TextFormField(
                               keyboardType: TextInputType.text,
-                              decoration: const InputDecoration(
-                                labelText: 'Output File Name',
+                              decoration: InputDecoration(
+                                labelText: L10n.of(context).outputFileName,
                                 border: OutlineInputBorder(),
                               ),
                               controller: outFileNameC,
@@ -146,15 +148,15 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                             const SizedBox(height: 16),
 
                             // ── All-pages angle ────────────────────────
-                            Text('All Pages Angle',
+                            Text(L10n.of(context).allPagesAngle,
                                 style: theme.textTheme.titleSmall
                                     ?.copyWith(fontWeight: FontWeight.w600)),
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: fileAngleC,
                               keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Angle (any value, e.g. 45, 90, 270)',
+                              decoration: InputDecoration(
+                                labelText: L10n.of(context).angleHint,
                                 border: OutlineInputBorder(),
                                 suffixText: '°',
                               ),
@@ -182,7 +184,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'All pages will rotate at this angle. Override per page below.',
+                              L10n.of(context).rotateAllHint,
                               style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurface
                                       .withValues(alpha: 0.55)),
@@ -194,11 +196,11 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                               margin: EdgeInsets.zero,
                               child: SwitchListTile(
                                 dense: true,
-                                title: const Text('Maintain Aspect Ratio'),
+                                title: Text(L10n.of(context).maintainAspect),
                                 subtitle: Text(
                                   maintain_ratio
-                                      ? 'Width and height swap to fit rotated content.'
-                                      : 'Page size stays the same; content rotates within it.',
+                                      ? L10n.of(context).rotateSwapHint
+                                      : L10n.of(context).rotateKeepHint,
                                   style: theme.textTheme.bodySmall,
                                 ),
                                 value: maintain_ratio,
@@ -208,14 +210,14 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Preview is approximate — actual PDF may differ.',
+                              L10n.of(context).previewApproximate,
                               style: theme.textTheme.bodySmall
                                   ?.copyWith(color: Colors.amber),
                             ),
                             const SizedBox(height: 16),
 
                             // ── Per-page angle override ────────────────
-                            Text('Per-Page Angle Override',
+                            Text(L10n.of(context).perPageAngle,
                                 style: theme.textTheme.titleSmall
                                     ?.copyWith(fontWeight: FontWeight.w600)),
                             const SizedBox(height: 8),
@@ -225,8 +227,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                                 Flexible(
                                   child: TextFormField(
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      label: Text('Page No.'),
+                                    decoration: InputDecoration(
+                                      label: Text(L10n.of(context).pageNo),
                                       border: OutlineInputBorder(),
                                       isDense: true,
                                     ),
@@ -237,8 +239,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                                 Flexible(
                                   child: TextFormField(
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      label: Text('Angle'),
+                                    decoration: InputDecoration(
+                                      label: Text(L10n.of(context).angleLabel),
                                       border: OutlineInputBorder(),
                                       isDense: true,
                                       suffixText: '°',
@@ -249,7 +251,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                                 const SizedBox(width: 8),
                                 FilledButton.tonal(
                                   onPressed: document == null ? null : _addPageAngle,
-                                  child: const Text('Add'),
+                                  child: Text(L10n.of(context).add),
                                 ),
                               ],
                             ),
@@ -275,7 +277,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
 
                             // ── Thumbnail previews ─────────────────────
                             if (thumbnails.isNotEmpty)
-                              Text('Preview',
+                              Text(L10n.of(context).preview,
                                   style: theme.textTheme.titleSmall
                                       ?.copyWith(fontWeight: FontWeight.w600)),
                             ...List.generate(thumbnails.length, (index) {
@@ -352,14 +354,14 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                               file_angle == 0 && page_angles.isEmpty
                                   ? null
                                   : _onRotatePages,
-                          child: const Text('Rotate PDF Pages'),
+                          child: Text(ToolStrings.name(context, 'rotate')),
                         ),
                       ),
                     ],
                   ),
                   LoadingOverlay(
                       httpState: state.httpStates[HttpStates.ROTATE_PDF],
-                      label: 'Rotating your PDF'),
+                      label: L10n.of(context).rotatingPdf),
                 ],
               );
             },
@@ -374,12 +376,12 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     final angle = int.tryParse(pageAngleC.text);
     if (pNo == null || pNo < 1 || pNo > (document?.pagesCount ?? 0)) {
       NotificationService.showSnackbar(
-          text: 'Invalid page number', color: Colors.red);
+          text: L10n.current.invalidPageNumber, color: Colors.red);
       return;
     }
     if (angle == null) {
       NotificationService.showSnackbar(
-          text: 'Invalid angle', color: Colors.red);
+          text: L10n.current.invalidAngle, color: Colors.red);
       return;
     }
     setState(() => page_angles.put(pNo, angle));
@@ -457,7 +459,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
       setState(() => thumbnails.put(pageNo, Thumbnail(image: image)));
     } catch (_) {
       if (!mounted) return;
-      setState(() => thumbnails.put(pageNo, Thumbnail(error: 'failed to render thumbnail')));
+      setState(() => thumbnails.put(pageNo, Thumbnail(error: L10n.current.thumbnailFailed)));
     }
   }
 

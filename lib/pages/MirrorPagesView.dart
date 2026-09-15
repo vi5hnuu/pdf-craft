@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/enum_labels.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/mirror-direction.dart';
 import 'package:pdf_craft/models/request/mirror-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -35,12 +38,12 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mirror Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'mirror-pages'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.MIRROR_PDF] != c.httpStates[HttpStates.MIRROR_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.MIRROR_PDF] != c.httpStates[HttpStates.MIRROR_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.MIRROR_PDF], successMessage: 'Pages mirrored'),
+            handleToolState(state.httpStates[HttpStates.MIRROR_PDF], successMessage: L10n.of(context).pagesMirrored),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.MIRROR_PDF]?.loading == true;
           return Stack(children: [
@@ -49,7 +52,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Flip direction', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).flipDirection, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     // RadioGroup supplies the selection to the tiles below it. Besides
                     // replacing the deprecated per-tile groupValue/onChanged, it gives the set
@@ -63,7 +66,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                           for (final d in MirrorDirection.values)
                             RadioListTile<MirrorDirection>(
                               value: d,
-                              title: Text(d.label),
+                              title: Text(d.localizedLabel(context)),
                               secondary: Icon(d == MirrorDirection.horizontal ? Icons.flip : Icons.flip_camera_android),
                             ),
                         ],
@@ -82,11 +85,11 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onMirror,
                   icon: const Icon(Icons.flip),
-                  label: const Text('Mirror Pages'),
+                  label: Text(ToolStrings.name(context, 'mirror-pages')),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.MIRROR_PDF], label: 'Mirroring pages'),
+            processingOverlay(state.httpStates[HttpStates.MIRROR_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

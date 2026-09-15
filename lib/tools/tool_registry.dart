@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
@@ -9,13 +10,18 @@ import 'package:pdf_craft/singletons/RecentToolsService.dart';
 import 'package:pdf_craft/tools/credit_gate.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
+import 'package:pdf_craft/utils/UploadLimits.dart';
 
 /// A tool category (used for grouping + accent colour on the Tools screen).
 class ToolCategory {
+  /// English name — the stable identity used in code and for lookups.
   final String name;
   final IconData icon;
   final Color color;
   const ToolCategory(this.name, this.icon, this.color);
+
+  /// Name in the user's language.
+  String localizedName(BuildContext context) => ToolStrings.category(context, name);
 }
 
 /// All categories, in display order.
@@ -70,9 +76,19 @@ class ToolDef {
   /// Extra payload merged into the route arguments (e.g. Image Studio op).
   final Map<String, dynamic>? extra;
 
+  /// Whether the tool uploads its input to the server. Drives the client-side upload size
+  /// check ([UploadLimits]) — tools that work purely on-device must not be blocked by it.
+  final bool uploads;
+
   /// Short, human description of what the tool does (shown via the info button
   /// on the tool card). Looked up by [id] so the tool list stays terse.
   String get description => ToolRegistry.descriptions[id] ?? '';
+
+  /// Name and description in the user's language. [name] stays the English identity used in
+  /// code, logs and search.
+  String localizedName(BuildContext context) => ToolStrings.name(context, id);
+
+  String localizedDescription(BuildContext context) => ToolStrings.description(context, id);
 
   /// Backend cost id (if this tool calls a priced endpoint), else null.
   String? get creditToolId => ToolRegistry.creditToolIds[id];
@@ -93,6 +109,7 @@ class ToolDef {
     this.maxSelection = 1,
     this.isHeavy = false,
     this.extra,
+    this.uploads = true,
   });
 
   /// True when this tool can run on a selection of [count] files whose
@@ -112,7 +129,7 @@ class ToolDef {
     CreditGate.run(
       context,
       creditToolId: creditToolId,
-      toolName: name,
+      toolName: localizedName(context),
       proceed: () {
         RecentToolsService().record(id);
         GoRouter.of(context).pushNamed(
@@ -124,6 +141,7 @@ class ToolDef {
             minSelection: multiSelect ? minSelection : null,
             limitToExtensions: extensions,
             extra: extra,
+            enforceUploadLimits: uploads,
           ),
         );
       },
@@ -133,11 +151,15 @@ class ToolDef {
   /// Opens the tool directly with an already-chosen [files] selection (used by
   /// the file→tool intellisense menu and the incoming-files chooser), skipping
   /// the picker. Heavy tools first pass through the opt-in rewarded-ad gate.
-  void openWithFiles(BuildContext context, List<File> files) {
+  void openWithFiles(BuildContext context, List<File> files) async {
+    // Fail fast on files the server would reject for size — before quoting a price or
+    // starting a long upload that can only end in an error.
+    if (uploads && !await UploadLimits.ensureWithinLimits(context, files)) return;
+    if (!context.mounted) return;
     CreditGate.run(
       context,
       creditToolId: creditToolId,
-      toolName: name,
+      toolName: localizedName(context),
       files: files, // known here, so the quote includes any size surcharge
 
       proceed: () {
@@ -185,7 +207,7 @@ class ToolRegistry {
     ToolDef(id: 'redact', name: 'Redact PDF', icon: Icons.hide_source, category: ToolCategories.pdf, route: AppRoutes.redactPdfRoute, extensions: _pdf),
     ToolDef(id: 'duplicate-pages', name: 'Duplicate Pages', icon: Icons.copy_all, category: ToolCategories.pdf, route: AppRoutes.duplicatePagesRoute, extensions: _pdf),
     ToolDef(id: 'bookmarks', name: 'Bookmarks', icon: Icons.bookmark_outline, category: ToolCategories.pdf, route: AppRoutes.bookmarksEditorRoute, extensions: _pdf),
-    ToolDef(id: 'compare', name: 'Compare PDF', icon: Icons.compare, category: ToolCategories.pdf, route: AppRoutes.pdfCompareRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: 2),
+    ToolDef(id: 'compare', name: 'Compare PDF', icon: Icons.compare, category: ToolCategories.pdf, route: AppRoutes.pdfCompareRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: 2, uploads: false), // renders both PDFs on-device
 
     // ---- Enhance ----
     ToolDef(id: 'compress', name: 'Compress PDF', icon: Icons.compress, category: ToolCategories.enhance, route: AppRoutes.compressPdfRoute, extensions: _pdf, isHeavy: true),
@@ -360,10 +382,16 @@ class ToolRegistry {
       tools.where((t) => t.category == category).toList();
 
   /// Case-insensitive name search (for the Tools-screen search box).
-  static List<ToolDef> search(String query) {
+  ///
+  /// Matches the localized name as well as the English one when a [context] is given, so a Hindi
+  /// user can type either "मर्ज" or "merge".
+  static List<ToolDef> search(String query, {BuildContext? context}) {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return tools;
-    return tools.where((t) => t.name.toLowerCase().contains(q)).toList();
+    return tools.where((t) {
+      if (t.name.toLowerCase().contains(q)) return true;
+      return context != null && t.localizedName(context).toLowerCase().contains(q);
+    }).toList();
   }
 
   /// All tools that apply to a selection of [files] (by count + extensions).

@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/extract-images.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -34,13 +36,13 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Extract Images')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-images'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_IMAGES] != c.httpStates[HttpStates.EXTRACT_IMAGES],
         listenWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_IMAGES] != c.httpStates[HttpStates.EXTRACT_IMAGES],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.EXTRACT_IMAGES],
-          successMessage: 'Images extracted',
+          successMessage: L10n.of(context).imagesExtracted,
           // Result is a .zip — open it externally rather than the PDF viewer.
           onDone: (f) => OpenFile.open(f.path),
         ),
@@ -56,12 +58,11 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
                     children: [
                       Icon(Icons.collections_outlined, size: 64, color: theme.colorScheme.primary),
                       const SizedBox(height: 16),
-                      Text('Extract embedded images',
+                      Text(L10n.of(context).extractEmbeddedImages,
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Text(
-                        'All raster images found in this PDF are collected into a ZIP file (as PNGs). '
-                        'Vector graphics and text are not included.',
+                        L10n.of(context).extractImagesHint,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),
@@ -80,11 +81,11 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onExtract,
                   icon: const Icon(Icons.archive_outlined),
-                  label: const Text('Extract Images (ZIP)'),
+                  label: Text(L10n.of(context).extractImagesZip),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.EXTRACT_IMAGES], label: 'Extracting images'),
+            processingOverlay(state.httpStates[HttpStates.EXTRACT_IMAGES], label: L10n.of(context).procWorking),
           ]);
         },
       ),

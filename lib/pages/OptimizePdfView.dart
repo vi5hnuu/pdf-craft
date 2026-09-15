@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -40,7 +42,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
     final sizeKb = _sizeKb;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Optimize PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'optimize'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.OPTIMIZE_PDF] != c.httpStates[HttpStates.OPTIMIZE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.OPTIMIZE_PDF] != c.httpStates[HttpStates.OPTIMIZE_PDF],
@@ -48,7 +50,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
           final s = state.httpStates[HttpStates.OPTIMIZE_PDF];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'PDF optimized', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.optimizeDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -80,13 +82,11 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                       Row(children: [
                         Icon(Icons.info_outline, size: 18, color: theme.colorScheme.primary),
                         const SizedBox(width: 8),
-                        Text('What this does', style: theme.textTheme.titleSmall),
+                        Text(L10n.of(context).whatThisDoes, style: theme.textTheme.titleSmall),
                       ]),
                       const SizedBox(height: 8),
                       Text(
-                        '• Removes embedded page thumbnails\n'
-                        '• Re-compresses document streams\n'
-                        '• Reduces file size without quality loss',
+                        L10n.of(context).optimizeExplainer,
                         style: theme.textTheme.bodySmall?.copyWith(height: 1.6),
                       ),
                     ]),
@@ -100,12 +100,12 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                     icon: loading
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.auto_fix_high),
-                    label: Text(loading ? 'Optimizing…' : 'Optimize PDF'),
+                    label: Text(loading ? L10n.of(context).optimizing : ToolStrings.name(context, 'optimize')),
                   ),
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.OPTIMIZE_PDF], label: 'Optimizing your PDF'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.OPTIMIZE_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

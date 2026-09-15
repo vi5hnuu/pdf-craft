@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/utils/AdUnits.dart';
@@ -55,7 +56,8 @@ class AdsSingleton {
 
   /// Shows the cached ad (if ready), then preloads the next one.
   void _show() {
-    if (ProService().isPro) return; // no ads for Pro users
+    // Cooldown, paid-run and Pro rules live in one place so every call site obeys them.
+    if (!FullScreenAdPolicy().canShowInterstitial()) return;
     if (_cachedAd == null) {
       _preload(); // try again for next time
       return;
@@ -73,6 +75,7 @@ class AdsSingleton {
       },
     );
     _cachedAd!.show();
+    FullScreenAdPolicy().recordShown();
   }
 
   void dispatch(AdEvent event) => _events.sink.add(event);

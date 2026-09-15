@@ -26,7 +26,15 @@ class GoogleDriveService {
   GoogleSignInAccount? get currentUser => _currentUser;
   bool get isSignedIn => _currentUser != null;
 
+  /// Restores a previous session **silently** — never shows the account picker. Use this when a
+  /// screen merely opens (e.g. the Cloud tab); only an explicit user tap should call [signIn].
+  Future<GoogleSignInAccount?> restoreSession() async {
+    _currentUser = await _signIn.signInSilently();
+    return _currentUser;
+  }
+
   /// Signs in silently first (restores previous session), then interactively if needed.
+  /// Interactive — call only in response to the user asking to connect Drive.
   Future<GoogleSignInAccount?> signIn() async {
     _currentUser = await _signIn.signInSilently();
     _currentUser ??= await _signIn.signIn();

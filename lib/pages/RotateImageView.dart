@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/rotate-image.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -35,13 +37,13 @@ class _RotateImageViewState extends State<RotateImageView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Rotate Image')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'img-rotate'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.ROTATE_IMAGE] != c.httpStates[HttpStates.ROTATE_IMAGE],
         listenWhen: (p, c) => p.httpStates[HttpStates.ROTATE_IMAGE] != c.httpStates[HttpStates.ROTATE_IMAGE],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.ROTATE_IMAGE],
-          successMessage: 'Image rotated',
+          successMessage: L10n.of(context).imageRotated,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {
@@ -68,7 +70,7 @@ class _RotateImageViewState extends State<RotateImageView>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('Rotation', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).rotationLabel, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(spacing: 8, children: [
                       for (final a in [90, 180, 270])
@@ -83,7 +85,7 @@ class _RotateImageViewState extends State<RotateImageView>
               ),
               _bar(theme, loading, 'Rotate', Icons.rotate_right, _onApply),
             ]),
-            processingOverlay(state.httpStates[HttpStates.ROTATE_IMAGE], label: 'Rotating image'),
+            processingOverlay(state.httpStates[HttpStates.ROTATE_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),
