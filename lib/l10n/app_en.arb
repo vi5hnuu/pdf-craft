@@ -1391,5 +1391,7 @@
   "filesMoveFailed": "Failed to move file",
   "filesDeleteFailed": "Failed to delete the file",
   "previewUnavailable": "This file can't be previewed, but the tool will still process it.",
-  "imageOverlayTitle": "Image Overlay"
+  "imageOverlayTitle": "Image Overlay",
+  "bookmarksEmptyHint": "Bookmarks are stored inside the PDF itself. Add some below, then Save to embed them — they'll travel with the file.",
+  "compressRecommended": "Compress (recommended)"
 }

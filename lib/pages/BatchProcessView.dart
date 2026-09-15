@@ -40,6 +40,21 @@ enum _Tool {
   final String creditToolId;
 
   const _Tool(this.label, this.icon, this.stateKey, this.creditToolId);
+
+  /// Registry id, so the label can reuse the already-translated tool name.
+  String get _registryId => switch (this) {
+        _Tool.grayscale => 'grayscale',
+        _Tool.compress => 'compress',
+        _Tool.repair => 'repair',
+        _Tool.flatten => 'flatten',
+        _Tool.optimize => 'optimize',
+        _Tool.removeBlankPages => 'remove-blanks',
+      };
+
+  /// `label` stays English for logs; the UI shows this.
+  String localizedLabel(BuildContext context) => this == _Tool.compress
+      ? L10n.of(context).compressRecommended
+      : ToolStrings.name(context, _registryId);
 }
 
 enum _FileStatus { pending, processing, done, error }
@@ -119,7 +134,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).batchDialogTitle(_tool.label, _items.length)),
+        title: Text(L10n.of(ctx).batchDialogTitle(_tool.localizedLabel(ctx), _items.length)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,7 +298,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                                   // "Remove Blank Pages" overruns the closed dropdown on a
                                   // narrow screen.
                                   Flexible(
-                                    child: Text(t.label, overflow: TextOverflow.ellipsis),
+                                    child: Text(t.localizedLabel(context), overflow: TextOverflow.ellipsis),
                                   ),
                                 ],
                               ),

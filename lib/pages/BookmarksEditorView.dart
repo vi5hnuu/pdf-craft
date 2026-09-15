@@ -162,8 +162,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: Text(
-            'Bookmarks are stored inside the PDF itself. Add some below, then '
-            'Save to embed them — they\'ll travel with the file.',
+            L10n.of(context).bookmarksEmptyHint,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),

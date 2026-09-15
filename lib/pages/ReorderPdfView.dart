@@ -270,7 +270,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                         ),
                       ),
                       Text(
-                        'Page $pageNo',
+                        L10n.of(context).pageNumber(pageNo),
                         style: const TextStyle(fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
                       ),
                     ],

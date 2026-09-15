@@ -871,5 +871,7 @@
   "filesMoveFailed": "फ़ाइल नहीं खिसकाई जा सकी",
   "filesDeleteFailed": "फ़ाइल नहीं हटाई जा सकी",
   "previewUnavailable": "इस फ़ाइल का प्रीव्यू नहीं दिख सकता, पर टूल इसे फिर भी प्रोसेस करेगा।",
-  "imageOverlayTitle": "इमेज ओवरले"
+  "imageOverlayTitle": "इमेज ओवरले",
+  "bookmarksEmptyHint": "बुकमार्क PDF के अंदर ही सेव होते हैं। नीचे कुछ जोड़ें, फिर सेव करें — वे फ़ाइल के साथ ही रहेंगे।",
+  "compressRecommended": "कंप्रेस करें (सुझाया गया)"
 }
