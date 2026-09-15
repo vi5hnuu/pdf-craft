@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
@@ -191,12 +190,9 @@ class _ErrorpageState extends State<Errorpage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                LottieBuilder.asset(
-                  'assets/lottie/error.json',
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.contain,
-                ),
+                // A static icon instead of a Lottie animation: this rarely shown fallback was
+                // the app's only Lottie use, and the package added ~0.7 MB to the APK.
+                Icon(Icons.error_outline_rounded, size: 96, color: theme.colorScheme.error),
                 const SizedBox(height: 32),
                 Text(
                   L10n.of(context).errGenericTitle,
