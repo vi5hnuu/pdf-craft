@@ -186,7 +186,10 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Annotate${_totalPages > 0 ? ' — P.$_currentPage/$_totalPages' : ''}'),
+        title: Text(_totalPages > 0
+            ? L10n.of(context).annotateTitlePage(
+                ToolStrings.name(context, 'annotate'), _currentPage, _totalPages)
+            : ToolStrings.name(context, 'annotate')),
         actions: [
           IconButton(icon: const Icon(Icons.undo), tooltip: 'Undo', onPressed: _undoStack.isEmpty ? null : _undo),
           IconButton(icon: const Icon(Icons.redo), tooltip: 'Redo', onPressed: _redoStack.isEmpty ? null : _redo),
@@ -529,7 +532,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(ToolStrings.name(context, 'annotate')),
+        title: Text(L10n.of(ctx).annotateAddText),
         content: TextField(
           controller: textC,
           autofocus: true,

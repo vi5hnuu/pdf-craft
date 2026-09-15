@@ -802,5 +802,50 @@
   "toolDescImgFlip": "Mirror an image horizontally or vertically.",
   "toolNameImgBorder": "Add Border",
   "toolDescImgBorder": "Add a coloured border around an image.",
-  "toolDone": "Done — saved to your files."
+  "toolDone": "Done — saved to your files.",
+  "annotateAddText": "Add text",
+  "annotateTitlePage": "{tool} — p.{current}/{total}",
+  "@annotateTitlePage": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "batchDialogTitle": "{tool} — {count} files",
+  "@batchDialogTitle": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchAppBarTitle": "{tool} ({count} files)",
+  "@batchAppBarTitle": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "formGroupTitle": "{type} group",
+  "@formGroupTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  }
 }

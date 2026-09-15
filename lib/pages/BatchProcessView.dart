@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/enums/compression-level.dart';
 import 'package:pdf_craft/models/request/compress-pdf.dart';
@@ -118,7 +119,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(ToolStrings.name(context, 'batch')),
+        title: Text(L10n.of(ctx).batchDialogTitle(_tool.label, _items.length)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +258,8 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Batch Process (${_items.length} files)'),
+          title: Text(L10n.of(context)
+              .batchAppBarTitle(ToolStrings.name(context, 'batch'), _items.length)),
         ),
         body: Column(
           children: [
