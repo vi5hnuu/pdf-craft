@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/compression-level.dart';
 import 'package:pdf_craft/models/request/compress-pdf.dart';
 import 'package:pdf_craft/routes.dart';
@@ -38,7 +40,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Compress PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'compress')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.COMPRESS_PDF] != c.httpStates[HttpStates.COMPRESS_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.COMPRESS_PDF] != c.httpStates[HttpStates.COMPRESS_PDF],
@@ -46,7 +48,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
           final s = state.httpStates[HttpStates.COMPRESS_PDF];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'PDF compressed successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }

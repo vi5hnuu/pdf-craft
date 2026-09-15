@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -59,7 +61,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Extract Pages'),
+        title: Text(ToolStrings.name(context, 'extract-pages')),
         actions: [
           if (_selected.isNotEmpty)
             TextButton(onPressed: () => setState(_selected.clear), child: const Text('Clear')),
@@ -103,7 +105,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: 'Extracting pages'),
+            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

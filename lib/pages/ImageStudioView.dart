@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' as img_studio;
 import 'package:pdf_craft/models/request/filter-image.dart' as fi;
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -129,7 +130,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO] ?? state.httpStates[HttpStates.FILTER_IMAGE], label: 'Processing your image'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_STUDIO] ?? state.httpStates[HttpStates.FILTER_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

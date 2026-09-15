@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/edit-bookmarks.dart';
 import 'package:pdf_craft/models/request/get-bookmarks.dart';
 import 'package:pdf_craft/routes.dart';
@@ -66,7 +68,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Bookmarks'),
+        title: Text(ToolStrings.name(context, 'bookmarks')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_box_outlined),
@@ -143,7 +145,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               ),
               _buildSaveBar(theme, saving),
             ]),
-            processingOverlay(editState, label: 'Saving bookmarks'),
+            processingOverlay(editState, label: L10n.of(context).procWorking),
           ]);
         },
       ),

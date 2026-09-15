@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/color-info.dart';
 import 'package:pdf_craft/models/enums/position.dart';
 import 'package:pdf_craft/models/request/watermark-pdf.dart';
@@ -117,7 +119,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Watermark PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'watermark')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.WATERMARK_PDF] != c.httpStates[HttpStates.WATERMARK_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.WATERMARK_PDF] != c.httpStates[HttpStates.WATERMARK_PDF],
@@ -125,7 +127,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
           final s = state.httpStates[HttpStates.WATERMARK_PDF];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Watermark applied successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -242,7 +244,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.WATERMARK_PDF], label: 'Adding watermark'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.WATERMARK_PDF], label: L10n.of(context).procWorking),
             ],
           );
         },

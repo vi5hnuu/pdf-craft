@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -53,7 +55,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
     final md=MediaQuery.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Image to PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'image-to-pdf')), elevation: 5),
       body: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
@@ -61,7 +63,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
         final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
         if(httpState?.done==true){
           AdsSingleton().dispatch(ShowInterstitialAd());
-          NotificationService.showSnackbar(text: "Image to pdf successfull",color: Colors.green);
+          NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
           if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
         }else if(httpState?.error!=null){
           NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -175,7 +177,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 )
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
           ],
         );
       },)

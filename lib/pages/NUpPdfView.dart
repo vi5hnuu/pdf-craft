@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/n-up.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -41,7 +43,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
     final filename = widget.file.path.split('/').last;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('N-Up Layout')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'n-up'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.N_UP_PDF] != c.httpStates[HttpStates.N_UP_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.N_UP_PDF] != c.httpStates[HttpStates.N_UP_PDF],
@@ -94,7 +96,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.N_UP_PDF], label: 'Building N-up layout'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.N_UP_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

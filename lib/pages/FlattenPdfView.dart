@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/fill-flatten.dart';
 import 'package:pdf_craft/models/request/flatten-pdf.dart';
 import 'package:pdf_craft/models/request/get-form-fields.dart';
@@ -46,7 +48,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Flatten PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'flatten'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.FLATTEN_PDF] != c.httpStates[HttpStates.FLATTEN_PDF] ||
@@ -75,7 +77,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             final s = state.httpStates[key];
             if (s?.done == true) {
               AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: 'PDF flattened successfully', color: Colors.green);
+              NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
               if (s?.extras?['savedFile'] is File) {
                 GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
                     pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});

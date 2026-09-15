@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
@@ -75,7 +76,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
               listener: (context, state) {
                 final httpState=state.httpStates[HttpStates.REORDER_PDF];
                 if(httpState?.done==true){
-                  NotificationService.showSnackbar(text: "Split Successfull",color: Colors.green);
+                  NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
                   final file=httpState?.extras?['savedFile'];
                   if(file is! File) return;
                   OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]??'*/*');

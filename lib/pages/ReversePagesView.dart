@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -47,7 +49,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Reverse Page Order')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'reverse-pages'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
@@ -95,7 +97,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: 'Reversing pages'),
+            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

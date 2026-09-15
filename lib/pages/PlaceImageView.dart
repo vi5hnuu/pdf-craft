@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/place-image.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -177,7 +178,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
           final s = state.httpStates[HttpStates.PLACE_IMAGE];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Image placed successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -240,7 +241,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
               // Bottom bar: aspect lock + confirm
               _buildBottomBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.PLACE_IMAGE], label: 'Placing image'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.PLACE_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

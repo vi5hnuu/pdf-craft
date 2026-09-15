@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/add-blank-pages.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -40,7 +42,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Blank Pages'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'add-blank')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.ADD_BLANK_PAGES] != c.httpStates[HttpStates.ADD_BLANK_PAGES],
         listenWhen: (p, c) => p.httpStates[HttpStates.ADD_BLANK_PAGES] != c.httpStates[HttpStates.ADD_BLANK_PAGES],
@@ -48,7 +50,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
           final s = state.httpStates[HttpStates.ADD_BLANK_PAGES];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Blank pages added successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -116,7 +118,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.ADD_BLANK_PAGES], label: 'Adding blank pages'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.ADD_BLANK_PAGES], label: L10n.of(context).procWorking),
             ],
           );
         },

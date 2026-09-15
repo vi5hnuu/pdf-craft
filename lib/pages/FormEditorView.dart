@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/create-form.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -192,7 +193,7 @@ class _FormEditorViewState extends State<FormEditorView> {
     final labels = await showDialog<List<String>>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('${type.label} group'),
+        title: Text(ToolStrings.name(context, 'fill-form')),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           const Text('Enter option labels, separated by commas.', style: TextStyle(fontSize: 13)),
           const SizedBox(height: 12),

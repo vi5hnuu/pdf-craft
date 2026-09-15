@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/analyze-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -40,7 +41,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Analyze PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'analyze'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.ANALYZE_PDF] != c.httpStates[HttpStates.ANALYZE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.ANALYZE_PDF] != c.httpStates[HttpStates.ANALYZE_PDF],

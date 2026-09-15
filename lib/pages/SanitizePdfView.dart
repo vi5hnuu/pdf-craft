@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/sanitize-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -40,7 +42,7 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Sanitize PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'sanitize'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.SANITIZE_PDF] != c.httpStates[HttpStates.SANITIZE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.SANITIZE_PDF] != c.httpStates[HttpStates.SANITIZE_PDF],
@@ -102,7 +104,7 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.SANITIZE_PDF], label: 'Sanitizing your PDF'),
+            processingOverlay(state.httpStates[HttpStates.SANITIZE_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

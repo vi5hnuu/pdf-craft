@@ -801,5 +801,6 @@
   "toolNameImgFlip": "Flip Image",
   "toolDescImgFlip": "Mirror an image horizontally or vertically.",
   "toolNameImgBorder": "Add Border",
-  "toolDescImgBorder": "Add a coloured border around an image."
+  "toolDescImgBorder": "Add a coloured border around an image.",
+  "toolDone": "Done — saved to your files."
 }

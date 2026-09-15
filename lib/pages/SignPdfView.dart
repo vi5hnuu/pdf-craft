@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -45,7 +46,7 @@ class _SignPdfViewState extends State<SignPdfView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign PDF'),
+        title: Text(ToolStrings.name(context, 'sign')),
         actions: [
           IconButton(
             icon: const Icon(Icons.undo),

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/split-by-size.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -46,7 +48,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Split by Size')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'split-by-size'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.SPLIT_BY_SIZE] != c.httpStates[HttpStates.SPLIT_BY_SIZE],
         listenWhen: (p, c) => p.httpStates[HttpStates.SPLIT_BY_SIZE] != c.httpStates[HttpStates.SPLIT_BY_SIZE],
@@ -112,7 +114,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.SPLIT_BY_SIZE], label: 'Splitting your PDF'),
+            processingOverlay(state.httpStates[HttpStates.SPLIT_BY_SIZE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

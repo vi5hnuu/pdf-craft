@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/get-metadata.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -38,7 +39,7 @@ class _PdfInfoViewState extends State<PdfInfoView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('PDF Info'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'pdf-info')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.GET_METADATA] != c.httpStates[HttpStates.GET_METADATA],
         listenWhen: (p, c) => p.httpStates[HttpStates.GET_METADATA] != c.httpStates[HttpStates.GET_METADATA],

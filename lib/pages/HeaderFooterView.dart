@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/color-info.dart';
 import 'package:pdf_craft/models/enums/font-name.dart';
 import 'package:pdf_craft/models/request/header-footer.dart';
@@ -114,7 +116,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Header & Footer'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.HEADER_FOOTER] != c.httpStates[HttpStates.HEADER_FOOTER],
         listenWhen: (p, c) => p.httpStates[HttpStates.HEADER_FOOTER] != c.httpStates[HttpStates.HEADER_FOOTER],
@@ -122,7 +124,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
           final s = state.httpStates[HttpStates.HEADER_FOOTER];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Header/footer added successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -260,7 +262,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.HEADER_FOOTER], label: 'Adding header & footer'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.HEADER_FOOTER], label: L10n.of(context).procWorking),
             ],
           );
         },

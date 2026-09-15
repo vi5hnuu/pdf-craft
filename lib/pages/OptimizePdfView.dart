@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/optimize-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -40,7 +42,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
     final sizeKb = _sizeKb;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Optimize PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'optimize'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.OPTIMIZE_PDF] != c.httpStates[HttpStates.OPTIMIZE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.OPTIMIZE_PDF] != c.httpStates[HttpStates.OPTIMIZE_PDF],
@@ -105,7 +107,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.OPTIMIZE_PDF], label: 'Optimizing your PDF'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.OPTIMIZE_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

@@ -479,5 +479,6 @@
   "toolNameImgFlip": "इमेज फ्लिप करें",
   "toolDescImgFlip": "इमेज को आड़ा या खड़ा पलटें।",
   "toolNameImgBorder": "बॉर्डर जोड़ें",
-  "toolDescImgBorder": "इमेज के चारों ओर रंगीन बॉर्डर लगाएँ।"
+  "toolDescImgBorder": "इमेज के चारों ओर रंगीन बॉर्डर लगाएँ।",
+  "toolDone": "हो गया — आपकी फ़ाइलों में सेव कर दिया गया।"
 }

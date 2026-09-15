@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/SplitConfig.dart';
@@ -54,7 +56,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Split Pdf'),
+        title: Text(ToolStrings.name(context, 'split')),
         elevation: 5,
       ),
       body: PopScope(
@@ -70,7 +72,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
               final httpState=state.httpStates[HttpStates.SPLIT_PDF];
               if(httpState?.done==true){
                 final file=httpState?.extras?['savedFile'];
-                NotificationService.showSnackbar(text: "Splitting Pdf Successfull",color: Colors.green);
+                NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
                 if(file is File) OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]);
               }else if(httpState?.error!=null){
                 NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -98,7 +100,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                     ),
                   )
                 ],),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.SPLIT_PDF], label: 'Splitting your PDF'),
+                LoadingOverlay(httpState: state.httpStates[HttpStates.SPLIT_PDF], label: L10n.of(context).procWorking),
               ],
             );
           },

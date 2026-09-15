@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -49,7 +50,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Duplicate Pages'),
+        title: Text(ToolStrings.name(context, 'duplicate-pages')),
         actions: [
           if (_pageCounts.isNotEmpty)
             TextButton(

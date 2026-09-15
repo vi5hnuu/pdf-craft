@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/remove-blank-pages.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -47,7 +49,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
     final filename = widget.file.path.split('/').last;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Remove Blank Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'remove-blanks'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REMOVE_BLANK_PAGES] != c.httpStates[HttpStates.REMOVE_BLANK_PAGES],
         listenWhen: (p, c) => p.httpStates[HttpStates.REMOVE_BLANK_PAGES] != c.httpStates[HttpStates.REMOVE_BLANK_PAGES],
@@ -105,7 +107,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.REMOVE_BLANK_PAGES], label: 'Removing blank pages'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.REMOVE_BLANK_PAGES], label: L10n.of(context).procWorking),
           ]);
         },
       ),

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/color-info.dart';
 import 'package:pdf_craft/models/enums/font.dart';
@@ -56,7 +58,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Page Numbers'),
+        title: Text(ToolStrings.name(context, 'page-numbers')),
         elevation: 2,
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
@@ -68,7 +70,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
           final httpState = state.httpStates[HttpStates.PAGE_NUMBERS];
           if (httpState?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Page numbers added successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (httpState?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -325,7 +327,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                 ],
               ),
 
-              LoadingOverlay(httpState: state.httpStates[HttpStates.PAGE_NUMBERS], label: 'Adding page numbers'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.PAGE_NUMBERS], label: L10n.of(context).procWorking),
             ],
           );
         },

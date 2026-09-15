@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/repair-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -35,7 +37,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Repair PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'repair')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REPAIR_PDF] != c.httpStates[HttpStates.REPAIR_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.REPAIR_PDF] != c.httpStates[HttpStates.REPAIR_PDF],
@@ -43,7 +45,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
           final s = state.httpStates[HttpStates.REPAIR_PDF];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'PDF repaired successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -103,7 +105,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.REPAIR_PDF], label: 'Repairing your PDF', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.REPAIR_PDF], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
             ],
           );
         },

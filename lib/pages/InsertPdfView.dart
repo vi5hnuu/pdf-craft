@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/insert-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -64,7 +66,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Insert PDF into PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'insert-pdf'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.INSERT_PDF] != c.httpStates[HttpStates.INSERT_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.INSERT_PDF] != c.httpStates[HttpStates.INSERT_PDF],
@@ -128,7 +130,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.INSERT_PDF], label: 'Inserting PDF'),
+            processingOverlay(state.httpStates[HttpStates.INSERT_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

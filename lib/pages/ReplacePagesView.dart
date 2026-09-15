@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/replace-pages.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -69,7 +71,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Replace Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'replace-pages'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REPLACE_PAGES] != c.httpStates[HttpStates.REPLACE_PAGES],
         listenWhen: (p, c) => p.httpStates[HttpStates.REPLACE_PAGES] != c.httpStates[HttpStates.REPLACE_PAGES],
@@ -133,7 +135,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REPLACE_PAGES], label: 'Replacing pages'),
+            processingOverlay(state.httpStates[HttpStates.REPLACE_PAGES], label: L10n.of(context).procWorking),
           ]);
         },
       ),

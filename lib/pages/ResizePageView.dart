@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/page-size-preset.dart';
 import 'package:pdf_craft/models/request/resize-page.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -40,7 +42,7 @@ class _ResizePageViewState extends State<ResizePageView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Resize Page Size')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'resize-page'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.RESIZE_PAGE] != c.httpStates[HttpStates.RESIZE_PAGE],
         listenWhen: (p, c) => p.httpStates[HttpStates.RESIZE_PAGE] != c.httpStates[HttpStates.RESIZE_PAGE],
@@ -105,7 +107,7 @@ class _ResizePageViewState extends State<ResizePageView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.RESIZE_PAGE], label: 'Resizing pages'),
+            processingOverlay(state.httpStates[HttpStates.RESIZE_PAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

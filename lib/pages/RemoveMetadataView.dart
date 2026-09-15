@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/remove-metadata.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -42,7 +44,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Remove Metadata')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'remove-metadata'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REMOVE_METADATA] != c.httpStates[HttpStates.REMOVE_METADATA],
         listenWhen: (p, c) => p.httpStates[HttpStates.REMOVE_METADATA] != c.httpStates[HttpStates.REMOVE_METADATA],
@@ -110,7 +112,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REMOVE_METADATA], label: 'Removing metadata'),
+            processingOverlay(state.httpStates[HttpStates.REMOVE_METADATA], label: L10n.of(context).procWorking),
           ]);
         },
       ),

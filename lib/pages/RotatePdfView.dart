@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/request/rotate-pdf.dart';
 import 'package:pdf_craft/routes.dart';
@@ -85,7 +87,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     final primary = theme.colorScheme.primary;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rotate PDF Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'rotate'))),
       body: FutureBuilder(
         future: _pdfController.document,
         builder: (context, snapshot) {
@@ -107,7 +109,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
               if (httpState?.done == true) {
                 AdsSingleton().dispatch(ShowInterstitialAd());
                 NotificationService.showSnackbar(
-                    text: 'Rotate Successful', color: Colors.green);
+                    text: L10n.current.toolDone, color: Colors.green);
                 if (httpState?.extras?['savedFile'] is File) {
                   GoRouter.of(context).pushNamed(
                     AppRoutes.pdfFilePreviewRoute.name,

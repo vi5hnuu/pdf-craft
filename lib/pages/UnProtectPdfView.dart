@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/unlock-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -55,7 +57,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('UnProtect Pdf'),
+        title: Text(ToolStrings.name(context, 'unprotect')),
         elevation: 5,
       ),
       body:BlocConsumer<PdfBloc,PdfState>(
@@ -65,7 +67,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
             final httpState=state.httpStates[HttpStates.UNPROTECT_PDF];
             if(httpState?.done==true){
               AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: "UnProtected file successfully",color: Colors.green);
+              NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
               if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
             }else if(httpState?.error!=null){
               NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -113,7 +115,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                    ],
                  ),
                ),
-               LoadingOverlay(httpState: state.httpStates[HttpStates.UNPROTECT_PDF], label: 'Removing password'),
+               LoadingOverlay(httpState: state.httpStates[HttpStates.UNPROTECT_PDF], label: L10n.of(context).procWorking),
              ],
            );
           },),

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/border-image.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -38,7 +40,7 @@ class _AddBorderViewState extends State<AddBorderView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Border')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'img-border'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.BORDER_IMAGE] != c.httpStates[HttpStates.BORDER_IMAGE],
         listenWhen: (p, c) => p.httpStates[HttpStates.BORDER_IMAGE] != c.httpStates[HttpStates.BORDER_IMAGE],
@@ -136,7 +138,7 @@ class _AddBorderViewState extends State<AddBorderView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.BORDER_IMAGE], label: 'Adding border'),
+            processingOverlay(state.httpStates[HttpStates.BORDER_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/mirror-direction.dart';
 import 'package:pdf_craft/models/request/mirror-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -35,7 +37,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mirror Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'mirror-pages'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.MIRROR_PDF] != c.httpStates[HttpStates.MIRROR_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.MIRROR_PDF] != c.httpStates[HttpStates.MIRROR_PDF],
@@ -86,7 +88,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.MIRROR_PDF], label: 'Mirroring pages'),
+            processingOverlay(state.httpStates[HttpStates.MIRROR_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

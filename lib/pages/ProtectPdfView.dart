@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/user-access-permission.dart';
 import 'package:pdf_craft/models/request/protect-pdf.dart';
@@ -56,7 +58,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Protect Pdf'),
+        title: Text(ToolStrings.name(context, 'protect')),
         elevation: 5,
       ),
       body: BlocConsumer<PdfBloc,PdfState>(
@@ -66,7 +68,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
             final httpState=state.httpStates[HttpStates.PROTECT_PDF];
             if(httpState?.done==true){
               AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: "Protected file successfully",color: Colors.green);
+              NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
               final savedFile = httpState?.extras?['savedFile'];
               if (savedFile is File && _hintC.text.trim().isNotEmpty) {
                 SharedPreferences.getInstance().then((prefs) =>
@@ -180,7 +182,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                     ],
                   ),
                 ),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.PROTECT_PDF], label: 'Protecting your PDF'),
+                LoadingOverlay(httpState: state.httpStates[HttpStates.PROTECT_PDF], label: L10n.of(context).procWorking),
               ],
             );
           },)

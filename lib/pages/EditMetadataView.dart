@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/edit-metadata.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -39,7 +41,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Metadata'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'edit-metadata')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.EDIT_METADATA] != c.httpStates[HttpStates.EDIT_METADATA],
         listenWhen: (p, c) => p.httpStates[HttpStates.EDIT_METADATA] != c.httpStates[HttpStates.EDIT_METADATA],
@@ -47,7 +49,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
           final s = state.httpStates[HttpStates.EDIT_METADATA];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Metadata updated successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -100,7 +102,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.EDIT_METADATA], label: 'Saving metadata'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.EDIT_METADATA], label: L10n.of(context).procWorking),
             ],
           );
         },

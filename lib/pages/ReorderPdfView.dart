@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -117,7 +119,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     final md = MediaQuery.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reorder PDF Pages'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'reorder')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
@@ -125,7 +127,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
           final httpState = state.httpStates[HttpStates.REORDER_PDF];
           if (httpState?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Reorder successful', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (httpState?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -169,7 +171,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                   ),
                 ],
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.REORDER_PDF], label: 'Saving new order'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.REORDER_PDF], label: L10n.of(context).procWorking),
             ],
           );
         },

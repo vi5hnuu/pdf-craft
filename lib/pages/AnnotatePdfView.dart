@@ -9,6 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/stamp-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
@@ -214,7 +216,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
               _buildOptionsPanel(theme),
               _buildSaveBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: 'Stamping your PDF'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.STAMP_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -527,7 +529,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Text'),
+        title: Text(ToolStrings.name(context, 'annotate')),
         content: TextField(
           controller: textC,
           autofocus: true,

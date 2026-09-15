@@ -1,3 +1,4 @@
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -79,7 +80,7 @@ class _PdfCompareViewState extends State<PdfCompareView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Compare PDFs'),
+        title: Text(ToolStrings.name(context, 'compare')),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Padding(

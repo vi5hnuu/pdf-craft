@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -41,7 +42,7 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('QR Code Stamp')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'qr-stamp'))),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

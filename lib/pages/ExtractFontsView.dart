@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/extract-fonts.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -33,7 +35,7 @@ class _ExtractFontsViewState extends State<ExtractFontsView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Extract Fonts')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-fonts'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_FONTS] != c.httpStates[HttpStates.EXTRACT_FONTS],
         listenWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_FONTS] != c.httpStates[HttpStates.EXTRACT_FONTS],
@@ -79,7 +81,7 @@ class _ExtractFontsViewState extends State<ExtractFontsView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.EXTRACT_FONTS], label: 'Extracting fonts'),
+            processingOverlay(state.httpStates[HttpStates.EXTRACT_FONTS], label: L10n.of(context).procWorking),
           ]);
         },
       ),
