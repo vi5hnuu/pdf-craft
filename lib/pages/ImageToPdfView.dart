@@ -93,7 +93,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
-                            text: ' (long press to drag)',
+                            text: L10n.of(context).longPressToDrag,
                             style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                           ),
                         ],

@@ -147,8 +147,8 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(
                       keyboardType: TextInputType.text,
-                      decoration: const InputDecoration(
-                        labelText: 'Output File Name',
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).outputFileName,
                         border: OutlineInputBorder(),
                       ),
                       controller: _outFileNameC,
@@ -166,7 +166,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                     ),
                     child: FilledButton(
                       onPressed: _document != null ? _onReorderPages : null,
-                      child: const Text('Reorder PDF Pages'),
+                      child: Text(ToolStrings.name(context, 'reorder')),
                     ),
                   ),
                 ],
@@ -181,10 +181,10 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
 
   Widget _buildBody(ThemeData theme, MediaQueryData md) {
     if (_docError) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(24),
-          child: Text('Failed to load PDF', style: TextStyle(color: Colors.red)),
+          child: Text(L10n.of(context).failedToLoadPdf, style: TextStyle(color: Colors.red)),
         ),
       );
     }
@@ -205,7 +205,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: RichText(
           text: TextSpan(
-            text: 'Reorder Pages ',
+            text: L10n.of(context).reorderPagesTitle,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -213,7 +213,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
             ),
             children: [
               TextSpan(
-                text: ' (long press to drag)',
+                text: L10n.of(context).longPressToDrag,
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.5),

@@ -57,7 +57,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
           final s = state.httpStates[HttpStates.REMOVE_BLANK_PAGES];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Blank pages removed', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.blankPagesRemoved, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -83,7 +83,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Detection Sensitivity', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(L10n.of(context).detectionSensitivity, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Slider(
                   value: _sensitivity,

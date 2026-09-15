@@ -70,10 +70,10 @@ class _CompressPdfViewState extends State<CompressPdfView> {
                           children: [
                             TextFormField(
                               controller: _outFileNameC,
-                              decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: OutlineInputBorder()),
                             ),
                             const SizedBox(height: 24),
-                            const Text('Compression Level', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            Text(L10n.of(context).compressionLevel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 12),
                             // RadioGroup supplies the selection to the tiles below it, and
                             // gives the set arrow-key navigation that loose radios never had.
@@ -98,7 +98,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
                       width: double.infinity,
                       child: FilledButton(
                         onPressed: _onCompress,
-                        child: const Text('Compress PDF'),
+                        child: Text(ToolStrings.name(context, 'compress')),
                       ),
                     ),
                   ],

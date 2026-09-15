@@ -58,7 +58,7 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
                     children: [
                       Icon(Icons.collections_outlined, size: 64, color: theme.colorScheme.primary),
                       const SizedBox(height: 16),
-                      Text('Extract embedded images',
+                      Text(L10n.of(context).extractEmbeddedImages,
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Text(
@@ -82,7 +82,7 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onExtract,
                   icon: const Icon(Icons.archive_outlined),
-                  label: const Text('Extract Images (ZIP)'),
+                  label: Text(L10n.of(context).extractImagesZip),
                 ),
               ),
             ]),

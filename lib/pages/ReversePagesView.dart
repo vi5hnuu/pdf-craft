@@ -68,7 +68,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
                     children: [
                       Icon(Icons.swap_vert, size: 64, color: theme.colorScheme.primary),
                       const SizedBox(height: 16),
-                      Text('Reverse the page order',
+                      Text(L10n.of(context).reverseOrderLabel,
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Text(
@@ -93,7 +93,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
                 child: FilledButton.icon(
                   onPressed: (pages != null && pages > 1 && !loading) ? _onReverse : null,
                   icon: const Icon(Icons.swap_vert),
-                  label: const Text('Reverse & Save'),
+                  label: Text(L10n.of(context).reverseAndSave),
                 ),
               ),
             ]),

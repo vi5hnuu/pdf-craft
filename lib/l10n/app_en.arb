@@ -1092,5 +1092,112 @@
   "willHaveOwnerPermissions": "⚠️ Will have owner permissions ⚠️",
   "passwordHintTitle": "Password hint",
   "passwordLabel": "Password",
-  "removePassword": "Remove password"
+  "removePassword": "Remove password",
+  "quickActions": "Quick Actions",
+  "recentlyProcessed": "Recently Processed",
+  "noProcessedFilesYet": "No processed files yet",
+  "purchaseCouldNotStart": "Could not start purchase.",
+  "purchaseFailed": "Purchase failed. You have not been charged.",
+  "creditsAdded": "Credits added!",
+  "purchaseVerifying": "Verifying your purchase… credits will appear shortly.",
+  "fileDeleteSuccess": "File deleted.",
+  "deletingFile": "Deleting file…",
+  "confirmDeleteFile": "Permanently delete \"{name}\"?\nThis cannot be undone.",
+  "@confirmDeleteFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequest": "Permission Request",
+  "decline": "Decline",
+  "grantPermission": "Grant Permission",
+  "documentScanner": "Document Scanner",
+  "pdfDocumentLabel": "PDF Document:",
+  "imagesLabel": "Images:",
+  "applyTo": "Apply to",
+  "failedToLoadPdf": "Failed to load PDF",
+  "reorderPagesTitle": "Reorder pages ",
+  "swapBaseInsert": "Swap base / insert",
+  "insertPosition": "Insert position",
+  "insertAndSave": "Insert & save",
+  "resetZoom": "Reset zoom",
+  "confirmPlacement": "Confirm placement",
+  "undoLastRegion": "Undo last region",
+  "clearPage": "Clear page",
+  "sanitizeIntro": "Remove active and unsafe content before sharing.",
+  "sanitizeWillStrip": "This will strip:",
+  "sanitizeUnchanged": "The visible page content is unchanged.",
+  "sanJavascript": "JavaScript",
+  "sanEmbeddedFiles": "Embedded / attached files",
+  "sanActions": "Open & event actions",
+  "sanMetadata": "Document metadata",
+  "scalePercent": "Scale: {percent}%",
+  "@scalePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "scaleHelp": "Both the page size and its content are scaled by this amount.",
+  "maxSizePerPart": "Maximum size per part",
+  "splitZip": "Split (ZIP)",
+  "tapToSelectStamp": "Tap to select a stamp image or PDF",
+  "compressionLevel": "Compression Level",
+  "pagesDuplicated": "Pages duplicated",
+  "flipHorizontalDesc": "Horizontal (mirror left–right)",
+  "flipVerticalDesc": "Vertical (mirror top–bottom)",
+  "grayscaleDone": "PDF converted to grayscale",
+  "optimizeDone": "PDF optimized",
+  "whatThisDoes": "What this does",
+  "rangeLabel": "Range",
+  "toLabel": "To",
+  "addRange": "Add Range",
+  "retry": "Retry",
+  "noAnalysisAvailable": "No analysis available",
+  "selectPagesToRemove": "Select the pages to remove.",
+  "selectPagesToKeep": "Select the pages to keep.",
+  "documentProperties": "Document Properties",
+  "saveMetadata": "Save metadata",
+  "extractAttachments": "Extract attachments",
+  "extractFilesZip": "Extract files (ZIP)",
+  "extractEmbeddedFonts": "Extract embedded fonts",
+  "extractFontsZip": "Extract fonts (ZIP)",
+  "extractEmbeddedImages": "Extract embedded images",
+  "extractImagesZip": "Extract images (ZIP)",
+  "flipDirection": "Flip direction",
+  "nUpDone": "N-up PDF created",
+  "pagesPerSheet": "Pages per Sheet",
+  "extensionAutoAdded": "Extension is added automatically",
+  "blankPagesRemoved": "Blank pages removed",
+  "detectionSensitivity": "Detection Sensitivity",
+  "followingWillBeRemoved": "The following will be removed:",
+  "metaTitle": "Title",
+  "metaAuthor": "Author",
+  "metaSubjectKeywords": "Subject & Keywords",
+  "metaCreatorProducer": "Creator & Producer app",
+  "metaDates": "Creation & modified dates",
+  "metaXmp": "XMP metadata",
+  "reverseOrderLabel": "Reverse the page order",
+  "reverseAndSave": "Reverse & save",
+  "rotationLabel": "Rotation",
+  "targetSize": "Target size",
+  "resizeTo": "Resize to {size}",
+  "@resizeTo": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "typeFieldLabel": "{type} field",
+  "@typeFieldLabel": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  }
 }

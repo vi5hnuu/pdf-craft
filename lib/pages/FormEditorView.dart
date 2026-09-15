@@ -689,7 +689,7 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
         Row(children: [
           Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Text('${f.type.label} field', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Text(L10n.of(context).typeFieldLabel(f.type.label), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
         ]),
         const SizedBox(height: 12),
         _field(_name, 'Field name', (v) => f.name = v),

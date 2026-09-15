@@ -67,7 +67,7 @@ class _DeletePagesViewState extends State<DeletePagesView>
         title: Text(ToolStrings.name(context, 'delete-pages')),
         actions: [
           if (_selected.isNotEmpty)
-            TextButton(onPressed: () => setState(_selected.clear), child: const Text('Clear')),
+            TextButton(onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
         ],
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
@@ -83,7 +83,7 @@ class _DeletePagesViewState extends State<DeletePagesView>
             Column(children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text('Select the pages to remove.',
+                child: Text(L10n.of(context).selectPagesToRemove,
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
               ),

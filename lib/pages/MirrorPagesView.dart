@@ -51,7 +51,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Flip direction', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).flipDirection, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     // RadioGroup supplies the selection to the tiles below it. Besides
                     // replacing the deprecated per-tile groupValue/onChanged, it gives the set
@@ -84,7 +84,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onMirror,
                   icon: const Icon(Icons.flip),
-                  label: const Text('Mirror Pages'),
+                  label: Text(ToolStrings.name(context, 'mirror-pages')),
                 ),
               ),
             ]),

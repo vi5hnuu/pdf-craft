@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/get-metadata.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -63,7 +64,7 @@ class _PdfInfoViewState extends State<PdfInfoView> {
                   const SizedBox(height: 12),
                   Text(s!.error!, textAlign: TextAlign.center),
                   const SizedBox(height: 16),
-                  FilledButton(onPressed: _fetch, child: const Text('Retry')),
+                  FilledButton(onPressed: _fetch, child: Text(L10n.of(context).retry)),
                 ],
               ),
             );

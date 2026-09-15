@@ -50,7 +50,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
           final s = state.httpStates[HttpStates.OPTIMIZE_PDF];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'PDF optimized', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.optimizeDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -82,7 +82,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                       Row(children: [
                         Icon(Icons.info_outline, size: 18, color: theme.colorScheme.primary),
                         const SizedBox(width: 8),
-                        Text('What this does', style: theme.textTheme.titleSmall),
+                        Text(L10n.of(context).whatThisDoes, style: theme.textTheme.titleSmall),
                       ]),
                       const SizedBox(height: 8),
                       Text(

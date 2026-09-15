@@ -540,7 +540,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
           maxLines: 3,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () {
               if (textC.text.isNotEmpty) {
@@ -552,7 +552,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
               }
               Navigator.pop(ctx);
             },
-            child: const Text('Add'),
+            child: Text(L10n.of(context).add),
           ),
         ],
       ),
@@ -625,10 +625,10 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
           onColorChanged: (c) => picked = c,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () { setState(() => _strokeColor = picked); Navigator.pop(ctx); },
-            child: const Text('Select'),
+            child: Text(L10n.of(context).select),
           ),
         ],
       ),
@@ -646,10 +646,10 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
           onColorChanged: (c) => picked = c,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () { setState(() => _fillColor = picked); Navigator.pop(ctx); },
-            child: const Text('Select'),
+            child: Text(L10n.of(context).select),
           ),
         ],
       ),

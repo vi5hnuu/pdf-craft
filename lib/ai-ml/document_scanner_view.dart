@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class DocumentScannerView extends StatefulWidget {
@@ -26,7 +27,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Document Scanner'),
+        title: Text(L10n.of(context).documentScanner),
         centerTitle: true,
         elevation: 0,
       ),
@@ -89,7 +90,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                     top: 16, bottom: 8, right: 8, left: 8),
                 child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('PDF Document:')),
+                    child: Text(L10n.of(context).pdfDocumentLabel)),
               ),
               SizedBox(
                 height: 300,
@@ -102,7 +103,7 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                     top: 16, bottom: 8, right: 8, left: 8),
                 child: Align(
                     alignment: Alignment.centerLeft,
-                    child: const Text('Images [0]:')),
+                    child: Text(L10n.of(context).imagesLabel)),
               ),
               SizedBox(
                   height: 400,

@@ -64,7 +64,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
         title: Text(ToolStrings.name(context, 'extract-pages')),
         actions: [
           if (_selected.isNotEmpty)
-            TextButton(onPressed: () => setState(_selected.clear), child: const Text('Clear')),
+            TextButton(onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
         ],
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
@@ -79,7 +79,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
             Column(children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text('Select the pages to keep.',
+                child: Text(L10n.of(context).selectPagesToKeep,
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
 
 class PermissionInfoDialog extends StatelessWidget {
@@ -10,7 +11,7 @@ class PermissionInfoDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("Permission Request",textAlign: TextAlign.center,style: TextStyle(fontWeight: FontWeight.bold),),
+      title: Text(L10n.of(context).permissionRequest,textAlign: TextAlign.center,style: TextStyle(fontWeight: FontWeight.bold),),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -41,11 +42,11 @@ class PermissionInfoDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: ()=>onAction(false),
-          child: Text("Decline"),
+          child: Text(L10n.of(context).decline),
         ),
         ElevatedButton(
           onPressed: () async =>onAction(await StoragePermissions.requestStoragePermissions()),
-          child: Text("Grant Permission"),
+          child: Text(L10n.of(context).grantPermission),
         ),
       ],
     );

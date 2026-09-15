@@ -54,7 +54,7 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.attachment_outlined, size: 64, color: theme.colorScheme.primary),
                     const SizedBox(height: 16),
-                    Text('Extract attachments',
+                    Text(L10n.of(context).extractAttachments,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Text(
@@ -77,7 +77,7 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onExtract,
                   icon: const Icon(Icons.archive_outlined),
-                  label: const Text('Extract Files (ZIP)'),
+                  label: Text(L10n.of(context).extractFilesZip),
                 ),
               ),
             ]),

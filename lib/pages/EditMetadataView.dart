@@ -72,9 +72,9 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                             _field(_outFileNameC, 'Output File Name (optional)'),
                             const SizedBox(height: 12),
                             const Divider(),
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Text('Document Properties', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              child: Text(L10n.of(context).documentProperties, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                             ),
                             _field(_titleC,    'Title'),
                             const SizedBox(height: 12),
@@ -96,7 +96,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                       child: FilledButton.icon(
                         onPressed: _onSave,
                         icon: const Icon(Icons.save),
-                        label: const Text('Save Metadata'),
+                        label: Text(L10n.of(context).saveMetadata),
                       ),
                     ),
                   ],

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/routes.dart';
@@ -55,7 +56,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
           if (_pageCounts.isNotEmpty)
             TextButton(
               onPressed: () => setState(() => _pageCounts.clear()),
-              child: const Text('Clear'),
+              child: Text(L10n.of(context).clear),
             ),
         ],
       ),
@@ -68,7 +69,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
           final s = state.httpStates[HttpStates.DUPLICATE_PAGES];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Pages duplicated', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.pagesDuplicated, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,

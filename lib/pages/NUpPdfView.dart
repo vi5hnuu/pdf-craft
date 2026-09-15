@@ -51,7 +51,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
           final s = state.httpStates[HttpStates.N_UP_PDF];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'N-up PDF created', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.nUpDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -76,7 +76,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Pages per Sheet', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(L10n.of(context).pagesPerSheet, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 Row(children: [
                   _layoutOption(theme, 2, '2-Up', 'Landscape, side by side', Icons.view_agenda_outlined),

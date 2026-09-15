@@ -84,13 +84,13 @@ class _InsertPdfViewState extends State<InsertPdfView>
                     Center(
                       child: IconButton(
                         icon: const Icon(Icons.swap_vert),
-                        tooltip: 'Swap base / insert',
+                        tooltip: L10n.of(context).swapBaseInsert,
                         onPressed: _swap,
                       ),
                     ),
                     _fileCard(theme, 'Insert this', _insert, Icons.note_add_outlined),
                     const SizedBox(height: 20),
-                    Text('Insert position', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).insertPosition, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     Text(
                       _position == 0
@@ -109,9 +109,9 @@ class _InsertPdfViewState extends State<InsertPdfView>
                         onChanged: (v) => setState(() => _position = v.round()),
                       )
                     else
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Reading base document…'),
+                        child: Text(L10n.of(context).readingBaseDoc),
                       ),
                   ]),
                 ),
@@ -126,7 +126,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
                 child: FilledButton.icon(
                   onPressed: (loading || _basePages == 0) ? null : _onInsert,
                   icon: const Icon(Icons.merge_type),
-                  label: const Text('Insert & Save'),
+                  label: Text(L10n.of(context).insertAndSave),
                 ),
               ),
             ]),

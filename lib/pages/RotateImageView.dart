@@ -70,7 +70,7 @@ class _RotateImageViewState extends State<RotateImageView>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('Rotation', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).rotationLabel, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(spacing: 8, children: [
                       for (final a in [90, 180, 270])

@@ -31,18 +31,20 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
     resetToolState([HttpStates.REMOVE_METADATA]);
   }
 
-  static const _stripped = [
-    ('Title', Icons.title),
-    ('Author', Icons.person_outline),
-    ('Subject & Keywords', Icons.label_outline),
-    ('Creator & Producer app', Icons.build_outlined),
-    ('Creation & modified dates', Icons.schedule_outlined),
-    ('XMP metadata', Icons.data_object),
+  /// Localized at build time, so the list follows the app language.
+  List<(String, IconData)> _strippedItems(BuildContext context) => [
+    (L10n.of(context).metaTitle, Icons.title),
+    (L10n.of(context).metaAuthor, Icons.person_outline),
+    (L10n.of(context).metaSubjectKeywords, Icons.label_outline),
+    (L10n.of(context).metaCreatorProducer, Icons.build_outlined),
+    (L10n.of(context).metaDates, Icons.schedule_outlined),
+    (L10n.of(context).metaXmp, Icons.data_object),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final stripped = _strippedItems(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'remove-metadata'))),
       body: BlocConsumer<PdfBloc, PdfState>(
@@ -69,7 +71,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
                       ),
                     ]),
                     const SizedBox(height: 20),
-                    Text('The following will be removed:',
+                    Text(L10n.of(context).followingWillBeRemoved,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                     const SizedBox(height: 8),
@@ -77,12 +79,12 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
                       margin: EdgeInsets.zero,
                       child: Column(
                         children: [
-                          for (int i = 0; i < _stripped.length; i++) ...[
+                          for (int i = 0; i < stripped.length; i++) ...[
                             if (i > 0) const Divider(height: 1, indent: 52),
                             ListTile(
                               dense: true,
-                              leading: Icon(_stripped[i].$2, size: 20, color: theme.colorScheme.primary),
-                              title: Text(_stripped[i].$1),
+                              leading: Icon(stripped[i].$2, size: 20, color: theme.colorScheme.primary),
+                              title: Text(stripped[i].$1),
                               trailing: const Icon(Icons.close, size: 16, color: Colors.red),
                             ),
                           ],
@@ -108,7 +110,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onRemove,
                   icon: const Icon(Icons.cleaning_services_outlined),
-                  label: const Text('Remove Metadata'),
+                  label: Text(ToolStrings.name(context, 'remove-metadata')),
                 ),
               ),
             ]),

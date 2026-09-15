@@ -100,7 +100,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
           if (_rects.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.undo),
-              tooltip: 'Undo last region',
+              tooltip: L10n.of(context).undoLastRegion,
               onPressed: () => setState(() {
                 _rects.removeLast();
                 _selectedId = null;
@@ -108,7 +108,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
             ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: 'Clear page',
+            tooltip: L10n.of(context).clearPage,
             onPressed: _rects.isEmpty
                 ? null
                 : () => setState(() {

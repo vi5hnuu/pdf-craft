@@ -100,7 +100,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                                         children: [
                                           Icon(Icons.picture_as_pdf_outlined, size: 36, color: theme.colorScheme.primary),
                                           const SizedBox(height: 6),
-                                          const Text('Tap to select a stamp image or PDF', style: TextStyle(fontSize: 13)),
+                                          Text(L10n.of(context).tapToSelectStamp, style: const TextStyle(fontSize: 13)),
                                         ],
                                       ),
                               ),
@@ -127,7 +127,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                       child: FilledButton.icon(
                         onPressed: _stampFile != null ? _onStamp : null,
                         icon: const Icon(Icons.photo_filter),
-                        label: const Text('Stamp PDF'),
+                        label: Text(ToolStrings.name(context, 'stamp')),
                       ),
                     ),
                   ],

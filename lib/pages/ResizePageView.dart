@@ -59,7 +59,7 @@ class _ResizePageViewState extends State<ResizePageView>
                   // overflows a fixed column on a short screen.
                   child: SingleChildScrollView(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Target size', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).targetSize, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     // RadioGroup supplies the selection to the tiles below it. Besides
                     // replacing the deprecated per-tile groupValue/onChanged, it gives the set
@@ -103,7 +103,7 @@ class _ResizePageViewState extends State<ResizePageView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onResize,
                   icon: const Icon(Icons.aspect_ratio),
-                  label: Text('Resize to ${_size.label}'),
+                  label: Text(L10n.of(context).resizeTo(_size.label)),
                 ),
               ),
             ]),

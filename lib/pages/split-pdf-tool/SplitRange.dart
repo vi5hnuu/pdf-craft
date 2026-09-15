@@ -90,7 +90,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
               if(widget.type==SplitType.FIXED_RANGE) Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Range',border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: L10n.of(context).rangeLabel,border: OutlineInputBorder()),
                     onChanged: _onFixedRangeChange,
                     validator: (value){
                       return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
@@ -114,7 +114,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                         SizedBox(width: 12,),
                         Flexible(
                           child: TextFormField(keyboardType: TextInputType.number,
-                              decoration: InputDecoration(label: Text("To"),border: OutlineInputBorder()),
+                              decoration: InputDecoration(label: Text(L10n.of(context).toLabel),border: OutlineInputBorder()),
                               controller: rangeEnd,
                               validator: (value){
                                 return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
@@ -128,7 +128,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                       final to=min(int.tryParse(rangeEnd.text) ?? 1, document!.pagesCount)-1;
                       if(from<0 || to<0) return;
                       _addRange(RangeModel(from:from, to:to ));
-                    }, child: Text("Add Range")),
+                    }, child: Text(L10n.of(context).addRange)),
                   ],
                 ),
               ),

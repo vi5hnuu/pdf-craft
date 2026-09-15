@@ -57,10 +57,10 @@ class _ScalePdfViewState extends State<ScalePdfView>
                   // overflows a fixed column on a short screen.
                   child: SingleChildScrollView(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Scale: ${_percent.round()}%',
+                    Text(L10n.of(context).scalePercent(_percent.round()),
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
-                    Text('Both the page size and its content are scaled by this amount.',
+                    Text(L10n.of(context).scaleHelp,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                     Slider(
@@ -103,7 +103,7 @@ class _ScalePdfViewState extends State<ScalePdfView>
                 child: FilledButton.icon(
                   onPressed: (loading || _percent == 100) ? null : _onScale,
                   icon: const Icon(Icons.photo_size_select_large),
-                  label: const Text('Scale PDF'),
+                  label: Text(ToolStrings.name(context, 'scale-pdf')),
                 ),
               ),
             ]),

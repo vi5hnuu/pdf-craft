@@ -72,7 +72,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _outFileNameC,
-                      decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 20),
                     PageRangeSelector(
@@ -87,7 +87,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(onPressed: _onExtract, child: const Text('Extract Text')),
+                      child: FilledButton(onPressed: _onExtract, child: Text(ToolStrings.name(context, 'extract-text'))),
                     ),
                   ],
                 ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -89,7 +90,7 @@ class PurchaseService extends ChangeNotifier {
           )));
     } catch (e) {
       LoggerSingleton().logger.w('buyConsumable failed: $e');
-      NotificationService.showSnackbar(text: 'Could not start purchase.', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.purchaseCouldNotStart, color: Colors.red);
       return false;
     }
   }
@@ -111,7 +112,7 @@ class PurchaseService extends ChangeNotifier {
           _setPending(false);
           LoggerSingleton().logger.w('Purchase error: ${p.error}');
           NotificationService.showSnackbar(
-              text: 'Purchase failed. You have not been charged.', color: Colors.red);
+              text: L10n.current.purchaseFailed, color: Colors.red);
           await _finalizeIfPending(p); // clear the failed item from the queue
           break;
 
@@ -130,14 +131,14 @@ class PurchaseService extends ChangeNotifier {
           .redeemPurchase(p.verificationData.serverVerificationData, p.productID);
       if (credited) {
         await _finalizeIfPending(p);
-        NotificationService.showSnackbar(text: 'Credits added!', color: Colors.green);
+        NotificationService.showSnackbar(text: L10n.current.creditsAdded, color: Colors.green);
       }
     } catch (e) {
       // Transient/verification failure — DO NOT finalize. Play will redeliver it and we
       // retry on the next update/launch, so the user isn't charged without credits.
       LoggerSingleton().logger.w('Purchase verification deferred (will retry): $e');
       NotificationService.showSnackbar(
-          text: 'Verifying your purchase… credits will appear shortly.', color: Colors.orange);
+          text: L10n.current.purchaseVerifying, color: Colors.orange);
     }
   }
 

@@ -85,7 +85,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(keyboardType: TextInputType.text,
-                        decoration: InputDecoration(labelText: "Output File Name" ,border: OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: L10n.of(context).outputFileName ,border: OutlineInputBorder()),
                         controller: outFileNameC),
                   ),
                   if(type==null || type==SplitType.EXTRACT_ALL_PAGES || type==SplitType.SPLIT_BY_BOOKMARK)
@@ -96,7 +96,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                     padding: const EdgeInsets.all(16.0),
                     child: FilledButton(
                       onPressed: type==null || (![SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK].contains(type) && ranges.isEmpty) ? null : _onExtractAllPages,
-                      child: const Text("Split Pdf Pages"),
+                      child: Text(ToolStrings.name(context, 'split')),
                     ),
                   )
                 ],),

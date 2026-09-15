@@ -69,7 +69,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(keyboardType: TextInputType.text,
-                    decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                     controller: outFileNameC),
                 ),
                 SizedBox(height: 12,),
@@ -81,12 +81,12 @@ class _MergePdfViewState extends State<MergePdfView> {
                   header: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: RichText(
-                      text: const TextSpan(
-                        text: 'Reorder File ',
+                      text: TextSpan(
+                        text: L10n.of(context).reorderFilesTitle,
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
-                            text: '( long press to drag )',
+                            text: L10n.of(context).longPressToDrag,
                             style: TextStyle(fontSize: 12),
                           ),
                         ],
@@ -112,7 +112,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                     );
                   },
                 )),
-                Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: const Text("Merge PDFs")),)
+                Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: Text(ToolStrings.name(context, 'merge'))),)
               ],
             ),
             LoadingOverlay(httpState: state.httpStates[HttpStates.MERGE_PDF], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),

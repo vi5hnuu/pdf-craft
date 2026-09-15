@@ -79,17 +79,17 @@ class _FlipImageViewState extends State<FlipImageView>
                     RadioGroup<bool>(
                       groupValue: _horizontal,
                       onChanged: (v) => setState(() => _horizontal = v ?? _horizontal),
-                      child: const Column(
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           RadioListTile<bool>(
                             value: true,
-                            title: Text('Horizontal (mirror left–right)'),
+                            title: Text(L10n.of(context).flipHorizontalDesc),
                             secondary: Icon(Icons.flip),
                           ),
                           RadioListTile<bool>(
                             value: false,
-                            title: Text('Vertical (mirror top–bottom)'),
+                            title: Text(L10n.of(context).flipVerticalDesc),
                             secondary: Icon(Icons.flip_camera_android),
                           ),
                         ],
@@ -108,7 +108,7 @@ class _FlipImageViewState extends State<FlipImageView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onApply,
                   icon: const Icon(Icons.flip),
-                  label: const Text('Flip Image'),
+                  label: Text(ToolStrings.name(context, 'img-flip')),
                 ),
               ),
             ]),

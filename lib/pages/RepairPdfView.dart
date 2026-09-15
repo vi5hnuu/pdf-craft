@@ -83,7 +83,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
                             const SizedBox(height: 20),
                             TextFormField(
                               controller: _outFileNameC,
-                              decoration: const InputDecoration(labelText: 'Output File Name (optional)', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).outputFileNameOptional, border: OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             const Text(
@@ -99,7 +99,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
                       child: FilledButton.icon(
                         onPressed: _onRepair,
                         icon: const Icon(Icons.build),
-                        label: const Text('Repair PDF'),
+                        label: Text(ToolStrings.name(context, 'repair')),
                       ),
                     ),
                   ],

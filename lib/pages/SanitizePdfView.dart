@@ -31,16 +31,18 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
     resetToolState([HttpStates.SANITIZE_PDF]);
   }
 
-  static const _removed = [
-    ('JavaScript', Icons.code_off),
-    ('Embedded / attached files', Icons.attach_file),
-    ('Open & event actions', Icons.bolt_outlined),
-    ('Document metadata', Icons.info_outline),
+  /// Localized at build time, so the list follows the app language.
+  List<(String, IconData)> _removedItems(BuildContext context) => [
+    (L10n.of(context).sanJavascript, Icons.code_off),
+    (L10n.of(context).sanEmbeddedFiles, Icons.attach_file),
+    (L10n.of(context).sanActions, Icons.bolt_outlined),
+    (L10n.of(context).sanMetadata, Icons.info_outline),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final removed = _removedItems(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'sanitize'))),
       body: BlocConsumer<PdfBloc, PdfState>(
@@ -60,31 +62,31 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
                       Icon(Icons.security_outlined, color: theme.colorScheme.primary),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text('Remove active and unsafe content before sharing.',
+                        child: Text(L10n.of(context).sanitizeIntro,
                             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                       ),
                     ]),
                     const SizedBox(height: 20),
-                    Text('This will strip:',
+                    Text(L10n.of(context).sanitizeWillStrip,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                     const SizedBox(height: 8),
                     Card(
                       margin: EdgeInsets.zero,
                       child: Column(children: [
-                        for (int i = 0; i < _removed.length; i++) ...[
+                        for (int i = 0; i < removed.length; i++) ...[
                           if (i > 0) const Divider(height: 1, indent: 52),
                           ListTile(
                             dense: true,
-                            leading: Icon(_removed[i].$2, size: 20, color: theme.colorScheme.primary),
-                            title: Text(_removed[i].$1),
+                            leading: Icon(removed[i].$2, size: 20, color: theme.colorScheme.primary),
+                            title: Text(removed[i].$1),
                             trailing: const Icon(Icons.close, size: 16, color: Colors.red),
                           ),
                         ],
                       ]),
                     ),
                     const SizedBox(height: 16),
-                    Text('The visible page content is unchanged.',
+                    Text(L10n.of(context).sanitizeUnchanged,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.55))),
                   ]),
@@ -100,7 +102,7 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onSanitize,
                   icon: const Icon(Icons.shield_outlined),
-                  label: const Text('Sanitize PDF'),
+                  label: Text(ToolStrings.name(context, 'sanitize')),
                 ),
               ),
             ]),

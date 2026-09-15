@@ -164,7 +164,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
           if (_mode == _Mode.zoom)
             IconButton(
               icon: const Icon(Icons.fit_screen),
-              tooltip: 'Reset zoom',
+              tooltip: L10n.of(context).resetZoom,
               onPressed: () => _txCtrl.value = Matrix4.identity(),
             ),
         ],
@@ -478,7 +478,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
           child: FilledButton.icon(
             onPressed: _imageBytes == null ? null : _onConfirm,
             icon: const Icon(Icons.check, size: 18),
-            label: const Text('Confirm Placement'),
+            label: Text(L10n.of(context).confirmPlacement),
           ),
         ),
       ]),

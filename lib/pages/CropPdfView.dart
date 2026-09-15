@@ -120,8 +120,8 @@ class _CropPdfViewState extends State<CropPdfView> {
                   children: [
                     TextFormField(
                       controller: _outFileNameC,
-                      decoration: const InputDecoration(
-                        labelText: 'Output File Name',
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).outputFileName,
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
@@ -136,7 +136,7 @@ class _CropPdfViewState extends State<CropPdfView> {
                     // fills the rest of the screen so dragging a handle never fights a scroll.
                     Row(
                       children: [
-                        Text('Apply to', style: theme.textTheme.bodySmall),
+                        Text(L10n.of(context).applyTo, style: theme.textTheme.bodySmall),
                         const Spacer(),
                         Flexible(
                           child: TextButton(
@@ -170,7 +170,7 @@ class _CropPdfViewState extends State<CropPdfView> {
                 ),
                 child: FilledButton(
                   onPressed: _onCrop,
-                  child: const Text('Crop PDF'),
+                  child: Text(ToolStrings.name(context, 'crop')),
                 ),
               ),
             ]),

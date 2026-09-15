@@ -66,7 +66,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Maximum size per part',
+                    Text(L10n.of(context).maxSizePerPart,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     Text(
@@ -80,8 +80,8 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                       controller: _sizeC,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                      decoration: const InputDecoration(
-                        labelText: 'Size',
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).sortSize,
                         suffixText: 'MB',
                         border: OutlineInputBorder(),
                         isDense: true,
@@ -110,7 +110,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                 child: FilledButton.icon(
                   onPressed: valid && !loading ? _onSplit : null,
                   icon: const Icon(Icons.call_split),
-                  label: const Text('Split (ZIP)'),
+                  label: Text(L10n.of(context).splitZip),
                 ),
               ),
             ]),

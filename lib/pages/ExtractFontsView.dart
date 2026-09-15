@@ -54,7 +54,7 @@ class _ExtractFontsViewState extends State<ExtractFontsView>
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.font_download_outlined, size: 64, color: theme.colorScheme.primary),
                     const SizedBox(height: 16),
-                    Text('Extract embedded fonts',
+                    Text(L10n.of(context).extractEmbeddedFonts,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Text(
@@ -77,7 +77,7 @@ class _ExtractFontsViewState extends State<ExtractFontsView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onExtract,
                   icon: const Icon(Icons.archive_outlined),
-                  label: const Text('Extract Fonts (ZIP)'),
+                  label: Text(L10n.of(context).extractFontsZip),
                 ),
               ),
             ]),

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
@@ -25,13 +26,13 @@ class FilesListing extends StatelessWidget {
         final httpState = state.httpStates[HttpStates.PAGE_NUMBERS];
         if (httpState?.done == true) {
           NotificationService.showSnackbar(
-              text: 'File Delete Success.', color: Colors.green);
+              text: L10n.current.fileDeleteSuccess, color: Colors.green);
         } else if (httpState?.error != null) {
           NotificationService.showSnackbar(
               text: httpState!.error!, color: Colors.red);
         } else if (httpState?.loading == true) {
           NotificationService.showSnackbar(
-              text: 'Deleting file...', color: Colors.lightBlue);
+              text: L10n.current.deletingFile, color: Colors.lightBlue);
         }
       },
       child: Flex(
@@ -57,7 +58,7 @@ class FilesListing extends StatelessWidget {
     final result = await ConfirmDialog.show(
       context,
       title: 'Delete File',
-      message: 'Permanently delete "$filename"?\nThis cannot be undone.',
+      message: L10n.current.confirmDeleteFile(filename),
       confirmLabel: 'Delete',
       destructive: true,
     );

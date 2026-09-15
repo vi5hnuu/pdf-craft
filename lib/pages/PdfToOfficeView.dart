@@ -111,10 +111,10 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _outFileNameC,
-                      decoration: const InputDecoration(
-                        labelText: 'Output File Name',
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).outputFileName,
                         border: OutlineInputBorder(),
-                        helperText: 'Extension is added automatically',
+                        helperText: L10n.of(context).extensionAutoAdded,
                       ),
                     ),
                     const Spacer(),
