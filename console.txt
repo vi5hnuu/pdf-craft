@@ -54,10 +54,22 @@ The app and backend already implement billing. Remaining setup:
 5. Service account for purchase verification (Google Cloud)
    a. console.cloud.google.com: create or pick a project.
    b. APIs & Services -> Enable "Google Play Android Developer API".
-   c. IAM & Admin -> Service accounts -> Create. Then Keys -> Add key -> JSON, and download it.
+   c. IAM & Admin -> Service accounts -> Create service account:
+        Name:         play-billing-verifier
+                      (email becomes play-billing-verifier@<project-id>.iam.gserviceaccount.com)
+        Description:  pdf-studio-api verifies PDF Craft Google Play purchases
+        "Grant this service account access to project" (roles): leave EMPTY -> Done.
+                      No Cloud IAM role is needed; access is granted in Play Console (step d).
+      Open the account -> Keys -> Add key -> Create new key -> JSON -> download it.
+      Reusing an existing service account works too, as long as its project has the Play
+      Android Developer API enabled. A dedicated account is safer because its key lives on the
+      homelab server.
    d. Play Console -> Users and permissions -> Invite new users -> enter the service account
-      email. App permissions for PDF Craft: "View financial data, orders, and cancellation
-      survey responses" and "Manage orders and subscriptions". Allow up to 24h to propagate.
+      email -> App permissions -> Add app: PDF Craft, and tick ONLY:
+        [x] View app information and download bulk reports (read-only)
+        [x] View financial data, orders, and cancellation survey responses
+        [x] Manage orders and subscriptions
+      No Admin and no account-level permissions. Invite, then allow up to 24h to propagate.
    e. Homelab server:
         - copy the JSON to e.g. /etc/pdf-studio/play-service-account.json (chmod 600)
         - in /etc/pdf-studio/prod.env set:
@@ -75,8 +87,12 @@ The app and backend already implement billing. Remaining setup:
    c. Create a subscription on the topic:
         Delivery type: Push
         Endpoint: https://pdf-studio-api.laxmi.solutions/api/v1/credits/play-rtdn?secret=<LONG_RANDOM_SECRET>
-        Recommended: enable authentication (OIDC) with a service account; audience = the
-        endpoint URL.
+        Recommended: enable authentication (OIDC):
+          - create a second service account "play-rtdn-pusher" (no roles) and select it
+          - audience = the endpoint URL
+          - projects created before 8 Apr 2021 only: grant the Pub/Sub service agent
+            service-<project-number>@gcp-sa-pubsub.iam.gserviceaccount.com the role
+            "Service Account Token Creator" on play-rtdn-pusher
    d. prod.env:
         PLAY_RTDN_SECRET=<LONG_RANDOM_SECRET>
         PLAY_RTDN_AUDIENCE=<endpoint URL, if OIDC is enabled>
