@@ -10,6 +10,9 @@ import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
+import 'package:pdf_craft/tools/credit_gate.dart';
+import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/utils/UploadLimits.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -330,14 +333,27 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (result.pdf != null) {
       await _savePdf(result.pdf!, fileName);
     } else {
-      BlocProvider.of<PdfBloc>(context).add(ImageToPdfEvent(
-        imageToPdf: ImageToPdf(
-          out_file_name: fileName,
-          files: await Future.wait(
-            (result.images ?? []).map((p) => MultipartFile.fromFile(p)),
-          ),
-        ),
-      ));
+      final images = (result.images ?? []).map((p) => File(p)).toList();
+      // Merging scanned images runs on the server (the priced image-to-pdf tool). This path used
+      // to spend credits without asking; it now checks size and confirms the cost exactly like
+      // opening Image to PDF from the Tools tab.
+      if (!await UploadLimits.ensureWithinLimits(context, images)) return;
+      if (!mounted) return;
+      final bloc = BlocProvider.of<PdfBloc>(context);
+      await CreditGate.run(
+        context,
+        creditToolId: ToolRegistry.byId('image-to-pdf')?.creditToolId,
+        toolName: 'Merge to PDF',
+        files: images,
+        proceed: () async {
+          bloc.add(ImageToPdfEvent(
+            imageToPdf: ImageToPdf(
+              out_file_name: fileName,
+              files: await Future.wait(images.map((f) => MultipartFile.fromFile(f.path))),
+            ),
+          ));
+        },
+      );
     }
   }
 
