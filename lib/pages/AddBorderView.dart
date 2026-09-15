@@ -46,7 +46,7 @@ class _AddBorderViewState extends State<AddBorderView>
         listenWhen: (p, c) => p.httpStates[HttpStates.BORDER_IMAGE] != c.httpStates[HttpStates.BORDER_IMAGE],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.BORDER_IMAGE],
-          successMessage: 'Border added',
+          successMessage: L10n.of(context).borderAdded,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {

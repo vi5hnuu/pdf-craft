@@ -107,7 +107,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
               ),
               LoadingOverlay(
                 httpState: state.httpStates[HttpStates.COMPRESS_PDF],
-                label: 'Compressing your PDF',
+                label: L10n.of(context).compressingPdf,
                 onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
               ),
             ],

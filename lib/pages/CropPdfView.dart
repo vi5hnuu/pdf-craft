@@ -128,7 +128,7 @@ class _CropPdfViewState extends State<CropPdfView> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Drag the blue handles inward — the shaded area is removed.',
+                      L10n.of(context).cropHint,
                       style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                     ),
@@ -141,7 +141,7 @@ class _CropPdfViewState extends State<CropPdfView> {
                         Flexible(
                           child: TextButton(
                             onPressed: _pickPages,
-                            child: Text('$_pageSummary · change',
+                            child: Text('$_pageSummary · ${L10n.of(context).change}',
                                 overflow: TextOverflow.ellipsis),
                           ),
                         ),

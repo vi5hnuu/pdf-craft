@@ -74,7 +74,7 @@ class _DeletePagesViewState extends State<DeletePagesView>
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: 'Pages deleted'),
+            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: L10n.of(context).pagesDeleted),
         builder: (context, state) {
           if (_doc == null) return const Center(child: CircularProgressIndicator());
           final loading = state.httpStates[HttpStates.REORDER_PDF]?.loading == true;
@@ -106,9 +106,9 @@ class _DeletePagesViewState extends State<DeletePagesView>
                   onPressed: canDelete && !loading ? _onDelete : null,
                   icon: const Icon(Icons.delete_outline),
                   label: Text(_selected.isEmpty
-                      ? 'Select pages to delete'
+                      ? L10n.of(context).selectPagesToDelete
                       : _remaining < 1
-                          ? 'Keep at least one page'
+                          ? L10n.of(context).keepAtLeastOnePage
                           : 'Delete ${_selected.length} page(s) · $_remaining left'),
                   style: FilledButton.styleFrom(backgroundColor: Colors.red),
                 ),

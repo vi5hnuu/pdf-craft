@@ -520,7 +520,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
         icon: _saving
             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : const Icon(Icons.save_alt),
-        label: Text(_saving ? 'Saving…' : 'Save Annotations'),
+        label: Text(_saving ? L10n.of(context).saving : L10n.of(context).saveAnnotations),
       ),
     );
   }

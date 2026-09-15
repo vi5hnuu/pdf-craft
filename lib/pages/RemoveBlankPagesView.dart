@@ -27,9 +27,9 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
   double _sensitivity = 0.95;
 
   String get _sensitivityLabel {
-    if (_sensitivity >= 0.97) return 'High — removes lightly used pages';
-    if (_sensitivity >= 0.92) return 'Medium — removes mostly blank pages';
-    return 'Low — removes only fully blank pages';
+    if (_sensitivity >= 0.97) return L10n.of(context).sensitivityHigh;
+    if (_sensitivity >= 0.92) return L10n.of(context).sensitivityMedium;
+    return L10n.of(context).sensitivityLow;
   }
 
   String _sizeLabel = '';
@@ -102,7 +102,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                     icon: loading
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.delete_sweep_outlined),
-                    label: Text(loading ? 'Processing…' : 'Remove Blank Pages'),
+                    label: Text(loading ? L10n.of(context).processingEllipsis : ToolStrings.name(context, 'remove-blanks')),
                   ),
                 ),
               ]),

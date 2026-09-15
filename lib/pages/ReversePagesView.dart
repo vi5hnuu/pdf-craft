@@ -54,7 +54,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: 'Page order reversed'),
+            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: L10n.of(context).pageOrderReversed),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.REORDER_PDF]?.loading == true;
           final pages = _totalPages;
@@ -73,7 +73,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
                       const SizedBox(height: 8),
                       Text(
                         pages == null
-                            ? 'Reading document…'
+                            ? L10n.of(context).readingDocument
                             : 'The last page becomes the first. This document has $pages page${pages == 1 ? '' : 's'}.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall

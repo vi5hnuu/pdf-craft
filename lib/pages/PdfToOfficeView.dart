@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/pdf-to-office.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -36,20 +37,20 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
 
   String get _title {
     switch (widget.format) {
-      case PdfOfficeFormat.word: return 'PDF to Word';
-      case PdfOfficeFormat.excel: return 'PDF to Excel';
-      case PdfOfficeFormat.pptx: return 'PDF to PowerPoint';
+      case PdfOfficeFormat.word: return ToolStrings.name(context, 'pdf-to-word');
+      case PdfOfficeFormat.excel: return ToolStrings.name(context, 'pdf-to-excel');
+      case PdfOfficeFormat.pptx: return ToolStrings.name(context, 'pdf-to-pptx');
     }
   }
 
   String get _description {
     switch (widget.format) {
       case PdfOfficeFormat.word:
-        return 'Extracts text from your PDF and creates a .docx Word document with preserved paragraph structure.';
+        return L10n.of(context).pdfToWordDesc;
       case PdfOfficeFormat.excel:
-        return 'Extracts text from each PDF page into a separate sheet, splitting columns on whitespace.';
+        return L10n.of(context).pdfToExcelDesc;
       case PdfOfficeFormat.pptx:
-        return 'Creates one PowerPoint slide per PDF page with extracted text in a text box.';
+        return L10n.of(context).pdfToPptxDesc;
     }
   }
 
@@ -63,9 +64,9 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
 
   String get _buttonLabel {
     switch (widget.format) {
-      case PdfOfficeFormat.word: return 'Convert to Word';
-      case PdfOfficeFormat.excel: return 'Convert to Excel';
-      case PdfOfficeFormat.pptx: return 'Convert to PowerPoint';
+      case PdfOfficeFormat.word: return L10n.of(context).convertToWord;
+      case PdfOfficeFormat.excel: return L10n.of(context).convertToExcel;
+      case PdfOfficeFormat.pptx: return L10n.of(context).convertToPowerPoint;
     }
   }
 
@@ -105,7 +106,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
                     Text(_description, style: const TextStyle(fontSize: 14)),
                     const SizedBox(height: 8),
                     Text(
-                      'Note: Text-extraction based — images and complex layouts are not reproduced.',
+                      L10n.of(context).officeNote,
                       style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
                     ),
                     const SizedBox(height: 24),
@@ -127,7 +128,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
               ),
               LoadingOverlay(
                 httpState: state.httpStates[_stateKey],
-                label: 'Converting your PDF',
+                label: L10n.of(context).convertingPdf,
                 onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
               ),
             ],

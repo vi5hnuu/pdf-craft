@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' as img_studio;
 import 'package:pdf_craft/models/request/filter-image.dart' as fi;
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -152,16 +153,16 @@ class _ImageStudioViewState extends State<ImageStudioView>
         const SizedBox(height: 8),
         _qualityHint(theme, _compressQuality),
         const Spacer(),
-        _submitButton(loading, 'Compress Image', Icons.compress, _onCompress),
+        _submitButton(loading, ToolStrings.name(context, 'img-compress'), Icons.compress, _onCompress),
       ]),
     );
   }
 
   Widget _qualityHint(ThemeData theme, int quality) {
-    final hint = quality >= 90 ? 'High quality — minimal compression'
-        : quality >= 70 ? 'Good balance of quality and size'
-        : quality >= 50 ? 'Noticeable compression — smaller file'
-        : 'Aggressive compression — smallest file';
+    final hint = quality >= 90 ? L10n.of(context).qualityHigh
+        : quality >= 70 ? L10n.of(context).qualityBalanced
+        : quality >= 50 ? L10n.of(context).qualityNoticeable
+        : L10n.of(context).qualityAggressive;
     return Text(hint, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant));
   }
 
@@ -181,11 +182,11 @@ class _ImageStudioViewState extends State<ImageStudioView>
         _qualityHint(theme, _toJpgQuality),
         const SizedBox(height: 8),
         Text(
-          'PNG and other images with transparency will be composited on a white background.',
+          L10n.of(context).jpgTransparencyNote,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outlineVariant),
         ),
         const Spacer(),
-        _submitButton(loading, 'Convert to JPG', Icons.image, _onConvertToJpg),
+        _submitButton(loading, ToolStrings.name(context, 'img-to-jpg'), Icons.image, _onConvertToJpg),
       ]),
     );
   }
@@ -205,11 +206,11 @@ class _ImageStudioViewState extends State<ImageStudioView>
         ]),
         const SizedBox(height: 12),
         Text(
-          'PNG supports transparency and is lossless. BMP is uncompressed.',
+          L10n.of(context).fromJpgNote,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outlineVariant),
         ),
         const Spacer(),
-        _submitButton(loading, 'Convert from JPG', Icons.swap_horiz, _onConvertFromJpg),
+        _submitButton(loading, ToolStrings.name(context, 'img-from-jpg'), Icons.swap_horiz, _onConvertFromJpg),
       ]),
     );
   }
@@ -256,12 +257,12 @@ class _ImageStudioViewState extends State<ImageStudioView>
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Enter only one dimension — the other is computed proportionally.',
+              L10n.of(context).resizeOneDimensionNote,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outlineVariant),
             ),
           ),
         const Spacer(),
-        _submitButton(loading, 'Resize Image', Icons.photo_size_select_large, _onResize),
+        _submitButton(loading, ToolStrings.name(context, 'img-resize'), Icons.photo_size_select_large, _onResize),
       ]),
     );
   }
@@ -304,7 +305,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
           ),
         ],
         const Spacer(),
-        _submitButton(loading, 'Apply Filter', Icons.auto_fix_high, _onFilter),
+        _submitButton(loading, L10n.of(context).applyFilter, Icons.auto_fix_high, _onFilter),
       ]),
     );
   }

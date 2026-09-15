@@ -281,7 +281,7 @@ class _FormEditorViewState extends State<FormEditorView> {
             ]),
             LoadingOverlay(
               httpState: state.httpStates[HttpStates.CREATE_FORM],
-              label: 'Creating fillable form',
+              label: L10n.of(context).creatingForm,
               onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
             ),
           ]);
@@ -588,8 +588,8 @@ class _FormEditorViewState extends State<FormEditorView> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             children: [
               for (final t in FieldType.values) _paletteItem(theme, t),
-              _paletteGroupItem(theme, FieldType.radio, 'Radio group', Icons.radio_button_checked),
-              _paletteGroupItem(theme, FieldType.checkbox, 'Check group', Icons.checklist),
+              _paletteGroupItem(theme, FieldType.radio, L10n.of(context).radioGroup, Icons.radio_button_checked),
+              _paletteGroupItem(theme, FieldType.checkbox, L10n.of(context).checkGroup, Icons.checklist),
             ],
           ),
         ),
@@ -702,22 +702,22 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
           Text(L10n.of(context).typeFieldLabel(f.type.localizedLabel(context)), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
         ]),
         const SizedBox(height: 12),
-        _field(_name, 'Field name', (v) => f.name = v),
+        _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
         if (f.type == FieldType.radio) ...[
-          _field(_group, 'Radio group', (v) => f.group = v),
-          _field(_export, 'Option value', (v) => f.exportValue = v),
+          _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
+          _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
         ],
         if (f.type.hasOptions)
-          _field(_options, 'Options (comma-separated)',
+          _field(_options, L10n.of(context).optionsCommaSeparated,
               (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
-        if (f.type.hasValue) _field(_value, 'Default value', (v) => f.value = v),
+        if (f.type.hasValue) _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
         if (f.type.hasValue)
           _field(_fontSize, 'Font size (0 = auto)', (v) => f.fontSize = double.tryParse(v) ?? 0,
               keyboard: TextInputType.number),
         if (f.type.isToggle)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(f.type == FieldType.radio ? 'Selected by default' : 'Checked by default'),
+            title: Text(f.type == FieldType.radio ? L10n.of(context).selectedByDefault : L10n.of(context).checkedByDefault),
             value: f.checked,
             onChanged: (v) => setState(() => f.checked = v),
           ),

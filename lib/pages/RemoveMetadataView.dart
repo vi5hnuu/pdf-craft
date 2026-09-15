@@ -51,7 +51,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
         buildWhen: (p, c) => p.httpStates[HttpStates.REMOVE_METADATA] != c.httpStates[HttpStates.REMOVE_METADATA],
         listenWhen: (p, c) => p.httpStates[HttpStates.REMOVE_METADATA] != c.httpStates[HttpStates.REMOVE_METADATA],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REMOVE_METADATA], successMessage: 'Metadata removed'),
+            handleToolState(state.httpStates[HttpStates.REMOVE_METADATA], successMessage: L10n.of(context).metadataRemoved),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.REMOVE_METADATA]?.loading == true;
           return Stack(children: [
@@ -65,7 +65,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Strip identifying information from this PDF before you share it.',
+                          L10n.of(context).removeMetadataIntro,
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -93,7 +93,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'The page content is not changed. Note: text visible on the page itself is not metadata — use Redact for that.',
+                      L10n.of(context).removeMetadataNote,
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.55), height: 1.4),
                     ),

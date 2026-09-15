@@ -69,7 +69,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _field(_outFileNameC, 'Output File Name (optional)'),
+                            _field(_outFileNameC, L10n.of(context).outputFileNameOptional),
                             const SizedBox(height: 12),
                             const Divider(),
                             Padding(
@@ -82,9 +82,9 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                             const SizedBox(height: 12),
                             _field(_subjectC,  'Subject'),
                             const SizedBox(height: 12),
-                            _field(_keywordsC, 'Keywords (comma-separated)'),
+                            _field(_keywordsC, L10n.of(context).keywordsCommaSeparated),
                             const SizedBox(height: 12),
-                            _field(_creatorC,  'Creator Application'),
+                            _field(_creatorC,  L10n.of(context).creatorApplication),
                             const SizedBox(height: 12),
                             _field(_producerC, 'Producer'),
                           ],

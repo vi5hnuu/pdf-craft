@@ -106,7 +106,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
           final editState = state.httpStates[HttpStates.EDIT_BOOKMARKS];
           if (editState?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            onToolSuccess('Bookmarks saved');
+            onToolSuccess(L10n.current.bookmarksSaved);
             final saved = editState?.extras?['savedFile'];
             if (saved is File) {
               // Keep editing the saved output and re-load so the user sees the

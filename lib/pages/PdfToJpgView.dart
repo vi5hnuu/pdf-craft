@@ -124,7 +124,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                                     controller: gapController,
                                     validator: (value){
                                       final val=int.tryParse(gapController.value.text);
-                                      return val!=null && val>0 ? null : "Invalid gap";
+                                      return val!=null && val>0 ? null : L10n.of(context).invalidGap;
                                     }),
                               ),
                             ],

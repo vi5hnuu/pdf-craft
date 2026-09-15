@@ -43,7 +43,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
         buildWhen: (p, c) => p.httpStates[HttpStates.MIRROR_PDF] != c.httpStates[HttpStates.MIRROR_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.MIRROR_PDF] != c.httpStates[HttpStates.MIRROR_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.MIRROR_PDF], successMessage: 'Pages mirrored'),
+            handleToolState(state.httpStates[HttpStates.MIRROR_PDF], successMessage: L10n.of(context).pagesMirrored),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.MIRROR_PDF]?.loading == true;
           return Stack(children: [

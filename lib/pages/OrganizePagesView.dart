@@ -116,7 +116,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: 'Pages organized'),
+            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: L10n.of(context).pagesOrganized),
         builder: (context, state) {
           if (_loadError) {
             return const Center(child: Icon(Icons.error_outline, color: Colors.red, size: 40));
@@ -131,7 +131,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                   width: double.infinity,
                   color: theme.colorScheme.primary.withValues(alpha: 0.08),
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Text('$removed page${removed == 1 ? '' : 's'} will be removed · ${_order.length} kept',
+                  child: Text(L10n.of(context).organizeSummary(removed, _order.length),
                       style: theme.textTheme.bodySmall),
                 ),
               Expanded(child: _buildList(theme)),

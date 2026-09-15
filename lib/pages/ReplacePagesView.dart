@@ -76,7 +76,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
         buildWhen: (p, c) => p.httpStates[HttpStates.REPLACE_PAGES] != c.httpStates[HttpStates.REPLACE_PAGES],
         listenWhen: (p, c) => p.httpStates[HttpStates.REPLACE_PAGES] != c.httpStates[HttpStates.REPLACE_PAGES],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REPLACE_PAGES], successMessage: 'Pages replaced'),
+            handleToolState(state.httpStates[HttpStates.REPLACE_PAGES], successMessage: L10n.of(context).pagesReplaced),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.REPLACE_PAGES]?.loading == true;
           return Stack(children: [
@@ -85,7 +85,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    _fileCard(theme, 'Base document', _base, Icons.picture_as_pdf),
+                    _fileCard(theme, L10n.of(context).baseDocument, _base, Icons.picture_as_pdf),
                     Center(
                       child: IconButton(
                         icon: const Icon(Icons.swap_vert),
@@ -93,7 +93,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                         onPressed: _swap,
                       ),
                     ),
-                    _fileCard(theme, 'Replace with', _replacement, Icons.find_replace),
+                    _fileCard(theme, L10n.of(context).replaceWith, _replacement, Icons.find_replace),
                     const SizedBox(height: 20),
                     Text(L10n.of(context).rangeToReplace, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),

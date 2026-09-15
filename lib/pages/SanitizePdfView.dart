@@ -49,7 +49,7 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
         buildWhen: (p, c) => p.httpStates[HttpStates.SANITIZE_PDF] != c.httpStates[HttpStates.SANITIZE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.SANITIZE_PDF] != c.httpStates[HttpStates.SANITIZE_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.SANITIZE_PDF], successMessage: 'PDF sanitized'),
+            handleToolState(state.httpStates[HttpStates.SANITIZE_PDF], successMessage: L10n.of(context).pdfSanitized),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.SANITIZE_PDF]?.loading == true;
           return Stack(children: [

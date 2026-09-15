@@ -72,10 +72,10 @@ class _StampPdfViewState extends State<StampPdfView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _field(_outFileNameC, 'Output File Name (optional)'),
+                            _field(_outFileNameC, L10n.of(context).outputFileNameOptional),
                             const SizedBox(height: 20),
                             // Stamp PDF picker
-                            const Text('Stamp PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text(ToolStrings.name(context, 'stamp'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                             const SizedBox(height: 8),
                             GestureDetector(
                               onTap: _pickStamp,
@@ -107,7 +107,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                             ),
                             const SizedBox(height: 20),
                             // Opacity
-                            Text('Opacity: ${(_opacity * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 14)),
+                            Text(L10n.of(context).opacityPercent((_opacity * 100).round()), style: const TextStyle(fontSize: 14)),
                             Slider(min: 0.05, max: 1.0, divisions: 19, value: _opacity, onChanged: (v) => setState(() => _opacity = v)),
                             const SizedBox(height: 12),
                             // Page range
@@ -115,7 +115,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                               children: [
                                 Expanded(child: _field(_fromPageC, 'From Page')),
                                 const SizedBox(width: 12),
-                                Expanded(child: _field(_toPageC, 'To Page (optional)')),
+                                Expanded(child: _field(_toPageC, L10n.of(context).toPageOptional)),
                               ],
                             ),
                           ],

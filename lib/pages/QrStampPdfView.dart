@@ -149,7 +149,7 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
         extra: {
           'file': widget.file,
           'imageBytes': qrBytes,
-          'title': 'Place QR Code',
+          'title': L10n.of(context).placeQrCode,
         },
       );
     } catch (e) {

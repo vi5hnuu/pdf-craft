@@ -151,7 +151,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                             PdfEffectPreview(
                               filePath: widget.file.path,
                               caption:
-                                  'Approximate placement — font metrics differ slightly from the output',
+                                  L10n.of(context).approxPlacement,
                               overlayBuilder: (ctx, canvas, pagePoints) {
                                 final text = _textC.text.isEmpty
                                     ? 'CONFIDENTIAL'
@@ -222,9 +222,9 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                             Text(L10n.of(context).angleValue(_angle.toStringAsFixed(0))),
                             Slider(value: _angle, min: 0, max: 360, divisions: 36, onChanged: (v) => setState(() => _angle = v)),
                             const SizedBox(height: 8),
-                            _buildDropdown('Vertical Position', _verticalPos, (v) => setState(() => _verticalPos = v!)),
+                            _buildDropdown(L10n.of(context).verticalPosition, _verticalPos, (v) => setState(() => _verticalPos = v!)),
                             const SizedBox(height: 8),
-                            _buildDropdown('Horizontal Position', _horizontalPos, (v) => setState(() => _horizontalPos = v!)),
+                            _buildDropdown(L10n.of(context).horizontalPosition, _horizontalPos, (v) => setState(() => _horizontalPos = v!)),
                             const SizedBox(height: 4),
                             // Settings are remembered, so there has to be a way back out of them.
                             Align(

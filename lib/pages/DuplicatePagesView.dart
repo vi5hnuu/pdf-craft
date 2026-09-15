@@ -88,7 +88,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: Text(
-                  'Tap a page to select it, then set how many copies of that page to add.',
+                  L10n.of(context).duplicateHint,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -117,7 +117,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
             ]),
             LoadingOverlay(
               httpState: state.httpStates[HttpStates.DUPLICATE_PAGES],
-              label: 'Duplicating pages',
+              label: L10n.of(context).duplicatingPages,
               onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
             ),
           ]);
@@ -222,7 +222,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.copy_all),
             label: Text(_pageCounts.isEmpty
-                ? 'Select pages to duplicate'
+                ? L10n.of(context).selectPagesToDuplicate
                 : 'Add $_totalCopies cop${_totalCopies == 1 ? 'y' : 'ies'} across ${_pageCounts.length} page(s)'),
           ),
         ),

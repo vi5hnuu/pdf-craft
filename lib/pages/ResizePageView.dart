@@ -47,7 +47,7 @@ class _ResizePageViewState extends State<ResizePageView>
         buildWhen: (p, c) => p.httpStates[HttpStates.RESIZE_PAGE] != c.httpStates[HttpStates.RESIZE_PAGE],
         listenWhen: (p, c) => p.httpStates[HttpStates.RESIZE_PAGE] != c.httpStates[HttpStates.RESIZE_PAGE],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.RESIZE_PAGE], successMessage: 'Pages resized'),
+            handleToolState(state.httpStates[HttpStates.RESIZE_PAGE], successMessage: L10n.of(context).pagesResized),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.RESIZE_PAGE]?.loading == true;
           return Stack(children: [

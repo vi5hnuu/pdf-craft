@@ -70,8 +70,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     Text(
-                      'Each output PDF will be at or below this size. A single page larger than the '
-                      'limit becomes its own part.',
+                      L10n.of(context).splitBySizeHint,
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),
                     ),

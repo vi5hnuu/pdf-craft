@@ -102,7 +102,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                     icon: loading
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.auto_fix_high),
-                    label: Text(loading ? 'Optimizing…' : 'Optimize PDF'),
+                    label: Text(loading ? L10n.of(context).optimizing : ToolStrings.name(context, 'optimize')),
                   ),
                 ),
               ]),

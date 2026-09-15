@@ -43,7 +43,7 @@ class _RotateImageViewState extends State<RotateImageView>
         listenWhen: (p, c) => p.httpStates[HttpStates.ROTATE_IMAGE] != c.httpStates[HttpStates.ROTATE_IMAGE],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.ROTATE_IMAGE],
-          successMessage: 'Image rotated',
+          successMessage: L10n.of(context).imageRotated,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {

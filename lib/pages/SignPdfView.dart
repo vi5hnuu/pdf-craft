@@ -67,7 +67,7 @@ class _SignPdfViewState extends State<SignPdfView> {
             padding: const EdgeInsets.all(16),
             child: Column(children: [
               Text(
-                'Draw your signature below, or import one from your device.',
+                L10n.of(context).signHint,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
@@ -194,7 +194,7 @@ class _SignPdfViewState extends State<SignPdfView> {
       if (!mounted) return;
       GoRouter.of(context).pushNamed(
         AppRoutes.placeImageRoute.name,
-        extra: {'file': widget.file, 'imageBytes': bytes, 'title': 'Place Signature'},
+        extra: {'file': widget.file, 'imageBytes': bytes, 'title': L10n.of(context).placeSignature},
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -207,7 +207,7 @@ class _SignPdfViewState extends State<SignPdfView> {
     if (bytes == null || !mounted) return;
     GoRouter.of(context).pushNamed(
       AppRoutes.placeImageRoute.name,
-      extra: {'file': widget.file, 'imageBytes': bytes, 'title': 'Place Signature'},
+      extra: {'file': widget.file, 'imageBytes': bytes, 'title': L10n.of(context).placeSignature},
     );
   }
 

@@ -71,7 +71,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
         buildWhen: (p, c) => p.httpStates[HttpStates.INSERT_PDF] != c.httpStates[HttpStates.INSERT_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.INSERT_PDF] != c.httpStates[HttpStates.INSERT_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.INSERT_PDF], successMessage: 'PDF inserted'),
+            handleToolState(state.httpStates[HttpStates.INSERT_PDF], successMessage: L10n.of(context).pdfInserted),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.INSERT_PDF]?.loading == true;
           return Stack(children: [
@@ -80,7 +80,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    _fileCard(theme, 'Base document', _base, Icons.picture_as_pdf),
+                    _fileCard(theme, L10n.of(context).baseDocument, _base, Icons.picture_as_pdf),
                     Center(
                       child: IconButton(
                         icon: const Icon(Icons.swap_vert),
@@ -88,13 +88,13 @@ class _InsertPdfViewState extends State<InsertPdfView>
                         onPressed: _swap,
                       ),
                     ),
-                    _fileCard(theme, 'Insert this', _insert, Icons.note_add_outlined),
+                    _fileCard(theme, L10n.of(context).insertThis, _insert, Icons.note_add_outlined),
                     const SizedBox(height: 20),
                     Text(L10n.of(context).insertPosition, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     Text(
                       _position == 0
-                          ? 'At the very beginning'
+                          ? L10n.of(context).atTheVeryBeginning
                           : 'After page $_position of the base document',
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),

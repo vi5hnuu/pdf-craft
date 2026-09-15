@@ -64,10 +64,8 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Converts pages to grayscale to reduce file size and ink when printing. '
-                      'Converted pages become images, so their text is no longer selectable; '
-                      'pages outside your selection are left untouched.',
+                    Text(
+                      L10n.of(context).grayscaleExplainer,
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),

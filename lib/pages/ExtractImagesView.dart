@@ -42,7 +42,7 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
         listenWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_IMAGES] != c.httpStates[HttpStates.EXTRACT_IMAGES],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.EXTRACT_IMAGES],
-          successMessage: 'Images extracted',
+          successMessage: L10n.of(context).imagesExtracted,
           // Result is a .zip — open it externally rather than the PDF viewer.
           onDone: (f) => OpenFile.open(f.path),
         ),
@@ -62,8 +62,7 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Text(
-                        'All raster images found in this PDF are collected into a ZIP file (as PNGs). '
-                        'Vector graphics and text are not included.',
+                        L10n.of(context).extractImagesHint,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),

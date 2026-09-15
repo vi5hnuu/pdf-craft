@@ -150,7 +150,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                             PdfEffectPreview(
                               filePath: widget.file.path,
                               caption:
-                                  'Approximate placement on page 1 — font metrics differ slightly from the output',
+                                  L10n.of(context).approxPlacementPage1,
                               overlayBuilder: (ctx, canvas, pagePoints) {
                                 final scale = canvas.width / pagePoints.width;
                                 final size = _fontSize * scale;
@@ -176,11 +176,11 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                               },
                             ),
                             const SizedBox(height: 16),
-                            _field(_outFileNameC, 'Output File Name (optional)'),
+                            _field(_outFileNameC, L10n.of(context).outputFileNameOptional),
                             const SizedBox(height: 16),
-                            _field(_headerTextC, 'Header Text'),
+                            _field(_headerTextC, L10n.of(context).headerText),
                             const SizedBox(height: 12),
-                            _field(_footerTextC, 'Footer Text'),
+                            _field(_footerTextC, L10n.of(context).footerText),
                             const SizedBox(height: 16),
                             // Font settings row
                             Row(
@@ -232,13 +232,13 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                               children: [
                                 Expanded(child: _field(_fromPageC, 'From Page')),
                                 const SizedBox(width: 12),
-                                Expanded(child: _field(_toPageC, 'To Page (optional)')),
+                                Expanded(child: _field(_toPageC, L10n.of(context).toPageOptional)),
                               ],
                             ),
                             const SizedBox(height: 16),
                             // Padding sliders
-                            _labeledSlider('Top Padding', _topPadding, 0, 80, (v) => setState(() => _topPadding = v)),
-                            _labeledSlider('Bottom Padding', _bottomPadding, 0, 80, (v) => setState(() => _bottomPadding = v)),
+                            _labeledSlider(L10n.of(context).topPadding, _topPadding, 0, 80, (v) => setState(() => _topPadding = v)),
+                            _labeledSlider(L10n.of(context).bottomPadding, _bottomPadding, 0, 80, (v) => setState(() => _bottomPadding = v)),
                             // Settings are remembered, so there has to be a way back out of them.
                             Align(
                               alignment: Alignment.centerLeft,

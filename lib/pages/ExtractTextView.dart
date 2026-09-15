@@ -64,9 +64,8 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Extracts the text of your PDF into a text file. Narrow it to a few pages '
-                      'if you only need part of the document.',
+                    Text(
+                      L10n.of(context).extractTextHint,
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),

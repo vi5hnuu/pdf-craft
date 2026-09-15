@@ -93,7 +93,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                     decoration: InputDecoration(labelText: L10n.of(context).rangeLabel,border: OutlineInputBorder()),
                     onChanged: _onFixedRangeChange,
                     validator: (value){
-                      return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                      return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
                     }),
               )
               else Padding(
@@ -108,7 +108,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                               decoration: InputDecoration(label: Text("from"),border: OutlineInputBorder()),
                               controller: rangeStart,
                               validator: (value){
-                                return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                                return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
                               }),
                         ),
                         SizedBox(width: 12,),
@@ -117,7 +117,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                               decoration: InputDecoration(label: Text(L10n.of(context).toLabel),border: OutlineInputBorder()),
                               controller: rangeEnd,
                               validator: (value){
-                                return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                                return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
                               }),
                         ),
                       ],
@@ -249,7 +249,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
       });
     }catch(e){
       setState((){
-        if(mounted) _thumbnailsCache.put(pageNo, Thumbnail(error: "failed to render thumbnail"));
+        if(mounted) _thumbnailsCache.put(pageNo, Thumbnail(error: L10n.current.thumbnailFailed));
       });
     }
   }

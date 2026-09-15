@@ -103,7 +103,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           const SizedBox(height: 20),
 
                           // Page number format
-                          _sectionLabel(theme, 'Page Number Format'),
+                          _sectionLabel(theme, L10n.of(context).pageNumberFormat),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<PageNoType>(
                             decoration: const InputDecoration(border: OutlineInputBorder()),
@@ -216,7 +216,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           const SizedBox(height: 20),
 
                           // Page range
-                          _sectionLabel(theme, 'Page Range'),
+                          _sectionLabel(theme, L10n.of(context).pageRange),
                           const SizedBox(height: 8),
                           Row(
                             children: [
@@ -248,7 +248,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           const SizedBox(height: 20),
 
                           // Color picker
-                          _sectionLabel(theme, 'Text Color'),
+                          _sectionLabel(theme, L10n.of(context).textColor),
                           const SizedBox(height: 8),
                           ColorPicker(
                             pickerColor: Color.fromARGB(

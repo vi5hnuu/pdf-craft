@@ -79,9 +79,9 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                 Text(L10n.of(context).pagesPerSheet, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 Row(children: [
-                  _layoutOption(theme, 2, '2-Up', 'Landscape, side by side', Icons.view_agenda_outlined),
+                  _layoutOption(theme, 2, '2-Up', L10n.of(context).nUpLandscapeSide, Icons.view_agenda_outlined),
                   const SizedBox(width: 12),
-                  _layoutOption(theme, 4, '4-Up', 'Portrait, 2×2 grid', Icons.grid_view_outlined),
+                  _layoutOption(theme, 4, '4-Up', L10n.of(context).nUpPortraitGrid, Icons.grid_view_outlined),
                 ]),
                 const Spacer(),
                 SizedBox(

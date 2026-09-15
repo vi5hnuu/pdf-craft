@@ -70,12 +70,12 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _field(_outFileNameC, 'Output File Name (optional)'),
+                            _field(_outFileNameC, L10n.of(context).outputFileNameOptional),
                             const SizedBox(height: 16),
                             _field(
                               _positionsC,
-                              'Insert blank before pages (e.g. 1, 3, 5)',
-                              hint: 'e.g. 0,2,5 inserts after pages 1, 3, 6',
+                              L10n.of(context).insertBlankBefore,
+                              hint: L10n.of(context).insertBlankHint,
                             ),
                             const SizedBox(height: 20),
                             Text(L10n.of(context).pageSizePoints, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),

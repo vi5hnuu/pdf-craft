@@ -133,7 +133,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               ],
             ),
             const SizedBox(height: 6),
-            Text('$perFile per file × ${_items.length} files',
+            Text(L10n.of(context).perFilePerCount(perFile, _items.length),
                 style: Theme.of(ctx).textTheme.bodySmall),
             const SizedBox(height: 8),
             Text(L10n.of(context).gateBalance(balance)),
@@ -221,7 +221,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     } catch (e) {
       setState(() {
         item.status = _FileStatus.error;
-        item.errorMsg = 'Failed to prepare file';
+        item.errorMsg = L10n.current.failedToPrepareFile;
         _currentIndex++;
       });
       await _processNext();
@@ -336,7 +336,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                     )
                   : FilledButton(
                       onPressed: _running ? null : _startBatch,
-                      child: Text(_running ? 'Processing…' : 'Start Batch'),
+                      child: Text(_running ? L10n.of(context).processingEllipsis : L10n.of(context).startBatch),
                     ),
             ),
           ],

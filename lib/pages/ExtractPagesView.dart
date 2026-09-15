@@ -71,7 +71,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: 'Pages extracted'),
+            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: L10n.of(context).pagesExtracted),
         builder: (context, state) {
           if (_doc == null) return const Center(child: CircularProgressIndicator());
           final loading = state.httpStates[HttpStates.REORDER_PDF]?.loading == true;
@@ -101,7 +101,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
                 child: FilledButton.icon(
                   onPressed: _selected.isEmpty || loading ? null : _onExtract,
                   icon: const Icon(Icons.content_cut),
-                  label: Text(_selected.isEmpty ? 'Select pages to extract' : 'Extract ${_selected.length} page(s)'),
+                  label: Text(_selected.isEmpty ? L10n.of(context).selectPagesToExtract : L10n.of(context).extractNPages(_selected.length)),
                 ),
               ),
             ]),

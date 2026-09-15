@@ -86,8 +86,8 @@ class _RepairPdfViewState extends State<RepairPdfView> {
                               decoration: InputDecoration(labelText: L10n.of(context).outputFileNameOptional, border: OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
-                              'Repair attempts to fix common PDF corruption issues such as broken cross-references, malformed streams, and invalid object structures.',
+                            Text(
+                              L10n.of(context).repairExplainer,
                               style: TextStyle(fontSize: 13, height: 1.5),
                             ),
                           ],

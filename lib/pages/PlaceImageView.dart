@@ -150,14 +150,14 @@ class _PlaceImageViewState extends State<PlaceImageView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.title}${_totalPages > 1 ? ' — Page $_currentPage / $_totalPages' : ''}'),
+        title: Text('${widget.title}${_totalPages > 1 ? ' — ${L10n.of(context).pageOfPages(_currentPage, _totalPages)}' : ''}'),
         actions: [
           // Mode toggle: place ↔ zoom
           IconButton(
             icon: Icon(
               _mode == _Mode.zoom ? Icons.touch_app : Icons.zoom_in,
             ),
-            tooltip: _mode == _Mode.zoom ? 'Switch to Place mode' : 'Switch to Zoom mode',
+            tooltip: _mode == _Mode.zoom ? L10n.of(context).switchToPlaceMode : L10n.of(context).switchToZoomMode,
             onPressed: () => setState(() => _mode = _mode == _Mode.place ? _Mode.zoom : _Mode.place),
           ),
           // Reset zoom
@@ -201,7 +201,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
                   child: OutlinedButton.icon(
                     onPressed: _pickImage,
                     icon: const Icon(Icons.image_outlined),
-                    label: Text(_imageBytes == null ? 'Select Image to Place' : 'Change Image'),
+                    label: Text(_imageBytes == null ? L10n.of(context).selectImageToPlace : L10n.of(context).changeImage),
                     style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 44)),
                   ),
                 ),
@@ -218,8 +218,8 @@ class _PlaceImageViewState extends State<PlaceImageView> {
                       ),
                       label: Text(
                         _mode == _Mode.zoom
-                            ? 'Zoom mode — pinch or scroll to zoom'
-                            : 'Place mode — drag image or handles',
+                            ? L10n.of(context).zoomModeHint
+                            : L10n.of(context).placeModeHint,
                         style: const TextStyle(fontSize: 11),
                       ),
                       visualDensity: VisualDensity.compact,

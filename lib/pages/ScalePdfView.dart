@@ -45,7 +45,7 @@ class _ScalePdfViewState extends State<ScalePdfView>
         buildWhen: (p, c) => p.httpStates[HttpStates.SCALE_PDF] != c.httpStates[HttpStates.SCALE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.SCALE_PDF] != c.httpStates[HttpStates.SCALE_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.SCALE_PDF], successMessage: 'PDF scaled'),
+            handleToolState(state.httpStates[HttpStates.SCALE_PDF], successMessage: L10n.of(context).pdfScaled),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.SCALE_PDF]?.loading == true;
           return Stack(children: [

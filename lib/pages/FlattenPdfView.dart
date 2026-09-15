@@ -95,7 +95,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
               httpState: state.httpStates[HttpStates.FILL_FLATTEN]?.loading == true
                   ? state.httpStates[HttpStates.FILL_FLATTEN]
                   : state.httpStates[HttpStates.FLATTEN_PDF],
-              label: 'Flattening your PDF',
+              label: L10n.of(context).flatteningPdf,
             ),
           ]);
         },
@@ -128,9 +128,8 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
                 const SizedBox(height: 12),
                 ..._fields!.map((f) => _buildFieldInput(theme, f)),
               ] else
-                const Text(
-                  'Flattening merges interactive form fields and annotations into static page content. '
-                  'The result is no longer editable but displays consistently everywhere.',
+                Text(
+                  L10n.of(context).flattenExplainer,
                   style: TextStyle(fontSize: 13, height: 1.5),
                 ),
             ]),
@@ -141,7 +140,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
           child: FilledButton.icon(
             onPressed: busy ? null : (hasFields ? _onFillFlatten : _onFlatten),
             icon: const Icon(Icons.layers_clear),
-            label: Text(hasFields ? 'Fill & Flatten' : 'Flatten PDF'),
+            label: Text(hasFields ? L10n.of(context).fillAndFlatten : ToolStrings.name(context, 'flatten')),
           ),
         ),
       ]),

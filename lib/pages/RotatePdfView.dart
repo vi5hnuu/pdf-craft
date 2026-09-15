@@ -184,7 +184,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'All pages will rotate at this angle. Override per page below.',
+                              L10n.of(context).rotateAllHint,
                               style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurface
                                       .withValues(alpha: 0.55)),
@@ -199,8 +199,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                                 title: Text(L10n.of(context).maintainAspect),
                                 subtitle: Text(
                                   maintain_ratio
-                                      ? 'Width and height swap to fit rotated content.'
-                                      : 'Page size stays the same; content rotates within it.',
+                                      ? L10n.of(context).rotateSwapHint
+                                      : L10n.of(context).rotateKeepHint,
                                   style: theme.textTheme.bodySmall,
                                 ),
                                 value: maintain_ratio,
@@ -210,7 +210,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Preview is approximate — actual PDF may differ.',
+                              L10n.of(context).previewApproximate,
                               style: theme.textTheme.bodySmall
                                   ?.copyWith(color: Colors.amber),
                             ),
@@ -361,7 +361,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                   ),
                   LoadingOverlay(
                       httpState: state.httpStates[HttpStates.ROTATE_PDF],
-                      label: 'Rotating your PDF'),
+                      label: L10n.of(context).rotatingPdf),
                 ],
               );
             },
@@ -459,7 +459,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
       setState(() => thumbnails.put(pageNo, Thumbnail(image: image)));
     } catch (_) {
       if (!mounted) return;
-      setState(() => thumbnails.put(pageNo, Thumbnail(error: 'failed to render thumbnail')));
+      setState(() => thumbnails.put(pageNo, Thumbnail(error: L10n.current.thumbnailFailed)));
     }
   }
 

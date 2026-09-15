@@ -94,11 +94,11 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView> {
           _Stat('Encrypted', (a['encrypted'] == true) ? 'Yes' : 'No', Icons.lock_outline),
         ]),
         const SizedBox(height: 16),
-        _listCard(theme, 'Blank pages', blank.isEmpty ? 'None' : blank.join(', '), Icons.crop_din),
-        _listCard(theme, 'Landscape pages', landscape.isEmpty ? 'None' : landscape.join(', '), Icons.crop_landscape),
+        _listCard(theme, L10n.of(context).blankPagesLabel, blank.isEmpty ? L10n.of(context).none : blank.join(', '), Icons.crop_din),
+        _listCard(theme, L10n.of(context).landscapePages, landscape.isEmpty ? L10n.of(context).none : landscape.join(', '), Icons.crop_landscape),
         _listCard(
           theme,
-          'Duplicate page groups',
+          L10n.of(context).duplicatePageGroups,
           dupGroups.isEmpty
               ? 'None'
               : dupGroups.map((g) => '[${(g as List).join(', ')}]').join('  '),

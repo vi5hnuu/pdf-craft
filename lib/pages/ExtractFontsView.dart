@@ -41,7 +41,7 @@ class _ExtractFontsViewState extends State<ExtractFontsView>
         listenWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_FONTS] != c.httpStates[HttpStates.EXTRACT_FONTS],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.EXTRACT_FONTS],
-          successMessage: 'Fonts extracted',
+          successMessage: L10n.of(context).fontsExtracted,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {
@@ -58,8 +58,7 @@ class _ExtractFontsViewState extends State<ExtractFontsView>
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Text(
-                      'Embedded font programs are collected into a ZIP (.ttf / .otf / .pfb). '
-                      'Fonts that are only referenced (not embedded) can\'t be extracted.',
+                      L10n.of(context).extractFontsHint,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),

@@ -43,7 +43,7 @@ class _FlipImageViewState extends State<FlipImageView>
         listenWhen: (p, c) => p.httpStates[HttpStates.FLIP_IMAGE] != c.httpStates[HttpStates.FLIP_IMAGE],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.FLIP_IMAGE],
-          successMessage: 'Image flipped',
+          successMessage: L10n.of(context).imageFlipped,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {
