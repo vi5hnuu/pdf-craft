@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/flip-image.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -35,13 +37,13 @@ class _FlipImageViewState extends State<FlipImageView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Flip Image')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'img-flip'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.FLIP_IMAGE] != c.httpStates[HttpStates.FLIP_IMAGE],
         listenWhen: (p, c) => p.httpStates[HttpStates.FLIP_IMAGE] != c.httpStates[HttpStates.FLIP_IMAGE],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.FLIP_IMAGE],
-          successMessage: 'Image flipped',
+          successMessage: L10n.of(context).imageFlipped,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {
@@ -77,17 +79,17 @@ class _FlipImageViewState extends State<FlipImageView>
                     RadioGroup<bool>(
                       groupValue: _horizontal,
                       onChanged: (v) => setState(() => _horizontal = v ?? _horizontal),
-                      child: const Column(
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           RadioListTile<bool>(
                             value: true,
-                            title: Text('Horizontal (mirror left–right)'),
+                            title: Text(L10n.of(context).flipHorizontalDesc),
                             secondary: Icon(Icons.flip),
                           ),
                           RadioListTile<bool>(
                             value: false,
-                            title: Text('Vertical (mirror top–bottom)'),
+                            title: Text(L10n.of(context).flipVerticalDesc),
                             secondary: Icon(Icons.flip_camera_android),
                           ),
                         ],
@@ -106,11 +108,11 @@ class _FlipImageViewState extends State<FlipImageView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onApply,
                   icon: const Icon(Icons.flip),
-                  label: const Text('Flip Image'),
+                  label: Text(ToolStrings.name(context, 'img-flip')),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.FLIP_IMAGE], label: 'Flipping image'),
+            processingOverlay(state.httpStates[HttpStates.FLIP_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

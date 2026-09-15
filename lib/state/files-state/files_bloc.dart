@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/WithHttpState.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -53,7 +54,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       } catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()
           ..put(HttpStates.LOAD_DIRECTORY_FILES,
-              HttpState.error(error: e.toString()))));
+              // Raw exception text ("Exception: Failed to…") used to reach the user.
+              HttpState.error(error: _logged(e, L10n.current.errLoadFolder)))));
       }
     });
 
@@ -98,7 +100,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         await _moveFile(file:event.file,toDirectoryPath:event.to);
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, const HttpState.done())));
       }catch(e){
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, HttpState.error(error: e.toString()))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, HttpState.error(error: _logged(e, L10n.current.errMoveFile)))));
       }
     });
 
@@ -108,29 +110,35 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         await _deleteFile(file:event.file);
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, const HttpState.done())));
       }catch(e){
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, HttpState.error(error: e.toString()))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, HttpState.error(error: _logged(e, L10n.current.errDeleteFile)))));
       }
     });
   }
 
 
+  /// Logs the technical error for debugging and returns the user-facing [message].
+  String _logged(Object error, String message) {
+    LoggerSingleton().logger.w('$message ($error)');
+    return message;
+  }
+
   Future<List<FileSystemEntity>> _loadDirectoryFiles(String path) async {
     try {
       if (!await StoragePermissions.requestStoragePermissions()) {
-        throw Exception("Permission denied");
+        throw Exception(L10n.current.filesPermissionDenied);
       }
       if (Constants.isHiddenFileOrDir(path) ||
           Constants.excludedPaths.any((pth) => pth.endsWith(path))) {
-        throw Exception("Permission denied");
+        throw Exception(L10n.current.filesPermissionDenied);
       }
 
       Directory directory = Directory(path);
       if (directory.existsSync() == false) {
-        throw Exception("Invalid directory path");
+        throw Exception(L10n.current.filesInvalidDirectory);
       }
       return directory.listSync(followLinks: false)..removeWhere((fileEntity)=>(fileEntity is Directory) && Constants.excludedPaths.contains(fileEntity.path));
     } catch (e) {
-      throw Exception("Failed to load directory files");
+      throw Exception(L10n.current.filesLoadFailed);
     }
   }
 
@@ -172,11 +180,11 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     Directory directoryTo=Directory(toDirectoryPath);
 
     if(!directoryTo.existsSync()){
-      throw Exception("No such directory exists");
+      throw Exception(L10n.current.filesNoSuchDirectory);
     }
 
     if (!file.existsSync()) {
-      throw Exception("File does not exist in the source directory");
+      throw Exception(L10n.current.filesNotInSource);
     }
 
     // Construct the new file path
@@ -186,19 +194,19 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       file.renameSync(newFilePath);
     } catch (e) {
-      throw Exception("Failed to move file: $e");
+      throw Exception('${L10n.current.filesMoveFailed}: $e');
     }
   }
 
   Future<void> _deleteFile({required File file}) async {
     if (!file.existsSync()) {
-      throw Exception("File does not exist");
+      throw Exception(L10n.current.filesFileNotExist);
     }
 
     try {
       await file.delete(); // Permanently deletes the file
     } catch (e) {
-      throw Exception("Failed to delete the file: $e");
+      throw Exception('${L10n.current.filesDeleteFailed}: $e');
     }
   }
 

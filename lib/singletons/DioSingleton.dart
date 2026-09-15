@@ -1,8 +1,11 @@
 import 'dart:math';
 
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/l10n/LocaleManager.dart';
+import 'package:pdf_craft/models/HttpState.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/utils/NetworkUtils.dart';
 
@@ -17,10 +20,12 @@ class DioSingleton {
         if (!await NetworkUtils.isOnline()) {
           return handler.reject(DioException(
             requestOptions: options,
-            message: 'No internet connection. Please check your network.',
+            message: HttpState.msgNoInternet,
             type: DioExceptionType.connectionError,
           ));
         }
+        // Tell the API which language the user reads, so server messages can be localized.
+        options.headers['Accept-Language'] = LocaleManager().resolvedLocale.languageCode;
         // Attach the current access token so pdf-studio can authenticate the request.
         // If none yet (cold start / first launch), establish one first so the request
         // never goes out unauthenticated.
@@ -52,7 +57,11 @@ class DioSingleton {
         final remaining = response.headers.value('X-Credits-Remaining');
         if (remaining != null) {
           final value = int.tryParse(remaining);
-          if (value != null) CreditService().setBalance(value);
+          if (value != null) {
+            CreditService().setBalance(value);
+            // The run that produced this response was paid for — no interstitial after it.
+            FullScreenAdPolicy().recordCharge();
+          }
         }
         return handler.next(response);
       },

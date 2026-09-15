@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/page-size-preset.dart';
 import 'package:pdf_craft/models/request/resize-page.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -40,12 +42,12 @@ class _ResizePageViewState extends State<ResizePageView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Resize Page Size')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'resize-page'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.RESIZE_PAGE] != c.httpStates[HttpStates.RESIZE_PAGE],
         listenWhen: (p, c) => p.httpStates[HttpStates.RESIZE_PAGE] != c.httpStates[HttpStates.RESIZE_PAGE],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.RESIZE_PAGE], successMessage: 'Pages resized'),
+            handleToolState(state.httpStates[HttpStates.RESIZE_PAGE], successMessage: L10n.of(context).pagesResized),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.RESIZE_PAGE]?.loading == true;
           return Stack(children: [
@@ -57,7 +59,7 @@ class _ResizePageViewState extends State<ResizePageView>
                   // overflows a fixed column on a short screen.
                   child: SingleChildScrollView(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Target size', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).targetSize, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     // RadioGroup supplies the selection to the tiles below it. Besides
                     // replacing the deprecated per-tile groupValue/onChanged, it gives the set
@@ -101,11 +103,11 @@ class _ResizePageViewState extends State<ResizePageView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onResize,
                   icon: const Icon(Icons.aspect_ratio),
-                  label: Text('Resize to ${_size.label}'),
+                  label: Text(L10n.of(context).resizeTo(_size.label)),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.RESIZE_PAGE], label: 'Resizing pages'),
+            processingOverlay(state.httpStates[HttpStates.RESIZE_PAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),

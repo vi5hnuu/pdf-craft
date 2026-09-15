@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/state/selection/SelectionService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -22,16 +23,16 @@ class SelectionBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              Text('$count selected',
+              Text(L10n.of(context).selCount(count),
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               const Spacer(),
               IconButton(
-                tooltip: 'Manage selection',
+                tooltip: L10n.of(context).selManage,
                 icon: const Icon(Icons.checklist),
                 onPressed: () => showManageSelections(context),
               ),
               IconButton(
-                tooltip: 'Clear',
+                tooltip: L10n.of(context).clear,
                 icon: const Icon(Icons.close),
                 onPressed: () => SelectionService().clear(),
               ),
@@ -39,7 +40,7 @@ class SelectionBar extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () => showToolsForSelection(context),
                 icon: const Icon(Icons.build, size: 18),
-                label: const Text('Tools'),
+                label: Text(L10n.of(context).navTools),
               ),
             ],
           ),
@@ -61,9 +62,9 @@ void showToolsForSelection(BuildContext context) {
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
     builder: (_) => SafeArea(
       child: applicable.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text('No tools apply to this selection'),
+          ? Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(L10n.of(context).selNoToolsApply),
             )
           : Column(
               mainAxisSize: MainAxisSize.min,
@@ -72,7 +73,7 @@ void showToolsForSelection(BuildContext context) {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Apply to ${files.length} file(s)',
+                    child: Text(L10n.of(context).selApplyTo(files.length),
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 15)),
                   ),
@@ -84,7 +85,7 @@ void showToolsForSelection(BuildContext context) {
                         .map((tool) => ListTile(
                               leading:
                                   Icon(tool.icon, color: tool.category.color),
-                              title: Text(tool.name),
+                              title: Text(tool.localizedName(context)),
                               onTap: () {
                                 Navigator.pop(context);
                                 final selected = SelectionService().files;
@@ -114,9 +115,9 @@ void showManageSelections(BuildContext context) {
         builder: (ctx, _) {
           final files = SelectionService().files;
           if (files.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text('No files selected'),
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(L10n.of(context).selNoFiles),
             );
           }
           return Column(
@@ -126,13 +127,13 @@ void showManageSelections(BuildContext context) {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
-                    Text('${files.length} selected',
+                    Text(L10n.of(context).selCount(files.length),
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 15)),
                     const Spacer(),
                     TextButton(
                       onPressed: () => SelectionService().clear(),
-                      child: const Text('Clear all'),
+                      child: Text(L10n.of(context).clearAll),
                     ),
                   ],
                 ),

@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/extract-embedded-files.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -33,13 +35,13 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Extract Embedded Files')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-embedded'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_EMBEDDED] != c.httpStates[HttpStates.EXTRACT_EMBEDDED],
         listenWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_EMBEDDED] != c.httpStates[HttpStates.EXTRACT_EMBEDDED],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.EXTRACT_EMBEDDED],
-          successMessage: 'Embedded files extracted',
+          successMessage: L10n.of(context).embeddedFilesExtracted,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {
@@ -52,12 +54,11 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.attachment_outlined, size: 64, color: theme.colorScheme.primary),
                     const SizedBox(height: 16),
-                    Text('Extract attachments',
+                    Text(L10n.of(context).extractAttachments,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Text(
-                      'Some PDFs carry attached files (spreadsheets, other PDFs, etc.). '
-                      'These are collected into a ZIP. If there are none, you\'ll be told.',
+                      L10n.of(context).extractFilesHint,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), height: 1.4),
@@ -75,11 +76,11 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onExtract,
                   icon: const Icon(Icons.archive_outlined),
-                  label: const Text('Extract Files (ZIP)'),
+                  label: Text(L10n.of(context).extractFilesZip),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.EXTRACT_EMBEDDED], label: 'Extracting files'),
+            processingOverlay(state.httpStates[HttpStates.EXTRACT_EMBEDDED], label: L10n.of(context).procWorking),
           ]);
         },
       ),

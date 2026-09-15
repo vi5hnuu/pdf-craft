@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -47,12 +49,12 @@ class _ReversePagesViewState extends State<ReversePagesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Reverse Page Order')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'reverse-pages'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: 'Page order reversed'),
+            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: L10n.of(context).pageOrderReversed),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.REORDER_PDF]?.loading == true;
           final pages = _totalPages;
@@ -66,12 +68,12 @@ class _ReversePagesViewState extends State<ReversePagesView>
                     children: [
                       Icon(Icons.swap_vert, size: 64, color: theme.colorScheme.primary),
                       const SizedBox(height: 16),
-                      Text('Reverse the page order',
+                      Text(L10n.of(context).reverseOrderLabel,
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Text(
                         pages == null
-                            ? 'Reading document…'
+                            ? L10n.of(context).readingDocument
                             : 'The last page becomes the first. This document has $pages page${pages == 1 ? '' : 's'}.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall
@@ -91,11 +93,11 @@ class _ReversePagesViewState extends State<ReversePagesView>
                 child: FilledButton.icon(
                   onPressed: (pages != null && pages > 1 && !loading) ? _onReverse : null,
                   icon: const Icon(Icons.swap_vert),
-                  label: const Text('Reverse & Save'),
+                  label: Text(L10n.of(context).reverseAndSave),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: 'Reversing pages'),
+            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

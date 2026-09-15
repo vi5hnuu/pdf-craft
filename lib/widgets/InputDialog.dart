@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 
 /// A reusable single-field text-input dialog.
 ///
@@ -13,8 +14,9 @@ class InputDialog extends StatefulWidget {
   final String? hint;
   final bool obscure;
   final TextInputType? keyboardType;
-  final String confirmLabel;
-  final String cancelLabel;
+  /// Button labels; null uses the translated "OK" / "Cancel".
+  final String? confirmLabel;
+  final String? cancelLabel;
   final String initial;
 
   const InputDialog({
@@ -24,8 +26,8 @@ class InputDialog extends StatefulWidget {
     this.hint,
     this.obscure = false,
     this.keyboardType,
-    this.confirmLabel = 'OK',
-    this.cancelLabel = 'Cancel',
+    this.confirmLabel,
+    this.cancelLabel,
     this.initial = '',
   });
 
@@ -36,8 +38,8 @@ class InputDialog extends StatefulWidget {
     String? hint,
     bool obscure = false,
     TextInputType? keyboardType,
-    String confirmLabel = 'OK',
-    String cancelLabel = 'Cancel',
+    String? confirmLabel,
+    String? cancelLabel,
     String initial = '',
   }) {
     return showDialog<String>(
@@ -93,8 +95,8 @@ class _InputDialogState extends State<InputDialog> {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(widget.cancelLabel)),
-        FilledButton(onPressed: _submit, child: Text(widget.confirmLabel)),
+            child: Text(widget.cancelLabel ?? L10n.of(context).cancel)),
+        FilledButton(onPressed: _submit, child: Text(widget.confirmLabel ?? L10n.of(context).ok)),
       ],
     );
   }

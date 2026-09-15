@@ -7,7 +7,21 @@ class AppTheme {
 
   static const _primary = Color(0xFFE53935);
 
-  static TextTheme _poppinsDark() => GoogleFonts.poppinsTextTheme(const TextTheme(
+  /// Poppins has no Devanagari glyphs, so Hindi text fell back to a mismatched system font.
+  /// Hind (same foundry as Poppins, covers Latin + Devanagari) is used when the app is in Hindi.
+  /// Google Fonts are fetched at runtime and cached, so this adds nothing to the APK.
+  static TextTheme Function([TextTheme?]) _fontTheme(bool hindi) =>
+      hindi ? GoogleFonts.hindTextTheme : GoogleFonts.poppinsTextTheme;
+
+  static TextStyle _appBarTitle(bool hindi, Color color) {
+    const size = 20.0;
+    return hindi
+        ? GoogleFonts.hind(color: color, fontSize: size, fontWeight: FontWeight.w600)
+        : GoogleFonts.poppins(
+            color: color, fontSize: size, fontWeight: FontWeight.w600, letterSpacing: 0.3);
+  }
+
+  static TextTheme _textDark(bool hindi) => _fontTheme(hindi)(const TextTheme(
         bodySmall: TextStyle(color: Colors.white),
         bodyMedium: TextStyle(color: Colors.white),
         bodyLarge: TextStyle(color: Colors.white),
@@ -15,7 +29,7 @@ class AppTheme {
         titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ));
 
-  static TextTheme _poppinsLight() => GoogleFonts.poppinsTextTheme(const TextTheme(
+  static TextTheme _textLight(bool hindi) => _fontTheme(hindi)(const TextTheme(
         bodySmall: TextStyle(color: Color(0xFF111111)),
         bodyMedium: TextStyle(color: Color(0xFF111111)),
         bodyLarge: TextStyle(color: Color(0xFF111111)),
@@ -23,7 +37,7 @@ class AppTheme {
         titleLarge: TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.bold),
       ));
 
-  static ThemeData get dark => ThemeData(
+  static ThemeData dark({bool hindi = false}) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: const ColorScheme.dark(
@@ -41,11 +55,7 @@ class AppTheme {
           backgroundColor: const Color(0xFF0D0D0D),
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3),
+          titleTextStyle: _appBarTitle(hindi, Colors.white),
           iconTheme: const IconThemeData(color: Colors.white),
           surfaceTintColor: Colors.transparent,
         ),
@@ -57,7 +67,7 @@ class AppTheme {
           elevation: 8,
         ),
         visualDensity: VisualDensity.compact,
-        textTheme: _poppinsDark(),
+        textTheme: _textDark(hindi),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.surface),
@@ -140,7 +150,7 @@ class AppTheme {
         cardColor: const Color(0xFF1A1A1A),
       );
 
-  static ThemeData get light => ThemeData(
+  static ThemeData light({bool hindi = false}) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
         colorScheme: const ColorScheme.light(
@@ -160,11 +170,7 @@ class AppTheme {
           scrolledUnderElevation: 0,
           surfaceTintColor: Colors.transparent,
           centerTitle: false,
-          titleTextStyle: GoogleFonts.poppins(
-              color: const Color(0xFF111111),
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3),
+          titleTextStyle: _appBarTitle(hindi, const Color(0xFF111111)),
           iconTheme: const IconThemeData(color: Color(0xFF111111)),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -175,7 +181,7 @@ class AppTheme {
           elevation: 8,
         ),
         visualDensity: VisualDensity.compact,
-        textTheme: _poppinsLight(),
+        textTheme: _textLight(hindi),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.surface),

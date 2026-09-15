@@ -5,6 +5,9 @@ import 'dart:typed_data' show Uint8List;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/LocaleManager.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/theme/app_theme.dart';
@@ -87,6 +90,7 @@ import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
@@ -122,14 +126,15 @@ String? _requireFiles(BuildContext context, GoRouterState state) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeManager().init();
+  await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame
-  // Establish an auth session (guest on first launch) so product requests are authenticated.
-  // Resilient to offline launch — a token is (re)obtained lazily on the next online request.
-  try {
-    await AuthService().bootstrap();
-  } catch (e) {
+  // Establish an auth session (guest on first launch) in the background. This used to be
+  // awaited here, so a slow or unreachable auth server held the first frame until the 20s
+  // connect timeout (measured on a release build: first frame at +20.4s). Requests don't need
+  // it to finish first — the Dio interceptor calls ensureSession(), which waits for it.
+  unawaited(AuthService().bootstrap().catchError((Object e) {
     LoggerSingleton().logger.w('Auth bootstrap deferred: $e');
-  }
+  }));
   // Load credits in the background so a slow/unreachable server never blocks the first frame.
   unawaited(CreditService().load());
   // Start the IAP lifecycle app-wide: recovers unfinished purchases and processes any
@@ -156,10 +161,6 @@ class NestedTabNavigationExampleApp extends StatefulWidget {
 
 class _NestedTabNavigationExampleAppState
     extends State<NestedTabNavigationExampleApp> with WidgetsBindingObserver {
-  /// Tracks whether the app has gone to the background at least once.
-  /// Used so the App Open ad shows only on a genuine warm resume and never on
-  /// the initial cold start (which reaches `resumed` with no prior background).
-  bool _wasBackgrounded = false;
 
   // Subscription to files shared into the app while it is running.
   StreamSubscription<List<String>>? _sharingSub;
@@ -204,17 +205,20 @@ class _NestedTabNavigationExampleAppState
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     switch (state) {
+      // Only a real trip to the background counts. `inactive`/`hidden` also fire for the
+      // notification shade, permission dialogs and system pickers — treating those as a
+      // resume showed a full-screen ad every time the user pulled down the shade.
       case AppLifecycleState.paused:
-      case AppLifecycleState.hidden:
-      case AppLifecycleState.inactive:
-        _wasBackgrounded = true;
+        FullScreenAdPolicy().onPaused();
         break;
       case AppLifecycleState.resumed:
-        if (_wasBackgrounded) {
-          _wasBackgrounded = false;
+        // The policy enforces minimum background time, cooldown, external flows and Pro.
+        if (FullScreenAdPolicy().consumeResumeForAppOpen()) {
           AppOpenAdManager().showAdIfAvailable();
         }
         break;
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
         break;
     }
@@ -225,6 +229,15 @@ class _NestedTabNavigationExampleAppState
     navigatorKey: _rootNavigatorKey, //navigator = 1
     initialLocation: AppRoutes.splashRoute.path,
     redirect: (context, state) async {
+      // Splash, onboarding and the permission page itself never need storage access. Gating
+      // them sent brand-new users to the permission wall before they had seen the intro (and
+      // skipped the splash's ad initialisation).
+      final path = state.matchedLocation;
+      if (path == AppRoutes.splashRoute.path ||
+          path == AppRoutes.onboardingRoute.path ||
+          path == AppRoutes.errorRoute.path) {
+        return null;
+      }
       final granted=await StoragePermissions.isStoragePermissionGranted();
       if(granted) return null;
       return AppRoutes.errorRoute.path;
@@ -552,7 +565,7 @@ class _NestedTabNavigationExampleAppState
           return PlaceImageView(
             pdfFile: extra['file'] as File,
             preloadedImageBytes: extra['imageBytes'] as Uint8List?,
-            title: extra['title'] as String? ?? 'Place Image',
+            title: extra['title'] as String? ?? L10n.of(context).placeImage,
           );
         },
       ),
@@ -564,7 +577,7 @@ class _NestedTabNavigationExampleAppState
         name: AppRoutes.imageOverlayRoute.name,
         builder: (context, state) => PlaceImageView(
           pdfFile: ((state.extra as Map)['files'] as List<File>).first,
-          title: 'Image Overlay',
+          title: L10n.of(context).imageOverlayTitle,
         ),
       ),
       // Image Studio: extra has 'files' list + 'op' ImageStudioOp
@@ -983,15 +996,26 @@ class _NestedTabNavigationExampleAppState
       // change rebuilds MaterialApp and re-reads themeMode live. Previously the
       // ListenableBuilder wrapped a const widget at runApp(), so notifications
       // could not propagate and the theme only applied on a fresh start.
+      // LocaleManager is listened to alongside it so switching language rebuilds the whole app
+      // live (strings, Hindi-capable font) without a restart.
       child: ListenableBuilder(
-        listenable: ThemeManager(),
+        listenable: Listenable.merge([ThemeManager(), LocaleManager()]),
         builder: (context, _) => MaterialApp.router(
           scaffoldMessengerKey: NotificationService.messengerKey,
-          title: 'Pdf craft',
+          title: 'PDF Craft',
           debugShowCheckedModeBanner: false,
           themeMode: ThemeManager().mode,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.light(hindi: LocaleManager().isHindi),
+          darkTheme: AppTheme.dark(hindi: LocaleManager().isHindi),
+          // null locale = follow the device language.
+          locale: LocaleManager().locale,
+          supportedLocales: LocaleManager.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           routerConfig: _router,
           // Surface a "session expired" prompt (sign in again / continue as guest)
           // over whatever screen is showing.
@@ -1046,17 +1070,15 @@ class _SessionExpiryGateState extends State<_SessionExpiryGate> {
       barrierDismissible: false,
       builder: (dctx) => AlertDialog(
         icon: const Icon(Icons.lock_clock_outlined, size: 40),
-        title: const Text('Session expired'),
-        content: const Text(
-            'You’ve been signed out. Sign in again to get back to your account, '
-            'or keep using PDF Craft as a guest.'),
+        title: Text(L10n.of(dctx).sessionExpiredTitle),
+        content: Text(L10n.of(dctx).sessionExpiredBody),
         actions: [
           TextButton(
             onPressed: () {
               AuthService().acknowledgeSessionExpired();
               Navigator.of(dctx).pop();
             },
-            child: const Text('Continue as guest'),
+            child: Text(L10n.of(dctx).sessionContinueGuest),
           ),
           FilledButton(
             onPressed: () {
@@ -1065,7 +1087,7 @@ class _SessionExpiryGateState extends State<_SessionExpiryGate> {
               GoRouter.of(ctx).pushNamed(AppRoutes.authRoute.name,
                   queryParameters: {'mode': 'signin'});
             },
-            child: const Text('Sign in again'),
+            child: Text(L10n.of(dctx).sessionSignInAgain),
           ),
         ],
       ),

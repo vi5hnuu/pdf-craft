@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/auth/AuthUser.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/auth/AuthApi.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
@@ -30,7 +31,7 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text(L10n.of(context).settingsSectionAccount)),
       body: AnimatedBuilder(
         animation: AuthService(),
         builder: (context, _) {
@@ -52,11 +53,11 @@ class _AccountScreenState extends State<AccountScreen> {
         const SizedBox(height: 12),
         Icon(Icons.account_circle_outlined, size: 88, color: theme.colorScheme.primary),
         const SizedBox(height: 16),
-        Text('You’re using PDF Craft as a guest',
+        Text(L10n.of(context).accountGuestTitle,
             textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
         Text(
-          'Create a free account to keep your credits safe and sync across devices.',
+          L10n.of(context).accountGuestBody,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -65,7 +66,7 @@ class _AccountScreenState extends State<AccountScreen> {
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
           onPressed: () => context.pushNamed(AppRoutes.authRoute.name),
-          child: const Text('Create account or sign in'),
+          child: Text(L10n.of(context).accountCreateOrSignIn),
         ),
         const SizedBox(height: 24),
         _creditsTile(context),
@@ -101,7 +102,7 @@ class _AccountScreenState extends State<AccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name.isEmpty ? (user.username ?? 'Your account') : name,
+                  Text(name.isEmpty ? (user.username ?? L10n.of(context).accountYourAccount) : name,
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.bold)),
                   if (user.email != null)
@@ -129,27 +130,27 @@ class _AccountScreenState extends State<AccountScreen> {
           child: Column(children: [
             ListTile(
               leading: const Icon(Icons.badge_outlined),
-              title: const Text('Edit profile'),
-              subtitle: const Text('Change your name'),
+              title: Text(L10n.of(context).accountEditProfile),
+              subtitle: Text(L10n.of(context).accountChangeName),
               onTap: _busy ? null : () => _editProfile(user),
             ),
             const Divider(height: 1, indent: 56),
             if (user.authProvider == 'LOCAL')
               ListTile(
                 leading: const Icon(Icons.password_outlined),
-                title: const Text('Change password'),
+                title: Text(L10n.of(context).accountChangePassword),
                 onTap: _busy ? null : _changePassword,
               ),
             if (user.authProvider == 'LOCAL') const Divider(height: 1, indent: 56),
             ListTile(
               leading: const Icon(Icons.logout),
-              title: const Text('Sign out'),
+              title: Text(L10n.of(context).signOut),
               onTap: _busy ? null : _signOut,
             ),
             const Divider(height: 1, indent: 56),
             ListTile(
               leading: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-              title: Text('Delete account',
+              title: Text(L10n.of(context).accountDelete,
                   style: TextStyle(color: theme.colorScheme.error)),
               onTap: _busy ? null : _deleteAccount,
             ),
@@ -172,15 +173,14 @@ class _AccountScreenState extends State<AccountScreen> {
               Icon(Icons.mark_email_unread_outlined, color: theme.colorScheme.error),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('Verify your email',
+                child: Text(L10n.of(context).accountVerifyTitle,
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold)),
               ),
             ]),
             const SizedBox(height: 8),
             Text(
-              'We sent a link to ${user.email ?? 'your email'}. Open it, tap “Verify email”, '
-              'then come back and tap “I’ve verified”. Check spam if you don’t see it.',
+              L10n.of(context).accountVerifyBody(user.email ?? L10n.of(context).yourEmail),
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
@@ -190,7 +190,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _busy ? null : () => _resend(user.email),
                     icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Resend'),
+                    label: Text(L10n.of(context).accountResend),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -198,7 +198,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: FilledButton.icon(
                     onPressed: _busy ? null : _recheck,
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text("I've verified"),
+                    label: Text(L10n.of(context).accountIveVerified),
                   ),
                 ),
               ],
@@ -213,8 +213,8 @@ class _AccountScreenState extends State<AccountScreen> {
     return Card(
       child: ListTile(
         leading: Icon(Icons.verified_outlined, color: Colors.green.shade600),
-        title: const Text('Email verified'),
-        subtitle: const Text('Your account is fully set up.'),
+        title: Text(L10n.of(context).accountEmailVerified),
+        subtitle: Text(L10n.of(context).accountFullySetUp),
       ),
     );
   }
@@ -226,8 +226,8 @@ class _AccountScreenState extends State<AccountScreen> {
         animation: CreditService(),
         builder: (context, _) => ListTile(
           leading: Icon(Icons.toll, color: theme.colorScheme.primary),
-          title: const Text('Credits'),
-          subtitle: Text('${CreditService().balance} available'),
+          title: Text(L10n.of(context).credits),
+          subtitle: Text(L10n.of(context).creditsAvailable(CreditService().balance)),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.pushNamed(AppRoutes.creditsRoute.name),
         ),
@@ -237,8 +237,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _providerChip(ThemeData theme, AuthUser user) {
     final label = switch (user.authProvider) {
-      'GOOGLE' => 'Google account',
-      'LOCAL' => 'Email account',
+      'GOOGLE' => L10n.of(context).accountGoogle,
+      'LOCAL' => L10n.of(context).accountEmail,
       _ => user.accountType,
     };
     return Chip(
@@ -268,7 +268,7 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       await AuthService().reVerify(email);
       NotificationService.showSnackbar(
-          text: 'Verification email sent to $email.', color: Colors.green);
+          text: L10n.current.accountVerificationSent(email), color: Colors.green);
     } on AuthException catch (e) {
       NotificationService.showSnackbar(text: e.message, color: Colors.red);
     } finally {
@@ -282,8 +282,8 @@ class _AccountScreenState extends State<AccountScreen> {
       final verified = await AuthService().refreshProfile();
       NotificationService.showSnackbar(
         text: verified
-            ? 'Email verified — you’re all set!'
-            : 'Not verified yet. Open the link in your email, then try again.',
+            ? L10n.current.accountVerifiedAllSet
+            : L10n.current.accountNotVerifiedYet,
         color: verified ? Colors.green : Colors.orange,
       );
     } finally {
@@ -298,26 +298,26 @@ class _AccountScreenState extends State<AccountScreen> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Edit profile'),
+          title: Text(L10n.of(ctx).accountEditProfile),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: firstC,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(labelText: 'First name'),
+                decoration: InputDecoration(labelText: L10n.of(ctx).firstName),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: lastC,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(labelText: 'Last name'),
+                decoration: InputDecoration(labelText: L10n.of(ctx).lastName),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(L10n.of(ctx).actionSave)),
           ],
         ),
       );
@@ -326,7 +326,7 @@ class _AccountScreenState extends State<AccountScreen> {
       try {
         await AuthService().updateProfile(
             firstName: firstC.text.trim(), lastName: lastC.text.trim());
-        NotificationService.showSnackbar(text: 'Profile updated.', color: Colors.green);
+        NotificationService.showSnackbar(text: L10n.current.accountProfileUpdated, color: Colors.green);
       } on AuthException catch (e) {
         NotificationService.showSnackbar(text: e.message, color: Colors.red);
       } finally {
@@ -347,21 +347,21 @@ class _AccountScreenState extends State<AccountScreen> {
         context: context,
         builder: (ctx) => StatefulBuilder(
           builder: (ctx, setInner) => AlertDialog(
-            title: const Text('Change password'),
+            title: Text(L10n.of(ctx).accountChangePassword),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: oldC,
                   obscureText: obscure,
-                  decoration: const InputDecoration(labelText: 'Current password'),
+                  decoration: InputDecoration(labelText: L10n.of(ctx).accountCurrentPassword),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: newC,
                   obscureText: obscure,
                   decoration: InputDecoration(
-                    labelText: 'New password (min 8)',
+                    labelText: L10n.of(ctx).accountNewPassword,
                     suffixIcon: IconButton(
                       icon: Icon(obscure
                           ? Icons.visibility_outlined
@@ -373,8 +373,8 @@ class _AccountScreenState extends State<AccountScreen> {
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Update')),
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
+              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(L10n.of(ctx).update)),
             ],
           ),
         ),
@@ -382,13 +382,13 @@ class _AccountScreenState extends State<AccountScreen> {
       if (ok != true) return;
       if (newC.text.length < 8) {
         NotificationService.showSnackbar(
-            text: 'New password must be at least 8 characters.', color: Colors.red);
+            text: L10n.current.accountPasswordTooShort, color: Colors.red);
         return;
       }
       setState(() => _busy = true);
       try {
         await AuthService().changePassword(oldC.text, newC.text);
-        NotificationService.showSnackbar(text: 'Password updated.', color: Colors.green);
+        NotificationService.showSnackbar(text: L10n.current.accountPasswordUpdated, color: Colors.green);
       } on AuthException catch (e) {
         NotificationService.showSnackbar(text: e.message, color: Colors.red);
       } finally {
@@ -405,7 +405,7 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       await AuthService().logout();
       await CreditService().load();
-      NotificationService.showSnackbar(text: 'Signed out.', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.accountSignedOut, color: Colors.orange);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -415,16 +415,14 @@ class _AccountScreenState extends State<AccountScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete account?'),
-        content: const Text(
-            'This permanently deletes your account. Your credits and profile cannot be recovered. '
-            'You’ll continue as a guest.'),
+        title: Text(L10n.of(ctx).accountDeleteTitle),
+        content: Text(L10n.of(ctx).accountDeleteBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(L10n.of(ctx).delete),
           ),
         ],
       ),
@@ -434,7 +432,7 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       await AuthService().deleteAccount();
       await CreditService().load();
-      NotificationService.showSnackbar(text: 'Account deleted.', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.accountDeleted, color: Colors.orange);
     } on AuthException catch (e) {
       NotificationService.showSnackbar(text: e.message, color: Colors.red);
     } finally {

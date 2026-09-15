@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/color-info.dart';
 import 'package:pdf_craft/models/enums/font-name.dart';
 import 'package:pdf_craft/models/request/header-footer.dart';
@@ -114,7 +116,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Header & Footer'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.HEADER_FOOTER] != c.httpStates[HttpStates.HEADER_FOOTER],
         listenWhen: (p, c) => p.httpStates[HttpStates.HEADER_FOOTER] != c.httpStates[HttpStates.HEADER_FOOTER],
@@ -122,7 +124,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
           final s = state.httpStates[HttpStates.HEADER_FOOTER];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Header/footer added successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -148,7 +150,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                             PdfEffectPreview(
                               filePath: widget.file.path,
                               caption:
-                                  'Approximate placement on page 1 — font metrics differ slightly from the output',
+                                  L10n.of(context).approxPlacementPage1,
                               overlayBuilder: (ctx, canvas, pagePoints) {
                                 final scale = canvas.width / pagePoints.width;
                                 final size = _fontSize * scale;
@@ -174,11 +176,11 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                               },
                             ),
                             const SizedBox(height: 16),
-                            _field(_outFileNameC, 'Output File Name (optional)'),
+                            _field(_outFileNameC, L10n.of(context).outputFileNameOptional),
                             const SizedBox(height: 16),
-                            _field(_headerTextC, 'Header Text'),
+                            _field(_headerTextC, L10n.of(context).headerText),
                             const SizedBox(height: 12),
-                            _field(_footerTextC, 'Footer Text'),
+                            _field(_footerTextC, L10n.of(context).footerText),
                             const SizedBox(height: 16),
                             // Font settings row
                             Row(
@@ -186,7 +188,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                                 Expanded(
                                   child: DropdownButtonFormField<PdfFontName>(
                                     initialValue: _fontName,
-                                    decoration: const InputDecoration(labelText: 'Font', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
+                                    decoration: InputDecoration(labelText: L10n.of(context).fontLabel, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
                                     items: PdfFontName.values.map((f) => DropdownMenuItem(value: f, child: Text(f.displayName, style: const TextStyle(fontSize: 13)))).toList(),
                                     onChanged: (v) => setState(() => _fontName = v!),
                                   ),
@@ -197,7 +199,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                                   child: TextFormField(
                                     initialValue: _fontSize.toString(),
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(labelText: 'Size', border: OutlineInputBorder()),
+                                    decoration: InputDecoration(labelText: L10n.of(context).sortSize, border: OutlineInputBorder()),
                                     onChanged: (v) => _fontSize = int.tryParse(v) ?? 12,
                                   ),
                                 ),
@@ -207,7 +209,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                             // Color picker
                             Row(
                               children: [
-                                const Text('Text Color:', style: TextStyle(fontSize: 14)),
+                                Text(L10n.of(context).textColorColon, style: const TextStyle(fontSize: 14)),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,
@@ -230,19 +232,19 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                               children: [
                                 Expanded(child: _field(_fromPageC, 'From Page')),
                                 const SizedBox(width: 12),
-                                Expanded(child: _field(_toPageC, 'To Page (optional)')),
+                                Expanded(child: _field(_toPageC, L10n.of(context).toPageOptional)),
                               ],
                             ),
                             const SizedBox(height: 16),
                             // Padding sliders
-                            _labeledSlider('Top Padding', _topPadding, 0, 80, (v) => setState(() => _topPadding = v)),
-                            _labeledSlider('Bottom Padding', _bottomPadding, 0, 80, (v) => setState(() => _bottomPadding = v)),
+                            _labeledSlider(L10n.of(context).topPadding, _topPadding, 0, 80, (v) => setState(() => _topPadding = v)),
+                            _labeledSlider(L10n.of(context).bottomPadding, _bottomPadding, 0, 80, (v) => setState(() => _bottomPadding = v)),
                             // Settings are remembered, so there has to be a way back out of them.
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton(
                                 onPressed: _resetSettings,
-                                child: const Text('Reset to defaults'),
+                                child: Text(L10n.of(context).resetDefaults),
                               ),
                             ),
                           ],
@@ -254,13 +256,13 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                       child: FilledButton.icon(
                         onPressed: _onApply,
                         icon: const Icon(Icons.title),
-                        label: const Text('Apply Header/Footer'),
+                        label: Text(ToolStrings.name(context, 'header-footer')),
                       ),
                     ),
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.HEADER_FOOTER], label: 'Adding header & footer'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.HEADER_FOOTER], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -318,7 +320,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Pick Text Color'),
+        title: Text(L10n.of(context).pickTextColor),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: _color,
@@ -326,7 +328,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
             enableAlpha: false,
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done))],
       ),
     );
   }

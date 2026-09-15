@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
@@ -64,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text('Quick Actions',
+                child: Text(L10n.of(context).quickActions,
                     style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
               ),
             ),
@@ -113,11 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
                 child: Row(children: [
-                  Text('Recently Processed',
+                  Text(L10n.of(context).recentlyProcessed,
                       style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                   const Spacer(),
                   if (_recentFiles.isNotEmpty)
-                    TextButton(onPressed: _loadRecentFiles, child: const Text('Refresh')),
+                    TextButton(onPressed: _loadRecentFiles, child: Text(L10n.of(context).refresh)),
                 ]),
               ),
             ),
@@ -130,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(Icons.folder_open_outlined, size: 48,
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.25)),
                     const SizedBox(height: 12),
-                    Text('No processed files yet',
+                    Text(L10n.of(context).noProcessedFilesYet,
                         style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(alpha: 0.4))),
                   ]),

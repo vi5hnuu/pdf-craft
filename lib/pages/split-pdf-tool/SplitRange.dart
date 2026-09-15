@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/enums/split-type.dart';
 import 'package:pdf_craft/models/request/split-pdf.dart';
@@ -75,7 +76,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
               listener: (context, state) {
                 final httpState=state.httpStates[HttpStates.REORDER_PDF];
                 if(httpState?.done==true){
-                  NotificationService.showSnackbar(text: "Split Successfull",color: Colors.green);
+                  NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
                   final file=httpState?.extras?['savedFile'];
                   if(file is! File) return;
                   OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]??'*/*');
@@ -89,10 +90,10 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
               if(widget.type==SplitType.FIXED_RANGE) Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Range',border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: L10n.of(context).rangeLabel,border: OutlineInputBorder()),
                     onChanged: _onFixedRangeChange,
                     validator: (value){
-                      return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                      return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
                     }),
               )
               else Padding(
@@ -107,16 +108,16 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                               decoration: InputDecoration(label: Text("from"),border: OutlineInputBorder()),
                               controller: rangeStart,
                               validator: (value){
-                                return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                                return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
                               }),
                         ),
                         SizedBox(width: 12,),
                         Flexible(
                           child: TextFormField(keyboardType: TextInputType.number,
-                              decoration: InputDecoration(label: Text("To"),border: OutlineInputBorder()),
+                              decoration: InputDecoration(label: Text(L10n.of(context).toLabel),border: OutlineInputBorder()),
                               controller: rangeEnd,
                               validator: (value){
-                                return value!=null && (int.parse(value)>0) ? null : "Invalid fixed range";
+                                return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
                               }),
                         ),
                       ],
@@ -127,7 +128,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                       final to=min(int.tryParse(rangeEnd.text) ?? 1, document!.pagesCount)-1;
                       if(from<0 || to<0) return;
                       _addRange(RangeModel(from:from, to:to ));
-                    }, child: Text("Add Range")),
+                    }, child: Text(L10n.of(context).addRange)),
                   ],
                 ),
               ),
@@ -248,7 +249,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
       });
     }catch(e){
       setState((){
-        if(mounted) _thumbnailsCache.put(pageNo, Thumbnail(error: "failed to render thumbnail"));
+        if(mounted) _thumbnailsCache.put(pageNo, Thumbnail(error: L10n.current.thumbnailFailed));
       });
     }
   }

@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/map-entensions.dart';
 import 'package:pdf_craft/models/WithHttpState.dart';
 import 'package:pdf_craft/models/request/add-blank-pages.dart';
@@ -85,175 +86,175 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<MergePdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.MERGE_PDF,
       call: (p) => _pdfService.mergePdf(mergePdf: e.mergePdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to merge PDFs',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ReorderPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.REORDER_PDF,
       call: (p) => _pdfService.reorderPdf(reorderPdf: e.reorderPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to reorder pages',
+      error: L10n.current.errToolFailed,
     ));
 
     on<SplitPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.SPLIT_PDF,
       call: (p) => _pdfService.splitPdf(splitPdf: e.splitPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to split PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<PdfToJpgEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.PDF_TO_JPG,
       call: (p) => _pdfService.pdfToJpg(pdfToJpg: e.pdfToJpg, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to convert PDF to JPG',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ImageToPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.IMAGE_TO_PDF,
       call: (p) => _pdfService.imageToPdf(imageToPdf: e.imageToPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to convert images to PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<PageNumbersEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.PAGE_NUMBERS,
       call: (p) => _pdfService.pageNumbers(pageNumber: e.pageNumber, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to add page numbers',
+      error: L10n.current.errToolFailed,
     ));
 
     on<RotatePdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.ROTATE_PDF,
       call: (p) => _pdfService.rotatePdf(rotatePdf: e.rotatePdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to rotate PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<UnprotectPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.UNPROTECT_PDF,
       call: (p) => _pdfService.unprotectPdf(unlockOdf: e.unlockPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to remove password',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ProtectPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.PROTECT_PDF,
       call: (p) => _pdfService.protectpdf(protectPdf: e.protectPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to protect PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<CompressPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.COMPRESS_PDF,
       call: (p) => _pdfService.compressPdf(compressPdf: e.compressPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to compress PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<WatermarkPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.WATERMARK_PDF,
       call: (p) => _pdfService.watermarkPdf(watermarkPdf: e.watermarkPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to add watermark',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ExtractTextEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.EXTRACT_TEXT,
       call: (p) => _pdfService.extractText(extractText: e.extractText, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to extract text',
+      error: L10n.current.errToolFailed,
     ));
 
     on<GrayscalePdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.GRAYSCALE_PDF,
       call: (p) => _pdfService.grayscalePdf(grayscalePdf: e.grayscalePdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to convert to grayscale',
+      error: L10n.current.errToolFailed,
     ));
 
     on<CropPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.CROP_PDF,
       call: (p) => _pdfService.cropPdf(cropPdf: e.cropPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to crop PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<EditMetadataEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.EDIT_METADATA,
       call: (p) => _pdfService.editMetadata(editMetadata: e.editMetadata, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to edit metadata',
+      error: L10n.current.errToolFailed,
     ));
 
     on<HeaderFooterEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.HEADER_FOOTER,
       call: (p) => _pdfService.headerFooter(headerFooter: e.headerFooter, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to add header/footer',
+      error: L10n.current.errToolFailed,
     ));
 
     on<RepairPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.REPAIR_PDF,
       call: (p) => _pdfService.repairPdf(repairPdf: e.repairPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to repair PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<FlattenPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.FLATTEN_PDF,
       call: (p) => _pdfService.flattenPdf(flattenPdf: e.flattenPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to flatten PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<AddBlankPagesEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.ADD_BLANK_PAGES,
       call: (p) => _pdfService.addBlankPages(addBlankPages: e.addBlankPages, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to add blank pages',
+      error: L10n.current.errToolFailed,
     ));
 
     on<StampPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.STAMP_PDF,
       call: (p) => _pdfService.stampPdf(stampPdf: e.stampPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to stamp PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<PlaceImageEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.PLACE_IMAGE,
       call: (p) => _pdfService.placeImage(placeImage: e.placeImage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to place image on PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<CompressImageEvent>((e, emit) => _handleImage(
       emit: emit,
       call: (p) => _pdfService.compressImage(req: e.compressImage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to compress image',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ConvertToJpgEvent>((e, emit) => _handleImage(
       emit: emit,
       call: (p) => _pdfService.convertToJpg(req: e.convertToJpg, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to convert image to JPG',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ConvertFromJpgEvent>((e, emit) => _handleImage(
       emit: emit,
       call: (p) => _pdfService.convertFromJpg(req: e.convertFromJpg, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to convert image from JPG',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ResizeImageEvent>((e, emit) => _handleImage(
       emit: emit,
       call: (p) => _pdfService.resizeImage(req: e.resizeImage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to resize image',
+      error: L10n.current.errToolFailed,
     ));
 
     on<RotateImageEvent>((e, emit) => _handleImage(
       emit: emit, key: HttpStates.ROTATE_IMAGE,
       call: (p) => _pdfService.rotateImage(req: e.rotateImage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to rotate image',
+      error: L10n.current.errToolFailed,
     ));
 
     on<FlipImageEvent>((e, emit) => _handleImage(
       emit: emit, key: HttpStates.FLIP_IMAGE,
       call: (p) => _pdfService.flipImage(req: e.flipImage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to flip image',
+      error: L10n.current.errToolFailed,
     ));
 
     on<BorderImageEvent>((e, emit) => _handleImage(
       emit: emit, key: HttpStates.BORDER_IMAGE,
       call: (p) => _pdfService.borderImage(req: e.borderImage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to add border',
+      error: L10n.current.errToolFailed,
     ));
 
     on<FillFlattenEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.FILL_FLATTEN,
       call: (p) => _pdfService.fillFlatten(req: e.fillFlatten, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to fill & flatten',
+      error: L10n.current.errToolFailed,
     ));
 
     // Returns the PDF's existing form fields as JSON — does not save a file.
@@ -266,10 +267,10 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         if (e.type == DioExceptionType.cancel) {
           emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.GET_FORM_FIELDS)));
         } else {
-          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.fromDio(e, 'Failed to read form fields'))));
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.fromDio(e, L10n.current.errToolFailed))));
         }
       } catch (_) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, const HttpState.error(error: 'Failed to read form fields'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_FORM_FIELDS, HttpState.error(error: L10n.current.errToolFailed))));
       }
     });
 
@@ -287,97 +288,97 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         PdfOfficeFormat.pptx =>
           (ProgressCallback p) => _pdfService.pdfToPptx(req: e.pdfToOffice, cancelToken: e.cancelToken, onSendProgress: p),
       };
-      return _handle(emit: emit, key: key, call: call, error: 'Conversion failed');
+      return _handle(emit: emit, key: key, call: call, error: L10n.current.errToolFailed);
     });
 
     on<RedactPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.REDACT_PDF,
       call: (p) => _pdfService.redactPdf(req: e.redactPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to redact PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<DuplicatePagesEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.DUPLICATE_PAGES,
       call: (p) => _pdfService.duplicatePages(req: e.duplicatePages, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to duplicate pages',
+      error: L10n.current.errToolFailed,
     ));
 
     on<EditBookmarksEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.EDIT_BOOKMARKS,
       call: (p) => _pdfService.editBookmarks(req: e.editBookmarks, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to edit bookmarks',
+      error: L10n.current.errToolFailed,
     ));
 
     on<CreateFormEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.CREATE_FORM,
       call: (p) => _pdfService.createForm(req: e.createForm, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to create form',
+      error: L10n.current.errToolFailed,
     ));
 
     on<RemoveMetadataEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.REMOVE_METADATA,
       call: (p) => _pdfService.removeMetadata(req: e.removeMetadata, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to remove metadata',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ExtractImagesEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.EXTRACT_IMAGES,
       call: (p) => _pdfService.extractImages(req: e.extractImages, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to extract images',
+      error: L10n.current.errToolFailed,
     ));
 
     on<SanitizePdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.SANITIZE_PDF,
       call: (p) => _pdfService.sanitizePdf(req: e.sanitizePdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to sanitize PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<SplitBySizeEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.SPLIT_BY_SIZE,
       call: (p) => _pdfService.splitBySize(req: e.splitBySize, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to split PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<MirrorPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.MIRROR_PDF,
       call: (p) => _pdfService.mirrorPdf(req: e.mirrorPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to mirror PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ResizePageEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.RESIZE_PAGE,
       call: (p) => _pdfService.resizePage(req: e.resizePage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to resize pages',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ScalePdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.SCALE_PDF,
       call: (p) => _pdfService.scalePdf(req: e.scalePdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to scale PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<InsertPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.INSERT_PDF,
       call: (p) => _pdfService.insertPdf(req: e.insertPdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to insert PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ExtractEmbeddedFilesEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.EXTRACT_EMBEDDED,
       call: (p) => _pdfService.extractEmbeddedFiles(req: e.extractEmbeddedFiles, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to extract embedded files',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ReplacePagesEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.REPLACE_PAGES,
       call: (p) => _pdfService.replacePages(req: e.replacePages, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to replace pages',
+      error: L10n.current.errToolFailed,
     ));
 
     on<ExtractFontsEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.EXTRACT_FONTS,
       call: (p) => _pdfService.extractFonts(req: e.extractFonts, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to extract fonts',
+      error: L10n.current.errToolFailed,
     ));
 
     // Returns a JSON analysis report — does not save a file.
@@ -390,10 +391,10 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         if (e.type == DioExceptionType.cancel) {
           emit(state.copyWith(httpStates: state.httpStates.clone()..remove(HttpStates.ANALYZE_PDF)));
         } else {
-          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.fromDio(e, 'Failed to analyze PDF'))));
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.fromDio(e, L10n.current.errToolFailed))));
         }
       } catch (_) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, const HttpState.error(error: 'Failed to analyze PDF'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.ANALYZE_PDF, HttpState.error(error: L10n.current.errToolFailed))));
       }
     });
 
@@ -401,28 +402,28 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       emit: emit,
       key: HttpStates.FILTER_IMAGE,
       call: (p) => _pdfService.filterImage(req: e.filterImage, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to apply filter',
+      error: L10n.current.errToolFailed,
     ));
 
     on<RemoveBlankPagesEvent>((e, emit) => _handle(
       emit: emit,
       key: HttpStates.REMOVE_BLANK_PAGES,
       call: (p) => _pdfService.removeBlankPages(req: e.removeBlankPages, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to remove blank pages',
+      error: L10n.current.errToolFailed,
     ));
 
     on<OptimizePdfEvent>((e, emit) => _handle(
       emit: emit,
       key: HttpStates.OPTIMIZE_PDF,
       call: (p) => _pdfService.optimizePdf(req: e.optimizePdf, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to optimize PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     on<NUpPdfEvent>((e, emit) => _handle(
       emit: emit,
       key: HttpStates.N_UP_PDF,
       call: (p) => _pdfService.nUpPdf(req: e.nUp, cancelToken: e.cancelToken, onSendProgress: p),
-      error: 'Failed to create N-up PDF',
+      error: L10n.current.errToolFailed,
     ));
 
     // Returns JSON bookmark tree — does not save a file
@@ -432,9 +433,9 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         final res = await _pdfService.getBookmarks(req: event.getBookmarks, cancelToken: event.cancelToken);
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.done(extras: {'bookmarks': res.data}))));
       } on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.fromDio(e, 'Failed to get bookmarks'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.fromDio(e, L10n.current.errToolFailed))));
       } catch (_) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, const HttpState.error(error: 'Failed to get bookmarks'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_BOOKMARKS, HttpState.error(error: L10n.current.errToolFailed))));
       }
     });
 
@@ -445,9 +446,9 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         final res = await _pdfService.getMetadata(getMetadata: event.getMetadata, cancelToken: event.cancelToken);
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.done(extras: {'metadata': res.data}))));
       } on DioException catch (e) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.fromDio(e, 'Failed to get metadata'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.fromDio(e, L10n.current.errToolFailed))));
       } catch (_) {
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, const HttpState.error(error: 'Failed to get metadata'))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.GET_METADATA, HttpState.error(error: L10n.current.errToolFailed))));
       }
     });
   }
@@ -526,7 +527,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     required String fallbackExt,
   }) async {
     if (!await StoragePermissions.requestStoragePermissions()) {
-      throw Exception('Failed to save — storage permission denied');
+      throw Exception(L10n.current.errToolFailed);
     }
     final directory = Directory(Constants.processedDirPath);
     if (!directory.existsSync()) await directory.create(recursive: true);

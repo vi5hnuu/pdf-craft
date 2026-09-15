@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/border-image.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -38,13 +40,13 @@ class _AddBorderViewState extends State<AddBorderView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Border')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'img-border'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.BORDER_IMAGE] != c.httpStates[HttpStates.BORDER_IMAGE],
         listenWhen: (p, c) => p.httpStates[HttpStates.BORDER_IMAGE] != c.httpStates[HttpStates.BORDER_IMAGE],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.BORDER_IMAGE],
-          successMessage: 'Border added',
+          successMessage: L10n.of(context).borderAdded,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {
@@ -74,7 +76,7 @@ class _AddBorderViewState extends State<AddBorderView>
                     ),
                     const SizedBox(height: 12),
                     Row(children: [
-                      const Text('Width'),
+                      Text(L10n.of(context).widthLabel),
                       Expanded(
                         child: Slider(
                           value: _width,
@@ -88,7 +90,7 @@ class _AddBorderViewState extends State<AddBorderView>
                       Text('${_width.round()} px'),
                     ]),
                     Row(children: [
-                      const Text('Colour'),
+                      Text(L10n.of(context).colorPlain),
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _pickColor,
@@ -132,11 +134,11 @@ class _AddBorderViewState extends State<AddBorderView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onApply,
                   icon: const Icon(Icons.border_outer),
-                  label: const Text('Add Border'),
+                  label: Text(ToolStrings.name(context, 'img-border')),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.BORDER_IMAGE], label: 'Adding border'),
+            processingOverlay(state.httpStates[HttpStates.BORDER_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -147,14 +149,14 @@ class _AddBorderViewState extends State<AddBorderView>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Pick a colour'),
+        title: Text(L10n.of(context).pickColor),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: _color,
             onColorChanged: (c) => setState(() => _color = c),
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done))],
       ),
     );
   }

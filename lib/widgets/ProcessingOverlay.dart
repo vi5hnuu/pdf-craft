@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/HttpState.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
@@ -39,9 +40,10 @@ class ProcessingOverlay extends StatelessWidget {
     // Derive a stage from the upload progress: no progress yet OR fully
     // uploaded means the server is doing the work; in-between is the upload.
     final uploading = progress != null && progress < 1.0;
+    final l = L10n.of(context);
     final stageText = uploading
-        ? 'Uploading ${(progress * 100).toInt()}%'
-        : 'Processing on our servers…';
+        ? l.procUploading((progress * 100).toInt())
+        : l.procProcessing;
 
     return Container(
       color: Colors.black.withValues(alpha: 0.55),
@@ -66,7 +68,7 @@ class ProcessingOverlay extends StatelessWidget {
               SpinKitFadingCube(color: primary, size: 34),
               const SizedBox(height: 20),
               Text(
-                label ?? 'Working on it',
+                label ?? l.procWorking,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
@@ -95,7 +97,7 @@ class ProcessingOverlay extends StatelessWidget {
                   const SizedBox(width: 5),
                   Flexible(
                     child: Text(
-                      'Sent securely · removed after processing',
+                      l.procSecure,
                       style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
                     ),
@@ -106,7 +108,7 @@ class ProcessingOverlay extends StatelessWidget {
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: onCancel,
-                  child: const Text('Cancel'),
+                  child: Text(l.cancel),
                 ),
               ],
             ],

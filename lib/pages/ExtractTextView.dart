@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/extract-text.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -38,7 +40,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Extract Text'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-text')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_TEXT] != c.httpStates[HttpStates.EXTRACT_TEXT],
         listenWhen: (p, c) => p.httpStates[HttpStates.EXTRACT_TEXT] != c.httpStates[HttpStates.EXTRACT_TEXT],
@@ -46,7 +48,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
           final s = state.httpStates[HttpStates.EXTRACT_TEXT];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Text extracted successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               OpenFile.open((s!.extras!['savedFile'] as File).path);
             }
@@ -62,15 +64,14 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Extracts the text of your PDF into a text file. Narrow it to a few pages '
-                      'if you only need part of the document.',
+                    Text(
+                      L10n.of(context).extractTextHint,
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _outFileNameC,
-                      decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 20),
                     PageRangeSelector(
@@ -85,12 +86,12 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(onPressed: _onExtract, child: const Text('Extract Text')),
+                      child: FilledButton(onPressed: _onExtract, child: Text(ToolStrings.name(context, 'extract-text'))),
                     ),
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.EXTRACT_TEXT], label: 'Extracting text', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.EXTRACT_TEXT], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
             ],
           );
         },

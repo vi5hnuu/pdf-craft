@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/color-info.dart';
 import 'package:pdf_craft/models/enums/font.dart';
@@ -56,7 +58,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Page Numbers'),
+        title: Text(ToolStrings.name(context, 'page-numbers')),
         elevation: 2,
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
@@ -68,7 +70,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
           final httpState = state.httpStates[HttpStates.PAGE_NUMBERS];
           if (httpState?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Page numbers added successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (httpState?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -93,15 +95,15 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           // Output filename
                           TextFormField(
                             controller: _outFileNameC,
-                            decoration: const InputDecoration(
-                              labelText: 'Output File Name',
+                            decoration: InputDecoration(
+                              labelText: L10n.of(context).outputFileName,
                               border: OutlineInputBorder(),
                             ),
                           ),
                           const SizedBox(height: 20),
 
                           // Page number format
-                          _sectionLabel(theme, 'Page Number Format'),
+                          _sectionLabel(theme, L10n.of(context).pageNumberFormat),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<PageNoType>(
                             decoration: const InputDecoration(border: OutlineInputBorder()),
@@ -158,8 +160,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<PositionInfo>(
-                                  decoration: const InputDecoration(
-                                    labelText: 'Vertical',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).vertical,
                                     border: OutlineInputBorder(),
                                   ),
                                   initialValue: _verticalPosition,
@@ -177,8 +179,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: DropdownButtonFormField<PositionInfo>(
-                                  decoration: const InputDecoration(
-                                    labelText: 'Horizontal',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).horizontal,
                                     border: OutlineInputBorder(),
                                   ),
                                   initialValue: _horizontalPosition,
@@ -214,15 +216,15 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           const SizedBox(height: 20),
 
                           // Page range
-                          _sectionLabel(theme, 'Page Range'),
+                          _sectionLabel(theme, L10n.of(context).pageRange),
                           const SizedBox(height: 8),
                           Row(
                             children: [
                               Expanded(
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'From page',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).fromPage,
                                     border: OutlineInputBorder(),
                                   ),
                                   initialValue: _fromPage.toString(),
@@ -233,8 +235,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                               Expanded(
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'To page (optional)',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).toPageOptional,
                                     border: OutlineInputBorder(),
                                   ),
                                   // Fixed: was incorrectly updating _fromPage
@@ -246,7 +248,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           const SizedBox(height: 20),
 
                           // Color picker
-                          _sectionLabel(theme, 'Text Color'),
+                          _sectionLabel(theme, L10n.of(context).textColor),
                           const SizedBox(height: 8),
                           ColorPicker(
                             pickerColor: Color.fromARGB(
@@ -319,13 +321,13 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                     ),
                     child: FilledButton(
                       onPressed: _onSubmit,
-                      child: const Text('Apply Page Numbers'),
+                      child: Text(ToolStrings.name(context, 'page-numbers')),
                     ),
                   ),
                 ],
               ),
 
-              LoadingOverlay(httpState: state.httpStates[HttpStates.PAGE_NUMBERS], label: 'Adding page numbers'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.PAGE_NUMBERS], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -368,7 +370,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
   void _onSubmit() async {
     final fontSize = int.tryParse(_fontSizeC.text);
     if (fontSize == null || fontSize < 4) {
-      NotificationService.showSnackbar(text: 'Invalid font size (min 4)', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.invalidFontSize, color: Colors.red);
       return;
     }
     bloc.add(PageNumbersEvent(

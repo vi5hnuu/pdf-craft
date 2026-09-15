@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -41,14 +42,12 @@ class IncomingFilesScreen extends StatelessWidget {
     final tools = ToolRegistry.toolsForSelection(files);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Open with PDF Craft')),
+      appBar: AppBar(title: Text(L10n.of(context).incomingTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            files.length == 1
-                ? '1 file received'
-                : '${files.length} files received',
+            L10n.of(context).incomingReceived(files.length),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 8),
@@ -71,28 +70,28 @@ class IncomingFilesScreen extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => _view(context),
               icon: Icon(_singlePdf ? Icons.visibility : Icons.open_in_new),
-              label: Text(_singlePdf ? 'View' : 'Open externally'),
+              label: Text(_singlePdf ? L10n.of(context).actionView : L10n.of(context).openExternally),
             ),
             const SizedBox(height: 16),
           ],
 
           // Applicable tools (intellisense).
           if (tools.isNotEmpty) ...[
-            const Text('Apply a tool',
-                style: TextStyle(fontWeight: FontWeight.w700)),
+            Text(L10n.of(context).applyATool,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             ...tools.map((tool) => Card(
                   margin: const EdgeInsets.only(bottom: 6),
                   child: ListTile(
                     leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.name),
+                    title: Text(tool.localizedName(context)),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => tool.openWithFiles(context, files),
                   ),
                 )),
           ] else
             Text(
-              'No in-app tools apply to these files.',
+              L10n.of(context).incomingNoTools,
               style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             ),

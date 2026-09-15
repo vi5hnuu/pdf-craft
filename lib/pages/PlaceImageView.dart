@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/place-image.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -149,21 +150,21 @@ class _PlaceImageViewState extends State<PlaceImageView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.title}${_totalPages > 1 ? ' — Page $_currentPage / $_totalPages' : ''}'),
+        title: Text('${widget.title}${_totalPages > 1 ? ' — ${L10n.of(context).pageOfPages(_currentPage, _totalPages)}' : ''}'),
         actions: [
           // Mode toggle: place ↔ zoom
           IconButton(
             icon: Icon(
               _mode == _Mode.zoom ? Icons.touch_app : Icons.zoom_in,
             ),
-            tooltip: _mode == _Mode.zoom ? 'Switch to Place mode' : 'Switch to Zoom mode',
+            tooltip: _mode == _Mode.zoom ? L10n.of(context).switchToPlaceMode : L10n.of(context).switchToZoomMode,
             onPressed: () => setState(() => _mode = _mode == _Mode.place ? _Mode.zoom : _Mode.place),
           ),
           // Reset zoom
           if (_mode == _Mode.zoom)
             IconButton(
               icon: const Icon(Icons.fit_screen),
-              tooltip: 'Reset zoom',
+              tooltip: L10n.of(context).resetZoom,
               onPressed: () => _txCtrl.value = Matrix4.identity(),
             ),
         ],
@@ -177,7 +178,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
           final s = state.httpStates[HttpStates.PLACE_IMAGE];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Image placed successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -200,7 +201,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
                   child: OutlinedButton.icon(
                     onPressed: _pickImage,
                     icon: const Icon(Icons.image_outlined),
-                    label: Text(_imageBytes == null ? 'Select Image to Place' : 'Change Image'),
+                    label: Text(_imageBytes == null ? L10n.of(context).selectImageToPlace : L10n.of(context).changeImage),
                     style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 44)),
                   ),
                 ),
@@ -217,8 +218,8 @@ class _PlaceImageViewState extends State<PlaceImageView> {
                       ),
                       label: Text(
                         _mode == _Mode.zoom
-                            ? 'Zoom mode — pinch or scroll to zoom'
-                            : 'Place mode — drag image or handles',
+                            ? L10n.of(context).zoomModeHint
+                            : L10n.of(context).placeModeHint,
                         style: const TextStyle(fontSize: 11),
                       ),
                       visualDensity: VisualDensity.compact,
@@ -240,7 +241,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
               // Bottom bar: aspect lock + confirm
               _buildBottomBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.PLACE_IMAGE], label: 'Placing image'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.PLACE_IMAGE], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -300,8 +301,8 @@ class _PlaceImageViewState extends State<PlaceImageView> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(AppRadius.surface)),
-                      child: const Text(
-                        'Select an image above\nto position it on this page',
+                      child: Text(
+                        L10n.of(context).placeImageEmpty,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white),
                       ),
@@ -477,7 +478,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
           child: FilledButton.icon(
             onPressed: _imageBytes == null ? null : _onConfirm,
             icon: const Icon(Icons.check, size: 18),
-            label: const Text('Confirm Placement'),
+            label: Text(L10n.of(context).confirmPlacement),
           ),
         ),
       ]),

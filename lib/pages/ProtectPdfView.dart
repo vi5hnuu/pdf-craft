@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/extensions/string-etension.dart';
 import 'package:pdf_craft/models/enums/user-access-permission.dart';
 import 'package:pdf_craft/models/request/protect-pdf.dart';
@@ -34,6 +36,9 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   final TextEditingController _hintC=TextEditingController();
   String ownerPassword="";
   String userPassword="";
+  // Passwords are masked by default; each field has its own show/hide toggle.
+  bool _obscureOwner = true;
+  bool _obscureUser = true;
   final List<UserAccessPermission> userPermissions=[];
 
   @override
@@ -53,7 +58,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Protect Pdf'),
+        title: Text(ToolStrings.name(context, 'protect')),
         elevation: 5,
       ),
       body: BlocConsumer<PdfBloc,PdfState>(
@@ -63,7 +68,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
             final httpState=state.httpStates[HttpStates.PROTECT_PDF];
             if(httpState?.done==true){
               AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: "Protected file successfully",color: Colors.green);
+              NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
               final savedFile = httpState?.extras?['savedFile'];
               if (savedFile is File && _hintC.text.trim().isNotEmpty) {
                 SharedPreferences.getInstance().then((prefs) =>
@@ -88,31 +93,60 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                         child: SingleChildScrollView(child: Column(
                             children: [
                               TextFormField(keyboardType: TextInputType.text,
-                                  decoration: InputDecoration(labelText: "File name",border: OutlineInputBorder()),
+                                  decoration: InputDecoration(labelText: L10n.of(context).fileNameLabel,border: OutlineInputBorder()),
                                   controller: outFileNameC),
                               SizedBox(height: 16,),
                               TextFormField(
                                 controller: _hintC,
                                 decoration: InputDecoration(
-                                  labelText: "Password Hint (optional)",
-                                  hintText: "e.g. My birthday year",
+                                  labelText: L10n.of(context).passwordHintOptional,
+                                  hintText: L10n.of(context).passwordHintExample,
                                   border: OutlineInputBorder(),
                                   prefixIcon: Icon(Icons.lightbulb_outline),
                                 ),
                               ),
                               SizedBox(height: 16,),
-                              TextFormField(keyboardType: TextInputType.number,
-                                decoration: InputDecoration(labelText: "Owner Password",border: OutlineInputBorder()),
+                              // Both passwords were shown in plain text on a numeric keyboard, and the
+                              // disabled button never said why. Now masked, full keyboard, and the
+                              // 10-character rule is stated up front.
+                              TextFormField(
+                                keyboardType: TextInputType.visiblePassword,
+                                obscureText: _obscureOwner,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                decoration: InputDecoration(
+                                  labelText: L10n.of(context).ownerPassword,
+                                  helperText: L10n.of(context).atLeast10Chars,
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    tooltip: _obscureOwner ? L10n.of(context).showPassword : L10n.of(context).hidePassword,
+                                    icon: Icon(_obscureOwner ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                    onPressed: () => setState(() => _obscureOwner = !_obscureOwner),
+                                  ),
+                                ),
                                 onChanged:(value) => setState(()=>ownerPassword=value),
                                 validator:(value) {
-                                  return value!=null && value.length>=10 ? null : "Min 10 character required";
+                                  return value!=null && value.length>=10 ? null : L10n.of(context).min10Chars;
                                 } ,),
                               SizedBox(height: 16,),
-                              TextFormField(keyboardType: TextInputType.number,
-                                decoration: InputDecoration(labelText: "User password",border: OutlineInputBorder()),
+                              TextFormField(
+                                keyboardType: TextInputType.visiblePassword,
+                                obscureText: _obscureUser,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                decoration: InputDecoration(
+                                  labelText: L10n.of(context).userPassword,
+                                  helperText: L10n.of(context).atLeast10Chars,
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    tooltip: _obscureUser ? L10n.of(context).showPassword : L10n.of(context).hidePassword,
+                                    icon: Icon(_obscureUser ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                    onPressed: () => setState(() => _obscureUser = !_obscureUser),
+                                  ),
+                                ),
                                 onChanged:(value) => setState(()=>userPassword=value),
                                 validator:(value) {
-                                  return value!=null && value.length>=10 ? null : "Min 10 character required";
+                                  return value!=null && value.length>=10 ? null : L10n.of(context).min10Chars;
                                 } ,),
                               Padding(padding: EdgeInsets.symmetric(horizontal: 12,vertical: 16).copyWith(bottom: 10),
                                 child: Flex(
@@ -120,8 +154,8 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                                   mainAxisSize: MainAxisSize.max,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    ...[Text("User permissions",textAlign: TextAlign.center,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,decoration: TextDecoration.underline),),
-                                      if(userPermissions.isEmpty) Text("⚠️ Will have owner permissions ⚠️")],
+                                    ...[Text(L10n.of(context).userPermissions,textAlign: TextAlign.center,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,decoration: TextDecoration.underline),),
+                                      if(userPermissions.isEmpty) Text(L10n.of(context).willHaveOwnerPermissions)],
                                     ...UserAccessPermission.values.map((permission)=>Row(
                                       children: [
                                         Checkbox(tristate: false,value: userPermissions.contains(permission), onChanged: (hasPermission){
@@ -143,12 +177,12 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                       Container(
                         padding: EdgeInsets.all(16),
                         width: double.infinity,
-                        child: FilledButton(onPressed: ownerPassword.length<10 || userPassword.length<10 ? null : _onProtectPdf, child: Text("Protect pdf")),
+                        child: FilledButton(onPressed: ownerPassword.length<10 || userPassword.length<10 ? null : _onProtectPdf, child: Text(ToolStrings.name(context, 'protect'))),
                       )
                     ],
                   ),
                 ),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.PROTECT_PDF], label: 'Protecting your PDF'),
+                LoadingOverlay(httpState: state.httpStates[HttpStates.PROTECT_PDF], label: L10n.of(context).procWorking),
               ],
             );
           },)

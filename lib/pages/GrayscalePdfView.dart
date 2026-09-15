@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/grayscale-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -38,7 +40,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Grayscale PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'grayscale')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.GRAYSCALE_PDF] != c.httpStates[HttpStates.GRAYSCALE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.GRAYSCALE_PDF] != c.httpStates[HttpStates.GRAYSCALE_PDF],
@@ -46,7 +48,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
           final s = state.httpStates[HttpStates.GRAYSCALE_PDF];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'PDF converted to grayscale', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.grayscaleDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -62,16 +64,14 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Converts pages to grayscale to reduce file size and ink when printing. '
-                      'Converted pages become images, so their text is no longer selectable; '
-                      'pages outside your selection are left untouched.',
+                    Text(
+                      L10n.of(context).grayscaleExplainer,
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _outFileNameC,
-                      decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 20),
                     PageRangeSelector(
@@ -86,12 +86,12 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView> {
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(onPressed: _onGrayscale, child: const Text('Convert to Grayscale')),
+                      child: FilledButton(onPressed: _onGrayscale, child: Text(ToolStrings.name(context, 'grayscale'))),
                     ),
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.GRAYSCALE_PDF], label: 'Converting to grayscale'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.GRAYSCALE_PDF], label: L10n.of(context).procWorking),
             ],
           );
         },

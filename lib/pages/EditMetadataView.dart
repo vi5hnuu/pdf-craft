@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/edit-metadata.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -39,7 +41,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Metadata'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'edit-metadata')), elevation: 5),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.EDIT_METADATA] != c.httpStates[HttpStates.EDIT_METADATA],
         listenWhen: (p, c) => p.httpStates[HttpStates.EDIT_METADATA] != c.httpStates[HttpStates.EDIT_METADATA],
@@ -47,7 +49,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
           final s = state.httpStates[HttpStates.EDIT_METADATA];
           if (s?.done == true) {
           AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Metadata updated successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
             }
@@ -67,12 +69,12 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _field(_outFileNameC, 'Output File Name (optional)'),
+                            _field(_outFileNameC, L10n.of(context).outputFileNameOptional),
                             const SizedBox(height: 12),
                             const Divider(),
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Text('Document Properties', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              child: Text(L10n.of(context).documentProperties, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                             ),
                             _field(_titleC,    'Title'),
                             const SizedBox(height: 12),
@@ -80,9 +82,9 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                             const SizedBox(height: 12),
                             _field(_subjectC,  'Subject'),
                             const SizedBox(height: 12),
-                            _field(_keywordsC, 'Keywords (comma-separated)'),
+                            _field(_keywordsC, L10n.of(context).keywordsCommaSeparated),
                             const SizedBox(height: 12),
-                            _field(_creatorC,  'Creator Application'),
+                            _field(_creatorC,  L10n.of(context).creatorApplication),
                             const SizedBox(height: 12),
                             _field(_producerC, 'Producer'),
                           ],
@@ -94,13 +96,13 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                       child: FilledButton.icon(
                         onPressed: _onSave,
                         icon: const Icon(Icons.save),
-                        label: const Text('Save Metadata'),
+                        label: Text(L10n.of(context).saveMetadata),
                       ),
                     ),
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.EDIT_METADATA], label: 'Saving metadata'),
+              LoadingOverlay(httpState: state.httpStates[HttpStates.EDIT_METADATA], label: L10n.of(context).procWorking),
             ],
           );
         },

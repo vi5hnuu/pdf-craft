@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/analyze-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -40,7 +42,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Analyze PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'analyze'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.ANALYZE_PDF] != c.httpStates[HttpStates.ANALYZE_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.ANALYZE_PDF] != c.httpStates[HttpStates.ANALYZE_PDF],
@@ -60,12 +62,12 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView> {
                 const SizedBox(height: 12),
                 Text(s.error!, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                FilledButton(onPressed: _fetch, child: const Text('Retry')),
+                FilledButton(onPressed: _fetch, child: Text(L10n.of(context).retry)),
               ]),
             );
           }
           final a = (s.extras?['analysis'] as Map?)?.cast<String, dynamic>();
-          if (a == null) return const Center(child: Text('No analysis available'));
+          if (a == null) return Center(child: Text(L10n.of(context).noAnalysisAvailable));
           return _buildReport(theme, a);
         },
       ),
@@ -92,11 +94,11 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView> {
           _Stat('Encrypted', (a['encrypted'] == true) ? 'Yes' : 'No', Icons.lock_outline),
         ]),
         const SizedBox(height: 16),
-        _listCard(theme, 'Blank pages', blank.isEmpty ? 'None' : blank.join(', '), Icons.crop_din),
-        _listCard(theme, 'Landscape pages', landscape.isEmpty ? 'None' : landscape.join(', '), Icons.crop_landscape),
+        _listCard(theme, L10n.of(context).blankPagesLabel, blank.isEmpty ? L10n.of(context).none : blank.join(', '), Icons.crop_din),
+        _listCard(theme, L10n.of(context).landscapePages, landscape.isEmpty ? L10n.of(context).none : landscape.join(', '), Icons.crop_landscape),
         _listCard(
           theme,
-          'Duplicate page groups',
+          L10n.of(context).duplicatePageGroups,
           dupGroups.isEmpty
               ? 'None'
               : dupGroups.map((g) => '[${(g as List).join(', ')}]').join('  '),

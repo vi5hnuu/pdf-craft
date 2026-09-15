@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/FavoriteToolsService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -43,7 +44,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final searching = _query.trim().isNotEmpty;
-    final results = ToolRegistry.search(_query);
+    final results = ToolRegistry.search(_query, context: context);
 
     // Rebuild on favourite changes so stars and the favourites row stay live.
     return AnimatedBuilder(
@@ -61,13 +62,13 @@ class _ToolsScreenState extends State<ToolsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        const Text('All Tools',
+                        Text(L10n.of(context).toolsAllTools,
                             style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.3)),
                         const SizedBox(width: 8),
-                        Text('( ${ToolRegistry.tools.length} )',
+                        Text(L10n.of(context).toolsCount(ToolRegistry.tools.length),
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -82,7 +83,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                   // Quick access to everything tools have produced.
                   IconButton(
                     icon: const Icon(Icons.folder_special_outlined),
-                    tooltip: 'Results',
+                    tooltip: L10n.of(context).resultsTitle,
                     onPressed: () =>
                         GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
                   ),
@@ -98,7 +99,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: 'Search tools',
+                  hintText: L10n.of(context).toolsSearchHint,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: searching
                       ? IconButton(
@@ -161,7 +162,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Center(
-            child: Text('No tools found',
+            child: Text(L10n.of(context).toolsNoneFound,
                 style: TextStyle(
                     color:
                         theme.colorScheme.onSurface.withValues(alpha: 0.5))),
@@ -188,6 +189,20 @@ class _ToolsScreenState extends State<ToolsScreen> {
   }
 }
 
+/// Size of one cell in the 3-column tool grid ([_CategorySection] and search results: 16px side
+/// padding, 10px spacing, 0.95 aspect ratio). The horizontal Favorites / Recently used rows use
+/// the same size — they used a fixed 88px card, narrower than the grid, which clipped the
+/// credit-cost badge.
+Size _toolCellSize(BuildContext context) {
+  const columns = 3;
+  const spacing = 10.0;
+  const sidePadding = 16.0;
+  const aspectRatio = 0.95;
+  final width =
+      (MediaQuery.sizeOf(context).width - sidePadding * 2 - spacing * (columns - 1)) / columns;
+  return Size(width, width / aspectRatio);
+}
+
 /// Horizontal row of the user's pinned favourite tools (hidden when empty).
 /// Toggle a favourite by long-pressing any tool card.
 class _FavoriteToolsRow extends StatelessWidget {
@@ -202,24 +217,24 @@ class _FavoriteToolsRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(children: [
-            Icon(Icons.star, size: 16, color: Colors.amber),
-            SizedBox(width: 6),
-            Text('Favourites',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const Icon(Icons.star, size: 16, color: Colors.amber),
+            const SizedBox(width: 6),
+            Text(L10n.of(context).favorites,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           ]),
         ),
         SizedBox(
-          height: 124,
+          height: _toolCellSize(context).height,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: tools.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, i) => SizedBox(
-                width: 88,
+                width: _toolCellSize(context).width,
                 child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
           ),
         ),
@@ -244,22 +259,22 @@ class _RecentToolsRow extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Text('Recently used',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Text(L10n.of(context).toolsRecentlyUsed,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
             SizedBox(
-              // Tall enough for ToolCard's icon box + 2-line label + padding
-              // (otherwise the card overflows the row vertically).
-              height: 124,
+              // Same cell size as the grid below, so cards (and their cost badge) match exactly.
+              height: _toolCellSize(context).height,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: tools.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) =>
-                    SizedBox(width: 88, child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+                itemBuilder: (context, i) => SizedBox(
+                    width: _toolCellSize(context).width,
+                    child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
               ),
             ),
           ],
@@ -294,7 +309,7 @@ class _CategorySection extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                category.name,
+                category.localizedName(context),
                 style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -330,9 +345,12 @@ class ToolCard extends StatelessWidget {
   const ToolCard({super.key, required this.tool, required this.accentColor});
 
   Future<void> _toggleFavorite(BuildContext context) async {
+    final name = tool.localizedName(context);
     final nowFav = await FavoriteToolsService().toggle(tool.id);
     NotificationService.showSnackbar(
-      text: nowFav ? '${tool.name} added to favourites' : '${tool.name} removed from favourites',
+      text: nowFav
+          ? L10n.current.toolAddedToFavorites(name)
+          : L10n.current.toolRemovedFromFavorites(name),
       color: nowFav ? Colors.amber : Colors.blueGrey,
       duration: const Duration(seconds: 2),
     );
@@ -372,7 +390,7 @@ class ToolCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  tool.name,
+                  tool.localizedName(context),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -385,7 +403,7 @@ class ToolCard extends StatelessWidget {
               ],
             ),
             // Info affordance (top-left) — reveals what the tool does.
-            if (tool.description.isNotEmpty)
+            if (tool.localizedDescription(context).isNotEmpty)
               Positioned(
                 top: -2,
                 left: -2,
@@ -448,10 +466,13 @@ class ToolCard extends StatelessWidget {
         title: Row(children: [
           Icon(tool.icon, color: accentColor),
           const SizedBox(width: 10),
-          Expanded(child: Text(tool.name, style: const TextStyle(fontSize: 17))),
+          Expanded(
+              child: Text(tool.localizedName(dialogContext),
+                  style: const TextStyle(fontSize: 17))),
         ]),
-        content: Text(tool.description, style: const TextStyle(height: 1.5)),
-        actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Got it'))],
+        content: Text(tool.localizedDescription(dialogContext),
+            style: const TextStyle(height: 1.5)),
+        actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(L10n.of(dialogContext).gotIt))],
       ),
     );
   }

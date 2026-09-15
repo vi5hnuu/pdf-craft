@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -53,7 +55,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
     final md=MediaQuery.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Image to PDF'), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'image-to-pdf')), elevation: 5),
       body: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.IMAGE_TO_PDF]!=current.httpStates[HttpStates.IMAGE_TO_PDF],
@@ -61,7 +63,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
         final httpState=state.httpStates[HttpStates.IMAGE_TO_PDF];
         if(httpState?.done==true){
           AdsSingleton().dispatch(ShowInterstitialAd());
-          NotificationService.showSnackbar(text: "Image to pdf successfull",color: Colors.green);
+          NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
           if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
         }else if(httpState?.error!=null){
           NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
@@ -75,7 +77,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(keyboardType: TextInputType.text,
-                    decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                     controller: outFileNameC),
                 ),
                 Expanded(child: ReorderableListView.builder(
@@ -87,11 +89,11 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: RichText(
                       text: TextSpan(
-                        text: 'Reorder File ',
+                        text: L10n.of(context).reorderFilesTitle,
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
-                            text: ' (long press to drag)',
+                            text: L10n.of(context).longPressToDrag,
                             style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                           ),
                         ],
@@ -137,13 +139,13 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                       child: DropdownButtonFormField<String>(
                         initialValue: _pageSize,
                         isExpanded: true,
-                        decoration: const InputDecoration(
-                            labelText: 'Page size', border: OutlineInputBorder(), isDense: true),
-                        items: const [
+                        decoration: InputDecoration(
+                            labelText: L10n.of(context).imgPageSize, border: OutlineInputBorder(), isDense: true),
+                        items: [
                           DropdownMenuItem(value: 'A4', child: Text('A4')),
-                          DropdownMenuItem(value: 'LETTER', child: Text('US Letter')),
-                          DropdownMenuItem(value: 'LEGAL', child: Text('US Legal')),
-                          DropdownMenuItem(value: 'MATCH_IMAGE', child: Text('Match each image')),
+                          DropdownMenuItem(value: 'LETTER', child: Text(L10n.of(context).usLetter)),
+                          DropdownMenuItem(value: 'LEGAL', child: Text(L10n.of(context).usLegal)),
+                          DropdownMenuItem(value: 'MATCH_IMAGE', child: Text(L10n.of(context).matchEachImage)),
                         ],
                         onChanged: (v) => setState(() => _pageSize = v ?? 'A4'),
                       ),
@@ -153,13 +155,13 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                       child: DropdownButtonFormField<String>(
                         initialValue: _orientation,
                         isExpanded: true,
-                        decoration: const InputDecoration(
-                            labelText: 'Orientation', border: OutlineInputBorder(), isDense: true),
+                        decoration: InputDecoration(
+                            labelText: L10n.of(context).orientation, border: OutlineInputBorder(), isDense: true),
                         // Meaningless when each page simply takes its image's dimensions.
-                        items: const [
-                          DropdownMenuItem(value: 'AUTO', child: Text('Match image')),
-                          DropdownMenuItem(value: 'PORTRAIT', child: Text('Portrait')),
-                          DropdownMenuItem(value: 'LANDSCAPE', child: Text('Landscape')),
+                        items: [
+                          DropdownMenuItem(value: 'AUTO', child: Text(L10n.of(context).matchImage)),
+                          DropdownMenuItem(value: 'PORTRAIT', child: Text(L10n.of(context).portrait)),
+                          DropdownMenuItem(value: 'LANDSCAPE', child: Text(L10n.of(context).landscape)),
                         ],
                         onChanged: _pageSize == 'MATCH_IMAGE'
                             ? null
@@ -171,11 +173,11 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   width: double.infinity,
-                  child: FilledButton(onPressed: _onConvertToPdf, child: const Text("Convert to pdf")),
+                  child: FilledButton(onPressed: _onConvertToPdf, child: Text(ToolStrings.name(context, 'image-to-pdf'))),
                 )
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF', onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
           ],
         );
       },)

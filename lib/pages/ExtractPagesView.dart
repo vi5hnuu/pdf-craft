@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/reorder-pdf.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -59,17 +61,17 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Extract Pages'),
+        title: Text(ToolStrings.name(context, 'extract-pages')),
         actions: [
           if (_selected.isNotEmpty)
-            TextButton(onPressed: () => setState(_selected.clear), child: const Text('Clear')),
+            TextButton(onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
         ],
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listenWhen: (p, c) => p.httpStates[HttpStates.REORDER_PDF] != c.httpStates[HttpStates.REORDER_PDF],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: 'Pages extracted'),
+            handleToolState(state.httpStates[HttpStates.REORDER_PDF], successMessage: L10n.of(context).pagesExtracted),
         builder: (context, state) {
           if (_doc == null) return const Center(child: CircularProgressIndicator());
           final loading = state.httpStates[HttpStates.REORDER_PDF]?.loading == true;
@@ -77,7 +79,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
             Column(children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text('Select the pages to keep.',
+                child: Text(L10n.of(context).selectPagesToKeep,
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
               ),
@@ -99,11 +101,11 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
                 child: FilledButton.icon(
                   onPressed: _selected.isEmpty || loading ? null : _onExtract,
                   icon: const Icon(Icons.content_cut),
-                  label: Text(_selected.isEmpty ? 'Select pages to extract' : 'Extract ${_selected.length} page(s)'),
+                  label: Text(_selected.isEmpty ? L10n.of(context).selectPagesToExtract : L10n.of(context).extractNPages(_selected.length)),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: 'Extracting pages'),
+            processingOverlay(state.httpStates[HttpStates.REORDER_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

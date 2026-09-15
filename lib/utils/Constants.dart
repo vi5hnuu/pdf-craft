@@ -28,6 +28,12 @@ class Constants {
   // app.auth.expected-audience and be in the auth service's allowed-audiences.
   static const String apiAudience = "pdf-studio-api";
 
+  // Upload limits — must mirror pdf-studio-api's spring.servlet.multipart.max-file-size and
+  // max-request-size (application.properties). Checked client-side before a tool uploads so an
+  // oversized file fails fast with a clear message instead of after a long upload.
+  static const int maxUploadFileBytes = 50 * 1024 * 1024;
+  static const int maxUploadRequestBytes = 100 * 1024 * 1024;
+
   // Legal pages (shown on the create-account screen), hosted on the legal site.
   static const String termsUrl = "https://legal.laxmi.solutions/pdf-craft/terms-of-service";
   static const String privacyUrl = "https://legal.laxmi.solutions/pdf-craft/privacy-policy";

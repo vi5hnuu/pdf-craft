@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 
 class HttpState {
   final bool loading;
@@ -37,15 +41,26 @@ class HttpState {
   const HttpState.error({required String? error, int? statusCode})
       : this(loading: false, error: error, statusCode: statusCode);
 
-  /// Builds an error state from a Dio failure, preferring the API's own message.
+  // User-facing transport failures, in the app's current language. Kept here so every tool
+  // reports them the same way.
+  static String get msgUnreachable => L10n.current.errUnreachable;
+  static String get msgTimeout => L10n.current.errTimeout;
+  static String get msgTooLarge => L10n.current.errTooLarge;
+  static String get msgInterrupted => L10n.current.errInterrupted;
+  static String get msgNoInternet => L10n.current.errNoInternet;
+
+  /// Builds an error state from a Dio failure.
   ///
-  /// pdf-studio-api returns `{"success": false, "code": ..., "message": ...}` on every
-  /// failure. Previously only `DioException.message` was used, which is Dio's own generic
-  /// text ("Http status error [402]"), so the server's actual explanation — why the file
-  /// was rejected, how many credits a tool costs — never reached the user.
+  /// Order of preference:
+  ///  1. the API's own message (`{"success": false, "message": ...}`), which explains *why*;
+  ///  2. a clear description of a transport failure (offline, timeout, too large, dropped);
+  ///  3. the tool's [fallback] ("Failed to compress PDF").
+  ///
+  /// Dio's raw `message` ("Http status error [402]", "HttpException: Connection closed…") is
+  /// never shown — it is meaningless to users.
   factory HttpState.fromDio(DioException e, String fallback) {
     return HttpState.error(
-      error: _serverMessage(e) ?? e.message ?? fallback,
+      error: _serverMessage(e) ?? _transportMessage(e) ?? fallback,
       statusCode: e.response?.statusCode,
     );
   }
@@ -54,11 +69,39 @@ class HttpState {
   bool get isOutOfCredits => statusCode == 402;
 
   static String? _serverMessage(DioException e) {
-    final data = e.response?.data;
+    var data = e.response?.data;
+    // File tools request `ResponseType.bytes`, so an error body arrives as raw bytes rather than
+    // a decoded map. Decode it, otherwise the server's explanation is silently lost.
+    if (data is List<int>) {
+      try {
+        data = jsonDecode(utf8.decode(data));
+      } catch (_) {
+        return null;
+      }
+    }
     if (data is Map) {
       final message = data['message'];
       if (message is String && message.trim().isNotEmpty) return message;
     }
     return null;
+  }
+
+  static String? _transportMessage(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return msgTimeout;
+      case DioExceptionType.connectionError:
+        // The offline interceptor (DioSingleton) rejects with its own friendly text; keep it.
+        return e.message == msgNoInternet ? msgNoInternet : msgUnreachable;
+      case DioExceptionType.badResponse:
+        return e.response?.statusCode == 413 ? msgTooLarge : null;
+      case DioExceptionType.unknown:
+        // The server (or a proxy) closing the socket mid-upload surfaces as an I/O error.
+        return (e.error is HttpException || e.error is SocketException) ? msgInterrupted : null;
+      default:
+        return null;
+    }
   }
 }

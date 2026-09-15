@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/crop-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -84,7 +86,7 @@ class _CropPdfViewState extends State<CropPdfView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Crop PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'crop'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.CROP_PDF] != c.httpStates[HttpStates.CROP_PDF],
@@ -95,7 +97,7 @@ class _CropPdfViewState extends State<CropPdfView> {
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
             NotificationService.showSnackbar(
-                text: 'PDF cropped successfully', color: Colors.green);
+                text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
                   pathParameters: {
@@ -118,15 +120,15 @@ class _CropPdfViewState extends State<CropPdfView> {
                   children: [
                     TextFormField(
                       controller: _outFileNameC,
-                      decoration: const InputDecoration(
-                        labelText: 'Output File Name',
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).outputFileName,
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Drag the blue handles inward — the shaded area is removed.',
+                      L10n.of(context).cropHint,
                       style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                     ),
@@ -134,12 +136,12 @@ class _CropPdfViewState extends State<CropPdfView> {
                     // fills the rest of the screen so dragging a handle never fights a scroll.
                     Row(
                       children: [
-                        Text('Apply to', style: theme.textTheme.bodySmall),
+                        Text(L10n.of(context).applyTo, style: theme.textTheme.bodySmall),
                         const Spacer(),
                         Flexible(
                           child: TextButton(
                             onPressed: _pickPages,
-                            child: Text('$_pageSummary · change',
+                            child: Text('$_pageSummary · ${L10n.of(context).change}',
                                 overflow: TextOverflow.ellipsis),
                           ),
                         ),
@@ -168,11 +170,11 @@ class _CropPdfViewState extends State<CropPdfView> {
                 ),
                 child: FilledButton(
                   onPressed: _onCrop,
-                  child: const Text('Crop PDF'),
+                  child: Text(ToolStrings.name(context, 'crop')),
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.CROP_PDF], label: 'Cropping your PDF'),
+            LoadingOverlay(httpState: state.httpStates[HttpStates.CROP_PDF], label: L10n.of(context).procWorking),
           ]);
         },
       ),

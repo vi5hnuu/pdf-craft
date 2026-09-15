@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/utils/FileSortFilter.dart';
 import 'package:pdf_craft/widgets/FilterPill.dart';
 
@@ -18,13 +19,23 @@ class SortControls extends StatelessWidget {
     required this.onToggleDirection,
   });
 
+  /// Translated label for a sort field (the enum's own `label` is English-only).
+  static String _modeLabel(BuildContext context, FileSortMode mode) {
+    final l = L10n.of(context);
+    return switch (mode) {
+      FileSortMode.name => l.sortName,
+      FileSortMode.date => l.sortDate,
+      FileSortMode.size => l.sortSize,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Sort',
+        Text(L10n.of(context).sortLabel,
             style: TextStyle(
                 fontSize: 12,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
@@ -32,12 +43,12 @@ class SortControls extends StatelessWidget {
         ...FileSortMode.values.map((m) => Padding(
               padding: const EdgeInsets.only(right: 6),
               child: FilterPill(
-                  label: m.label,
+                  label: _modeLabel(context, m),
                   selected: mode == m,
                   onTap: () => onModeChanged(m)),
             )),
         FilterPill(
-          label: ascending ? 'Asc' : 'Desc',
+          label: ascending ? L10n.of(context).sortAsc : L10n.of(context).sortDesc,
           icon: ascending ? Icons.arrow_upward : Icons.arrow_downward,
           selected: true,
           onTap: onToggleDirection,

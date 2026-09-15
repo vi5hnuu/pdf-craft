@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/enums/compression-level.dart';
 import 'package:pdf_craft/models/request/compress-pdf.dart';
 import 'package:pdf_craft/models/request/flatten-pdf.dart';
@@ -38,6 +40,21 @@ enum _Tool {
   final String creditToolId;
 
   const _Tool(this.label, this.icon, this.stateKey, this.creditToolId);
+
+  /// Registry id, so the label can reuse the already-translated tool name.
+  String get _registryId => switch (this) {
+        _Tool.grayscale => 'grayscale',
+        _Tool.compress => 'compress',
+        _Tool.repair => 'repair',
+        _Tool.flatten => 'flatten',
+        _Tool.optimize => 'optimize',
+        _Tool.removeBlankPages => 'remove-blanks',
+      };
+
+  /// `label` stays English for logs; the UI shows this.
+  String localizedLabel(BuildContext context) => this == _Tool.compress
+      ? L10n.of(context).compressRecommended
+      : ToolStrings.name(context, _registryId);
 }
 
 enum _FileStatus { pending, processing, done, error }
@@ -117,7 +134,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('${_tool.label} — ${_items.length} files'),
+        title: Text(L10n.of(ctx).batchDialogTitle(_tool.localizedLabel(ctx), _items.length)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,18 +143,18 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               children: [
                 const Icon(Icons.toll, size: 20),
                 const SizedBox(width: 8),
-                Text('Uses $total credit${total > 1 ? 's' : ''}',
+                Text(L10n.of(context).gateUsesCredits(total),
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 6),
-            Text('$perFile per file × ${_items.length} files',
+            Text(L10n.of(context).perFilePerCount(perFile, _items.length),
                 style: Theme.of(ctx).textTheme.bodySmall),
             const SizedBox(height: 8),
-            Text('Your balance: $balance'),
+            Text(L10n.of(context).gateBalance(balance)),
             if (!enough) ...[
               const SizedBox(height: 8),
-              Text('Not enough credits for this batch.',
+              Text(L10n.of(context).batchNotEnough,
                   style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
             ],
           ],
@@ -145,7 +162,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context).cancel),
           ),
           if (!enough)
             FilledButton(
@@ -153,12 +170,12 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                 Navigator.of(ctx).pop(false);
                 GoRouter.of(context).pushNamed(AppRoutes.creditsRoute.name);
               },
-              child: const Text('Get credits'),
+              child: Text(L10n.of(context).gateGetCredits),
             )
           else
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text('Use $total'),
+              child: Text(L10n.of(context).gateUse(total)),
             ),
         ],
       ),
@@ -172,7 +189,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       final done = _items.where((i) => i.status == _FileStatus.done).length;
       final err = _items.where((i) => i.status == _FileStatus.error).length;
       NotificationService.showSnackbar(
-        text: 'Batch complete: $done succeeded, $err failed',
+        text: L10n.current.batchComplete(done, err),
         color: done == _items.length ? Colors.green : Colors.orange,
       );
       return;
@@ -219,7 +236,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     } catch (e) {
       setState(() {
         item.status = _FileStatus.error;
-        item.errorMsg = 'Failed to prepare file';
+        item.errorMsg = L10n.current.failedToPrepareFile;
         _currentIndex++;
       });
       await _processNext();
@@ -256,7 +273,8 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Batch Process (${_items.length} files)'),
+          title: Text(L10n.of(context)
+              .batchAppBarTitle(ToolStrings.name(context, 'batch'), _items.length)),
         ),
         body: Column(
           children: [
@@ -265,7 +283,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tool', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(L10n.of(context).toolLabel, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<_Tool>(
                     initialValue: _tool,
@@ -280,7 +298,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                                   // "Remove Blank Pages" overruns the closed dropdown on a
                                   // narrow screen.
                                   Flexible(
-                                    child: Text(t.label, overflow: TextOverflow.ellipsis),
+                                    child: Text(t.localizedLabel(context), overflow: TextOverflow.ellipsis),
                                   ),
                                 ],
                               ),
@@ -329,11 +347,11 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               child: _finished
                   ? OutlinedButton(
                       onPressed: _startBatch,
-                      child: const Text('Run Again'),
+                      child: Text(L10n.of(context).runAgain),
                     )
                   : FilledButton(
                       onPressed: _running ? null : _startBatch,
-                      child: Text(_running ? 'Processing…' : 'Start Batch'),
+                      child: Text(_running ? L10n.of(context).processingEllipsis : L10n.of(context).startBatch),
                     ),
             ),
           ],

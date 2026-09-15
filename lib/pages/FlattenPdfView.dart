@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/fill-flatten.dart';
 import 'package:pdf_craft/models/request/flatten-pdf.dart';
 import 'package:pdf_craft/models/request/get-form-fields.dart';
@@ -46,7 +48,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Flatten PDF')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'flatten'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.FLATTEN_PDF] != c.httpStates[HttpStates.FLATTEN_PDF] ||
@@ -75,7 +77,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             final s = state.httpStates[key];
             if (s?.done == true) {
               AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: 'PDF flattened successfully', color: Colors.green);
+              NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
               if (s?.extras?['savedFile'] is File) {
                 GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
                     pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
@@ -93,7 +95,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
               httpState: state.httpStates[HttpStates.FILL_FLATTEN]?.loading == true
                   ? state.httpStates[HttpStates.FILL_FLATTEN]
                   : state.httpStates[HttpStates.FLATTEN_PDF],
-              label: 'Flattening your PDF',
+              label: L10n.of(context).flatteningPdf,
             ),
           ]);
         },
@@ -114,21 +116,20 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               TextFormField(
                 controller: _outFileNameC,
-                decoration: const InputDecoration(labelText: 'Output File Name (optional)', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: L10n.of(context).outputFileNameOptional, border: OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               if (hasFields) ...[
-                Text('This PDF has ${_fields!.length} fillable field${_fields!.length == 1 ? '' : 's'}',
+                Text(L10n.of(context).flattenFieldsCount(_fields!.length),
                     style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('Fill any you like, then flatten to bake the values in permanently.',
+                Text(L10n.of(context).flattenHint,
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                 const SizedBox(height: 12),
                 ..._fields!.map((f) => _buildFieldInput(theme, f)),
               ] else
-                const Text(
-                  'Flattening merges interactive form fields and annotations into static page content. '
-                  'The result is no longer editable but displays consistently everywhere.',
+                Text(
+                  L10n.of(context).flattenExplainer,
                   style: TextStyle(fontSize: 13, height: 1.5),
                 ),
             ]),
@@ -139,7 +140,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
           child: FilledButton.icon(
             onPressed: busy ? null : (hasFields ? _onFillFlatten : _onFlatten),
             icon: const Icon(Icons.layers_clear),
-            label: Text(hasFields ? 'Fill & Flatten' : 'Flatten PDF'),
+            label: Text(hasFields ? L10n.of(context).fillAndFlatten : ToolStrings.name(context, 'flatten')),
           ),
         ),
       ]),
@@ -171,7 +172,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             child: DropdownButton<String>(
               isExpanded: true,
               value: options.contains(current) ? current : null,
-              hint: const Text('Select'),
+              hint: Text(L10n.of(context).select),
               items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
               onChanged: (v) => setState(() => _values[name] = v ?? ''),
             ),
@@ -183,7 +184,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.draw_outlined),
           title: Text(name),
-          subtitle: const Text('Signature field — not fillable here'),
+          subtitle: Text(L10n.of(context).signatureNotFillable),
         );
         break;
       default: // text

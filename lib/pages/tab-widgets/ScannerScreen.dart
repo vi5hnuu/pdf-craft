@@ -9,6 +9,11 @@ import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/tools/credit_gate.dart';
+import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/utils/UploadLimits.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -26,7 +31,7 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   DocumentScanner? _documentScanner;
   DocumentScanningResult? _result;
-  // Which scan card is busy (0 = Scan to PDF, 1 = JPEG, 2 = Searchable), or null
+  // Which scan card is busy (0 = Scan to PDF, 1 = JPEG), or null
   // when idle. Only the active card shows a spinner; the rest are just disabled.
   int? _scanningCard;
   bool get _busy => _scanningCard != null;
@@ -44,7 +49,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         final s = state.httpStates[HttpStates.IMAGE_TO_PDF];
         if (s?.done == true) {
           final savedFile = s?.extras?['savedFile'];
-          NotificationService.showSnackbar(text: 'Images merged to PDF', color: Colors.green);
+          NotificationService.showSnackbar(text: L10n.current.scanImagesMerged, color: Colors.green);
           if (savedFile is File) {
             OpenFile.open(
               savedFile.path,
@@ -68,7 +73,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               const BannerAdd(),
             ]),
           ),
-          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF'),
+          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: L10n.of(context).scanCreatingPdf),
         ]);
       },
     );
@@ -82,56 +87,50 @@ class _ScannerScreenState extends State<ScannerScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Document Scanner',
+          Text(L10n.of(context).scanTitle,
               style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(
-            'Scan physical documents with your camera or import from gallery.',
+            L10n.of(context).scanSubtitle,
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 32),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              SizedBox(
-                width: (MediaQuery.sizeOf(context).width - 56) / 2,
-                child: _ScanCard(
-                  icon: Icons.picture_as_pdf,
-                  label: 'Scan to PDF',
-                  description: 'Creates a multi-page PDF from scanned pages.',
-                  color: theme.colorScheme.primary,
-                  loading: _scanningCard == 0,
-                  enabled: !_busy,
-                  onTap: () => _startScan(DocumentFormat.pdf, 0),
+          // Two equal cards side by side. IntrinsicHeight keeps both the same height when one
+          // description wraps to more lines than the other.
+          //
+          // A third "Searchable PDF (OCR)" card used to sit here, but it ran the exact same scan
+          // as "Scan to PDF" — no text layer was ever produced — so it was removed rather than
+          // promise a feature that does not exist.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _ScanCard(
+                    icon: Icons.picture_as_pdf,
+                    label: L10n.of(context).scanToPdf,
+                    description: L10n.of(context).scanToPdfDesc,
+                    color: theme.colorScheme.primary,
+                    loading: _scanningCard == 0,
+                    enabled: !_busy,
+                    onTap: () => _startScan(DocumentFormat.pdf, 0),
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: (MediaQuery.sizeOf(context).width - 56) / 2,
-                child: _ScanCard(
-                  icon: Icons.image_outlined,
-                  label: 'Scan to JPEG',
-                  description: 'Saves each page as a separate JPEG image.',
-                  color: const Color(0xFF7B1FA2),
-                  loading: _scanningCard == 1,
-                  enabled: !_busy,
-                  onTap: () => _startScan(DocumentFormat.jpeg, 1),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _ScanCard(
+                    icon: Icons.image_outlined,
+                    label: L10n.of(context).scanToJpeg,
+                    description: L10n.of(context).scanToJpegDesc,
+                    color: const Color(0xFF7B1FA2),
+                    loading: _scanningCard == 1,
+                    enabled: !_busy,
+                    onTap: () => _startScan(DocumentFormat.jpeg, 1),
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: _ScanCard(
-                  icon: Icons.document_scanner_outlined,
-                  label: 'Searchable PDF',
-                  description: 'OCR scan — creates a PDF with selectable, searchable text layer.',
-                  color: const Color(0xFF00796B),
-                  loading: _scanningCard == 2,
-                  enabled: !_busy,
-                  onTap: () => _startScan(DocumentFormat.pdf, 2),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Card(
@@ -144,7 +143,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Tip: You can import from your gallery as well as scan with the camera.',
+                    L10n.of(context).scanTip,
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                   ),
@@ -175,13 +174,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              isPdf ? 'Scanned PDF Document' : '${_result!.images?.length ?? 0} Scanned Image(s)',
+              isPdf
+                  ? L10n.of(context).scanPdfDocument
+                  : L10n.of(context).scanImagesCount(_result!.images?.length ?? 0),
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.close),
-            tooltip: 'Discard',
+            tooltip: L10n.of(context).discard,
             onPressed: () => setState(() => _result = null),
           ),
         ]),
@@ -192,9 +193,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: TextFormField(
           controller: _outFileNameC,
-          decoration: const InputDecoration(
-            labelText: 'Output File Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: L10n.of(context).outputFileName,
+            border: const OutlineInputBorder(),
           ),
         ),
       ),
@@ -217,7 +218,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         child: FilledButton.icon(
           onPressed: () => _saveResult(_result!),
           icon: const Icon(Icons.save_alt),
-          label: Text(isPdf ? 'Save PDF' : 'Merge to PDF'),
+          label: Text(isPdf ? L10n.of(context).scanSavePdf : L10n.of(context).scanMergeToPdf),
           style: FilledButton.styleFrom(backgroundColor: Colors.green),
         ),
       ),
@@ -243,12 +244,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 Icon(Icons.picture_as_pdf,
                     size: 72, color: theme.colorScheme.primary),
                 const SizedBox(height: 16),
-                Text('Scanned PDF ready',
+                Text(L10n.of(context).scanPdfReady,
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Text(
-                  'Tap to preview • Press "Save PDF" to save',
+                  L10n.of(context).scanTapToPreview,
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                   textAlign: TextAlign.center,
@@ -285,7 +286,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.all(8),
-                child: Text('Page ${index + 1}',
+                child: Text(L10n.of(context).pageNumber(index + 1),
                     style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ),
             ],
@@ -310,7 +311,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
           pageLimit: 10,
         ),
       );
-      final result = await _documentScanner?.scanDocument();
+      // The scanner runs in its own activity; returning from it is not a resume worth an ad.
+      final scanner = _documentScanner!;
+      final result = await FullScreenAdPolicy().runExternal(() => scanner.scanDocument());
       // Scanning hands control to another activity and can take minutes, which is ample time
       // for this screen to be disposed before the result comes back.
       if (!mounted) return;
@@ -321,7 +324,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       });
     } catch (_) {
       setState(() => _scanningCard = null);
-      NotificationService.showSnackbar(text: 'Scan cancelled or failed', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.scanCancelledOrFailed, color: Colors.red);
     }
   }
 
@@ -333,14 +336,27 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (result.pdf != null) {
       await _savePdf(result.pdf!, fileName);
     } else {
-      BlocProvider.of<PdfBloc>(context).add(ImageToPdfEvent(
-        imageToPdf: ImageToPdf(
-          out_file_name: fileName,
-          files: await Future.wait(
-            (result.images ?? []).map((p) => MultipartFile.fromFile(p)),
-          ),
-        ),
-      ));
+      final images = (result.images ?? []).map((p) => File(p)).toList();
+      // Merging scanned images runs on the server (the priced image-to-pdf tool). This path used
+      // to spend credits without asking; it now checks size and confirms the cost exactly like
+      // opening Image to PDF from the Tools tab.
+      if (!await UploadLimits.ensureWithinLimits(context, images)) return;
+      if (!mounted) return;
+      final bloc = BlocProvider.of<PdfBloc>(context);
+      await CreditGate.run(
+        context,
+        creditToolId: ToolRegistry.byId('image-to-pdf')?.creditToolId,
+        toolName: L10n.current.scanMergeToPdf,
+        files: images,
+        proceed: () async {
+          bloc.add(ImageToPdfEvent(
+            imageToPdf: ImageToPdf(
+              out_file_name: fileName,
+              files: await Future.wait(images.map((f) => MultipartFile.fromFile(f.path))),
+            ),
+          ));
+        },
+      );
     }
   }
 
@@ -353,13 +369,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final target = await source.copy('${Constants.processedDirPath}/$fileName.pdf');
       if (!mounted) return;
       setState(() => _result = null);
-      NotificationService.showSnackbar(text: 'Saved to ${target.path}', color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.savedTo(target.path), color: Colors.green);
       router.pushNamed(
         AppRoutes.pdfFilePreviewRoute.name,
         pathParameters: {'pdfFilePath': target.path},
       );
     } catch (e) {
-      NotificationService.showSnackbar(text: 'Failed to save: $e', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.failedToSave('$e'), color: Colors.red);
     }
   }
 

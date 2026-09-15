@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/duplicate-pages.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -49,12 +51,12 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Duplicate Pages'),
+        title: Text(ToolStrings.name(context, 'duplicate-pages')),
         actions: [
           if (_pageCounts.isNotEmpty)
             TextButton(
               onPressed: () => setState(() => _pageCounts.clear()),
-              child: const Text('Clear'),
+              child: Text(L10n.of(context).clear),
             ),
         ],
       ),
@@ -67,7 +69,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
           final s = state.httpStates[HttpStates.DUPLICATE_PAGES];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Pages duplicated', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.pagesDuplicated, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -86,7 +88,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: Text(
-                  'Tap a page to select it, then set how many copies of that page to add.',
+                  L10n.of(context).duplicateHint,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -115,7 +117,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
             ]),
             LoadingOverlay(
               httpState: state.httpStates[HttpStates.DUPLICATE_PAGES],
-              label: 'Duplicating pages',
+              label: L10n.of(context).duplicatingPages,
               onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
             ),
           ]);
@@ -220,7 +222,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.copy_all),
             label: Text(_pageCounts.isEmpty
-                ? 'Select pages to duplicate'
+                ? L10n.of(context).selectPagesToDuplicate
                 : 'Add $_totalCopies cop${_totalCopies == 1 ? 'y' : 'ies'} across ${_pageCounts.length} page(s)'),
           ),
         ),

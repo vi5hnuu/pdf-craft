@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 
 /// Offers the tools that can be applied to a file the user is already looking at.
@@ -40,7 +41,7 @@ class NextToolSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Use this file in another tool',
+                      Text(L10n.of(context).nextToolTitle,
                           style: theme.textTheme.titleMedium),
                       const SizedBox(height: 2),
                       Text(
@@ -60,7 +61,7 @@ class NextToolSheet extends StatelessWidget {
           if (tools.isEmpty)
             Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('No other tool accepts this kind of file.',
+              child: Text(L10n.of(context).nextToolNone,
                   style: theme.textTheme.bodyMedium),
             )
           else
@@ -72,8 +73,8 @@ class NextToolSheet extends StatelessWidget {
                   final tool = tools[index];
                   return ListTile(
                     leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.name),
-                    subtitle: Text(tool.category.name),
+                    title: Text(tool.localizedName(context)),
+                    subtitle: Text(tool.category.localizedName(context)),
                     onTap: () {
                       Navigator.pop(context);
                       tool.openWithFiles(context, [file]);

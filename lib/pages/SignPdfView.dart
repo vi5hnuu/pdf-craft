@@ -5,6 +5,8 @@ import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -45,16 +47,16 @@ class _SignPdfViewState extends State<SignPdfView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign PDF'),
+        title: Text(ToolStrings.name(context, 'sign')),
         actions: [
           IconButton(
             icon: const Icon(Icons.undo),
-            tooltip: 'Undo',
+            tooltip: L10n.of(context).undo,
             onPressed: _hasStrokes ? () => setState(() => _strokes.removeLast()) : null,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            tooltip: 'Clear',
+            tooltip: L10n.of(context).clear,
             onPressed: _hasStrokes ? () => setState(_strokes.clear) : null,
           ),
         ],
@@ -65,7 +67,7 @@ class _SignPdfViewState extends State<SignPdfView> {
             padding: const EdgeInsets.all(16),
             child: Column(children: [
               Text(
-                'Draw your signature below, or import one from your device.',
+                L10n.of(context).signHint,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
@@ -97,7 +99,7 @@ class _SignPdfViewState extends State<SignPdfView> {
                     ),
                     if (!_hasStrokes)
                       Center(
-                        child: Text('Sign here',
+                        child: Text(L10n.of(context).signHere,
                             style: TextStyle(color: Colors.grey.shade300, fontSize: 28, fontStyle: FontStyle.italic)),
                       ),
                     GestureDetector(
@@ -160,7 +162,7 @@ class _SignPdfViewState extends State<SignPdfView> {
                 child: OutlinedButton.icon(
                   onPressed: _busy ? null : _importSignature,
                   icon: const Icon(Icons.image_outlined),
-                  label: const Text('Import'),
+                  label: Text(L10n.of(context).importLabel),
                   style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 ),
               ),
@@ -170,7 +172,7 @@ class _SignPdfViewState extends State<SignPdfView> {
                 child: FilledButton.icon(
                   onPressed: (_hasStrokes && !_busy) ? _placeDrawn : null,
                   icon: const Icon(Icons.check),
-                  label: const Text('Place on PDF'),
+                  label: Text(L10n.of(context).placeOnPdf),
                   style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 ),
               ),
@@ -186,13 +188,13 @@ class _SignPdfViewState extends State<SignPdfView> {
     try {
       final bytes = await _exportCroppedSignature();
       if (bytes == null) {
-        NotificationService.showSnackbar(text: 'Could not capture signature', color: Colors.red);
+        NotificationService.showSnackbar(text: L10n.current.signatureCaptureFailed, color: Colors.red);
         return;
       }
       if (!mounted) return;
       GoRouter.of(context).pushNamed(
         AppRoutes.placeImageRoute.name,
-        extra: {'file': widget.file, 'imageBytes': bytes, 'title': 'Place Signature'},
+        extra: {'file': widget.file, 'imageBytes': bytes, 'title': L10n.of(context).placeSignature},
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -205,7 +207,7 @@ class _SignPdfViewState extends State<SignPdfView> {
     if (bytes == null || !mounted) return;
     GoRouter.of(context).pushNamed(
       AppRoutes.placeImageRoute.name,
-      extra: {'file': widget.file, 'imageBytes': bytes, 'title': 'Place Signature'},
+      extra: {'file': widget.file, 'imageBytes': bytes, 'title': L10n.of(context).placeSignature},
     );
   }
 

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/replace-pages.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
@@ -69,12 +71,12 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Replace Pages')),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'replace-pages'))),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.REPLACE_PAGES] != c.httpStates[HttpStates.REPLACE_PAGES],
         listenWhen: (p, c) => p.httpStates[HttpStates.REPLACE_PAGES] != c.httpStates[HttpStates.REPLACE_PAGES],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.REPLACE_PAGES], successMessage: 'Pages replaced'),
+            handleToolState(state.httpStates[HttpStates.REPLACE_PAGES], successMessage: L10n.of(context).pagesReplaced),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.REPLACE_PAGES]?.loading == true;
           return Stack(children: [
@@ -83,20 +85,20 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    _fileCard(theme, 'Base document', _base, Icons.picture_as_pdf),
+                    _fileCard(theme, L10n.of(context).baseDocument, _base, Icons.picture_as_pdf),
                     Center(
                       child: IconButton(
                         icon: const Icon(Icons.swap_vert),
-                        tooltip: 'Swap base / replacement',
+                        tooltip: L10n.of(context).swapBaseReplacement,
                         onPressed: _swap,
                       ),
                     ),
-                    _fileCard(theme, 'Replace with', _replacement, Icons.find_replace),
+                    _fileCard(theme, L10n.of(context).replaceWith, _replacement, Icons.find_replace),
                     const SizedBox(height: 20),
-                    Text('Range to replace', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).rangeToReplace, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     if (_basePages > 0) ...[
-                      Text('Base has $_basePages page${_basePages == 1 ? '' : 's'}. Replacing pages $_from–$_to.',
+                      Text(L10n.of(context).replaceSummary(_basePages, _from, _to),
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                       const SizedBox(height: 8),
@@ -112,9 +114,9 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                         }),
                       ),
                     ] else
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Reading base document…'),
+                        child: Text(L10n.of(context).readingBaseDoc),
                       ),
                   ]),
                 ),
@@ -129,11 +131,11 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                 child: FilledButton.icon(
                   onPressed: (loading || _basePages == 0) ? null : _onReplace,
                   icon: const Icon(Icons.find_replace),
-                  label: const Text('Replace & Save'),
+                  label: Text(L10n.of(context).replaceAndSave),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.REPLACE_PAGES], label: 'Replacing pages'),
+            processingOverlay(state.httpStates[HttpStates.REPLACE_PAGES], label: L10n.of(context).procWorking),
           ]);
         },
       ),

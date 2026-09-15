@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/request/redact-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -94,12 +96,12 @@ class _RedactPdfViewState extends State<RedactPdfView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Redact PDF${_totalPages > 0 ? ' — P.$_currentPage/$_totalPages' : ''}'),
+        title: Text('${ToolStrings.name(context, 'redact')}${_totalPages > 0 ? ' — P.$_currentPage/$_totalPages' : ''}'),
         actions: [
           if (_rects.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.undo),
-              tooltip: 'Undo last region',
+              tooltip: L10n.of(context).undoLastRegion,
               onPressed: () => setState(() {
                 _rects.removeLast();
                 _selectedId = null;
@@ -107,7 +109,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
             ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: 'Clear page',
+            tooltip: L10n.of(context).clearPage,
             onPressed: _rects.isEmpty
                 ? null
                 : () => setState(() {
@@ -124,7 +126,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
           final s = state.httpStates[HttpStates.REDACT_PDF];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Redacted successfully', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -142,7 +144,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Text(
-                  'Drag on an empty area to draw a box. Tap a box to move, resize (corner) or delete it.',
+                  L10n.of(context).redactHint,
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
               ),
@@ -152,7 +154,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
             ]),
             LoadingOverlay(
               httpState: state.httpStates[HttpStates.REDACT_PDF],
-              label: 'Redacting your PDF',
+              label: L10n.of(context).redactingPdf,
               onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
             ),
           ]);
@@ -284,7 +286,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
         icon: loading
             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : const Icon(Icons.hide_source),
-        label: Text(loading ? 'Redacting…' : 'Apply Redactions'),
+        label: Text(loading ? L10n.of(context).redactingEllipsis : L10n.of(context).applyRedactions),
         style: FilledButton.styleFrom(backgroundColor: Colors.red),
       ),
     );
