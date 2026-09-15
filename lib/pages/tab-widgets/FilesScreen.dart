@@ -197,7 +197,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           ? loadingWidget
                           : Text(stats.totalItemsInRoot.toString(),
                               style: const TextStyle(fontSize: 16)),
-                      leadingIconSvgPath: 'assets/icons/hard-disk.svg',
+                      icon: Icons.phone_android_rounded,
                       title: L10n.of(context).storageInternal,
                     ),
                     StorageTile(
@@ -210,7 +210,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           ? loadingWidget
                           : Text(stats.totalItemsInDownloads.toString(),
                               style: const TextStyle(fontSize: 16)),
-                      leadingIconSvgPath: 'assets/icons/downloads.svg',
+                      icon: Icons.download_rounded,
                       title: L10n.of(context).storageDownloads,
                     ),
                     StorageTile(
@@ -223,7 +223,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           ? loadingWidget
                           : Text(stats.totalItemsInDocuments.toString(),
                               style: const TextStyle(fontSize: 16)),
-                      leadingIconSvgPath: 'assets/icons/documents.svg',
+                      icon: Icons.description_rounded,
                       title: L10n.of(context).storageDocuments,
                     ),
                     StorageTile(
@@ -236,7 +236,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           ? loadingWidget
                           : Text(stats.totalProcessedFiles.toString(),
                               style: const TextStyle(fontSize: 16)),
-                      leadingIconSvgPath: 'assets/icons/folder-management.svg',
+                      icon: Icons.auto_awesome_motion_rounded,
                       title: L10n.of(context).storageProcessed,
                     ),
                   ],
