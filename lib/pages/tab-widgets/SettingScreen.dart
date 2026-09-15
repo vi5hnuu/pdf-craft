@@ -6,6 +6,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
 import 'package:pdf_craft/utils/Constants.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -19,12 +20,21 @@ class _SettingScreenState extends State<SettingScreen> {
   late ThemeMode _themeMode;
   int _processedFileCount = 0;
   String _processedDirSize = '0 KB';
+  // Read from the installed package (pubspec version) — it was hard-coded as 2.0.0 and went
+  // stale with every release.
+  String _version = '';
 
   @override
   void initState() {
     super.initState();
     _themeMode = ThemeManager().mode;
     _loadProcessedStats();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) setState(() => _version = '${info.version} (${info.buildNumber})');
   }
 
   Future<void> _loadProcessedStats() async {
@@ -268,7 +278,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   ListTile(
                     leading: const Icon(Icons.code_outlined),
                     title: const Text('Version'),
-                    trailing: Text('2.0.0', style: theme.textTheme.bodyMedium),
+                    trailing: Text(_version, style: theme.textTheme.bodyMedium),
                   ),
                 ]),
               ),
