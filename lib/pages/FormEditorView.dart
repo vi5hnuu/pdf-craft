@@ -28,6 +28,16 @@ extension FieldTypeX on FieldType {
         FieldType.date => 'Date',
         FieldType.signature => 'Signature',
       };
+  /// Localized label for the UI; `label` above stays English for logs and wire use.
+  String localizedLabel(BuildContext context) => switch (this) {
+        FieldType.text => L10n.of(context).fieldText,
+        FieldType.multiline => L10n.of(context).fieldParagraph,
+        FieldType.checkbox => L10n.of(context).fieldCheckbox,
+        FieldType.radio => L10n.of(context).fieldRadio,
+        FieldType.dropdown => L10n.of(context).fieldDropdown,
+        FieldType.date => L10n.of(context).fieldDate,
+        FieldType.signature => L10n.of(context).fieldSignature,
+      };
   IconData get icon => switch (this) {
         FieldType.text => Icons.text_fields,
         FieldType.multiline => Icons.notes,
@@ -194,7 +204,7 @@ class _FormEditorViewState extends State<FormEditorView> {
     final labels = await showDialog<List<String>>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).formGroupTitle(type.label)),
+        title: Text(L10n.of(ctx).formGroupTitle(type.localizedLabel(ctx))),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(L10n.of(context).optionLabelsHint, style: const TextStyle(fontSize: 13)),
           const SizedBox(height: 12),
@@ -633,7 +643,7 @@ class _FormEditorViewState extends State<FormEditorView> {
             children: [
               Icon(t.icon, size: 22, color: theme.colorScheme.primary),
               const SizedBox(height: 4),
-              Text(t.label, style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+              Text(t.localizedLabel(context), style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
             ],
           ),
         ),
@@ -689,7 +699,7 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
         Row(children: [
           Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Text(L10n.of(context).typeFieldLabel(f.type.label), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Text(L10n.of(context).typeFieldLabel(f.type.localizedLabel(context)), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
         ]),
         const SizedBox(height: 12),
         _field(_name, 'Field name', (v) => f.name = v),

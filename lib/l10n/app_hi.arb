@@ -713,5 +713,18 @@
   "rotationLabel": "घुमाव",
   "targetSize": "जो साइज़ चाहिए",
   "resizeTo": "{size} में बदलें",
-  "typeFieldLabel": "{type} फ़ील्ड"
+  "typeFieldLabel": "{type} फ़ील्ड",
+  "compressionExtreme": "अधिकतम (सबसे छोटा साइज़)",
+  "compressionRecommended": "सुझाया गया (संतुलित)",
+  "compressionLow": "कम (सबसे अच्छी क्वालिटी)",
+  "positionStart": "शुरुआत",
+  "positionCenter": "बीच में",
+  "positionEnd": "अंत",
+  "fieldText": "टेक्स्ट",
+  "fieldParagraph": "पैराग्राफ",
+  "fieldCheckbox": "चेकबॉक्स",
+  "fieldRadio": "रेडियो",
+  "fieldDropdown": "ड्रॉपडाउन",
+  "fieldDate": "तारीख़",
+  "fieldSignature": "हस्ताक्षर"
 }

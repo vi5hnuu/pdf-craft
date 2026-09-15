@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/enum_labels.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/mirror-direction.dart';
@@ -65,7 +66,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
                           for (final d in MirrorDirection.values)
                             RadioListTile<MirrorDirection>(
                               value: d,
-                              title: Text(d.label),
+                              title: Text(d.localizedLabel(context)),
                               secondary: Icon(d == MirrorDirection.horizontal ? Icons.flip : Icons.flip_camera_android),
                             ),
                         ],

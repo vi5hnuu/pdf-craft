@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/enum_labels.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/enums/compression-level.dart';
@@ -84,7 +85,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: CompressionLevel.values
                                     .map((level) => RadioListTile<CompressionLevel>(
-                                          title: Text(level.displayName),
+                                          title: Text(level.localizedLabel(context)),
                                           value: level,
                                         ))
                                     .toList(),

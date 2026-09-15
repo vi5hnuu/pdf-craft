@@ -1199,5 +1199,18 @@
         "type": "String"
       }
     }
-  }
+  },
+  "compressionExtreme": "Extreme (smallest size)",
+  "compressionRecommended": "Recommended (balanced)",
+  "compressionLow": "Low (best quality)",
+  "positionStart": "Start",
+  "positionCenter": "Center",
+  "positionEnd": "End",
+  "fieldText": "Text",
+  "fieldParagraph": "Paragraph",
+  "fieldCheckbox": "Checkbox",
+  "fieldRadio": "Radio",
+  "fieldDropdown": "Dropdown",
+  "fieldDate": "Date",
+  "fieldSignature": "Signature"
 }

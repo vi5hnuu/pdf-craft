@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/enum_labels.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/models/color-info.dart';
@@ -256,7 +257,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
     return DropdownButtonFormField<WatermarkPosition>(
       initialValue: value,
       decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-      items: WatermarkPosition.values.map((p) => DropdownMenuItem(value: p, child: Text(p.displayName))).toList(),
+      items: WatermarkPosition.values.map((p) => DropdownMenuItem(value: p, child: Text(p.localizedLabel(context)))).toList(),
       onChanged: onChanged,
     );
   }
