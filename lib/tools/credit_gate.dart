@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/utils/UploadLimits.dart';
 
@@ -60,21 +61,21 @@ class CreditGate {
                 const SizedBox(width: 8),
                 Text(
                     approximate
-                        ? 'Uses from $cost credit${cost > 1 ? 's' : ''}'
-                        : 'Uses $cost credit${cost > 1 ? 's' : ''}',
+                        ? L10n.of(ctx).gateUsesFromCredits(cost)
+                        : L10n.of(ctx).gateUsesCredits(cost),
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
             if (approximate) ...[
               const SizedBox(height: 4),
-              Text('Larger files may cost more.',
+              Text(L10n.of(ctx).gateLargerFiles,
                   style: Theme.of(ctx).textTheme.bodySmall),
             ],
             const SizedBox(height: 8),
-            Text('Your balance: $balance'),
+            Text(L10n.of(ctx).gateBalance(balance)),
             if (!enough) ...[
               const SizedBox(height: 8),
-              Text('Not enough credits for this tool.',
+              Text(L10n.of(ctx).gateNotEnough,
                   style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
             ],
           ],
@@ -82,7 +83,7 @@ class CreditGate {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(ctx).cancel),
           ),
           if (!enough)
             FilledButton(
@@ -90,12 +91,12 @@ class CreditGate {
                 Navigator.of(ctx).pop(false);
                 GoRouter.of(context).pushNamed(AppRoutes.creditsRoute.name);
               },
-              child: const Text('Get credits'),
+              child: Text(L10n.of(ctx).gateGetCredits),
             )
           else
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text('Use $cost'),
+              child: Text(L10n.of(ctx).gateUse(cost)),
             ),
         ],
       ),

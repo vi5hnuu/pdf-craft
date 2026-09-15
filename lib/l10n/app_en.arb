@@ -495,5 +495,108 @@
   "fileDeselect": "Deselect",
   "favAdd": "Add to favorites",
   "favRemove": "Remove from favorites",
-  "openInExternalViewer": "Open in external viewer"
+  "openInExternalViewer": "Open in external viewer",
+  "gateUsesCredits": "{count, plural, =1{Uses 1 credit} other{Uses {count} credits}}",
+  "@gateUsesCredits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gateUsesFromCredits": "{count, plural, =1{Uses from 1 credit} other{Uses from {count} credits}}",
+  "@gateUsesFromCredits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gateLargerFiles": "Larger files may cost more.",
+  "gateBalance": "Your balance: {count}",
+  "@gateBalance": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gateNotEnough": "Not enough credits for this tool.",
+  "gateGetCredits": "Get credits",
+  "gateUse": "Use {count}",
+  "@gateUse": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadTooLargeTitle": "File too large",
+  "uploadCombinedTooLarge": "The selected files add up to {size}. Tools can process up to {limit} at a time — select fewer files.",
+  "@uploadCombinedTooLarge": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFileTooLarge": "“{name}” is {size}. Tools can process files up to {limit}.",
+  "@uploadFileTooLarge": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "sortLabel": "Sort",
+  "sortName": "Name",
+  "sortDate": "Date",
+  "sortSize": "Size",
+  "sortAsc": "Asc",
+  "sortDesc": "Desc",
+  "rangeApplyTo": "Apply to",
+  "rangeEveryPage": "Every page",
+  "done": "Done",
+  "rangeReadError": "Could not read the pages of this file.",
+  "rangeAllPages": "All pages",
+  "rangeSomePages": "{count} pages ({first}–{last})",
+  "@rangeSomePages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "int"
+      },
+      "last": {
+        "type": "int"
+      }
+    }
+  },
+  "rangeSummaryDone": "{summary} · done",
+  "@rangeSummaryDone": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeSummaryChange": "{summary} · change",
+  "@rangeSummaryChange": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeClearAll": "Clear — apply to every page"
 }

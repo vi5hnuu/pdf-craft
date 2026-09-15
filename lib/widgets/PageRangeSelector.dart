@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/widgets/PageSelectorGrid.dart';
 import 'package:pdfx/pdfx.dart';
 
@@ -88,11 +89,11 @@ class _PageRangeSheetState extends State<_PageRangeSheet> {
           children: [
             Row(
               children: [
-                Text('Apply to', style: theme.textTheme.titleMedium),
+                Text(L10n.of(context).rangeApplyTo, style: theme.textTheme.titleMedium),
                 const Spacer(),
                 TextButton(
                   onPressed: _draft.isEmpty ? null : () => setState(_draft.clear),
-                  child: const Text('Every page'),
+                  child: Text(L10n.of(context).rangeEveryPage),
                 ),
               ],
             ),
@@ -110,7 +111,7 @@ class _PageRangeSheetState extends State<_PageRangeSheet> {
             const SizedBox(height: 8),
             FilledButton(
               onPressed: () => Navigator.pop(context, _draft),
-              child: const Text('Done'),
+              child: Text(L10n.of(context).done),
             ),
           ],
         ),
@@ -169,16 +170,17 @@ class _PageRangeSelectorState extends State<PageRangeSelector> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Could not read the pages of this file.';
+        _error = L10n.of(context).rangeReadError;
       });
     }
   }
 
   String get _summary {
-    if (widget.selected.isEmpty) return 'All pages';
-    if (widget.selected.length == 1) return 'Page ${widget.selected.first + 1}';
+    final l = L10n.of(context);
+    if (widget.selected.isEmpty) return l.rangeAllPages;
+    if (widget.selected.length == 1) return l.pageNumber(widget.selected.first + 1);
     final sorted = widget.selected.toList()..sort();
-    return '${sorted.length} pages (${sorted.first + 1}–${sorted.last + 1})';
+    return l.rangeSomePages(sorted.length, sorted.first + 1, sorted.last + 1);
   }
 
   @override
@@ -190,11 +192,13 @@ class _PageRangeSelectorState extends State<PageRangeSelector> {
         if (!widget.startExpanded)
           Row(
             children: [
-              Text('Apply to', style: theme.textTheme.titleSmall),
+              Text(L10n.of(context).rangeApplyTo, style: theme.textTheme.titleSmall),
               const Spacer(),
               TextButton(
                 onPressed: _toggleOpen,
-                child: Text('$_summary · ${_open ? 'done' : 'change'}'),
+                child: Text(_open
+                    ? L10n.of(context).rangeSummaryDone(_summary)
+                    : L10n.of(context).rangeSummaryChange(_summary)),
               ),
             ],
           ),
@@ -239,7 +243,7 @@ class _PageRangeSelectorState extends State<PageRangeSelector> {
                   onPressed: widget.selected.isEmpty
                       ? null
                       : () => widget.onChanged(<int>{}),
-                  child: const Text('Clear — apply to every page'),
+                  child: Text(L10n.of(context).rangeClearAll),
                 ),
               ),
           ],

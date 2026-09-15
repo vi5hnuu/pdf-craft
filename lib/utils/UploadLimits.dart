@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 
@@ -78,13 +79,12 @@ class UploadLimits {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.warning_amber_rounded, size: 36),
-        title: const Text('File too large'),
+        title: Text(L10n.of(ctx).uploadTooLargeTitle),
         content: Text(violation.isCombined
-            ? 'The selected files add up to $size. Tools can process up to $limit at a time — '
-                'select fewer files.'
-            : '"${violation.fileName}" is $size. Tools can process files up to $limit.'),
+            ? L10n.of(ctx).uploadCombinedTooLarge(size, limit)
+            : L10n.of(ctx).uploadFileTooLarge(violation.fileName!, size, limit)),
         actions: [
-          FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+          FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(ctx).ok)),
         ],
       ),
     );
