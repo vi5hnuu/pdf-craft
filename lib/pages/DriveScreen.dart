@@ -6,6 +6,7 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/cloud/GoogleDriveService.dart';
 import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -93,7 +94,7 @@ class _DriveScreenState extends State<DriveScreen> {
       await FullScreenAdPolicy().runExternal(() => _drive.signIn());
       if (_drive.isSignedIn) await Future.wait([_loadFiles(), _loadStorage()]);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Sign-in failed', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveSignInFailed, color: Colors.red);
     } finally {
       if (mounted) setState(() => _signingIn = false);
     }
@@ -116,7 +117,7 @@ class _DriveScreenState extends State<DriveScreen> {
         });
       }
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Failed to load Drive files', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveLoadFailed, color: Colors.red);
     } finally {
       if (mounted) setState(() => _loadingFiles = false);
     }
@@ -151,10 +152,10 @@ class _DriveScreenState extends State<DriveScreen> {
     setState(() => _uploading = true);
     try {
       await _drive.uploadFile(file);
-      if (mounted) NotificationService.showSnackbar(text: 'Uploaded to Google Drive', color: Colors.green);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveUploaded, color: Colors.green);
       await Future.wait([_loadFiles(), _loadStorage()]);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Upload failed: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveUploadFailed('$e'), color: Colors.red);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -175,9 +176,9 @@ class _DriveScreenState extends State<DriveScreen> {
       final tmpFile = await _drive.downloadFile(f.id!, f.name!);
       final dest = File('${Constants.processedDirPath}/${f.name}');
       await tmpFile.copy(dest.path);
-      if (mounted) NotificationService.showSnackbar(text: 'Downloaded to processed folder', color: Colors.green);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloaded, color: Colors.green);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Download failed: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloadFailed('$e'), color: Colors.red);
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -194,7 +195,7 @@ class _DriveScreenState extends State<DriveScreen> {
         pathParameters: {'pdfFilePath': tmpFile.path},
       );
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Could not open: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveCouldNotOpen('$e'), color: Colors.red);
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -210,7 +211,7 @@ class _DriveScreenState extends State<DriveScreen> {
     try {
       local = await _drive.downloadFile(f.id!, f.name!);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Could not fetch file: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveCouldNotFetch('$e'), color: Colors.red);
       return;
     } finally {
       if (mounted) setState(() => _downloadingId = null);
@@ -219,7 +220,7 @@ class _DriveScreenState extends State<DriveScreen> {
 
     final tools = ToolRegistry.toolsForSelection([local]);
     if (tools.isEmpty) {
-      NotificationService.showSnackbar(text: 'No tools available for this file type', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.driveNoToolsForType, color: Colors.orange);
       return;
     }
     showModalBottomSheet(
@@ -230,12 +231,12 @@ class _DriveScreenState extends State<DriveScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Apply a tool',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                child: Text(L10n.of(context).applyATool,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ),
             ),
             Flexible(
@@ -268,7 +269,7 @@ class _DriveScreenState extends State<DriveScreen> {
       if (!mounted) return;
       await Share.shareXFiles([XFile(local.path)]);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: 'Share failed: $e', color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveShareFailed('$e'), color: Colors.red);
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -292,18 +293,18 @@ class _DriveScreenState extends State<DriveScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Google Drive'),
+        title: Text(L10n.of(context).googleDrive),
         actions: [
           if (_drive.isSignedIn) ...[
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _loadingFiles ? null : () => Future.wait([_loadFiles(), _loadStorage()]),
-              tooltip: 'Refresh',
+              tooltip: L10n.of(context).refresh,
             ),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: _signOut,
-              tooltip: 'Sign Out',
+              tooltip: L10n.of(context).signOut,
             ),
           ],
         ],
@@ -314,7 +315,7 @@ class _DriveScreenState extends State<DriveScreen> {
               icon: _uploading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.cloud_upload),
-              label: Text(_uploading ? 'Uploading…' : 'Upload File'),
+              label: Text(_uploading ? L10n.of(context).driveUploading : L10n.of(context).driveUploadFile),
             )
           : null,
       body: _signingIn
@@ -332,17 +333,17 @@ class _DriveScreenState extends State<DriveScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.cloud_outlined, size: 72, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
-          Text('Connect Google Drive', style: theme.textTheme.titleLarge),
+          Text(L10n.of(context).driveConnect, style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
-            'Sign in to upload, download and manage your Drive files.',
+            L10n.of(context).driveConnectBody,
             textAlign: TextAlign.center,
             style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
             icon: const Icon(Icons.login),
-            label: const Text('Sign in with Google'),
+            label: Text(L10n.of(context).driveSignInWithGoogle),
             onPressed: _signIn,
           ),
         ]),
@@ -381,7 +382,7 @@ class _DriveScreenState extends State<DriveScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(user?.displayName ?? 'Google Drive',
+                Text(user?.displayName ?? L10n.of(context).googleDrive,
                     style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 Text(user?.email ?? '', style: theme.textTheme.bodySmall),
               ]),
@@ -392,7 +393,7 @@ class _DriveScreenState extends State<DriveScreen> {
             LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
             const SizedBox(height: 4),
             Text(
-              '${Utility.bytesToSize(used)} of ${Utility.bytesToSize(limit)} used',
+              L10n.of(context).driveStorageUsed(Utility.bytesToSize(used), Utility.bytesToSize(limit)),
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             ),
           ],
@@ -416,13 +417,16 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  String _filterLabel(_FileFilter f) => switch (f) {
-    _FileFilter.all => 'All',
-    _FileFilter.pdf => 'PDFs',
-    _FileFilter.images => 'Images',
-    _FileFilter.docs => 'Documents',
-    _FileFilter.other => 'Other',
-  };
+  String _filterLabel(_FileFilter f) {
+    final l = L10n.of(context);
+    return switch (f) {
+      _FileFilter.all => l.filterAll,
+      _FileFilter.pdf => l.filterPdfs,
+      _FileFilter.images => l.filterImages,
+      _FileFilter.docs => l.filterDocuments,
+      _FileFilter.other => l.filterOther,
+    };
+  }
 
   Widget _buildFileList(ThemeData theme) {
     final files = _filteredFiles;
@@ -431,7 +435,9 @@ class _DriveScreenState extends State<DriveScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.folder_open_outlined, size: 56, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          Text(_filter == _FileFilter.all ? 'No files in your Drive' : 'No ${_filterLabel(_filter)} found'),
+          Text(_filter == _FileFilter.all
+              ? L10n.of(context).driveNoFiles
+              : L10n.of(context).driveNoFilesOfType(_filterLabel(_filter))),
         ]),
       );
     }
@@ -456,7 +462,7 @@ class _DriveScreenState extends State<DriveScreen> {
   }
 
   Widget _buildFileCard(ThemeData theme, drive.File f) {
-    final name = f.name ?? 'Unknown';
+    final name = f.name ?? L10n.of(context).unknown;
     final size = f.size != null ? Utility.bytesToSize(int.tryParse(f.size!) ?? 0) : '';
     final modified = f.modifiedTime != null
         ? '${f.modifiedTime!.day}/${f.modifiedTime!.month}/${f.modifiedTime!.year}'
@@ -495,22 +501,22 @@ class _DriveScreenState extends State<DriveScreen> {
                 TextButton.icon(
                   onPressed: isDownloading ? null : () => _openPdf(f),
                   icon: const Icon(Icons.open_in_new, size: 18),
-                  label: const Text('Open'),
+                  label: Text(L10n.of(context).actionOpen),
                 ),
               TextButton.icon(
                 onPressed: isDownloading ? null : () => _useInTools(f),
                 icon: const Icon(Icons.build_outlined, size: 18),
-                label: const Text('Tools'),
+                label: Text(L10n.of(context).navTools),
               ),
               TextButton.icon(
                 onPressed: isDownloading ? null : () => _downloadFile(f),
                 icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('Save'),
+                label: Text(L10n.of(context).actionSave),
               ),
               TextButton.icon(
                 onPressed: isDownloading ? null : () => _shareFile(f),
                 icon: const Icon(Icons.share_outlined, size: 18),
-                label: const Text('Share'),
+                label: Text(L10n.of(context).actionShare),
               ),
             ],
           ),

@@ -10,6 +10,7 @@ import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
 import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/tools/credit_gate.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/UploadLimits.dart';
@@ -48,7 +49,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         final s = state.httpStates[HttpStates.IMAGE_TO_PDF];
         if (s?.done == true) {
           final savedFile = s?.extras?['savedFile'];
-          NotificationService.showSnackbar(text: 'Images merged to PDF', color: Colors.green);
+          NotificationService.showSnackbar(text: L10n.current.scanImagesMerged, color: Colors.green);
           if (savedFile is File) {
             OpenFile.open(
               savedFile.path,
@@ -72,7 +73,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               const BannerAdd(),
             ]),
           ),
-          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: 'Creating your PDF'),
+          LoadingOverlay(httpState: state.httpStates[HttpStates.IMAGE_TO_PDF], label: L10n.of(context).scanCreatingPdf),
         ]);
       },
     );
@@ -86,11 +87,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Document Scanner',
+          Text(L10n.of(context).scanTitle,
               style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(
-            'Scan physical documents with your camera or import from gallery.',
+            L10n.of(context).scanSubtitle,
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
           ),
@@ -108,8 +109,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 Expanded(
                   child: _ScanCard(
                     icon: Icons.picture_as_pdf,
-                    label: 'Scan to PDF',
-                    description: 'Creates a multi-page PDF from scanned pages.',
+                    label: L10n.of(context).scanToPdf,
+                    description: L10n.of(context).scanToPdfDesc,
                     color: theme.colorScheme.primary,
                     loading: _scanningCard == 0,
                     enabled: !_busy,
@@ -120,8 +121,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 Expanded(
                   child: _ScanCard(
                     icon: Icons.image_outlined,
-                    label: 'Scan to JPEG',
-                    description: 'Saves each page as a separate JPEG image.',
+                    label: L10n.of(context).scanToJpeg,
+                    description: L10n.of(context).scanToJpegDesc,
                     color: const Color(0xFF7B1FA2),
                     loading: _scanningCard == 1,
                     enabled: !_busy,
@@ -142,7 +143,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Tip: You can import from your gallery as well as scan with the camera.',
+                    L10n.of(context).scanTip,
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                   ),
@@ -173,13 +174,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              isPdf ? 'Scanned PDF Document' : '${_result!.images?.length ?? 0} Scanned Image(s)',
+              isPdf
+                  ? L10n.of(context).scanPdfDocument
+                  : L10n.of(context).scanImagesCount(_result!.images?.length ?? 0),
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.close),
-            tooltip: 'Discard',
+            tooltip: L10n.of(context).discard,
             onPressed: () => setState(() => _result = null),
           ),
         ]),
@@ -190,9 +193,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: TextFormField(
           controller: _outFileNameC,
-          decoration: const InputDecoration(
-            labelText: 'Output File Name',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: L10n.of(context).outputFileName,
+            border: const OutlineInputBorder(),
           ),
         ),
       ),
@@ -215,7 +218,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         child: FilledButton.icon(
           onPressed: () => _saveResult(_result!),
           icon: const Icon(Icons.save_alt),
-          label: Text(isPdf ? 'Save PDF' : 'Merge to PDF'),
+          label: Text(isPdf ? L10n.of(context).scanSavePdf : L10n.of(context).scanMergeToPdf),
           style: FilledButton.styleFrom(backgroundColor: Colors.green),
         ),
       ),
@@ -241,12 +244,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 Icon(Icons.picture_as_pdf,
                     size: 72, color: theme.colorScheme.primary),
                 const SizedBox(height: 16),
-                Text('Scanned PDF ready',
+                Text(L10n.of(context).scanPdfReady,
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Text(
-                  'Tap to preview • Press "Save PDF" to save',
+                  L10n.of(context).scanTapToPreview,
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                   textAlign: TextAlign.center,
@@ -283,7 +286,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.all(8),
-                child: Text('Page ${index + 1}',
+                child: Text(L10n.of(context).pageNumber(index + 1),
                     style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ),
             ],
@@ -321,7 +324,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       });
     } catch (_) {
       setState(() => _scanningCard = null);
-      NotificationService.showSnackbar(text: 'Scan cancelled or failed', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.scanCancelledOrFailed, color: Colors.red);
     }
   }
 
@@ -343,7 +346,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       await CreditGate.run(
         context,
         creditToolId: ToolRegistry.byId('image-to-pdf')?.creditToolId,
-        toolName: 'Merge to PDF',
+        toolName: L10n.current.scanMergeToPdf,
         files: images,
         proceed: () async {
           bloc.add(ImageToPdfEvent(
@@ -366,13 +369,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final target = await source.copy('${Constants.processedDirPath}/$fileName.pdf');
       if (!mounted) return;
       setState(() => _result = null);
-      NotificationService.showSnackbar(text: 'Saved to ${target.path}', color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.savedTo(target.path), color: Colors.green);
       router.pushNamed(
         AppRoutes.pdfFilePreviewRoute.name,
         pathParameters: {'pdfFilePath': target.path},
       );
     } catch (e) {
-      NotificationService.showSnackbar(text: 'Failed to save: $e', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.failedToSave('$e'), color: Colors.red);
     }
   }
 

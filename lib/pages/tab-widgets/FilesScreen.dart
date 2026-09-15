@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/FavoritesService.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
@@ -92,16 +93,16 @@ class _FilesScreenState extends State<FilesScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Recent Files',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    Text(
+                      L10n.of(context).filesRecentFiles,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                     // The home preview is capped at 10; offer the full list.
                     TextButton(
                       onPressed: () => router
                           .pushNamed(AppRoutes.recentsRoute.name)
                           .then((_) => _loadStats()),
-                      child: const Text('See more'),
+                      child: Text(L10n.of(context).seeMore),
                     ),
                   ],
                 ),
@@ -128,11 +129,11 @@ class _FilesScreenState extends State<FilesScreen> {
               ),
             ],
             if (_favoritePdfs.isNotEmpty) ...[
-              const Padding(
-                padding: EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, top: 24.0, bottom: 8),
                 child: Text(
-                  'Favorites',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  L10n.of(context).favorites,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
               SizedBox(
@@ -163,14 +164,14 @@ class _FilesScreenState extends State<FilesScreen> {
                 ),
               ),
             ],
-            const Padding(
-              padding: EdgeInsets.only(left: 18.0, top: 24.0),
+            Padding(
+              padding: const EdgeInsets.only(left: 18.0, top: 24.0),
               child: Row(
                 children: [
                   Text(
-                    'My Storage',
+                    L10n.of(context).filesMyStorage,
                     style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -197,7 +198,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           : Text(stats.totalItemsInRoot.toString(),
                               style: const TextStyle(fontSize: 16)),
                       leadingIconSvgPath: 'assets/icons/hard-disk.svg',
-                      title: 'Internal Storage',
+                      title: L10n.of(context).storageInternal,
                     ),
                     StorageTile(
                       onTap: () => router
@@ -210,7 +211,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           : Text(stats.totalItemsInDownloads.toString(),
                               style: const TextStyle(fontSize: 16)),
                       leadingIconSvgPath: 'assets/icons/downloads.svg',
-                      title: 'Downloads',
+                      title: L10n.of(context).storageDownloads,
                     ),
                     StorageTile(
                       onTap: () => router
@@ -223,7 +224,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           : Text(stats.totalItemsInDocuments.toString(),
                               style: const TextStyle(fontSize: 16)),
                       leadingIconSvgPath: 'assets/icons/documents.svg',
-                      title: 'Documents',
+                      title: L10n.of(context).storageDocuments,
                     ),
                     StorageTile(
                       onTap: () => router
@@ -236,7 +237,7 @@ class _FilesScreenState extends State<FilesScreen> {
                           : Text(stats.totalProcessedFiles.toString(),
                               style: const TextStyle(fontSize: 16)),
                       leadingIconSvgPath: 'assets/icons/folder-management.svg',
-                      title: 'Processed Files',
+                      title: L10n.of(context).storageProcessed,
                     ),
                   ],
                 );
@@ -286,13 +287,13 @@ class _FilesScreenState extends State<FilesScreen> {
           if (mounted) GoRouter.of(context).goNamed(AppRoutes.errorRoute.name);
         } else {
           NotificationService.showSnackbar(
-              text: 'Storage permission is needed to browse your files',
+              text: L10n.current.errStoragePermissionNeeded,
               color: Colors.red);
         }
       }
     } catch (e) {
       NotificationService.showSnackbar(
-          text: 'Something went wrong', color: Colors.red);
+          text: L10n.current.errSomethingWrong, color: Colors.red);
     }
   }
 

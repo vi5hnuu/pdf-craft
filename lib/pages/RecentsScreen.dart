@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/widgets/FileActionsSheet.dart';
@@ -46,13 +47,13 @@ class _RecentsScreenState extends State<RecentsScreen> {
     final recents = _recents;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Recent Files')),
+      appBar: AppBar(title: Text(L10n.of(context).filesRecentFiles)),
       body: recents == null
           ? const SkeletonList()
           : recents.isEmpty
               ? Center(
                   child: Text(
-                    'No recent files',
+                    L10n.of(context).noRecentFiles,
                     style: TextStyle(
                         color: theme.colorScheme.onSurface
                             .withValues(alpha: 0.5)),

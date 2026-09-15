@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/RecentFilesService.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
@@ -142,7 +143,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 enableSuggestions: true,
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: 'Search files',
+                  hintText: L10n.of(context).searchFilesHint,
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.surface)),
@@ -203,10 +204,10 @@ class _SearchScreenState extends State<SearchScreen> {
     // Empty box -> Recents.
     if (_query.trim().isEmpty) {
       final recents = _recents;
-      if (recents == null) return _searching(theme, label: 'Loading…');
+      if (recents == null) return _searching(theme, label: L10n.of(context).loading);
       final shaped = _shape(recents);
-      if (shaped.isEmpty) return _hint(theme, 'No recent files');
-      return _list(theme, 'Recent', shaped);
+      if (shaped.isEmpty) return _hint(theme, L10n.of(context).noRecentFiles);
+      return _list(theme, L10n.of(context).recent, shaped);
     }
 
     // Otherwise show search results.
@@ -220,8 +221,8 @@ class _SearchScreenState extends State<SearchScreen> {
           builder: (context, snapshot) {
             if (!snapshot.hasData) return _searching(theme);
             final shaped = _shape(snapshot.data ?? const []);
-            if (shaped.isEmpty) return _hint(theme, 'No matching files');
-            return _list(theme, '${shaped.length} file(s) found', shaped);
+            if (shaped.isEmpty) return _hint(theme, L10n.of(context).noMatchingFiles);
+            return _list(theme, L10n.of(context).filesFound(shaped.length), shaped);
           },
         );
       },
@@ -268,7 +269,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
       );
 
-  Widget _searching(ThemeData theme, {String label = 'Searching…'}) => Center(
+  Widget _searching(ThemeData theme, {String? label}) => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -277,7 +278,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 height: 26,
                 child: CircularProgressIndicator(strokeWidth: 2.5)),
             const SizedBox(height: 12),
-            Text(label,
+            Text(label ?? L10n.of(context).searching,
                 style: TextStyle(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           ],
@@ -287,13 +288,13 @@ class _SearchScreenState extends State<SearchScreen> {
   String _typeLabel(_TypeFilter t) {
     switch (t) {
       case _TypeFilter.all:
-        return 'All';
+        return L10n.of(context).filterAll;
       case _TypeFilter.pdf:
-        return 'PDF';
+        return L10n.of(context).filterPdf;
       case _TypeFilter.images:
-        return 'Images';
+        return L10n.of(context).filterImages;
       case _TypeFilter.docs:
-        return 'Docs';
+        return L10n.of(context).filterDocs;
     }
   }
 

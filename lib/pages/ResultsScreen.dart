@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -75,13 +76,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear results'),
-        content: Text('Delete all $count output files? This cannot be undone.'),
+        title: Text(L10n.of(ctx).resultsClearTitle),
+        content: Text(L10n.of(ctx).resultsClearBody(count)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(L10n.of(ctx).delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -93,7 +94,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       } catch (_) {}
     }
     await _load();
-    NotificationService.showSnackbar(text: 'Results cleared', color: Colors.orange);
+    NotificationService.showSnackbar(text: L10n.current.resultsCleared, color: Colors.orange);
   }
 
   @override
@@ -103,12 +104,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Results'),
+        title: Text(L10n.of(context).resultsTitle),
         actions: [
           if (files != null && files.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete_sweep_outlined),
-              tooltip: 'Clear all',
+              tooltip: L10n.of(context).clearAll,
               onPressed: _clearAll,
             ),
         ],
@@ -142,12 +143,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
         children: [
           Icon(Icons.inbox_outlined, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          const Text('No results yet', style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(L10n.of(context).resultsEmpty, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Files you create with any tool will appear here for quick access.',
+              L10n.of(context).resultsEmptyBody,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),

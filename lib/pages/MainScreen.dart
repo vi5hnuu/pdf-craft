@@ -68,12 +68,13 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
           IconButton(
+            tooltip: L10n.of(context).actionSearch,
             onPressed: () =>
                 GoRouter.of(context).pushNamed(AppRoutes.searchRoute.name),
             icon: const Icon(Icons.search),
           ),
           IconButton(
-            tooltip: 'Settings',
+            tooltip: L10n.of(context).actionSettings,
             onPressed: () =>
                 GoRouter.of(context).pushNamed(AppRoutes.settingsRoute.name),
             icon: const Icon(Icons.settings_outlined),
@@ -87,23 +88,23 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         iconSize: 24,
         showUnselectedLabels: true,
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-              icon: Icon(Icons.folder_copy_outlined),
-              label: 'Files',
-              activeIcon: Icon(Icons.folder)),
+              icon: const Icon(Icons.folder_copy_outlined),
+              label: L10n.of(context).navFiles,
+              activeIcon: const Icon(Icons.folder)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.auto_fix_high_outlined),
-              label: 'Tools',
-              activeIcon: Icon(Icons.auto_fix_high)),
+              icon: const Icon(Icons.auto_fix_high_outlined),
+              label: L10n.of(context).navTools,
+              activeIcon: const Icon(Icons.auto_fix_high)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.document_scanner_outlined),
-              label: 'Scanner',
-              activeIcon: Icon(Icons.document_scanner)),
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: L10n.of(context).navScanner,
+              activeIcon: const Icon(Icons.document_scanner)),
           BottomNavigationBarItem(
-              icon: Icon(Icons.cloud_outlined),
-              label: 'Cloud',
-              activeIcon: Icon(Icons.cloud)),
+              icon: const Icon(Icons.cloud_outlined),
+              label: L10n.of(context).navCloud,
+              activeIcon: const Icon(Icons.cloud)),
         ],
         currentIndex: widget.navigationShell.currentIndex,
         onTap: _onTap,
@@ -117,10 +118,10 @@ class _MainScreenState extends State<MainScreen> {
       context: ctx,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text('Enjoying PDF Craft?'),
-        content: const Text(
-          'You\'ve processed several files! If you find this app useful, please take a moment to rate it — it helps a lot.',
-          style: TextStyle(height: 1.5),
+        title: Text(L10n.of(ctx).rateTitle),
+        content: Text(
+          L10n.of(ctx).rateBody,
+          style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
@@ -129,7 +130,7 @@ class _MainScreenState extends State<MainScreen> {
               RateAppService().snooze();
               Navigator.pop(ctx);
             },
-            child: const Text('Later'),
+            child: Text(L10n.of(ctx).rateLater),
           ),
           FilledButton(
             onPressed: () async {
@@ -137,7 +138,7 @@ class _MainScreenState extends State<MainScreen> {
               await RateAppService().openPlayStore();
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Rate Now'),
+            child: Text(L10n.of(ctx).rateNow),
           ),
         ],
       ),
