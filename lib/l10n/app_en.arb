@@ -962,5 +962,135 @@
   "resetDefaults": "Reset to defaults",
   "optionLabelsHint": "Enter option labels, separated by commas.",
   "formCreated": "Fillable form created",
-  "tapFieldToPlace": "Tap a field below to place it"
+  "tapFieldToPlace": "Tap a field below to place it",
+  "imgPageSize": "Page size",
+  "usLetter": "US Letter",
+  "usLegal": "US Legal",
+  "matchEachImage": "Match each image",
+  "orientation": "Orientation",
+  "matchImage": "Match image",
+  "portrait": "Portrait",
+  "landscape": "Landscape",
+  "reorderFilesTitle": "Reorder files ",
+  "longPressToDrag": "( long press to drag )",
+  "batchNotEnough": "Not enough credits for this batch.",
+  "batchComplete": "Batch complete: {done} succeeded, {failed} failed",
+  "@batchComplete": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "toolLabel": "Tool",
+  "runAgain": "Run again",
+  "fileNameLabel": "File name",
+  "passwordHintOptional": "Password hint (optional)",
+  "passwordHintExample": "e.g. My birthday year",
+  "ownerPassword": "Owner password",
+  "userPassword": "User password",
+  "atLeast10Chars": "At least 10 characters",
+  "userPermissions": "User permissions",
+  "vertical": "Vertical",
+  "horizontal": "Horizontal",
+  "fromPage": "From page",
+  "toPageOptional": "To page (optional)",
+  "invalidFontSize": "Invalid font size (min 4)",
+  "fontLabel": "Font",
+  "textColorColon": "Text color:",
+  "pickTextColor": "Pick text color",
+  "signHere": "Sign here",
+  "importLabel": "Import",
+  "placeOnPdf": "Place on PDF",
+  "signatureCaptureFailed": "Could not capture signature",
+  "imageQuality": "Image quality",
+  "imageGap": "Image gap",
+  "generateSingleImage": "Generate single image",
+  "joinImages": "Join images",
+  "sideBySide": "Side by side",
+  "overlayLabel": "Overlay",
+  "doc1": "Doc 1",
+  "doc2": "Doc 2",
+  "overlayLoadFailed": "Could not load pages for overlay",
+  "pageOfPages": "Page {current} / {total}",
+  "@pageOfPages": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "outputFileNameOptional": "Output file name (optional)",
+  "flattenFieldsCount": "{count, plural, =1{This PDF has 1 fillable field} other{This PDF has {count} fillable fields}}",
+  "@flattenFieldsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "flattenHint": "Fill any you like, then flatten to bake the values in permanently.",
+  "signatureNotFillable": "Signature field — not fillable here",
+  "pageSizePoints": "Page size (points)",
+  "pageSizeHint": "A4 = 595 × 842 pt, Letter = 612 × 792 pt",
+  "widthPt": "Width (pt)",
+  "heightPt": "Height (pt)",
+  "enterPagePosition": "Enter at least one page position",
+  "splitByRanges": "Split by ranges",
+  "splitByRangesSub": "Add custom ranges",
+  "fixedRanges": "Fixed ranges",
+  "fixedRangesSub": "Assign a fixed range",
+  "deletePagesTitle": "Delete pages",
+  "deletePagesSub": "Remove individual pages or a range of pages",
+  "splitByBookmark": "Split by bookmark",
+  "splitByBookmarkSub": "Creates one PDF per top-level chapter/bookmark; the PDF must have an outline",
+  "extractAllPages": "Extract all pages",
+  "extractAllPagesSub": "Every page becomes a separate PDF file",
+  "swapBaseReplacement": "Swap base / replacement",
+  "rangeToReplace": "Range to replace",
+  "replaceSummary": "Base has {pages} pages. Replacing pages {from}–{to}.",
+  "@replaceSummary": {
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      },
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "readingBaseDoc": "Reading base document…",
+  "replaceAndSave": "Replace & save",
+  "qrUrlLabel": "URL or text for QR code",
+  "positionQrOnPdf": "Position QR on PDF",
+  "failedWith": "Failed: {error}",
+  "@failedWith": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "needAtLeastOnePage": "A PDF needs at least one page",
+  "reset": "Reset",
+  "removePage": "Remove page",
+  "exportPdf": "Export PDF",
+  "widthLabel": "Width",
+  "colorPlain": "Colour",
+  "min10Chars": "Minimum 10 characters required",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "willHaveOwnerPermissions": "⚠️ Will have owner permissions ⚠️",
+  "passwordHintTitle": "Password hint",
+  "passwordLabel": "Password",
+  "removePassword": "Remove password"
 }

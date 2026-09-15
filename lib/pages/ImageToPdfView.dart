@@ -77,7 +77,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(keyboardType: TextInputType.text,
-                    decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                     controller: outFileNameC),
                 ),
                 Expanded(child: ReorderableListView.builder(
@@ -89,7 +89,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: RichText(
                       text: TextSpan(
-                        text: 'Reorder File ',
+                        text: L10n.of(context).reorderFilesTitle,
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
@@ -139,13 +139,13 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                       child: DropdownButtonFormField<String>(
                         initialValue: _pageSize,
                         isExpanded: true,
-                        decoration: const InputDecoration(
-                            labelText: 'Page size', border: OutlineInputBorder(), isDense: true),
-                        items: const [
+                        decoration: InputDecoration(
+                            labelText: L10n.of(context).imgPageSize, border: OutlineInputBorder(), isDense: true),
+                        items: [
                           DropdownMenuItem(value: 'A4', child: Text('A4')),
-                          DropdownMenuItem(value: 'LETTER', child: Text('US Letter')),
-                          DropdownMenuItem(value: 'LEGAL', child: Text('US Legal')),
-                          DropdownMenuItem(value: 'MATCH_IMAGE', child: Text('Match each image')),
+                          DropdownMenuItem(value: 'LETTER', child: Text(L10n.of(context).usLetter)),
+                          DropdownMenuItem(value: 'LEGAL', child: Text(L10n.of(context).usLegal)),
+                          DropdownMenuItem(value: 'MATCH_IMAGE', child: Text(L10n.of(context).matchEachImage)),
                         ],
                         onChanged: (v) => setState(() => _pageSize = v ?? 'A4'),
                       ),
@@ -155,13 +155,13 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                       child: DropdownButtonFormField<String>(
                         initialValue: _orientation,
                         isExpanded: true,
-                        decoration: const InputDecoration(
-                            labelText: 'Orientation', border: OutlineInputBorder(), isDense: true),
+                        decoration: InputDecoration(
+                            labelText: L10n.of(context).orientation, border: OutlineInputBorder(), isDense: true),
                         // Meaningless when each page simply takes its image's dimensions.
-                        items: const [
-                          DropdownMenuItem(value: 'AUTO', child: Text('Match image')),
-                          DropdownMenuItem(value: 'PORTRAIT', child: Text('Portrait')),
-                          DropdownMenuItem(value: 'LANDSCAPE', child: Text('Landscape')),
+                        items: [
+                          DropdownMenuItem(value: 'AUTO', child: Text(L10n.of(context).matchImage)),
+                          DropdownMenuItem(value: 'PORTRAIT', child: Text(L10n.of(context).portrait)),
+                          DropdownMenuItem(value: 'LANDSCAPE', child: Text(L10n.of(context).landscape)),
                         ],
                         onChanged: _pageSize == 'MATCH_IMAGE'
                             ? null
@@ -173,7 +173,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   width: double.infinity,
-                  child: FilledButton(onPressed: _onConvertToPdf, child: const Text("Convert to pdf")),
+                  child: FilledButton(onPressed: _onConvertToPdf, child: Text(ToolStrings.name(context, 'image-to-pdf'))),
                 )
               ],
             ),

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
@@ -51,8 +52,8 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
             // QR data input
             TextFormField(
               controller: _qrDataC,
-              decoration: const InputDecoration(
-                labelText: 'URL or text for QR code',
+              decoration: InputDecoration(
+                labelText: L10n.of(context).qrUrlLabel,
                 hintText: 'https://example.com',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.qr_code),
@@ -62,7 +63,7 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
 
             // Live QR preview
             if (_qrPreview.isNotEmpty) ...[
-              Text('Preview', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+              Text(L10n.of(context).preview, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               Center(
                 child: RepaintBoundary(
@@ -118,7 +119,7 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
                         width: 18, height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.place),
-                label: const Text('Position QR on PDF'),
+                label: Text(L10n.of(context).positionQrOnPdf),
               ),
             ),
           ],
@@ -152,7 +153,7 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
         },
       );
     } catch (e) {
-      NotificationService.showSnackbar(text: 'Failed: $e', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.failedWith('$e'), color: Colors.red);
     } finally {
       if (mounted) setState(() => _capturing = false);
     }

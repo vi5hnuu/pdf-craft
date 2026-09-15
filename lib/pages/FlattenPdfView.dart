@@ -116,14 +116,14 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               TextFormField(
                 controller: _outFileNameC,
-                decoration: const InputDecoration(labelText: 'Output File Name (optional)', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: L10n.of(context).outputFileNameOptional, border: OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               if (hasFields) ...[
-                Text('This PDF has ${_fields!.length} fillable field${_fields!.length == 1 ? '' : 's'}',
+                Text(L10n.of(context).flattenFieldsCount(_fields!.length),
                     style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('Fill any you like, then flatten to bake the values in permanently.',
+                Text(L10n.of(context).flattenHint,
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                 const SizedBox(height: 12),
                 ..._fields!.map((f) => _buildFieldInput(theme, f)),
@@ -173,7 +173,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             child: DropdownButton<String>(
               isExpanded: true,
               value: options.contains(current) ? current : null,
-              hint: const Text('Select'),
+              hint: Text(L10n.of(context).select),
               items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
               onChanged: (v) => setState(() => _values[name] = v ?? ''),
             ),
@@ -185,7 +185,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.draw_outlined),
           title: Text(name),
-          subtitle: const Text('Signature field — not fillable here'),
+          subtitle: Text(L10n.of(context).signatureNotFillable),
         );
         break;
       default: // text

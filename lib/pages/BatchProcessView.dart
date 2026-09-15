@@ -128,7 +128,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               children: [
                 const Icon(Icons.toll, size: 20),
                 const SizedBox(width: 8),
-                Text('Uses $total credit${total > 1 ? 's' : ''}',
+                Text(L10n.of(context).gateUsesCredits(total),
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
@@ -136,10 +136,10 @@ class _BatchProcessViewState extends State<BatchProcessView> {
             Text('$perFile per file × ${_items.length} files',
                 style: Theme.of(ctx).textTheme.bodySmall),
             const SizedBox(height: 8),
-            Text('Your balance: $balance'),
+            Text(L10n.of(context).gateBalance(balance)),
             if (!enough) ...[
               const SizedBox(height: 8),
-              Text('Not enough credits for this batch.',
+              Text(L10n.of(context).batchNotEnough,
                   style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
             ],
           ],
@@ -147,7 +147,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context).cancel),
           ),
           if (!enough)
             FilledButton(
@@ -155,12 +155,12 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                 Navigator.of(ctx).pop(false);
                 GoRouter.of(context).pushNamed(AppRoutes.creditsRoute.name);
               },
-              child: const Text('Get credits'),
+              child: Text(L10n.of(context).gateGetCredits),
             )
           else
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text('Use $total'),
+              child: Text(L10n.of(context).gateUse(total)),
             ),
         ],
       ),
@@ -174,7 +174,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       final done = _items.where((i) => i.status == _FileStatus.done).length;
       final err = _items.where((i) => i.status == _FileStatus.error).length;
       NotificationService.showSnackbar(
-        text: 'Batch complete: $done succeeded, $err failed',
+        text: L10n.current.batchComplete(done, err),
         color: done == _items.length ? Colors.green : Colors.orange,
       );
       return;
@@ -268,7 +268,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tool', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(L10n.of(context).toolLabel, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<_Tool>(
                     initialValue: _tool,
@@ -332,7 +332,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               child: _finished
                   ? OutlinedButton(
                       onPressed: _startBatch,
-                      child: const Text('Run Again'),
+                      child: Text(L10n.of(context).runAgain),
                     )
                   : FilledButton(
                       onPressed: _running ? null : _startBatch,

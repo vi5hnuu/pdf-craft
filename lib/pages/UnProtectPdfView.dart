@@ -82,14 +82,14 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                    mainAxisSize: MainAxisSize.max,
                    children:[
                      TextFormField(keyboardType: TextInputType.text,
-                       decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                       decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                        controller: outputFileNameC,),
                      SizedBox(height: 12,),
                      if (_passwordHint != null) ...[
                        Card(
                          child: ListTile(
                            leading: Icon(Icons.lightbulb_outline, color: Colors.amber),
-                           title: Text('Password Hint'),
+                           title: Text(L10n.of(context).passwordHintTitle),
                            subtitle: Text(_passwordHint!),
                          ),
                        ),
@@ -101,17 +101,17 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                          autocorrect: false,
                          enableSuggestions: false,
                          decoration: InputDecoration(
-                           labelText: "Password",
+                           labelText: L10n.of(context).passwordLabel,
                            border: OutlineInputBorder(),
                            suffixIcon: IconButton(
-                             tooltip: _obscure ? 'Show password' : 'Hide password',
+                             tooltip: _obscure ? L10n.of(context).showPassword : L10n.of(context).hidePassword,
                              icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                              onPressed: () => setState(() => _obscure = !_obscure),
                            ),
                          ),
                          onChanged: (value) => setState(()=>password=value)),
                      SizedBox(height: 16,),
-                     FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text("Remove password"))
+                     FilledButton(onPressed: password.isEmpty ? null : _onUnProtectPdf, child: Text(L10n.of(context).removePassword))
                    ],
                  ),
                ),

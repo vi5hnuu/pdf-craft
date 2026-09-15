@@ -63,7 +63,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
 
   void _deleteAt(int i) {
     if (_order.length <= 1) {
-      NotificationService.showSnackbar(text: 'A PDF needs at least one page', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.needAtLeastOnePage, color: Colors.orange);
       return;
     }
     setState(() => _order.removeAt(i));
@@ -106,7 +106,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
           if (_order.length != _totalPages)
             TextButton(
               onPressed: _reset,
-              child: Text('Reset', style: TextStyle(color: theme.colorScheme.primary)),
+              child: Text(L10n.of(context).reset, style: TextStyle(color: theme.colorScheme.primary)),
             ),
         ],
       ),
@@ -181,12 +181,12 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text('Page ${original + 1}',
+                  child: Text(L10n.of(context).pageNumber(original + 1),
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  tooltip: 'Remove page',
+                  tooltip: L10n.of(context).removePage,
                   onPressed: () => _deleteAt(i),
                 ),
                 ReorderableDragStartListener(
@@ -215,7 +215,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
       child: FilledButton.icon(
         onPressed: loading ? null : _onSave,
         icon: const Icon(Icons.save_alt),
-        label: const Text('Export PDF'),
+        label: Text(L10n.of(context).exportPdf),
       ),
     );
   }

@@ -76,7 +76,7 @@ class _AddBorderViewState extends State<AddBorderView>
                     ),
                     const SizedBox(height: 12),
                     Row(children: [
-                      const Text('Width'),
+                      Text(L10n.of(context).widthLabel),
                       Expanded(
                         child: Slider(
                           value: _width,
@@ -90,7 +90,7 @@ class _AddBorderViewState extends State<AddBorderView>
                       Text('${_width.round()} px'),
                     ]),
                     Row(children: [
-                      const Text('Colour'),
+                      Text(L10n.of(context).colorPlain),
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _pickColor,
@@ -134,7 +134,7 @@ class _AddBorderViewState extends State<AddBorderView>
                 child: FilledButton.icon(
                   onPressed: loading ? null : _onApply,
                   icon: const Icon(Icons.border_outer),
-                  label: const Text('Add Border'),
+                  label: Text(ToolStrings.name(context, 'img-border')),
                 ),
               ),
             ]),
@@ -149,14 +149,14 @@ class _AddBorderViewState extends State<AddBorderView>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Pick a colour'),
+        title: Text(L10n.of(context).pickColor),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: _color,
             onColorChanged: (c) => setState(() => _color = c),
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done))],
       ),
     );
   }

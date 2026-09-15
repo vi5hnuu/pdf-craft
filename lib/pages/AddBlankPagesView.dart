@@ -78,9 +78,9 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                               hint: 'e.g. 0,2,5 inserts after pages 1, 3, 6',
                             ),
                             const SizedBox(height: 20),
-                            const Text('Page Size (points)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text(L10n.of(context).pageSizePoints, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                             const SizedBox(height: 4),
-                            const Text('A4 = 595 × 842 pt, Letter = 612 × 792 pt', style: TextStyle(fontSize: 12)),
+                            Text(L10n.of(context).pageSizeHint, style: const TextStyle(fontSize: 12)),
                             const SizedBox(height: 12),
                             Row(
                               children: [
@@ -88,7 +88,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                                   child: TextFormField(
                                     initialValue: _pageWidth.toStringAsFixed(0),
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(labelText: 'Width (pt)', border: OutlineInputBorder()),
+                                    decoration: InputDecoration(labelText: L10n.of(context).widthPt, border: OutlineInputBorder()),
                                     onChanged: (v) => _pageWidth = double.tryParse(v) ?? 595,
                                   ),
                                 ),
@@ -97,7 +97,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                                   child: TextFormField(
                                     initialValue: _pageHeight.toStringAsFixed(0),
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(labelText: 'Height (pt)', border: OutlineInputBorder()),
+                                    decoration: InputDecoration(labelText: L10n.of(context).heightPt, border: OutlineInputBorder()),
                                     onChanged: (v) => _pageHeight = double.tryParse(v) ?? 842,
                                   ),
                                 ),
@@ -112,7 +112,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                       child: FilledButton.icon(
                         onPressed: _onAdd,
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Blank Pages'),
+                        label: Text(ToolStrings.name(context, 'add-blank')),
                       ),
                     ),
                   ],
@@ -143,7 +143,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
   void _onAdd() async {
     final positions = _parsePositions();
     if (positions.isEmpty) {
-      NotificationService.showSnackbar(text: 'Enter at least one page position', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.enterPagePosition, color: Colors.orange);
       return;
     }
     _bloc.add(AddBlankPagesEvent(

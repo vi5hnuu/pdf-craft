@@ -188,7 +188,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                                 Expanded(
                                   child: DropdownButtonFormField<PdfFontName>(
                                     initialValue: _fontName,
-                                    decoration: const InputDecoration(labelText: 'Font', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
+                                    decoration: InputDecoration(labelText: L10n.of(context).fontLabel, border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14)),
                                     items: PdfFontName.values.map((f) => DropdownMenuItem(value: f, child: Text(f.displayName, style: const TextStyle(fontSize: 13)))).toList(),
                                     onChanged: (v) => setState(() => _fontName = v!),
                                   ),
@@ -199,7 +199,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                                   child: TextFormField(
                                     initialValue: _fontSize.toString(),
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(labelText: 'Size', border: OutlineInputBorder()),
+                                    decoration: InputDecoration(labelText: L10n.of(context).sortSize, border: OutlineInputBorder()),
                                     onChanged: (v) => _fontSize = int.tryParse(v) ?? 12,
                                   ),
                                 ),
@@ -209,7 +209,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                             // Color picker
                             Row(
                               children: [
-                                const Text('Text Color:', style: TextStyle(fontSize: 14)),
+                                Text(L10n.of(context).textColorColon, style: const TextStyle(fontSize: 14)),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,
@@ -244,7 +244,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                               alignment: Alignment.centerLeft,
                               child: TextButton(
                                 onPressed: _resetSettings,
-                                child: const Text('Reset to defaults'),
+                                child: Text(L10n.of(context).resetDefaults),
                               ),
                             ),
                           ],
@@ -256,7 +256,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                       child: FilledButton.icon(
                         onPressed: _onApply,
                         icon: const Icon(Icons.title),
-                        label: const Text('Apply Header/Footer'),
+                        label: Text(ToolStrings.name(context, 'header-footer')),
                       ),
                     ),
                   ],
@@ -320,7 +320,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Pick Text Color'),
+        title: Text(L10n.of(context).pickTextColor),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: _color,
@@ -328,7 +328,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
             enableAlpha: false,
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done))],
       ),
     );
   }

@@ -95,8 +95,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                           // Output filename
                           TextFormField(
                             controller: _outFileNameC,
-                            decoration: const InputDecoration(
-                              labelText: 'Output File Name',
+                            decoration: InputDecoration(
+                              labelText: L10n.of(context).outputFileName,
                               border: OutlineInputBorder(),
                             ),
                           ),
@@ -160,8 +160,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<PositionInfo>(
-                                  decoration: const InputDecoration(
-                                    labelText: 'Vertical',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).vertical,
                                     border: OutlineInputBorder(),
                                   ),
                                   initialValue: _verticalPosition,
@@ -179,8 +179,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: DropdownButtonFormField<PositionInfo>(
-                                  decoration: const InputDecoration(
-                                    labelText: 'Horizontal',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).horizontal,
                                     border: OutlineInputBorder(),
                                   ),
                                   initialValue: _horizontalPosition,
@@ -223,8 +223,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                               Expanded(
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'From page',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).fromPage,
                                     border: OutlineInputBorder(),
                                   ),
                                   initialValue: _fromPage.toString(),
@@ -235,8 +235,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                               Expanded(
                                 child: TextFormField(
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'To page (optional)',
+                                  decoration: InputDecoration(
+                                    labelText: L10n.of(context).toPageOptional,
                                     border: OutlineInputBorder(),
                                   ),
                                   // Fixed: was incorrectly updating _fromPage
@@ -321,7 +321,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                     ),
                     child: FilledButton(
                       onPressed: _onSubmit,
-                      child: const Text('Apply Page Numbers'),
+                      child: Text(ToolStrings.name(context, 'page-numbers')),
                     ),
                   ),
                 ],
@@ -370,7 +370,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
   void _onSubmit() async {
     final fontSize = int.tryParse(_fontSizeC.text);
     if (fontSize == null || fontSize < 4) {
-      NotificationService.showSnackbar(text: 'Invalid font size (min 4)', color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.invalidFontSize, color: Colors.red);
       return;
     }
     bloc.add(PageNumbersEvent(

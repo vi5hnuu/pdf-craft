@@ -89,16 +89,16 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                     Center(
                       child: IconButton(
                         icon: const Icon(Icons.swap_vert),
-                        tooltip: 'Swap base / replacement',
+                        tooltip: L10n.of(context).swapBaseReplacement,
                         onPressed: _swap,
                       ),
                     ),
                     _fileCard(theme, 'Replace with', _replacement, Icons.find_replace),
                     const SizedBox(height: 20),
-                    Text('Range to replace', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    Text(L10n.of(context).rangeToReplace, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     if (_basePages > 0) ...[
-                      Text('Base has $_basePages page${_basePages == 1 ? '' : 's'}. Replacing pages $_from–$_to.',
+                      Text(L10n.of(context).replaceSummary(_basePages, _from, _to),
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                       const SizedBox(height: 8),
@@ -114,9 +114,9 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                         }),
                       ),
                     ] else
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Reading base document…'),
+                        child: Text(L10n.of(context).readingBaseDoc),
                       ),
                   ]),
                 ),
@@ -131,7 +131,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
                 child: FilledButton.icon(
                   onPressed: (loading || _basePages == 0) ? null : _onReplace,
                   icon: const Icon(Icons.find_replace),
-                  label: const Text('Replace & Save'),
+                  label: Text(L10n.of(context).replaceAndSave),
                 ),
               ),
             ]),

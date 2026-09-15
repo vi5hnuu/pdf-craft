@@ -87,7 +87,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: TextFormField(keyboardType: TextInputType.text,
-                      decoration: InputDecoration(labelText: "Output File Name",border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: OutlineInputBorder()),
                       controller: outFileNameC),
                   ),
                   Expanded(
@@ -100,7 +100,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text("Image Quality",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                              Text(L10n.of(context).imageQuality, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               SizedBox(width: 12),
                               Flexible(
                                 child: DropdownButtonFormField(
@@ -116,7 +116,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                           if(isSingle) Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text("Image Gap",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                              Text(L10n.of(context).imageGap, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               SizedBox(width: 12),
                               Flexible(
                                 child: TextFormField(keyboardType: TextInputType.number,
@@ -134,7 +134,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                             padding: const EdgeInsets.only(bottom: 16.0),
                             child: Row(
                               children: [
-                                Text("Generate Single Image ",style: TextStyle(fontSize: 20),),
+                                Text(L10n.of(context).generateSingleImage, style: const TextStyle(fontSize: 20)),
                                 SizedBox(width: 16,),
                                 Switch(value: isSingle, onChanged: (value)=>setState(() =>isSingle=value))
                               ],
@@ -143,7 +143,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                           AnimatedOpacity(opacity: isSingle ? 1 : 0, duration: Duration(milliseconds: 300),child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text("Join Images ",style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold),),
+                              Text(L10n.of(context).joinImages, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               SizedBox(width: 16,),
                               Flexible(child: DropdownButtonFormField(
                                   
@@ -176,7 +176,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   Container(
                     padding: EdgeInsets.all(16),
                     width: double.infinity,
-                    child: FilledButton(onPressed: (isSingle && direction==null) ? null : _onPdfToJpf, child: const Text("Convert to JPG")),
+                    child: FilledButton(onPressed: (isSingle && direction==null) ? null : _onPdfToJpf, child: Text(ToolStrings.name(context, 'pdf-to-jpg'))),
                   )
                 ],),
             ),
