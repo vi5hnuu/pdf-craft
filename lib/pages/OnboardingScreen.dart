@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -15,29 +16,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  static const _pages = [
-    _OnboardingPage(
-      lottieAsset: null,
-      icon: Icons.picture_as_pdf_outlined,
-      title: 'All Your PDF Tools',
-      description:
-          'Merge, split, rotate, compress, reorder, and much more — everything you need for PDFs in one place.',
-    ),
-    _OnboardingPage(
-      lottieAsset: null,
-      icon: Icons.document_scanner_outlined,
-      title: 'Scan & Convert',
-      description:
-          'Scan physical documents with your camera and instantly convert images to PDFs.',
-    ),
-    _OnboardingPage(
-      lottieAsset: null,
-      icon: Icons.folder_open_outlined,
-      title: 'Organize Your Files',
-      description:
-          'Browse your storage, bookmark favorites, and access recently opened files — all from one screen.',
-    ),
-  ];
+  // Built on every build (not a const list) so the copy follows the current language.
+  static List<_OnboardingPage> _pages(AppLocalizations l) => [
+        _OnboardingPage(
+          lottieAsset: null,
+          icon: Icons.picture_as_pdf_outlined,
+          title: l.onbTitle1,
+          description: l.onbBody1,
+        ),
+        _OnboardingPage(
+          lottieAsset: null,
+          icon: Icons.document_scanner_outlined,
+          title: l.onbTitle2,
+          description: l.onbBody2,
+        ),
+        _OnboardingPage(
+          lottieAsset: null,
+          icon: Icons.folder_open_outlined,
+          title: l.onbTitle3,
+          description: l.onbBody3,
+        ),
+      ];
 
   Future<void> _finish() async {
     final prefs = await SharedPreferences.getInstance();
@@ -49,7 +48,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final isLast = _currentPage == _pages.length - 1;
+    final l = L10n.of(context);
+    final pages = _pages(l);
+    final isLast = _currentPage == pages.length - 1;
 
     return Scaffold(
       body: SafeArea(
@@ -59,16 +60,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: _finish,
-                child: Text('Skip', style: TextStyle(color: primary.withValues(alpha: 0.7))),
+                child: Text(l.onbSkip, style: TextStyle(color: primary.withValues(alpha: 0.7))),
               ),
             ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: _pages.length,
+                itemCount: pages.length,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 itemBuilder: (context, index) {
-                  final page = _pages[index];
+                  final page = pages[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Column(
@@ -112,7 +113,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_pages.length, (i) {
+                    children: List.generate(pages.length, (i) {
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
                         margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -137,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeInOut,
                               ),
-                      child: Text(isLast ? 'Get Started' : 'Next'),
+                      child: Text(isLast ? l.onbGetStarted : l.onbNext),
                     ),
                   ),
                 ],

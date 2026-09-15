@@ -71,13 +71,13 @@ class _SettingScreenState extends State<SettingScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear Processed Files'),
-        content: Text('Delete all $_processedFileCount files in the processed folder?'),
+        title: Text(L10n.of(ctx).settingsClearProcessedTitle),
+        content: Text(L10n.of(ctx).settingsClearProcessedBody(_processedFileCount)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(L10n.of(ctx).delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -92,7 +92,7 @@ class _SettingScreenState extends State<SettingScreen> {
     await _loadProcessedStats();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Processed files cleared'), backgroundColor: Colors.orange),
+        SnackBar(content: Text(L10n.of(context).settingsProcessedCleared), backgroundColor: Colors.orange),
       );
     }
   }
@@ -103,7 +103,7 @@ class _SettingScreenState extends State<SettingScreen> {
     for (final k in keys) await prefs.remove(k);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password hints cleared')),
+        SnackBar(content: Text(L10n.of(context).settingsPasswordHintsCleared)),
       );
     }
   }
@@ -112,14 +112,14 @@ class _SettingScreenState extends State<SettingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(L10n.of(context).actionSettings)),
       body: SafeArea(
       child: CustomScrollView(
         slivers: [
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // Account
-          _sectionHeader(theme, 'Account', Icons.person_outline),
+          _sectionHeader(theme, L10n.of(context).settingsSectionAccount, Icons.person_outline),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -140,14 +140,14 @@ class _SettingScreenState extends State<SettingScreen> {
                         color: unverified ? theme.colorScheme.error : null,
                       ),
                       title: Text(signedIn
-                          ? (user?.email ?? user?.username ?? 'Account')
-                          : 'Guest'),
+                          ? (user?.email ?? user?.username ?? L10n.of(context).settingsSectionAccount)
+                          : L10n.of(context).guest),
                       subtitle: Text(
                         unverified
-                            ? 'Email not verified — tap to verify'
+                            ? L10n.of(context).settingsEmailNotVerified
                             : signedIn
-                                ? 'Manage your account'
-                                : 'Sign in to save your credits & sync across devices',
+                                ? L10n.of(context).settingsManageAccount
+                                : L10n.of(context).settingsSignInPrompt,
                         style: unverified
                             ? TextStyle(color: theme.colorScheme.error)
                             : null,
@@ -165,17 +165,17 @@ class _SettingScreenState extends State<SettingScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // Appearance
-          _sectionHeader(theme, 'Appearance', Icons.palette_outlined),
+          _sectionHeader(theme, L10n.of(context).settingsSectionAppearance, Icons.palette_outlined),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Card(
                 child: Column(children: [
-                  _themeTile(theme, ThemeMode.system, 'System Default', Icons.brightness_auto),
+                  _themeTile(theme, ThemeMode.system, L10n.of(context).themeSystem, Icons.brightness_auto),
                   const Divider(height: 1, indent: 56),
-                  _themeTile(theme, ThemeMode.light, 'Light', Icons.light_mode_outlined),
+                  _themeTile(theme, ThemeMode.light, L10n.of(context).themeLight, Icons.light_mode_outlined),
                   const Divider(height: 1, indent: 56),
-                  _themeTile(theme, ThemeMode.dark, 'Dark', Icons.dark_mode_outlined),
+                  _themeTile(theme, ThemeMode.dark, L10n.of(context).themeDark, Icons.dark_mode_outlined),
                 ]),
               ),
             ),
@@ -209,7 +209,7 @@ class _SettingScreenState extends State<SettingScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // Storage
-          _sectionHeader(theme, 'Storage', Icons.folder_outlined),
+          _sectionHeader(theme, L10n.of(context).settingsSectionStorage, Icons.folder_outlined),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -217,28 +217,28 @@ class _SettingScreenState extends State<SettingScreen> {
                 child: Column(children: [
                   ListTile(
                     leading: const Icon(Icons.folder_outlined),
-                    title: const Text('Processed Files Folder'),
+                    title: Text(L10n.of(context).settingsProcessedFolder),
                     subtitle: Text(Constants.processedDirPath, style: theme.textTheme.bodySmall),
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.storage_outlined),
-                    title: const Text('Processed Files'),
-                    subtitle: Text('$_processedFileCount files · $_processedDirSize · tap to view'),
+                    title: Text(L10n.of(context).storageProcessed),
+                    subtitle: Text(L10n.of(context).settingsProcessedSummary(_processedFileCount, _processedDirSize)),
                     onTap: () => GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
                     trailing: TextButton(
                       onPressed: _processedFileCount == 0 ? null : _clearCache,
-                      child: const Text('Clear', style: TextStyle(color: Colors.red)),
+                      child: Text(L10n.of(context).clear, style: const TextStyle(color: Colors.red)),
                     ),
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.key_outlined),
-                    title: const Text('Password Hints'),
-                    subtitle: const Text('Saved hints for protected PDFs'),
+                    title: Text(L10n.of(context).settingsPasswordHints),
+                    subtitle: Text(L10n.of(context).settingsPasswordHintsSub),
                     trailing: TextButton(
                       onPressed: _clearPasswordHints,
-                      child: const Text('Clear'),
+                      child: Text(L10n.of(context).clear),
                     ),
                   ),
                 ]),
@@ -249,7 +249,7 @@ class _SettingScreenState extends State<SettingScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // Privacy & Data — be transparent that tools process on the server.
-          _sectionHeader(theme, 'Privacy & Data', Icons.shield_outlined),
+          _sectionHeader(theme, L10n.of(context).settingsSectionPrivacy, Icons.shield_outlined),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -263,9 +263,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Tools run on our secure server so results are identical on every '
-                          'device. Files are sent over an encrypted (HTTPS) connection, processed, '
-                          'and removed afterwards — we don\'t keep your documents.',
+                          L10n.of(context).settingsPrivacyBody,
                           style: theme.textTheme.bodySmall?.copyWith(
                               height: 1.45,
                               color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
@@ -281,22 +279,22 @@ class _SettingScreenState extends State<SettingScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // About
-          _sectionHeader(theme, 'About', Icons.info_outlined),
+          _sectionHeader(theme, L10n.of(context).settingsSectionAbout, Icons.info_outlined),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Card(
                 child: Column(children: [
-                  const ListTile(
-                    leading: Icon(Icons.apps),
-                    title: Text('PDF Craft'),
-                    subtitle: Text('PDF & Image toolkit'),
+                  ListTile(
+                    leading: const Icon(Icons.apps),
+                    title: Text(L10n.of(context).appName),
+                    subtitle: Text(L10n.of(context).settingsAboutSubtitle),
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.slideshow_outlined),
-                    title: const Text('App Intro'),
-                    subtitle: const Text('Replay the welcome walkthrough'),
+                    title: Text(L10n.of(context).settingsAppIntro),
+                    subtitle: Text(L10n.of(context).settingsAppIntroSub),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => GoRouter.of(context)
                         .pushNamed(AppRoutes.onboardingRoute.name),
@@ -304,7 +302,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.code_outlined),
-                    title: const Text('Version'),
+                    title: Text(L10n.of(context).settingsVersion),
                     trailing: Text(_version, style: theme.textTheme.bodyMedium),
                   ),
                 ]),

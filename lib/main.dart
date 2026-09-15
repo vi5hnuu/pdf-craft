@@ -1070,17 +1070,15 @@ class _SessionExpiryGateState extends State<_SessionExpiryGate> {
       barrierDismissible: false,
       builder: (dctx) => AlertDialog(
         icon: const Icon(Icons.lock_clock_outlined, size: 40),
-        title: const Text('Session expired'),
-        content: const Text(
-            'You’ve been signed out. Sign in again to get back to your account, '
-            'or keep using PDF Craft as a guest.'),
+        title: Text(L10n.of(dctx).sessionExpiredTitle),
+        content: Text(L10n.of(dctx).sessionExpiredBody),
         actions: [
           TextButton(
             onPressed: () {
               AuthService().acknowledgeSessionExpired();
               Navigator.of(dctx).pop();
             },
-            child: const Text('Continue as guest'),
+            child: Text(L10n.of(dctx).sessionContinueGuest),
           ),
           FilledButton(
             onPressed: () {
@@ -1089,7 +1087,7 @@ class _SessionExpiryGateState extends State<_SessionExpiryGate> {
               GoRouter.of(ctx).pushNamed(AppRoutes.authRoute.name,
                   queryParameters: {'mode': 'signin'});
             },
-            child: const Text('Sign in again'),
+            child: Text(L10n.of(dctx).sessionSignInAgain),
           ),
         ],
       ),

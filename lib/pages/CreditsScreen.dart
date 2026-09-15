@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/PurchaseService.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
@@ -48,11 +49,11 @@ class _CreditsScreenState extends State<CreditsScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Credits'),
+        title: Text(L10n.of(context).credits),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: L10n.of(context).refresh,
             onPressed: () => CreditService().load(),
           ),
         ],
@@ -67,12 +68,12 @@ class _CreditsScreenState extends State<CreditsScreen> {
             children: [
               _balanceCard(theme),
               const SizedBox(height: 24),
-              Text('Earn free credits', style: theme.textTheme.titleMedium),
+              Text(L10n.of(context).creditsEarnFree, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               _earnTile(
                 icon: Icons.calendar_today_outlined,
-                title: 'Claim daily credits',
-                subtitle: 'A few free credits every day',
+                title: L10n.of(context).creditsClaimDaily,
+                subtitle: L10n.of(context).creditsClaimDailySub,
                 onTap: _claimDaily,
               ),
               // Hidden when no rewarded unit is configured, rather than offering a way to
@@ -80,19 +81,19 @@ class _CreditsScreenState extends State<CreditsScreen> {
               if (AdUnits.rewardedAvailable)
                 _earnTile(
                   icon: Icons.smart_display_outlined,
-                  title: 'Watch an ad',
-                  subtitle: 'Get credits for watching a short video',
+                  title: L10n.of(context).creditsWatchAd,
+                  subtitle: L10n.of(context).creditsWatchAdSub,
                   onTap: _watchAd,
                 ),
               const SizedBox(height: 24),
-              Text('Buy credits', style: theme.textTheme.titleMedium),
+              Text(L10n.of(context).creditsBuy, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               ..._packs.map((p) => _packTile(theme, p)),
               if (PurchaseService().initialized && !PurchaseService().available)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'In-app purchases aren’t available on this device yet.',
+                    L10n.of(context).creditsIapUnavailable,
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
@@ -120,9 +121,9 @@ class _CreditsScreenState extends State<CreditsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Your balance',
+              Text(L10n.of(context).creditsYourBalance,
                   style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary)),
-              Text('${CreditService().balance} credits',
+              Text(L10n.of(context).creditsCount(CreditService().balance),
                   style: theme.textTheme.headlineSmall
                       ?.copyWith(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold)),
             ],
@@ -158,8 +159,8 @@ class _CreditsScreenState extends State<CreditsScreen> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         leading: Icon(Icons.toll_outlined, color: theme.colorScheme.primary),
-        title: Text('${pack.credits} credits'),
-        subtitle: Text(available ? 'One-time purchase' : 'Available soon'),
+        title: Text(L10n.of(context).creditsCount(pack.credits)),
+        subtitle: Text(available ? L10n.of(context).creditsOneTime : L10n.of(context).creditsAvailableSoon),
         trailing: available
             ? FilledButton(
                 onPressed: _busy ? null : () => _buy(pack.id),
@@ -177,10 +178,10 @@ class _CreditsScreenState extends State<CreditsScreen> {
     setState(() => _busy = true);
     try {
       final granted = await CreditService().claimDaily();
-      NotificationService.showSnackbar(text: 'Claimed +$granted credits!', color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.creditsClaimed(granted), color: Colors.green);
     } catch (e) {
       NotificationService.showSnackbar(
-          text: 'Already claimed today. Come back tomorrow.', color: Colors.orange);
+          text: L10n.current.creditsAlreadyClaimed, color: Colors.orange);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -196,15 +197,15 @@ class _CreditsScreenState extends State<CreditsScreen> {
           final granted = await CreditService().awaitRewardedCredits();
           if (granted > 0) {
             NotificationService.showSnackbar(
-                text: 'Earned +$granted credits!', color: Colors.green);
+                text: L10n.current.creditsEarned(granted), color: Colors.green);
           } else {
             NotificationService.showSnackbar(
-                text: 'Thanks for watching — your credits will appear shortly.',
+                text: L10n.current.creditsThanksWatching,
                 color: Colors.orange);
           }
         } catch (_) {
           NotificationService.showSnackbar(
-              text: "Couldn't confirm your credits. Pull to refresh in a moment.",
+              text: L10n.current.creditsCouldNotConfirm,
               color: Colors.orange);
         } finally {
           if (mounted) setState(() => _busy = false);
@@ -213,7 +214,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
       onUnavailable: () {
         if (mounted) setState(() => _busy = false);
         NotificationService.showSnackbar(
-            text: 'No ad available right now. Try again shortly.', color: Colors.orange);
+            text: L10n.current.creditsNoAd, color: Colors.orange);
       },
     );
   }

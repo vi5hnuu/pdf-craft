@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
@@ -89,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'PDF Craft',
+                L10n.of(context).appName,
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
@@ -99,7 +100,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Your complete PDF toolkit',
+                L10n.of(context).splashTagline,
                 style: TextStyle(
                   fontSize: 14,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.55),

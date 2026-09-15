@@ -721,6 +721,900 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Files you create with any tool will appear here for quick access.'**
   String get resultsEmptyBody;
+
+  /// No description provided for @splashTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your complete PDF toolkit'**
+  String get splashTagline;
+
+  /// No description provided for @onbTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'All Your PDF Tools'**
+  String get onbTitle1;
+
+  /// No description provided for @onbBody1.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge, split, rotate, compress, reorder, and much more — everything you need for PDFs in one place.'**
+  String get onbBody1;
+
+  /// No description provided for @onbTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan & Convert'**
+  String get onbTitle2;
+
+  /// No description provided for @onbBody2.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan physical documents with your camera and instantly convert images to PDFs.'**
+  String get onbBody2;
+
+  /// No description provided for @onbTitle3.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize Your Files'**
+  String get onbTitle3;
+
+  /// No description provided for @onbBody3.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse your storage, bookmark favorites, and access recently opened files — all from one screen.'**
+  String get onbBody3;
+
+  /// No description provided for @onbSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onbSkip;
+
+  /// No description provided for @onbNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onbNext;
+
+  /// No description provided for @onbGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get onbGetStarted;
+
+  /// No description provided for @permTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow file access'**
+  String get permTitle;
+
+  /// No description provided for @permBody.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF Craft works with the PDFs and images already on your device. Grant file access so you can browse, open and save your documents.'**
+  String get permBody;
+
+  /// No description provided for @permBenefitBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse & open your PDFs and images'**
+  String get permBenefitBrowse;
+
+  /// No description provided for @permBenefitSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save tool results back to your storage'**
+  String get permBenefitSave;
+
+  /// No description provided for @permBenefitPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Files stay on your device until you use a tool'**
+  String get permBenefitPrivate;
+
+  /// No description provided for @permTurnedOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Access was turned off. Enable “All files access” (or Storage) for PDF Craft in system Settings.'**
+  String get permTurnedOff;
+
+  /// No description provided for @permRequesting.
+  ///
+  /// In en, this message translates to:
+  /// **'Requesting…'**
+  String get permRequesting;
+
+  /// No description provided for @permOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get permOpenSettings;
+
+  /// No description provided for @permAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow access'**
+  String get permAllow;
+
+  /// No description provided for @permDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission denied'**
+  String get permDenied;
+
+  /// No description provided for @errGenericTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something Went Wrong'**
+  String get errGenericTitle;
+
+  /// No description provided for @errGenericBody.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred. Please try going back.'**
+  String get errGenericBody;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get goBack;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get update;
+
+  /// No description provided for @guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get guest;
+
+  /// No description provided for @actionView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get actionView;
+
+  /// No description provided for @openExternally.
+  ///
+  /// In en, this message translates to:
+  /// **'Open externally'**
+  String get openExternally;
+
+  /// No description provided for @settingsSectionAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsSectionAccount;
+
+  /// No description provided for @settingsEmailNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Email not verified — tap to verify'**
+  String get settingsEmailNotVerified;
+
+  /// No description provided for @settingsManageAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your account'**
+  String get settingsManageAccount;
+
+  /// No description provided for @settingsSignInPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to save your credits & sync across devices'**
+  String get settingsSignInPrompt;
+
+  /// No description provided for @settingsSectionAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsSectionAppearance;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @settingsSectionStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get settingsSectionStorage;
+
+  /// No description provided for @settingsProcessedFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed Files Folder'**
+  String get settingsProcessedFolder;
+
+  /// No description provided for @settingsProcessedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} files · {size} · tap to view'**
+  String settingsProcessedSummary(int count, String size);
+
+  /// No description provided for @settingsPasswordHints.
+  ///
+  /// In en, this message translates to:
+  /// **'Password Hints'**
+  String get settingsPasswordHints;
+
+  /// No description provided for @settingsPasswordHintsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved hints for protected PDFs'**
+  String get settingsPasswordHintsSub;
+
+  /// No description provided for @settingsSectionPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & Data'**
+  String get settingsSectionPrivacy;
+
+  /// No description provided for @settingsPrivacyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools run on our secure server so results are identical on every device. Files are sent over an encrypted (HTTPS) connection, processed, and removed afterwards — we don\'t keep your documents.'**
+  String get settingsPrivacyBody;
+
+  /// No description provided for @settingsSectionAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsSectionAbout;
+
+  /// No description provided for @settingsAboutSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF & Image toolkit'**
+  String get settingsAboutSubtitle;
+
+  /// No description provided for @settingsAppIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'App Intro'**
+  String get settingsAppIntro;
+
+  /// No description provided for @settingsAppIntroSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay the welcome walkthrough'**
+  String get settingsAppIntroSub;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get settingsVersion;
+
+  /// No description provided for @settingsClearProcessedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Processed Files'**
+  String get settingsClearProcessedTitle;
+
+  /// No description provided for @settingsClearProcessedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all {count} files in the processed folder?'**
+  String settingsClearProcessedBody(int count);
+
+  /// No description provided for @settingsProcessedCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Processed files cleared'**
+  String get settingsProcessedCleared;
+
+  /// No description provided for @settingsPasswordHintsCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Password hints cleared'**
+  String get settingsPasswordHintsCleared;
+
+  /// No description provided for @authCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get authCreateTitle;
+
+  /// No description provided for @authSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get authSignInTitle;
+
+  /// No description provided for @authCreateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your credits safe and sync across devices.'**
+  String get authCreateSubtitle;
+
+  /// No description provided for @authSignInSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to your PDF Craft account.'**
+  String get authSignInSubtitle;
+
+  /// No description provided for @authNameOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get authNameOptional;
+
+  /// No description provided for @authEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmail;
+
+  /// No description provided for @authInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email'**
+  String get authInvalidEmail;
+
+  /// No description provided for @authPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPassword;
+
+  /// No description provided for @authPasswordMin.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get authPasswordMin;
+
+  /// No description provided for @authForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authForgotPassword;
+
+  /// No description provided for @authCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authCreateAccount;
+
+  /// No description provided for @authSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authSignIn;
+
+  /// No description provided for @authOr.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authOr;
+
+  /// No description provided for @authContinueGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get authContinueGoogle;
+
+  /// No description provided for @authHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? '**
+  String get authHaveAccount;
+
+  /// No description provided for @authNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? '**
+  String get authNoAccount;
+
+  /// No description provided for @authCreateOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Create one'**
+  String get authCreateOne;
+
+  /// No description provided for @authGuestNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You can keep using PDF Craft as a guest.'**
+  String get authGuestNote;
+
+  /// No description provided for @authAccountCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Account created — check your email to verify.'**
+  String get authAccountCreated;
+
+  /// No description provided for @authSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in.'**
+  String get authSignedIn;
+
+  /// No description provided for @authSomethingWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get authSomethingWrong;
+
+  /// No description provided for @authVerifyFirstTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email first'**
+  String get authVerifyFirstTitle;
+
+  /// No description provided for @authVerifyFirstBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email isn’t verified yet. We can resend the verification link to {email} — open it, tap “Verify email”, then sign in again.'**
+  String authVerifyFirstBody(String email);
+
+  /// No description provided for @yourEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'your email'**
+  String get yourEmail;
+
+  /// No description provided for @authResendLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend link'**
+  String get authResendLink;
+
+  /// No description provided for @authSignedInGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in with Google.'**
+  String get authSignedInGoogle;
+
+  /// No description provided for @authGoogleFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in failed.'**
+  String get authGoogleFailed;
+
+  /// No description provided for @authSwitchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to your account?'**
+  String get authSwitchTitle;
+
+  /// No description provided for @authSwitchCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{You have 1 credit as a guest.} other{You have {count} credits as a guest.}}'**
+  String authSwitchCredits(int count);
+
+  /// No description provided for @authSwitchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in switches to your existing account and these guest credits won\'t carry over.\n\nTip: choose “Create account” instead to keep them.'**
+  String get authSwitchBody;
+
+  /// No description provided for @authSignInAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in anyway'**
+  String get authSignInAnyway;
+
+  /// No description provided for @authEnterEmailFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email above first.'**
+  String get authEnterEmailFirst;
+
+  /// No description provided for @authCheckEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email'**
+  String get authCheckEmailTitle;
+
+  /// No description provided for @authResetSentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'If an account exists for {email}, we’ve sent a password-reset link. Open it to choose a new password, then come back and sign in.'**
+  String authResetSentBody(String email);
+
+  /// No description provided for @authResetFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send reset email. Please try again.'**
+  String get authResetFailed;
+
+  /// No description provided for @authLegalPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'By creating an account you agree to our '**
+  String get authLegalPrefix;
+
+  /// No description provided for @authLegalTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms'**
+  String get authLegalTerms;
+
+  /// No description provided for @authLegalAnd.
+  ///
+  /// In en, this message translates to:
+  /// **' & '**
+  String get authLegalAnd;
+
+  /// No description provided for @authLegalPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get authLegalPrivacy;
+
+  /// No description provided for @authLegalSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'.'**
+  String get authLegalSuffix;
+
+  /// No description provided for @accountGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re using PDF Craft as a guest'**
+  String get accountGuestTitle;
+
+  /// No description provided for @accountGuestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a free account to keep your credits safe and sync across devices.'**
+  String get accountGuestBody;
+
+  /// No description provided for @accountCreateOrSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account or sign in'**
+  String get accountCreateOrSignIn;
+
+  /// No description provided for @accountYourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account'**
+  String get accountYourAccount;
+
+  /// No description provided for @accountEditProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get accountEditProfile;
+
+  /// No description provided for @accountChangeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Change your name'**
+  String get accountChangeName;
+
+  /// No description provided for @accountChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get accountChangePassword;
+
+  /// No description provided for @accountDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get accountDelete;
+
+  /// No description provided for @accountVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get accountVerifyTitle;
+
+  /// No description provided for @accountVerifyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a link to {email}. Open it, tap “Verify email”, then come back and tap “I’ve verified”. Check spam if you don’t see it.'**
+  String accountVerifyBody(String email);
+
+  /// No description provided for @accountResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get accountResend;
+
+  /// No description provided for @accountIveVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve verified'**
+  String get accountIveVerified;
+
+  /// No description provided for @accountEmailVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Email verified'**
+  String get accountEmailVerified;
+
+  /// No description provided for @accountFullySetUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is fully set up.'**
+  String get accountFullySetUp;
+
+  /// No description provided for @credits.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits'**
+  String get credits;
+
+  /// No description provided for @creditsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} available'**
+  String creditsAvailable(int count);
+
+  /// No description provided for @accountGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google account'**
+  String get accountGoogle;
+
+  /// No description provided for @accountEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email account'**
+  String get accountEmail;
+
+  /// No description provided for @accountVerificationSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email sent to {email}.'**
+  String accountVerificationSent(String email);
+
+  /// No description provided for @accountVerifiedAllSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Email verified — you’re all set!'**
+  String get accountVerifiedAllSet;
+
+  /// No description provided for @accountNotVerifiedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified yet. Open the link in your email, then try again.'**
+  String get accountNotVerifiedYet;
+
+  /// No description provided for @firstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get firstName;
+
+  /// No description provided for @lastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last name'**
+  String get lastName;
+
+  /// No description provided for @accountProfileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated.'**
+  String get accountProfileUpdated;
+
+  /// No description provided for @accountCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get accountCurrentPassword;
+
+  /// No description provided for @accountNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password (min 8)'**
+  String get accountNewPassword;
+
+  /// No description provided for @accountPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'New password must be at least 8 characters.'**
+  String get accountPasswordTooShort;
+
+  /// No description provided for @accountPasswordUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated.'**
+  String get accountPasswordUpdated;
+
+  /// No description provided for @accountSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out.'**
+  String get accountSignedOut;
+
+  /// No description provided for @accountDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account?'**
+  String get accountDeleteTitle;
+
+  /// No description provided for @accountDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your account. Your credits and profile cannot be recovered. You’ll continue as a guest.'**
+  String get accountDeleteBody;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted.'**
+  String get accountDeleted;
+
+  /// No description provided for @creditsEarnFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn free credits'**
+  String get creditsEarnFree;
+
+  /// No description provided for @creditsClaimDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim daily credits'**
+  String get creditsClaimDaily;
+
+  /// No description provided for @creditsClaimDailySub.
+  ///
+  /// In en, this message translates to:
+  /// **'A few free credits every day'**
+  String get creditsClaimDailySub;
+
+  /// No description provided for @creditsWatchAd.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch an ad'**
+  String get creditsWatchAd;
+
+  /// No description provided for @creditsWatchAdSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Get credits for watching a short video'**
+  String get creditsWatchAdSub;
+
+  /// No description provided for @creditsBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy credits'**
+  String get creditsBuy;
+
+  /// No description provided for @creditsIapUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'In-app purchases aren’t available on this device yet.'**
+  String get creditsIapUnavailable;
+
+  /// No description provided for @creditsYourBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Your balance'**
+  String get creditsYourBalance;
+
+  /// No description provided for @creditsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 credit} other{{count} credits}}'**
+  String creditsCount(int count);
+
+  /// No description provided for @creditsOneTime.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time purchase'**
+  String get creditsOneTime;
+
+  /// No description provided for @creditsAvailableSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Available soon'**
+  String get creditsAvailableSoon;
+
+  /// No description provided for @creditsClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed +{count} credits!'**
+  String creditsClaimed(int count);
+
+  /// No description provided for @creditsAlreadyClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Already claimed today. Come back tomorrow.'**
+  String get creditsAlreadyClaimed;
+
+  /// No description provided for @creditsEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned +{count} credits!'**
+  String creditsEarned(int count);
+
+  /// No description provided for @creditsThanksWatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks for watching — your credits will appear shortly.'**
+  String get creditsThanksWatching;
+
+  /// No description provided for @creditsCouldNotConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t confirm your credits. Pull to refresh in a moment.'**
+  String get creditsCouldNotConfirm;
+
+  /// No description provided for @creditsNoAd.
+  ///
+  /// In en, this message translates to:
+  /// **'No ad available right now. Try again shortly.'**
+  String get creditsNoAd;
+
+  /// No description provided for @sessionExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired'**
+  String get sessionExpiredTitle;
+
+  /// No description provided for @sessionExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You’ve been signed out. Sign in again to get back to your account, or keep using PDF Craft as a guest.'**
+  String get sessionExpiredBody;
+
+  /// No description provided for @sessionContinueGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as guest'**
+  String get sessionContinueGuest;
+
+  /// No description provided for @sessionSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get sessionSignInAgain;
+
+  /// No description provided for @incomingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open with PDF Craft'**
+  String get incomingTitle;
+
+  /// No description provided for @incomingReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file received} other{{count} files received}}'**
+  String incomingReceived(int count);
+
+  /// No description provided for @incomingNoTools.
+  ///
+  /// In en, this message translates to:
+  /// **'No in-app tools apply to these files.'**
+  String get incomingNoTools;
 }
 
 class _AppLocalizationsDelegate

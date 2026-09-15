@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/services/auth/AuthApi.dart';
@@ -77,7 +78,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _createMode ? 'Create your account' : 'Welcome back',
+                    _createMode ? L10n.of(context).authCreateTitle : L10n.of(context).authSignInTitle,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall
                         ?.copyWith(fontWeight: FontWeight.bold),
@@ -85,8 +86,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 6),
                   Text(
                     _createMode
-                        ? 'Keep your credits safe and sync across devices.'
-                        : 'Sign in to your PDF Craft account.',
+                        ? L10n.of(context).authCreateSubtitle
+                        : L10n.of(context).authSignInSubtitle,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(color: cs.onSurfaceVariant),
@@ -105,10 +106,10 @@ class _AuthScreenState extends State<AuthScreen> {
                             enabled: !_busy,
                             textCapitalization: TextCapitalization.words,
                             textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              labelText: 'Name (optional)',
-                              prefixIcon: Icon(Icons.person_outline),
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: L10n.of(context).authNameOptional,
+                              prefixIcon: const Icon(Icons.person_outline),
+                              border: const OutlineInputBorder(),
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -119,13 +120,13 @@ class _AuthScreenState extends State<AuthScreen> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email_outlined),
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: L10n.of(context).authEmail,
+                            prefixIcon: const Icon(Icons.email_outlined),
+                            border: const OutlineInputBorder(),
                           ),
                           validator: (v) => (v == null || !v.contains('@') || v.trim().length < 3)
-                              ? 'Enter a valid email'
+                              ? L10n.of(context).authInvalidEmail
                               : null,
                         ),
                         const SizedBox(height: 14),
@@ -137,7 +138,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           autofillHints: const [AutofillHints.password],
                           onFieldSubmitted: (_) => _busy ? null : _submit(),
                           decoration: InputDecoration(
-                            labelText: 'Password',
+                            labelText: L10n.of(context).authPassword,
                             prefixIcon: const Icon(Icons.lock_outline),
                             border: const OutlineInputBorder(),
                             suffixIcon: IconButton(
@@ -146,7 +147,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           validator: (v) => (v == null || v.length < 8)
-                              ? 'At least 8 characters'
+                              ? L10n.of(context).authPasswordMin
                               : null,
                         ),
                         if (!_createMode)
@@ -154,7 +155,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: _busy ? null : _forgotPassword,
-                              child: const Text('Forgot password?'),
+                              child: Text(L10n.of(context).authForgotPassword),
                             ),
                           ),
                       ],
@@ -171,7 +172,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             height: 22,
                             width: 22,
                             child: CircularProgressIndicator(strokeWidth: 2.4))
-                        : Text(_createMode ? 'Create account' : 'Sign in'),
+                        : Text(_createMode ? L10n.of(context).authCreateAccount : L10n.of(context).authSignIn),
                   ),
 
                   // Divider.
@@ -180,7 +181,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     const Expanded(child: Divider()),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('or', style: TextStyle(color: cs.onSurfaceVariant)),
+                      child: Text(L10n.of(context).authOr, style: TextStyle(color: cs.onSurfaceVariant)),
                     ),
                     const Expanded(child: Divider()),
                   ]),
@@ -191,7 +192,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         minimumSize: const Size.fromHeight(50)),
                     onPressed: _busy ? null : _google,
                     icon: const FaIcon(FontAwesomeIcons.google, size: 18),
-                    label: const Text('Continue with Google'),
+                    label: Text(L10n.of(context).authContinueGoogle),
                   ),
 
                   const SizedBox(height: 24),
@@ -202,12 +203,12 @@ class _AuthScreenState extends State<AuthScreen> {
                           : () => setState(() => _createMode = !_createMode),
                       child: Text.rich(TextSpan(
                         text: _createMode
-                            ? 'Already have an account? '
-                            : "Don't have an account? ",
+                            ? L10n.of(context).authHaveAccount
+                            : L10n.of(context).authNoAccount,
                         style: TextStyle(color: cs.onSurfaceVariant),
                         children: [
                           TextSpan(
-                            text: _createMode ? 'Sign in' : 'Create one',
+                            text: _createMode ? L10n.of(context).authSignIn : L10n.of(context).authCreateOne,
                             style: TextStyle(
                                 color: cs.primary, fontWeight: FontWeight.bold),
                           ),
@@ -217,7 +218,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'You can keep using PDF Craft as a guest.',
+                    L10n.of(context).authGuestNote,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: cs.onSurfaceVariant),
@@ -248,7 +249,7 @@ class _AuthScreenState extends State<AuthScreen> {
         );
         if (!mounted) return;
         NotificationService.showSnackbar(
-            text: 'Account created — check your email to verify.', color: Colors.green);
+            text: L10n.current.authAccountCreated, color: Colors.green);
         // Land on the account hub so the "verify your email" path is front and centre.
         context.pushReplacementNamed(AppRoutes.accountRoute.name);
       } else {
@@ -260,7 +261,7 @@ class _AuthScreenState extends State<AuthScreen> {
         }
         await AuthService().login(_email.text.trim(), _password.text);
         await CreditService().load(); // switched account → reload its balance
-        _done('Signed in.');
+        _done(L10n.current.authSignedIn);
       }
     } on AuthException catch (e) {
       // Blocked because the e-mail isn't verified → give a real way to verify, not a dead-end toast.
@@ -270,7 +271,7 @@ class _AuthScreenState extends State<AuthScreen> {
         _fail(e.message);
       }
     } catch (e) {
-      _fail('Something went wrong. Please try again.');
+      _fail(L10n.current.authSomethingWrong);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -286,18 +287,17 @@ class _AuthScreenState extends State<AuthScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.mark_email_unread_outlined, size: 40),
-        title: const Text('Verify your email first'),
-        content: Text(
-            'Your email isn’t verified yet. We can resend the verification link to '
-            '${email.isEmpty ? 'your email' : email} — open it, tap “Verify email”, then sign in again.'),
+        title: Text(L10n.of(ctx).authVerifyFirstTitle),
+        content: Text(L10n.of(ctx)
+            .authVerifyFirstBody(email.isEmpty ? L10n.of(ctx).yourEmail : email)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
+            child: Text(L10n.of(ctx).close),
           ),
           FilledButton.icon(
             icon: const Icon(Icons.send_outlined, size: 18),
-            label: const Text('Resend link'),
+            label: Text(L10n.of(ctx).authResendLink),
             onPressed: () async {
               Navigator.of(ctx).pop();
               try {
@@ -319,11 +319,11 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       await AuthService().signInWithGoogle();
       await CreditService().load();
-      _done('Signed in with Google.');
+      _done(L10n.current.authSignedInGoogle);
     } on AuthException catch (e) {
       _fail(e.message);
     } catch (e) {
-      _fail('Google sign-in failed.');
+      _fail(L10n.current.authGoogleFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -334,14 +334,12 @@ class _AuthScreenState extends State<AuthScreen> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Switch to your account?'),
+        title: Text(L10n.of(ctx).authSwitchTitle),
         content: Text(
-            "You have $credits credit${credits == 1 ? '' : 's'} as a guest. Signing in switches "
-            "to your existing account and these guest credits won't carry over.\n\n"
-            'Tip: choose “Create an account” instead to keep them.'),
+            '${L10n.of(ctx).authSwitchCredits(credits)} ${L10n.of(ctx).authSwitchBody}'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign in anyway')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(L10n.of(ctx).authSignInAnyway)),
         ],
       ),
     );
@@ -350,7 +348,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _forgotPassword() async {
     final email = _email.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      _fail('Enter your email above first.');
+      _fail(L10n.current.authEnterEmailFirst);
       return;
     }
     try {
@@ -361,17 +359,15 @@ class _AuthScreenState extends State<AuthScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           icon: const Icon(Icons.mark_email_read_outlined, size: 40),
-          title: const Text('Check your email'),
-          content: Text(
-              'If an account exists for $email, we’ve sent a password-reset link. '
-              'Open it to choose a new password, then come back and sign in.'),
+          title: Text(L10n.of(ctx).authCheckEmailTitle),
+          content: Text(L10n.of(ctx).authResetSentBody(email)),
           actions: [
-            FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Got it')),
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(ctx).gotIt)),
           ],
         ),
       );
     } catch (e) {
-      _fail('Could not send reset email. Please try again.');
+      _fail(L10n.current.authResetFailed);
     }
   }
 
@@ -383,14 +379,16 @@ class _AuthScreenState extends State<AuthScreen> {
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text('By creating an account you agree to our ', style: base),
+        // Split into pieces so each language can order the sentence naturally around the links.
+        Text(L10n.of(context).authLegalPrefix, style: base),
         GestureDetector(
-            onTap: () => _openUrl(Constants.termsUrl), child: Text('Terms', style: link)),
-        Text(' & ', style: base),
+            onTap: () => _openUrl(Constants.termsUrl),
+            child: Text(L10n.of(context).authLegalTerms, style: link)),
+        Text(L10n.of(context).authLegalAnd, style: base),
         GestureDetector(
             onTap: () => _openUrl(Constants.privacyUrl),
-            child: Text('Privacy Policy', style: link)),
-        Text('.', style: base),
+            child: Text(L10n.of(context).authLegalPrivacy, style: link)),
+        Text(L10n.of(context).authLegalSuffix, style: base),
       ],
     );
   }
