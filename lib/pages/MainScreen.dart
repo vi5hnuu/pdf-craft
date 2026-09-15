@@ -123,7 +123,8 @@ class _MainScreenState extends State<MainScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              RateAppService().markRated();
+              // "Later" asks again after more uses; it used to opt the user out permanently.
+              RateAppService().snooze();
               Navigator.pop(ctx);
             },
             child: const Text('Later'),
