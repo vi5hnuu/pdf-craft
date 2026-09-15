@@ -48,8 +48,8 @@ void main() {
         messageFor(DioException(
             requestOptions: req,
             type: DioExceptionType.connectionError,
-            message: 'No internet connection. Please check your network.')),
-        'No internet connection. Please check your network.');
+            message: HttpState.msgNoInternet)),
+        HttpState.msgNoInternet);
   });
 
   test('timeouts and dropped uploads get their own messages', () {

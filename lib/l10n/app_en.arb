@@ -598,5 +598,14 @@
       }
     }
   },
-  "rangeClearAll": "Clear — apply to every page"
+  "rangeClearAll": "Clear — apply to every page",
+  "errUnreachable": "Couldn't reach the server. Check your connection and try again.",
+  "errTimeout": "The server took too long to respond. Please try again.",
+  "errTooLarge": "This file is larger than the upload limit. Try a smaller file.",
+  "errInterrupted": "Upload interrupted — the file may be too large or the connection dropped. Please try again.",
+  "errNoInternet": "No internet connection. Please check your network.",
+  "errToolFailed": "Couldn't process your file. Please try again.",
+  "errLoadFolder": "Couldn't open this folder.",
+  "errMoveFile": "Couldn't move the file.",
+  "errDeleteFile": "Couldn't delete the file."
 }

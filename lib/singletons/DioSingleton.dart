@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/l10n/LocaleManager.dart';
+import 'package:pdf_craft/models/HttpState.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
@@ -19,7 +20,7 @@ class DioSingleton {
         if (!await NetworkUtils.isOnline()) {
           return handler.reject(DioException(
             requestOptions: options,
-            message: 'No internet connection. Please check your network.',
+            message: HttpState.msgNoInternet,
             type: DioExceptionType.connectionError,
           ));
         }

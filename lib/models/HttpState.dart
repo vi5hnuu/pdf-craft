@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 
 class HttpState {
   final bool loading;
@@ -40,13 +41,13 @@ class HttpState {
   const HttpState.error({required String? error, int? statusCode})
       : this(loading: false, error: error, statusCode: statusCode);
 
-  // User-facing transport failures. Kept here so every tool reports them the same way.
-  static const String msgUnreachable =
-      "Couldn't reach the server. Check your connection and try again.";
-  static const String msgTimeout = 'The server took too long to respond. Please try again.';
-  static const String msgTooLarge = 'This file is larger than the upload limit. Try a smaller file.';
-  static const String msgInterrupted =
-      'Upload interrupted — the file may be too large or the connection dropped. Please try again.';
+  // User-facing transport failures, in the app's current language. Kept here so every tool
+  // reports them the same way.
+  static String get msgUnreachable => L10n.current.errUnreachable;
+  static String get msgTimeout => L10n.current.errTimeout;
+  static String get msgTooLarge => L10n.current.errTooLarge;
+  static String get msgInterrupted => L10n.current.errInterrupted;
+  static String get msgNoInternet => L10n.current.errNoInternet;
 
   /// Builds an error state from a Dio failure.
   ///
@@ -93,8 +94,7 @@ class HttpState {
         return msgTimeout;
       case DioExceptionType.connectionError:
         // The offline interceptor (DioSingleton) rejects with its own friendly text; keep it.
-        final m = e.message;
-        return (m != null && m.startsWith('No internet')) ? m : msgUnreachable;
+        return e.message == msgNoInternet ? msgNoInternet : msgUnreachable;
       case DioExceptionType.badResponse:
         return e.response?.statusCode == 413 ? msgTooLarge : null;
       case DioExceptionType.unknown:
