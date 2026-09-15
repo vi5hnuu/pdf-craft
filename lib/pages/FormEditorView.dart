@@ -196,15 +196,15 @@ class _FormEditorViewState extends State<FormEditorView> {
       builder: (ctx) => AlertDialog(
         title: Text(L10n.of(ctx).formGroupTitle(type.label)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Enter option labels, separated by commas.', style: TextStyle(fontSize: 13)),
+          Text(L10n.of(context).optionLabelsHint, style: const TextStyle(fontSize: 13)),
           const SizedBox(height: 12),
           TextField(controller: controller, autofocus: true, decoration: const InputDecoration(border: OutlineInputBorder())),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
-            child: const Text('Add'),
+            child: Text(L10n.of(context).add),
           ),
         ],
       ),
@@ -221,7 +221,7 @@ class _FormEditorViewState extends State<FormEditorView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.fit_screen_outlined),
-            tooltip: 'Fit to screen',
+            tooltip: L10n.of(context).fitToScreen,
             onPressed: () => setState(() => _tc.value = Matrix4.identity()),
           ),
           // Primary action — enabled once there's at least one field and no
@@ -234,7 +234,7 @@ class _FormEditorViewState extends State<FormEditorView> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: FilledButton(
                   onPressed: (_totalFields > 0 && !busy) ? _onSave : null,
-                  child: const Text('Create'),
+                  child: Text(L10n.of(context).create),
                 ),
               );
             },
@@ -248,7 +248,7 @@ class _FormEditorViewState extends State<FormEditorView> {
           final s = state.httpStates[HttpStates.CREATE_FORM];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Fillable form created', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.formCreated, color: Colors.green);
             if (s?.extras?['savedFile'] is File) {
               GoRouter.of(context).pushNamed(
                 AppRoutes.pdfFilePreviewRoute.name,
@@ -306,7 +306,7 @@ class _FormEditorViewState extends State<FormEditorView> {
                 color: theme.colorScheme.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(AppRadius.surface),
               ),
-              child: Text('Tap a field below to place it',
+              child: Text(L10n.of(context).tapFieldToPlace,
                   style: TextStyle(fontSize: 12.5, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
             ),
           ),
@@ -714,14 +714,14 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
         const SizedBox(height: 4),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Required'),
+          title: Text(L10n.of(context).required),
           value: f.required,
           onChanged: (v) => setState(() => f.required = v),
         ),
         const SizedBox(height: 4),
         SizedBox(
           width: double.infinity,
-          child: FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
+          child: FilledButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done)),
         ),
       ]),
     );

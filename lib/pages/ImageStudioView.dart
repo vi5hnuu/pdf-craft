@@ -61,16 +61,16 @@ class _ImageStudioViewState extends State<ImageStudioView>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Image Studio'),
+        title: Text(L10n.of(context).toolCatImageStudio),
         bottom: TabBar(
           controller: _tabC,
           isScrollable: true,
-          tabs: const [
-            Tab(icon: Icon(Icons.compress), text: 'Compress'),
-            Tab(icon: Icon(Icons.image), text: 'To JPG'),
-            Tab(icon: Icon(Icons.swap_horiz), text: 'From JPG'),
-            Tab(icon: Icon(Icons.photo_size_select_large), text: 'Resize'),
-            Tab(icon: Icon(Icons.auto_fix_high), text: 'Filters'),
+          tabs: [
+            Tab(icon: const Icon(Icons.compress), text: L10n.of(context).tabCompress),
+            Tab(icon: const Icon(Icons.image), text: L10n.of(context).tabToJpg),
+            Tab(icon: const Icon(Icons.swap_horiz), text: L10n.of(context).tabFromJpg),
+            Tab(icon: const Icon(Icons.photo_size_select_large), text: L10n.of(context).tabResize),
+            Tab(icon: const Icon(Icons.auto_fix_high), text: L10n.of(context).tabFilters),
           ],
         ),
       ),
@@ -85,14 +85,14 @@ class _ImageStudioViewState extends State<ImageStudioView>
           final s = state.httpStates[HttpStates.IMAGE_STUDIO];
           if (s?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Image saved to processed folder', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.imageSaved, color: Colors.green);
           } else if (s?.error != null) {
             NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
           }
           final fs = state.httpStates[HttpStates.FILTER_IMAGE];
           if (fs?.done == true) {
             AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: 'Filtered image saved', color: Colors.green);
+            NotificationService.showSnackbar(text: L10n.current.filteredImageSaved, color: Colors.green);
           } else if (fs?.error != null) {
             NotificationService.showSnackbar(text: fs!.error!, color: Colors.red);
           }
@@ -143,7 +143,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('JPEG Quality: $_compressQuality%', style: theme.textTheme.bodyMedium),
+        Text(L10n.of(context).jpegQuality(_compressQuality), style: theme.textTheme.bodyMedium),
         Slider(
           value: _compressQuality.toDouble(),
           min: 1, max: 100, divisions: 99,
@@ -171,7 +171,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Output JPEG Quality: $_toJpgQuality%', style: theme.textTheme.bodyMedium),
+        Text(L10n.of(context).outputJpegQuality(_toJpgQuality), style: theme.textTheme.bodyMedium),
         Slider(
           value: _toJpgQuality.toDouble(),
           min: 1, max: 100, divisions: 99,
@@ -196,7 +196,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Target Format', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+        Text(L10n.of(context).targetFormat, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Row(children: [
           _formatChip('PNG', theme),
@@ -234,7 +234,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
             child: TextFormField(
               controller: _widthC,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Width (px)', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: L10n.of(context).widthPx, border: const OutlineInputBorder()),
             ),
           ),
           const SizedBox(width: 12),
@@ -242,7 +242,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
             child: TextFormField(
               controller: _heightC,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Height (px)', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: L10n.of(context).heightPx, border: const OutlineInputBorder()),
             ),
           ),
         ]),
@@ -250,7 +250,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
         Row(children: [
           Switch(value: _maintainAspect, onChanged: (v) => setState(() => _maintainAspect = v)),
           const SizedBox(width: 8),
-          const Text('Maintain aspect ratio'),
+          Text(L10n.of(context).maintainAspect),
         ]),
         if (_maintainAspect)
           Padding(
@@ -283,7 +283,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Filter', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+        Text(L10n.of(context).filterLabel, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8, runSpacing: 8,
@@ -295,7 +295,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
         ),
         if (showIntensity) ...[
           const SizedBox(height: 16),
-          Text('Intensity: ${_filterIntensity.toStringAsFixed(1)}',
+          Text(L10n.of(context).intensity(_filterIntensity.toStringAsFixed(1)),
               style: theme.textTheme.bodyMedium),
           Slider(
             value: _filterIntensity,
@@ -369,7 +369,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     final w = int.tryParse(_widthC.text.trim());
     final h = int.tryParse(_heightC.text.trim());
     if (w == null && h == null) {
-      NotificationService.showSnackbar(text: 'Enter at least one dimension', color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.enterDimension, color: Colors.orange);
       return;
     }
     BlocProvider.of<PdfBloc>(context).add(ResizeImageEvent(

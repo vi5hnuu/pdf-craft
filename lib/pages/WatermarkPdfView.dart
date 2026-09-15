@@ -184,25 +184,25 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _outFileNameC,
-                              decoration: const InputDecoration(labelText: 'Output File Name', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: const OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _textC,
                               onChanged: (_) => setState(() {}),
-                              decoration: const InputDecoration(labelText: 'Watermark Text', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).watermarkText, border: const OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _fontSizeC,
                               keyboardType: TextInputType.number,
                               onChanged: (_) => setState(() {}),
-                              decoration: const InputDecoration(labelText: 'Font Size', border: OutlineInputBorder()),
+                              decoration: InputDecoration(labelText: L10n.of(context).fontSize, border: const OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                const Text('Color: '),
+                                Text(L10n.of(context).colorColon),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,
@@ -212,13 +212,13 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                TextButton(onPressed: _pickColor, child: const Text('Change')),
+                                TextButton(onPressed: _pickColor, child: Text(L10n.of(context).change)),
                               ],
                             ),
                             const SizedBox(height: 16),
-                            Text('Opacity: ${_opacity.toStringAsFixed(2)}'),
+                            Text(L10n.of(context).opacityValue(_opacity.toStringAsFixed(2))),
                             Slider(value: _opacity, min: 0.05, max: 1.0, divisions: 19, onChanged: (v) => setState(() => _opacity = v)),
-                            Text('Angle: ${_angle.toStringAsFixed(0)}°'),
+                            Text(L10n.of(context).angleValue(_angle.toStringAsFixed(0))),
                             Slider(value: _angle, min: 0, max: 360, divisions: 36, onChanged: (v) => setState(() => _angle = v)),
                             const SizedBox(height: 8),
                             _buildDropdown('Vertical Position', _verticalPos, (v) => setState(() => _verticalPos = v!)),
@@ -230,7 +230,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                               alignment: Alignment.centerLeft,
                               child: TextButton(
                                 onPressed: _resetSettings,
-                                child: const Text('Reset to defaults'),
+                                child: Text(L10n.of(context).resetDefaults),
                               ),
                             ),
                           ],
@@ -239,7 +239,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                     ),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(onPressed: _onWatermark, child: const Text('Apply Watermark')),
+                      child: FilledButton(onPressed: _onWatermark, child: Text(ToolStrings.name(context, 'watermark'))),
                     ),
                   ],
                 ),
@@ -265,14 +265,14 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Pick a color'),
+        title: Text(L10n.of(context).pickColor),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: _pickedColor,
             onColorChanged: (c) => setState(() => _pickedColor = c),
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done))],
       ),
     );
   }

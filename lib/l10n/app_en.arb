@@ -847,5 +847,120 @@
         "type": "String"
       }
     }
-  }
+  },
+  "add": "Add",
+  "create": "Create",
+  "change": "Change",
+  "preview": "Preview",
+  "required": "Required",
+  "undo": "Undo",
+  "redo": "Redo",
+  "zoom": "Zoom",
+  "moreColors": "More colors",
+  "fill": "Fill",
+  "sizeColon": "Size:",
+  "bold": "Bold",
+  "annotateTapToPlaceNote": "Tap on the page to place a sticky note",
+  "enterTextHint": "Enter text…",
+  "addStickyNote": "Add Sticky Note",
+  "noteTextHint": "Note text…",
+  "placeSticky": "Place Sticky",
+  "pickColor": "Pick color",
+  "fillColor": "Fill color",
+  "annotationsSaved": "Annotations saved",
+  "saveFailedWith": "Save failed: {error}",
+  "@saveFailedWith": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addBookmark": "Add bookmark",
+  "bookmarksLoadFailed": "Could not load bookmarks",
+  "bookmarksSaved": "Saved. Bookmarks are embedded in the PDF.",
+  "viewPdf": "VIEW PDF",
+  "noBookmarksInPdf": "No bookmarks in this PDF",
+  "addFirstBookmark": "Add first bookmark",
+  "indentChild": "Indent (make child)",
+  "dedentUp": "Dedent (move up)",
+  "saveBookmarks": "Save bookmarks",
+  "addBookmarkTitle": "Add bookmark",
+  "editBookmarkTitle": "Edit bookmark",
+  "titleLabel": "Title",
+  "pageOfTotal": "Page (1–{total})",
+  "@pageOfTotal": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tabCompress": "Compress",
+  "tabToJpg": "To JPG",
+  "tabFromJpg": "From JPG",
+  "tabResize": "Resize",
+  "tabFilters": "Filters",
+  "imageSaved": "Image saved to processed folder",
+  "filteredImageSaved": "Filtered image saved",
+  "jpegQuality": "JPEG quality: {value}%",
+  "@jpegQuality": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "outputJpegQuality": "Output JPEG quality: {value}%",
+  "@outputJpegQuality": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "targetFormat": "Target format",
+  "widthPx": "Width (px)",
+  "heightPx": "Height (px)",
+  "maintainAspect": "Maintain aspect ratio",
+  "filterLabel": "Filter",
+  "intensity": "Intensity: {value}",
+  "@intensity": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "enterDimension": "Enter at least one dimension",
+  "allPagesAngle": "All pages angle",
+  "angleHint": "Angle (any value, e.g. 45, 90, 270)",
+  "perPageAngle": "Per-page angle override",
+  "pageNo": "Page no.",
+  "angleLabel": "Angle",
+  "invalidPageNumber": "Invalid page number",
+  "invalidAngle": "Invalid angle",
+  "watermarkText": "Watermark text",
+  "fontSize": "Font size",
+  "colorColon": "Color: ",
+  "opacityValue": "Opacity: {value}",
+  "@opacityValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "angleValue": "Angle: {value}°",
+  "@angleValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resetDefaults": "Reset to defaults",
+  "optionLabelsHint": "Enter option labels, separated by commas.",
+  "formCreated": "Fillable form created",
+  "tapFieldToPlace": "Tap a field below to place it"
 }
