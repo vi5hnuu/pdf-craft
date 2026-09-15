@@ -189,6 +189,20 @@ class _ToolsScreenState extends State<ToolsScreen> {
   }
 }
 
+/// Size of one cell in the 3-column tool grid ([_CategorySection] and search results: 16px side
+/// padding, 10px spacing, 0.95 aspect ratio). The horizontal Favorites / Recently used rows use
+/// the same size — they used a fixed 88px card, narrower than the grid, which clipped the
+/// credit-cost badge.
+Size _toolCellSize(BuildContext context) {
+  const columns = 3;
+  const spacing = 10.0;
+  const sidePadding = 16.0;
+  const aspectRatio = 0.95;
+  final width =
+      (MediaQuery.sizeOf(context).width - sidePadding * 2 - spacing * (columns - 1)) / columns;
+  return Size(width, width / aspectRatio);
+}
+
 /// Horizontal row of the user's pinned favourite tools (hidden when empty).
 /// Toggle a favourite by long-pressing any tool card.
 class _FavoriteToolsRow extends StatelessWidget {
@@ -213,14 +227,14 @@ class _FavoriteToolsRow extends StatelessWidget {
           ]),
         ),
         SizedBox(
-          height: 124,
+          height: _toolCellSize(context).height,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: tools.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, i) => SizedBox(
-                width: 88,
+                width: _toolCellSize(context).width,
                 child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
           ),
         ),
@@ -251,16 +265,16 @@ class _RecentToolsRow extends StatelessWidget {
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
             SizedBox(
-              // Tall enough for ToolCard's icon box + 2-line label + padding
-              // (otherwise the card overflows the row vertically).
-              height: 124,
+              // Same cell size as the grid below, so cards (and their cost badge) match exactly.
+              height: _toolCellSize(context).height,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: tools.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) =>
-                    SizedBox(width: 88, child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+                itemBuilder: (context, i) => SizedBox(
+                    width: _toolCellSize(context).width,
+                    child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
               ),
             ),
           ],
