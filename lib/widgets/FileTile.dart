@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/singletons/FavoritesService.dart';
 import 'package:pdf_craft/utils/Constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
@@ -92,7 +93,7 @@ class _FileTileState extends State<FileTile> {
               _isFavorite ? Icons.star : Icons.star_border,
               color: _isFavorite ? Colors.amber : theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
-            tooltip: _isFavorite ? 'Remove from favorites' : 'Add to favorites',
+            tooltip: _isFavorite ? L10n.of(context).favRemove : L10n.of(context).favAdd,
           ),
           if (widget.onDelete != null)
             IconButton(

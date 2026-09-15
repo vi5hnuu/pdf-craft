@@ -879,4 +879,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incomingNoTools => 'No in-app tools apply to these files.';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get dontAskAgain => 'Don\'t ask me again';
+
+  @override
+  String get chooseFiles => 'Choose files';
+
+  @override
+  String get selManage => 'Manage selection';
+
+  @override
+  String get selNoToolsApply => 'No tools apply to this selection';
+
+  @override
+  String selApplyTo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Apply to $count files',
+      one: 'Apply to 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selNoFiles => 'No files selected';
+
+  @override
+  String selCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get nextToolTitle => 'Use this file in another tool';
+
+  @override
+  String get nextToolNone => 'No other tool accepts this kind of file.';
+
+  @override
+  String procUploading(int percent) {
+    return 'Uploading $percent%';
+  }
+
+  @override
+  String get procProcessing => 'Processing on our servers…';
+
+  @override
+  String get procWorking => 'Working on it';
+
+  @override
+  String get procSecure => 'Sent securely · removed after processing';
+
+  @override
+  String get fileSelectForTools => 'Select for tools';
+
+  @override
+  String get fileDeselect => 'Deselect';
+
+  @override
+  String get favAdd => 'Add to favorites';
+
+  @override
+  String get favRemove => 'Remove from favorites';
+
+  @override
+  String get openInExternalViewer => 'Open in external viewer';
 }

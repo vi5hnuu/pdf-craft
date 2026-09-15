@@ -881,4 +881,77 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get incomingNoTools => 'इन फ़ाइलों पर कोई इन-ऐप टूल लागू नहीं होता।';
+
+  @override
+  String get confirm => 'पुष्टि करें';
+
+  @override
+  String get ok => 'ठीक है';
+
+  @override
+  String get dontAskAgain => 'फिर से न पूछें';
+
+  @override
+  String get chooseFiles => 'फ़ाइलें चुनें';
+
+  @override
+  String get selManage => 'चयन मैनेज करें';
+
+  @override
+  String get selNoToolsApply => 'इस चयन पर कोई टूल लागू नहीं होता';
+
+  @override
+  String selApplyTo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count फ़ाइलों पर लागू करें',
+      one: '1 फ़ाइल पर लागू करें',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selNoFiles => 'कोई फ़ाइल चुनी नहीं गई';
+
+  @override
+  String selCount(int count) {
+    return '$count चुनी गईं';
+  }
+
+  @override
+  String get nextToolTitle => 'इस फ़ाइल को दूसरे टूल में इस्तेमाल करें';
+
+  @override
+  String get nextToolNone => 'कोई दूसरा टूल इस तरह की फ़ाइल नहीं लेता।';
+
+  @override
+  String procUploading(int percent) {
+    return 'अपलोड हो रहा है $percent%';
+  }
+
+  @override
+  String get procProcessing => 'हमारे सर्वर पर प्रोसेस हो रहा है…';
+
+  @override
+  String get procWorking => 'काम चल रहा है';
+
+  @override
+  String get procSecure =>
+      'सुरक्षित भेजा गया · प्रोसेस के बाद हटा दिया जाता है';
+
+  @override
+  String get fileSelectForTools => 'टूल्स के लिए चुनें';
+
+  @override
+  String get fileDeselect => 'चयन हटाएँ';
+
+  @override
+  String get favAdd => 'पसंदीदा में जोड़ें';
+
+  @override
+  String get favRemove => 'पसंदीदा से हटाएँ';
+
+  @override
+  String get openInExternalViewer => 'दूसरे व्यूअर में खोलें';
 }

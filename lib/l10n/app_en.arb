@@ -454,5 +454,46 @@
       }
     }
   },
-  "incomingNoTools": "No in-app tools apply to these files."
+  "incomingNoTools": "No in-app tools apply to these files.",
+  "confirm": "Confirm",
+  "ok": "OK",
+  "dontAskAgain": "Don't ask me again",
+  "chooseFiles": "Choose files",
+  "selManage": "Manage selection",
+  "selNoToolsApply": "No tools apply to this selection",
+  "selApplyTo": "{count, plural, =1{Apply to 1 file} other{Apply to {count} files}}",
+  "@selApplyTo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selNoFiles": "No files selected",
+  "selCount": "{count} selected",
+  "@selCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nextToolTitle": "Use this file in another tool",
+  "nextToolNone": "No other tool accepts this kind of file.",
+  "procUploading": "Uploading {percent}%",
+  "@procUploading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "procProcessing": "Processing on our servers…",
+  "procWorking": "Working on it",
+  "procSecure": "Sent securely · removed after processing",
+  "fileSelectForTools": "Select for tools",
+  "fileDeselect": "Deselect",
+  "favAdd": "Add to favorites",
+  "favRemove": "Remove from favorites",
+  "openInExternalViewer": "Open in external viewer"
 }

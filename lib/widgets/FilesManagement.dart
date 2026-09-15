@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
 import 'package:pdf_craft/utils/UploadLimits.dart';
 import 'package:pdf_craft/widgets/BannerAdd.dart';
 import 'package:pdf_craft/widgets/DirectoryFilesListing.dart';
@@ -27,7 +28,8 @@ class _FilesManagementState extends State<FilesManagement> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("File Management"),
+        // Says what the screen is for: it's a picker for a tool, not a file manager.
+        title: Text(L10n.of(context).chooseFiles),
       ),
       body: SafeArea(
         child: Flex(direction: Axis.vertical,

@@ -1615,6 +1615,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No in-app tools apply to these files.'**
   String get incomingNoTools;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @dontAskAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t ask me again'**
+  String get dontAskAgain;
+
+  /// No description provided for @chooseFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose files'**
+  String get chooseFiles;
+
+  /// No description provided for @selManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage selection'**
+  String get selManage;
+
+  /// No description provided for @selNoToolsApply.
+  ///
+  /// In en, this message translates to:
+  /// **'No tools apply to this selection'**
+  String get selNoToolsApply;
+
+  /// No description provided for @selApplyTo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Apply to 1 file} other{Apply to {count} files}}'**
+  String selApplyTo(int count);
+
+  /// No description provided for @selNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'No files selected'**
+  String get selNoFiles;
+
+  /// No description provided for @selCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selCount(int count);
+
+  /// No description provided for @nextToolTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this file in another tool'**
+  String get nextToolTitle;
+
+  /// No description provided for @nextToolNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No other tool accepts this kind of file.'**
+  String get nextToolNone;
+
+  /// No description provided for @procUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading {percent}%'**
+  String procUploading(int percent);
+
+  /// No description provided for @procProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing on our servers…'**
+  String get procProcessing;
+
+  /// No description provided for @procWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working on it'**
+  String get procWorking;
+
+  /// No description provided for @procSecure.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent securely · removed after processing'**
+  String get procSecure;
+
+  /// No description provided for @fileSelectForTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Select for tools'**
+  String get fileSelectForTools;
+
+  /// No description provided for @fileDeselect.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect'**
+  String get fileDeselect;
+
+  /// No description provided for @favAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get favAdd;
+
+  /// No description provided for @favRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get favRemove;
+
+  /// No description provided for @openInExternalViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in external viewer'**
+  String get openInExternalViewer;
 }
 
 class _AppLocalizationsDelegate
