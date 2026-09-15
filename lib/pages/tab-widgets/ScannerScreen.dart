@@ -26,7 +26,7 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   DocumentScanner? _documentScanner;
   DocumentScanningResult? _result;
-  // Which scan card is busy (0 = Scan to PDF, 1 = JPEG, 2 = Searchable), or null
+  // Which scan card is busy (0 = Scan to PDF, 1 = JPEG), or null
   // when idle. Only the active card shows a spinner; the rest are just disabled.
   int? _scanningCard;
   bool get _busy => _scanningCard != null;
@@ -91,47 +91,41 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 32),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              SizedBox(
-                width: (MediaQuery.sizeOf(context).width - 56) / 2,
-                child: _ScanCard(
-                  icon: Icons.picture_as_pdf,
-                  label: 'Scan to PDF',
-                  description: 'Creates a multi-page PDF from scanned pages.',
-                  color: theme.colorScheme.primary,
-                  loading: _scanningCard == 0,
-                  enabled: !_busy,
-                  onTap: () => _startScan(DocumentFormat.pdf, 0),
+          // Two equal cards side by side. IntrinsicHeight keeps both the same height when one
+          // description wraps to more lines than the other.
+          //
+          // A third "Searchable PDF (OCR)" card used to sit here, but it ran the exact same scan
+          // as "Scan to PDF" — no text layer was ever produced — so it was removed rather than
+          // promise a feature that does not exist.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _ScanCard(
+                    icon: Icons.picture_as_pdf,
+                    label: 'Scan to PDF',
+                    description: 'Creates a multi-page PDF from scanned pages.',
+                    color: theme.colorScheme.primary,
+                    loading: _scanningCard == 0,
+                    enabled: !_busy,
+                    onTap: () => _startScan(DocumentFormat.pdf, 0),
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: (MediaQuery.sizeOf(context).width - 56) / 2,
-                child: _ScanCard(
-                  icon: Icons.image_outlined,
-                  label: 'Scan to JPEG',
-                  description: 'Saves each page as a separate JPEG image.',
-                  color: const Color(0xFF7B1FA2),
-                  loading: _scanningCard == 1,
-                  enabled: !_busy,
-                  onTap: () => _startScan(DocumentFormat.jpeg, 1),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _ScanCard(
+                    icon: Icons.image_outlined,
+                    label: 'Scan to JPEG',
+                    description: 'Saves each page as a separate JPEG image.',
+                    color: const Color(0xFF7B1FA2),
+                    loading: _scanningCard == 1,
+                    enabled: !_busy,
+                    onTap: () => _startScan(DocumentFormat.jpeg, 1),
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: _ScanCard(
-                  icon: Icons.document_scanner_outlined,
-                  label: 'Searchable PDF',
-                  description: 'OCR scan — creates a PDF with selectable, searchable text layer.',
-                  color: const Color(0xFF00796B),
-                  loading: _scanningCard == 2,
-                  enabled: !_busy,
-                  onTap: () => _startScan(DocumentFormat.pdf, 2),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Card(
