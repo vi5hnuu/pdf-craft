@@ -18,9 +18,11 @@ class Constants {
       : "https://pdf-studio-api.laxmi.solutions/api/v1";
 
   // Standalone auth service (issues the JWTs pdf-studio validates).
+  // Both URLs must end in /api/v1 — AuthApi paths (/auth/guest, /user/me…) are relative
+  // to it; without the prefix the service answers 401 "Authentication required."
   static String get authBaseUrl => kDebugMode
       ? "http://$_devHost:8081/api/v1"
-      : "https://pdf-studio-auth.laxmi.solutions";
+      : "https://pdf-studio-auth.laxmi.solutions/api/v1";
 
   // Audience this app requests its tokens for — must match pdf-studio's
   // app.auth.expected-audience and be in the auth service's allowed-audiences.
