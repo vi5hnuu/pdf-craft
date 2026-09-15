@@ -34,19 +34,20 @@ class _SplashScreenState extends State<SplashScreen> {
     // Navigate as soon as ad init completes — no fixed minimum delay (the
     // splash previously always waited the full timer). MobileAds init is the
     // only gate.
+    // Ads initialise in the background and no longer gate navigation. The splash used to wait
+    // for MobileAds.initialize() (or a 3s fallback), so a slow ad SDK — common on poor networks —
+    // held every launch here. The preloads are singletons and don't need this screen mounted.
     MobileAds.instance.initialize().then((value) {
-      if (!mounted) return;
       // Preload an App Open ad now that MobileAds is initialized, so the first
       // background->foreground (warm resume) has an ad ready to show.
       AppOpenAdManager().loadAd();
       // Preload a rewarded ad for the first heavy-tool gate.
       RewardedAdManager().loadAd();
       LoggerSingleton().logger.i('Ads ${value.adapterStatuses.keys.join(',')} : ${value.adapterStatuses.values.join(',')}');
-      _goOnce();
     });
-    // Safety fallback so we never hang if ad init stalls.
-    timer=Timer(const Duration(seconds: 3),(){
-      if(!mounted) return;
+    // Show the brand briefly so the splash doesn't just flash, then continue.
+    timer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
       _goOnce();
     });
     super.initState();
