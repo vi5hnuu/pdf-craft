@@ -44,7 +44,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final searching = _query.trim().isNotEmpty;
-    final results = ToolRegistry.search(_query);
+    final results = ToolRegistry.search(_query, context: context);
 
     // Rebuild on favourite changes so stars and the favourites row stay live.
     return AnimatedBuilder(
@@ -309,7 +309,7 @@ class _CategorySection extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                category.name,
+                category.localizedName(context),
                 style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -345,11 +345,12 @@ class ToolCard extends StatelessWidget {
   const ToolCard({super.key, required this.tool, required this.accentColor});
 
   Future<void> _toggleFavorite(BuildContext context) async {
+    final name = tool.localizedName(context);
     final nowFav = await FavoriteToolsService().toggle(tool.id);
     NotificationService.showSnackbar(
       text: nowFav
-          ? L10n.current.toolAddedToFavorites(tool.name)
-          : L10n.current.toolRemovedFromFavorites(tool.name),
+          ? L10n.current.toolAddedToFavorites(name)
+          : L10n.current.toolRemovedFromFavorites(name),
       color: nowFav ? Colors.amber : Colors.blueGrey,
       duration: const Duration(seconds: 2),
     );
@@ -389,7 +390,7 @@ class ToolCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  tool.name,
+                  tool.localizedName(context),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -402,7 +403,7 @@ class ToolCard extends StatelessWidget {
               ],
             ),
             // Info affordance (top-left) — reveals what the tool does.
-            if (tool.description.isNotEmpty)
+            if (tool.localizedDescription(context).isNotEmpty)
               Positioned(
                 top: -2,
                 left: -2,
@@ -465,9 +466,12 @@ class ToolCard extends StatelessWidget {
         title: Row(children: [
           Icon(tool.icon, color: accentColor),
           const SizedBox(width: 10),
-          Expanded(child: Text(tool.name, style: const TextStyle(fontSize: 17))),
+          Expanded(
+              child: Text(tool.localizedName(dialogContext),
+                  style: const TextStyle(fontSize: 17))),
         ]),
-        content: Text(tool.description, style: const TextStyle(height: 1.5)),
+        content: Text(tool.localizedDescription(dialogContext),
+            style: const TextStyle(height: 1.5)),
         actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(L10n.of(dialogContext).gotIt))],
       ),
     );

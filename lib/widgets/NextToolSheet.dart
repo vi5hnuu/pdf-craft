@@ -73,8 +73,8 @@ class NextToolSheet extends StatelessWidget {
                   final tool = tools[index];
                   return ListTile(
                     leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.name),
-                    subtitle: Text(tool.category.name),
+                    title: Text(tool.localizedName(context)),
+                    subtitle: Text(tool.category.localizedName(context)),
                     onTap: () {
                       Navigator.pop(context);
                       tool.openWithFiles(context, [file]);

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/tools/tool_registry.dart';
 
 /// Every English string must have a Hindi translation (and vice versa), with the same
 /// placeholders — otherwise Hindi users silently see English or a crash on a missing argument.
@@ -33,6 +35,43 @@ void main() {
       final enNames = names(en[key] as String);
       final hiNames = names(hi[key] as String);
       expect(hiNames.containsAll(enNames), isTrue, reason: 'placeholders differ for "$key"');
+    }
+  });
+
+  test('every tool in the registry has a translated name and description', () {
+    // Keys follow toolName<Id> / toolDesc<Id>, e.g. 'pdf-to-jpg' -> toolNamePdfToJpg.
+    String camel(String id) {
+      final parts = id.split(RegExp(r'[-_ ]+'));
+      return parts.first + parts.skip(1).map((p) => p[0].toUpperCase() + p.substring(1)).join();
+    }
+    String key(String prefix, String id) {
+      final c = camel(id);
+      return '$prefix${c[0].toUpperCase()}${c.substring(1)}';
+    }
+
+    final missing = <String>[];
+    for (final tool in ToolRegistry.tools) {
+      for (final k in [key('toolName', tool.id), key('toolDesc', tool.id)]) {
+        if (!en.containsKey(k) || !hi.containsKey(k)) missing.add(k);
+      }
+      if (ToolStrings.englishName(tool.id) == tool.id) missing.add('englishName:${tool.id}');
+    }
+    expect(missing, isEmpty);
+  });
+
+  test('every tool category has a translated name', () {
+    // 'PDF Tools' -> toolCatPdfTools
+    String categoryKey(String englishName) {
+      final parts = englishName.toLowerCase().split(RegExp(r'\s+'));
+      final camel =
+          parts.first + parts.skip(1).map((p) => p[0].toUpperCase() + p.substring(1)).join();
+      return 'toolCat${camel[0].toUpperCase()}${camel.substring(1)}';
+    }
+
+    for (final category in ToolCategories.all) {
+      final k = categoryKey(category.name);
+      expect(en.containsKey(k), isTrue, reason: 'missing $k in English');
+      expect(hi.containsKey(k), isTrue, reason: 'missing $k in Hindi');
     }
   });
 

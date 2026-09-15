@@ -84,7 +84,7 @@ class IncomingFilesScreen extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 6),
                   child: ListTile(
                     leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.name),
+                    title: Text(tool.localizedName(context)),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => tool.openWithFiles(context, files),
                   ),

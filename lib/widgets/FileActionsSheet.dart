@@ -179,7 +179,7 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
               ),
               ...tools.map((tool) => ListTile(
                     leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.name),
+                    title: Text(tool.localizedName(context)),
                     onTap: () {
                       Navigator.pop(context);
                       tool.openWithFiles(context, [widget.file]);

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
@@ -13,10 +14,14 @@ import 'package:pdf_craft/utils/UploadLimits.dart';
 
 /// A tool category (used for grouping + accent colour on the Tools screen).
 class ToolCategory {
+  /// English name — the stable identity used in code and for lookups.
   final String name;
   final IconData icon;
   final Color color;
   const ToolCategory(this.name, this.icon, this.color);
+
+  /// Name in the user's language.
+  String localizedName(BuildContext context) => ToolStrings.category(context, name);
 }
 
 /// All categories, in display order.
@@ -79,6 +84,12 @@ class ToolDef {
   /// on the tool card). Looked up by [id] so the tool list stays terse.
   String get description => ToolRegistry.descriptions[id] ?? '';
 
+  /// Name and description in the user's language. [name] stays the English identity used in
+  /// code, logs and search.
+  String localizedName(BuildContext context) => ToolStrings.name(context, id);
+
+  String localizedDescription(BuildContext context) => ToolStrings.description(context, id);
+
   /// Backend cost id (if this tool calls a priced endpoint), else null.
   String? get creditToolId => ToolRegistry.creditToolIds[id];
 
@@ -118,7 +129,7 @@ class ToolDef {
     CreditGate.run(
       context,
       creditToolId: creditToolId,
-      toolName: name,
+      toolName: localizedName(context),
       proceed: () {
         RecentToolsService().record(id);
         GoRouter.of(context).pushNamed(
@@ -148,7 +159,7 @@ class ToolDef {
     CreditGate.run(
       context,
       creditToolId: creditToolId,
-      toolName: name,
+      toolName: localizedName(context),
       files: files, // known here, so the quote includes any size surcharge
 
       proceed: () {
@@ -371,10 +382,16 @@ class ToolRegistry {
       tools.where((t) => t.category == category).toList();
 
   /// Case-insensitive name search (for the Tools-screen search box).
-  static List<ToolDef> search(String query) {
+  ///
+  /// Matches the localized name as well as the English one when a [context] is given, so a Hindi
+  /// user can type either "मर्ज" or "merge".
+  static List<ToolDef> search(String query, {BuildContext? context}) {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return tools;
-    return tools.where((t) => t.name.toLowerCase().contains(q)).toList();
+    return tools.where((t) {
+      if (t.name.toLowerCase().contains(q)) return true;
+      return context != null && t.localizedName(context).toLowerCase().contains(q);
+    }).toList();
   }
 
   /// All tools that apply to a selection of [files] (by count + extensions).
