@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/l10n/LocaleManager.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
@@ -22,6 +23,8 @@ class DioSingleton {
             type: DioExceptionType.connectionError,
           ));
         }
+        // Tell the API which language the user reads, so server messages can be localized.
+        options.headers['Accept-Language'] = LocaleManager().resolvedLocale.languageCode;
         // Attach the current access token so pdf-studio can authenticate the request.
         // If none yet (cold start / first launch), establish one first so the request
         // never goes out unauthenticated.

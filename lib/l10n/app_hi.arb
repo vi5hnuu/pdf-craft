@@ -1,0 +1,9 @@
+{
+  "@@locale": "hi",
+  "appName": "PDF Craft",
+  "settingsLanguage": "भाषा",
+  "languageSystem": "सिस्टम डिफ़ॉल्ट",
+  "languageEnglish": "English",
+  "languageHindi": "हिन्दी",
+  "switchLanguageTooltip": "भाषा बदलें"
+}

@@ -5,6 +5,9 @@ import 'dart:typed_data' show Uint8List;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/LocaleManager.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file-selection-config.dart';
 import 'package:pdf_craft/theme/app_theme.dart';
@@ -123,6 +126,7 @@ String? _requireFiles(BuildContext context, GoRouterState state) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeManager().init();
+  await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame
   // Establish an auth session (guest on first launch) so product requests are authenticated.
   // Resilient to offline launch — a token is (re)obtained lazily on the next online request.
@@ -992,15 +996,26 @@ class _NestedTabNavigationExampleAppState
       // change rebuilds MaterialApp and re-reads themeMode live. Previously the
       // ListenableBuilder wrapped a const widget at runApp(), so notifications
       // could not propagate and the theme only applied on a fresh start.
+      // LocaleManager is listened to alongside it so switching language rebuilds the whole app
+      // live (strings, Hindi-capable font) without a restart.
       child: ListenableBuilder(
-        listenable: ThemeManager(),
+        listenable: Listenable.merge([ThemeManager(), LocaleManager()]),
         builder: (context, _) => MaterialApp.router(
           scaffoldMessengerKey: NotificationService.messengerKey,
-          title: 'Pdf craft',
+          title: 'PDF Craft',
           debugShowCheckedModeBanner: false,
           themeMode: ThemeManager().mode,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.light(hindi: LocaleManager().isHindi),
+          darkTheme: AppTheme.dark(hindi: LocaleManager().isHindi),
+          // null locale = follow the device language.
+          locale: LocaleManager().locale,
+          supportedLocales: LocaleManager.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           routerConfig: _router,
           // Surface a "session expired" prompt (sign in again / continue as guest)
           // over whatever screen is showing.
