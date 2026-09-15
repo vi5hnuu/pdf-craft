@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/cloud/GoogleDriveService.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -86,7 +87,8 @@ class _DriveScreenState extends State<DriveScreen> {
   Future<void> _signIn() async {
     setState(() => _signingIn = true);
     try {
-      await _drive.signIn();
+      // Interactive sign-in opens the account picker; its return must not trigger an ad.
+      await FullScreenAdPolicy().runExternal(() => _drive.signIn());
       if (_drive.isSignedIn) await Future.wait([_loadFiles(), _loadStorage()]);
     } catch (e) {
       if (mounted) NotificationService.showSnackbar(text: 'Sign-in failed', color: Colors.red);

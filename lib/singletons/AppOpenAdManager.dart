@@ -1,5 +1,7 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
+import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/utils/AdUnits.dart';
 
 /// Manages the lifecycle of a single App Open ad.
@@ -38,6 +40,7 @@ class AppOpenAdManager {
   /// Safe to call repeatedly; it no-ops while a load is in flight or a fresh
   /// ad is already cached. Requires MobileAds to be initialized first.
   void loadAd() {
+    if (ProService().isPro) return; // Pro users never see app-open ads, so don't request them
     if (_isLoading || _isAdAvailable) return;
     _isLoading = true;
     AppOpenAd.load(
@@ -72,7 +75,10 @@ class AppOpenAdManager {
 
     final ad = _cachedAd!;
     ad.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (ad) => _isShowingAd = true,
+      onAdShowedFullScreenContent: (ad) {
+        _isShowingAd = true;
+        FullScreenAdPolicy().recordShown(); // shares the cooldown with interstitials
+      },
       onAdDismissedFullScreenContent: (ad) {
         _isShowingAd = false;
         ad.dispose();

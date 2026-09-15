@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:pdf_craft/models/auth/AuthUser.dart';
 import 'package:pdf_craft/services/auth/AuthApi.dart';
 import 'package:pdf_craft/services/auth/TokenStorage.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 
 /// Owns the app's authentication state and tokens.
@@ -125,7 +126,8 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn(scopes: const ['email']);
-    final account = await googleSignIn.signIn();
+    // The account picker is a separate activity; returning from it must not trigger an ad.
+    final account = await FullScreenAdPolicy().runExternal(() => googleSignIn.signIn());
     if (account == null) throw AuthException('Google sign-in cancelled.');
     final auth = await account.authentication;
     final idToken = auth.idToken;

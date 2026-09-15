@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/utils/StoragePermissions.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -254,7 +255,8 @@ class _ErrorpageState extends State<Errorpage> {
   }
 
   Future<void> _openSettings() async {
-    await openAppSettings();
+    // System Settings is another app; returning after granting access must not show an ad.
+    await FullScreenAdPolicy().runExternal(() => openAppSettings());
     // Re-check on return; proceed if the user enabled it in Settings.
     final granted = await StoragePermissions.isStoragePermissionGranted();
     if (!mounted) return;

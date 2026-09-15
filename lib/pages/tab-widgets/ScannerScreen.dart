@@ -9,6 +9,7 @@ import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/models/request/image-to-pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AdsSingleton.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/Constants.dart';
@@ -304,7 +305,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
           pageLimit: 10,
         ),
       );
-      final result = await _documentScanner?.scanDocument();
+      // The scanner runs in its own activity; returning from it is not a resume worth an ad.
+      final scanner = _documentScanner!;
+      final result = await FullScreenAdPolicy().runExternal(() => scanner.scanDocument());
       // Scanning hands control to another activity and can take minutes, which is ample time
       // for this screen to be disposed before the result comes back.
       if (!mounted) return;

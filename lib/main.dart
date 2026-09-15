@@ -87,6 +87,7 @@ import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/PdfService.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/singletons/ProService.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
@@ -156,10 +157,6 @@ class NestedTabNavigationExampleApp extends StatefulWidget {
 
 class _NestedTabNavigationExampleAppState
     extends State<NestedTabNavigationExampleApp> with WidgetsBindingObserver {
-  /// Tracks whether the app has gone to the background at least once.
-  /// Used so the App Open ad shows only on a genuine warm resume and never on
-  /// the initial cold start (which reaches `resumed` with no prior background).
-  bool _wasBackgrounded = false;
 
   // Subscription to files shared into the app while it is running.
   StreamSubscription<List<String>>? _sharingSub;
@@ -204,17 +201,20 @@ class _NestedTabNavigationExampleAppState
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     switch (state) {
+      // Only a real trip to the background counts. `inactive`/`hidden` also fire for the
+      // notification shade, permission dialogs and system pickers — treating those as a
+      // resume showed a full-screen ad every time the user pulled down the shade.
       case AppLifecycleState.paused:
-      case AppLifecycleState.hidden:
-      case AppLifecycleState.inactive:
-        _wasBackgrounded = true;
+        FullScreenAdPolicy().onPaused();
         break;
       case AppLifecycleState.resumed:
-        if (_wasBackgrounded) {
-          _wasBackgrounded = false;
+        // The policy enforces minimum background time, cooldown, external flows and Pro.
+        if (FullScreenAdPolicy().consumeResumeForAppOpen()) {
           AppOpenAdManager().showAdIfAvailable();
         }
         break;
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
         break;
     }

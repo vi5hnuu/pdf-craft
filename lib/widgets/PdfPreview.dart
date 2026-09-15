@@ -15,6 +15,7 @@ import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/NextToolSheet.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 
 class PdfPreview extends StatefulWidget {
   final String pdfFilePath;
@@ -128,7 +129,9 @@ class _PdfPreviewState extends State<PdfPreview> {
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share',
-            onPressed: () => Share.shareXFiles([XFile(_path)]),
+            // The share sheet leaves the app; coming back from it is not a resume worth an ad.
+            onPressed: () => FullScreenAdPolicy()
+                .runExternal(() => Share.shareXFiles([XFile(_path)])),
           ),
           // Our in-app viewer is intentionally lightweight; offer a way out to
           // a full external PDF viewer at any time (not just on error).
@@ -266,8 +269,9 @@ class _PdfPreviewState extends State<PdfPreview> {
 
   void _openExternally() {
     final ext = '.${_path.split('.').last}';
-    OpenFile.open(_path,
-        type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*');
+    // Viewing in another app and coming back must not trigger an app-open ad.
+    FullScreenAdPolicy().runExternal(() => OpenFile.open(_path,
+        type: Constants.extrnalOpenSupportedFiles[ext] ?? '*/*'));
   }
 
   /// Renames the open file on disk and keeps viewing it under the new name.

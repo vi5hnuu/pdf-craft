@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/singletons/AuthService.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/utils/NetworkUtils.dart';
 
@@ -52,7 +53,11 @@ class DioSingleton {
         final remaining = response.headers.value('X-Credits-Remaining');
         if (remaining != null) {
           final value = int.tryParse(remaining);
-          if (value != null) CreditService().setBalance(value);
+          if (value != null) {
+            CreditService().setBalance(value);
+            // The run that produced this response was paid for — no interstitial after it.
+            FullScreenAdPolicy().recordCharge();
+          }
         }
         return handler.next(response);
       },
