@@ -118,13 +118,24 @@ class _Field {
   engine.TextAlignment alignment = engine.TextAlignment.left;
   bool multiSelect = false;
   String validationPattern = '';
-  /// "field operator value" — shows this field only when the named field matches.
+  /// What the author typed in the inspector, shown back to them verbatim.
+  ///
+  /// The authoritative link is [conditionRef] / [calcRefs]: those hold the resolved **id**,
+  /// captured the moment the name is entered. Resolving at save time instead meant that
+  /// renaming the target first left the lookup with nothing to find, and the rule silently
+  /// degraded to a dangling reference.
   String conditionField = '';
   engine.ConditionOperator conditionOperator = engine.ConditionOperator.equals;
   String conditionValue = '';
   engine.CalculationFunction calcFunction = engine.CalculationFunction.sum;
-  /// Comma-separated field names feeding the calculation.
+  /// Comma-separated field names feeding the calculation, as typed.
   String calcFields = '';
+
+  /// Resolved reference for [conditionField], captured when it was entered.
+  engine.FieldRef? conditionRef;
+
+  /// Resolved references for [calcFields], captured when they were entered.
+  List<engine.FieldRef> calcRefs = const [];
 
   _Field({required this.type, required this.rect, required this.name}) : id = UniqueKey().toString();
 }
@@ -236,12 +247,15 @@ class _FormEditorViewState extends State<FormEditorView> {
                 ..alignment = f.alignment
                 ..multiSelect = f.multiSelect
                 ..validationPattern = f.validation.pattern ?? ''
+                ..conditionRef = f.condition?.parent
                 ..conditionField = f.condition == null
                     ? ''
                     : _nameForId(schema, f.condition!.parent)
                 ..conditionOperator = f.condition?.operator ?? engine.ConditionOperator.equals
                 ..conditionValue = f.condition?.value ?? ''
                 ..calcFunction = f.calculation?.function ?? engine.CalculationFunction.sum
+                ..calcRefs = List<engine.FieldRef>.from(
+                    f.calculation?.fields ?? const <engine.FieldRef>[])
                 ..calcFields = (f.calculation?.fields ?? const <engine.FieldRef>[])
                     .map((r) => _nameForId(schema, r))
                     .join(', '),
@@ -773,7 +787,10 @@ class _FormEditorViewState extends State<FormEditorView> {
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
-      builder: (_) => _FieldPropertiesSheet(field: f),
+      builder: (_) => _FieldPropertiesSheet(
+        field: f,
+        resolve: (name) => engine.FieldRef(_idForName(name), name),
+      ),
     ).whenComplete(() {
       if (mounted) setState(() {}); // refresh badges/state after edits
     });
@@ -815,23 +832,17 @@ class _FormEditorViewState extends State<FormEditorView> {
           // canvas, but rules are stored by id so a later rename cannot silently rewire them.
           // An unresolved name is kept verbatim and surfaces as a dangling reference rather
           // than being dropped.
-          condition: f.conditionField.trim().isEmpty
+          // References were resolved to ids when they were typed; a rename since then
+          // changes the display name only, never the link.
+          condition: f.conditionRef == null
               ? null
               : engine.VisibilityCondition(
-                  parent: engine.FieldRef(
-                      _idForName(f.conditionField.trim()), f.conditionField.trim()),
+                  parent: f.conditionRef!,
                   operator: f.conditionOperator,
                   value: f.conditionValue),
-          calculation: f.calcFields.trim().isEmpty
+          calculation: f.calcRefs.isEmpty
               ? null
-              : engine.Calculation(
-                  function: f.calcFunction,
-                  fields: f.calcFields
-                      .split(',')
-                      .map((e) => e.trim())
-                      .where((e) => e.isNotEmpty)
-                      .map((name) => engine.FieldRef(_idForName(name), name))
-                      .toList()),
+              : engine.Calculation(function: f.calcFunction, fields: f.calcRefs),
         ));
       }
     });
@@ -960,7 +971,13 @@ class _FormEditorViewState extends State<FormEditorView> {
 /// correct values, and writes edits straight back to the [field].
 class _FieldPropertiesSheet extends StatefulWidget {
   final _Field field;
-  const _FieldPropertiesSheet({required this.field});
+
+  /// Turns a field name typed by the author into a stable reference, resolved against the
+  /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
+  /// later rename harmless.
+  final engine.FieldRef Function(String name) resolve;
+
+  const _FieldPropertiesSheet({required this.field, required this.resolve});
 
   @override
   State<_FieldPropertiesSheet> createState() => _FieldPropertiesSheetState();
@@ -1088,7 +1105,11 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
         _sectionTitle(theme, L10n.of(context).sectionLogic),
         Text(L10n.of(context).conditionShowWhen, style: theme.textTheme.bodySmall),
         const SizedBox(height: 4),
-        _field(_condField, L10n.of(context).conditionFieldName, (v) => f.conditionField = v),
+        _field(_condField, L10n.of(context).conditionFieldName, (v) {
+          f.conditionField = v;
+          final name = v.trim();
+          f.conditionRef = name.isEmpty ? null : widget.resolve(name);
+        }),
         DropdownButtonFormField<engine.ConditionOperator>(
           initialValue: f.conditionOperator,
           isExpanded: true,
@@ -1115,7 +1136,15 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
             onChanged: (v) => setState(() => f.calcFunction = v ?? engine.CalculationFunction.sum),
           ),
           const SizedBox(height: 8),
-          _field(_calcFields, L10n.of(context).calcFieldsHint, (v) => f.calcFields = v),
+          _field(_calcFields, L10n.of(context).calcFieldsHint, (v) {
+            f.calcFields = v;
+            f.calcRefs = v
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .map(widget.resolve)
+                .toList();
+          }),
         ],
 
         const SizedBox(height: 8),
