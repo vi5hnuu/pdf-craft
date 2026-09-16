@@ -13,6 +13,7 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'package:form_engine/form_engine.dart' as engine;
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
@@ -57,17 +58,23 @@ extension FieldTypeX on FieldType {
         FieldType.signature => 'signature',
       };
 
-  // ── Per-type config (single source of truth — adding a type touches only here) ──
-  Size get defaultSize => switch (this) {
-        FieldType.multiline => const Size(0.42, 0.12),
-        FieldType.checkbox || FieldType.radio => const Size(0.05, 0.032),
-        FieldType.signature => const Size(0.32, 0.08),
-        _ => const Size(0.36, 0.045),
-      };
-  bool get isToggle => this == FieldType.checkbox || this == FieldType.radio;
-  bool get hasOptions => this == FieldType.dropdown;
-  bool get hasValue => this == FieldType.text || this == FieldType.multiline || this == FieldType.date;
+  // ── Per-type behaviour comes from the engine's registry ──────────────────────
+  // The enum stays as the UI's handle, but every behavioural question is answered
+  // by the registered descriptor, so a type's rules live in exactly one place and
+  // are unit-tested in `packages/form_engine` without a device.
+  engine.FieldTypeDescriptor get _descriptor => formFieldTypes[wire];
+
+  Size get defaultSize => Size(_descriptor.defaultSize.width, _descriptor.defaultSize.height);
+  bool get isToggle => _descriptor.isToggle;
+  bool get hasOptions => _descriptor.acceptsOptions;
+  bool get hasValue => _descriptor.acceptsValue;
+  bool get isGrouped => _descriptor.isGrouped;
 }
+
+/// The field types this app offers. Built once; the engine's registry owns the
+/// per-type rules and this is simply the app's handle to it.
+final engine.FieldTypeRegistry formFieldTypes =
+    engine.FieldTypeRegistry(engine.builtinFieldTypes);
 
 /// A placed form field. [rect] is stored in **fractional** page coordinates
 /// (0..1), which makes it independent of zoom and per-page pixel size.
@@ -533,29 +540,44 @@ class _FormEditorViewState extends State<FormEditorView> {
     });
   }
 
-  Future<void> _onSave() async {
-    final specs = <FormFieldSpec>[];
-    _pageFields.forEach((page, fields) {
-      final pts = _pagePoints[page];
-      if (pts == null) return;
-      for (final f in fields) {
-        specs.add(FormFieldSpec(
-          type: f.type.wire,
-          name: f.type == FieldType.radio ? f.group : f.name,
-          page: page - 1,
-          x: f.rect.left * pts.width,
-          y: f.rect.top * pts.height,
-          width: f.rect.width * pts.width,
-          height: f.rect.height * pts.height,
-          value: f.value.isEmpty ? null : f.value,
-          options: f.type == FieldType.dropdown ? f.options : null,
-          exportValue: f.type == FieldType.radio ? (f.exportValue.isEmpty ? f.name : f.exportValue) : null,
-          fontSize: f.type.hasValue && f.fontSize > 0 ? f.fontSize : null,
-          required: f.required ? true : null,
-          checked: f.type.isToggle ? f.checked : null,
+  /// The placed layout as an engine schema.
+  ///
+  /// This is the editor's output and the thing worth persisting: page-relative
+  /// coordinates, so the same layout survives any zoom or render size, and no
+  /// knowledge of the backend's wire format.
+  engine.FormSchema _toSchema() {
+    final fields = <engine.FormFieldModel>[];
+    _pageFields.forEach((page, pageFields) {
+      for (final f in pageFields) {
+        fields.add(engine.FormFieldModel(
+          id: f.id,
+          typeId: f.type.wire,
+          page: page,
+          rect: engine.FractionalRect(f.rect.left, f.rect.top, f.rect.width, f.rect.height),
+          name: f.name,
+          value: f.value,
+          options: List<String>.from(f.options),
+          group: f.group,
+          exportValue: f.exportValue,
+          fontSize: f.fontSize,
+          required: f.required,
+          checked: f.checked,
         ));
       }
     });
+    return engine.FormSchema(
+      fields: fields,
+      pageSizes: {
+        for (final e in _pagePoints.entries)
+          e.key: engine.PageSizePoints(e.value.width, e.value.height),
+      },
+    );
+  }
+
+  Future<void> _onSave() async {
+    // The mapping to the backend's request lives in the engine, where a golden
+    // test pins the exact JSON the running server parses.
+    final specs = engine.AcroFormSpecMapper(formFieldTypes).toSpecs(_toSchema());
 
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
