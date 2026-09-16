@@ -30,7 +30,7 @@ void main() {
     final runtime = FormRuntime(FormSchema(fields: [
       field('has_company'),
       field('company_name',
-          condition: const VisibilityCondition(parentField: 'has_company', value: 'yes')),
+          condition: VisibilityCondition(parent: FieldRef('has_company'), value: 'yes')),
     ]));
 
     test('a dependent field is hidden until its parent matches', () {
@@ -45,14 +45,14 @@ void main() {
     test('a condition naming a field that does not exist leaves the field visible', () {
       // Hiding it would make part of the form permanently unreachable over a typo.
       final r = FormRuntime(FormSchema(fields: [
-        field('orphan', condition: const VisibilityCondition(parentField: 'ghost', value: 'x')),
+        field('orphan', condition: VisibilityCondition(parent: FieldRef('ghost'), value: 'x')),
       ]));
       expect(r.visibleFields({}).map((f) => f.name), ['orphan']);
     });
 
     test('every operator behaves as written', () {
       bool check(ConditionOperator op, String parent, String value) =>
-          VisibilityCondition(parentField: 'p', operator: op, value: value)
+          VisibilityCondition(parent: const FieldRef('p'), operator: op, value: value)
               .isSatisfiedBy({'p': parent});
 
       expect(check(ConditionOperator.equals, 'a', 'a'), isTrue);
@@ -71,15 +71,15 @@ void main() {
         field('a', format: TextFormat.number),
         field('b', format: TextFormat.number),
         field('total',
-            calculation: const Calculation(
-                function: CalculationFunction.sum, fields: ['a', 'b'])),
+            calculation: Calculation(
+                function: CalculationFunction.sum, fields: [FieldRef('a'), FieldRef('b')])),
       ]));
       expect(runtime.applyCalculations({'a': '2', 'b': '3'})['total'], '5');
     });
 
     test('supports average, product, min and max', () {
       num? run(CalculationFunction fn) =>
-          Calculation(function: fn, fields: ['a', 'b', 'c'])
+          Calculation(function: fn, fields: [FieldRef('a'), FieldRef('b'), FieldRef('c')])
               .evaluate({'a': '2', 'b': '4', 'c': '6'});
 
       expect(run(CalculationFunction.average), 4);
@@ -91,7 +91,7 @@ void main() {
     test('skips non-numeric entries instead of counting them as zero', () {
       // Counting a blank as 0 would make every PRODUCT zero.
       expect(
-        const Calculation(function: CalculationFunction.product, fields: ['a', 'b'])
+        Calculation(function: CalculationFunction.product, fields: [FieldRef('a'), FieldRef('b')])
             .evaluate({'a': '5', 'b': ''}),
         5,
       );
@@ -101,18 +101,18 @@ void main() {
       final runtime = FormRuntime(FormSchema(fields: [
         field('a', format: TextFormat.number),
         field('subtotal',
-            calculation: const Calculation(function: CalculationFunction.sum, fields: ['a'])),
+            calculation: Calculation(function: CalculationFunction.sum, fields: [FieldRef('a')])),
         field('total',
             calculation:
-                const Calculation(function: CalculationFunction.sum, fields: ['subtotal'])),
+                Calculation(function: CalculationFunction.sum, fields: [FieldRef('subtotal')])),
       ]));
       expect(runtime.applyCalculations({'a': '7'})['total'], '7');
     });
 
     test('a circular reference terminates rather than hanging', () {
       final runtime = FormRuntime(FormSchema(fields: [
-        field('x', calculation: const Calculation(fields: ['y'])),
-        field('y', calculation: const Calculation(fields: ['x'])),
+        field('x', calculation: Calculation(fields: [FieldRef('y')])),
+        field('y', calculation: Calculation(fields: [FieldRef('x')])),
       ]));
       expect(() => runtime.applyCalculations({'x': '1', 'y': '2'}), returnsNormally);
     });
@@ -120,7 +120,7 @@ void main() {
     test('whole numbers do not gain a trailing decimal', () {
       final runtime = FormRuntime(FormSchema(fields: [
         field('a'),
-        field('t', calculation: const Calculation(fields: ['a'])),
+        field('t', calculation: Calculation(fields: [FieldRef('a')])),
       ]));
       expect(runtime.applyCalculations({'a': '4'})['t'], '4');
     });
@@ -138,7 +138,7 @@ void main() {
         field('has_company'),
         field('company_name',
             required: true,
-            condition: const VisibilityCondition(parentField: 'has_company', value: 'yes')),
+            condition: VisibilityCondition(parent: FieldRef('has_company'), value: 'yes')),
       ]));
       expect(runtime.validate({'has_company': 'no'}), isEmpty);
       expect(runtime.validate({'has_company': 'yes'}).single.problem, ValidationProblem.required);

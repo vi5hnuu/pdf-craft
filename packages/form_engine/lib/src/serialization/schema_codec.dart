@@ -2,6 +2,7 @@ import '../logic/calculation.dart';
 import '../logic/condition.dart';
 import '../model/field_rules.dart';
 import '../model/form_field.dart';
+import '../model/recipient.dart';
 import '../model/form_schema.dart';
 import '../model/geometry.dart';
 
@@ -15,7 +16,12 @@ class SchemaCodec {
   const SchemaCodec();
 
   Map<String, Object?> encode(FormSchema schema) => {
-        'version': schema.version,
+        'version': FormSchema.currentVersion,
+        if (schema.documentId != null) 'document_id': schema.documentId,
+        if (schema.title != null) 'title': schema.title,
+        'updated_at': (schema.updatedAt ?? DateTime.now().toUtc()).toIso8601String(),
+        if (schema.recipients.isNotEmpty)
+          'recipients': schema.recipients.map((r) => r.toJson()).toList(),
         'page_sizes': {
           for (final e in schema.pageSizes.entries)
             e.key.toString(): {'width': e.value.width, 'height': e.value.height},
@@ -71,6 +77,13 @@ class SchemaCodec {
 
     return FormSchema(
       version: FormSchema.currentVersion,
+      documentId: migrated['document_id'] as String?,
+      title: migrated['title'] as String?,
+      updatedAt: DateTime.tryParse(migrated['updated_at'] as String? ?? ''),
+      recipients: ((migrated['recipients'] as List?) ?? const [])
+          .cast<Map<String, Object?>>()
+          .map(Recipient.fromJson)
+          .toList(),
       pageSizes: {
         for (final e in rawSizes.entries)
           int.parse(e.key as String): PageSizePoints(
@@ -130,8 +143,51 @@ class SchemaCodec {
     );
   }
 
-  /// Applies migrations in order. Empty today (v1 is the first format); the hook
-  /// exists so the first breaking change is a small addition here rather than a
-  /// redesign of loading.
-  Map<String, Object?> _migrate(Map<String, Object?> json, {required int from}) => json;
+  /// Applies migrations in order, oldest first.
+  Map<String, Object?> _migrate(Map<String, Object?> json, {required int from}) {
+    var result = json;
+    if (from < 2) result = _v1ToV2(result);
+    return result;
+  }
+
+  /// v1 -> v2: rules referenced field *names*; they now reference ids.
+  ///
+  /// Every v1 draft is rewritten by looking each name up in the same document. A name that no
+  /// longer resolves is left as-is and surfaces later as a dangling reference, which is
+  /// honest — it was already broken, and silently dropping the rule would hide that.
+  Map<String, Object?> _v1ToV2(Map<String, Object?> json) {
+    final fields = ((json['fields'] as List?) ?? const []).cast<Map<String, Object?>>();
+    final idByName = <String, String>{
+      for (final f in fields)
+        if (f['name'] is String && f['id'] is String) f['name'] as String: f['id'] as String,
+    };
+
+    Object? refFor(Object? name) {
+      if (name is! String) return name;
+      final id = idByName[name];
+      return id == null ? {'id': name, 'name': name} : {'id': id, 'name': name};
+    }
+
+    for (final f in fields) {
+      final condition = f['condition'];
+      if (condition is Map) {
+        // A fresh map, not cast(): a cast view keeps the source's value type, so writing the
+        // new reference object into a slot that held a String throws at runtime.
+        final map = Map<String, Object?>.of(condition.cast<String, Object?>());
+        if (map['parent'] == null && map['parent_field'] != null) {
+          map['parent'] = refFor(map['parent_field']);
+          map.remove('parent_field');
+        }
+        f['condition'] = map;
+      }
+      final calculation = f['calculation'];
+      if (calculation is Map) {
+        final map = Map<String, Object?>.of(calculation.cast<String, Object?>());
+        final names = map['fields'];
+        if (names is List) map['fields'] = names.map(refFor).toList();
+        f['calculation'] = map;
+      }
+    }
+    return json;
+  }
 }

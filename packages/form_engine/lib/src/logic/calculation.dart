@@ -5,6 +5,8 @@
 /// readers while the app computes it itself for the mobile ones that ignore script.
 library;
 
+import '../model/field_ref.dart';
+
 enum CalculationFunction {
   sum,
   average,
@@ -28,8 +30,8 @@ enum CalculationFunction {
 class Calculation {
   final CalculationFunction function;
 
-  /// Names of the fields feeding the calculation.
-  final List<String> fields;
+  /// The fields feeding the calculation, by **id**.
+  final List<FieldRef> fields;
 
   const Calculation({this.function = CalculationFunction.sum, this.fields = const []});
 
@@ -41,8 +43,8 @@ class Calculation {
   /// silently counts an empty box as 0 in a PRODUCT would always be 0.
   num? evaluate(Map<String, String> values) {
     final numbers = <num>[];
-    for (final name in fields) {
-      final parsed = num.tryParse((values[name] ?? '').trim());
+    for (final ref in fields) {
+      final parsed = num.tryParse((values[ref.id] ?? '').trim());
       if (parsed != null) numbers.add(parsed);
     }
     if (numbers.isEmpty) return null;
@@ -55,10 +57,12 @@ class Calculation {
     };
   }
 
-  Map<String, Object?> toJson() => {'function': function.name, 'fields': fields};
+  Map<String, Object?> toJson() =>
+      {'function': function.name, 'fields': fields.map((f) => f.toJson()).toList()};
 
   static Calculation fromJson(Map<String, Object?> json) => Calculation(
         function: CalculationFunction.fromWire(json['function'] as String?),
-        fields: (json['fields'] as List?)?.cast<String>().toList() ?? const [],
+        // Entries may be bare strings in pre-id drafts; FieldRef handles both shapes.
+        fields: (json['fields'] as List?)?.map(FieldRef.fromJson).toList() ?? const [],
       );
 }

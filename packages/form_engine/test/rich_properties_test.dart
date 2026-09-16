@@ -22,9 +22,9 @@ void main() {
         format: TextFormat.number,
         validation: const FieldValidation(pattern: r'^\d+$', min: 0, max: 1000),
         condition: const VisibilityCondition(
-            parentField: 'paying', operator: ConditionOperator.equals, value: 'yes'),
-        calculation:
-            const Calculation(function: CalculationFunction.sum, fields: ['a', 'b']),
+            parent: FieldRef('paying'), operator: ConditionOperator.equals, value: 'yes'),
+        calculation: const Calculation(
+            function: CalculationFunction.sum, fields: [FieldRef('a'), FieldRef('b')]),
       );
 
   FormSchema schemaOf(List<FormFieldModel> fields) =>
@@ -42,9 +42,9 @@ void main() {
     expect(decoded.validation.pattern, r'^\d+$');
     expect(decoded.validation.min, 0);
     expect(decoded.validation.max, 1000);
-    expect(decoded.condition!.parentField, 'paying');
+    expect(decoded.condition!.parent.id, 'paying');
     expect(decoded.calculation!.function, CalculationFunction.sum);
-    expect(decoded.calculation!.fields, ['a', 'b']);
+    expect(decoded.calculation!.fields.map((f) => f.id), ['a', 'b']);
   });
 
   test('the wire format carries the new properties for the backend', () {
@@ -57,7 +57,8 @@ void main() {
     expect(spec['alignment'], 2, reason: 'right maps to PDF quadding 2');
     expect(spec['format'], 'number');
     expect(spec['validation_pattern'], r'^\d+$');
-    expect((spec['condition'] as Map)['parent_field'], 'paying');
+    expect((spec['condition'] as Map)['parent_field'], 'paying',
+        reason: 'a dangling id is sent verbatim so the failure stays visible');
     expect((spec['calculation'] as Map)['function'], 'SUM',
         reason: 'the PDF helper takes SUM/AVG/PRD/MIN/MAX');
   });

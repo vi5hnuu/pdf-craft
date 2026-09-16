@@ -22,16 +22,25 @@ class AcroFormSpecMapper {
   /// points the fractional rect cannot be converted, and guessing would place
   /// the field somewhere wrong rather than nowhere.
   List<Map<String, Object?>> toSpecs(FormSchema schema) {
+    // A rule's target may itself be a radio, whose PDF name is its group.
+    final byId = schema.byId;
+    String nameFor(String id) {
+      final target = byId[id];
+      if (target == null) return id; // dangling: send the id so the failure is visible
+      return registry[target.typeId].isGrouped ? target.group : target.name;
+    }
+
     final specs = <Map<String, Object?>>[];
     for (final field in schema.fields) {
       final points = schema.pageSizes[field.page];
       if (points == null) continue;
-      specs.add(_specFor(field, points));
+      specs.add(_specFor(field, points, nameFor));
     }
     return specs;
   }
 
-  Map<String, Object?> _specFor(FormFieldModel f, PageSizePoints points) {
+  Map<String, Object?> _specFor(
+      FormFieldModel f, PageSizePoints points, String Function(String) nameFor) {
     final type = registry[f.typeId];
 
     // A radio group is a single PDF field with one widget per option, so the
@@ -71,11 +80,19 @@ class AcroFormSpecMapper {
       if (f.format != TextFormat.none) 'format': f.format.name,
       if (f.validation.pattern != null && f.validation.pattern!.isNotEmpty)
         'validation_pattern': f.validation.pattern,
-      if (f.condition != null) 'condition': f.condition!.toJson(),
+      // Rules travel as ids, but the PDF's own scripts address fields by NAME, so the
+      // resolved names are sent alongside. Resolution happens here, where the whole schema
+      // is in hand, rather than leaving the backend to guess.
+      if (f.condition != null)
+        'condition': {
+          'parent_field': nameFor(f.condition!.parent.id),
+          'operator': f.condition!.operator.name,
+          'value': f.condition!.value,
+        },
       if (f.calculation != null && !f.calculation!.isEmpty)
         'calculation': {
           'function': f.calculation!.function.acrobatName,
-          'fields': f.calculation!.fields,
+          'fields': f.calculation!.fields.map((r) => nameFor(r.id)).toList(),
         },
     };
   }

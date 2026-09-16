@@ -2,6 +2,8 @@
 /// settled on: a field appears only once another field holds a particular value.
 library;
 
+import '../model/field_ref.dart';
+
 enum ConditionOperator {
   equals,
   notEquals,
@@ -17,24 +19,23 @@ enum ConditionOperator {
 
 /// "Show this field when [parentField] [operator] [value]".
 class VisibilityCondition {
-  /// Name of the field this one watches. Names, not ids, because that is what the PDF
-  /// carries and what a calculation would reference too.
-  final String parentField;
+  /// The field this one watches, by **id**. Ids survive a rename; names do not.
+  final FieldRef parent;
   final ConditionOperator operator;
   final String value;
 
   const VisibilityCondition({
-    required this.parentField,
+    required this.parent,
     this.operator = ConditionOperator.equals,
     this.value = '',
   });
 
   /// Whether the dependent field should be visible for the given form values.
   ///
-  /// An unknown parent counts as empty rather than as a failure: a half-built form should
-  /// still be previewable.
+  /// [values] is keyed by field **id**. An unknown parent counts as empty rather than as a
+  /// failure: a half-built form should still be previewable.
   bool isSatisfiedBy(Map<String, String> values) {
-    final actual = values[parentField] ?? '';
+    final actual = values[parent.id] ?? '';
     switch (operator) {
       case ConditionOperator.equals:
         return actual == value;
@@ -56,13 +57,14 @@ class VisibilityCondition {
   static double _asNumber(String raw) => double.tryParse(raw.trim()) ?? 0;
 
   Map<String, Object?> toJson() => {
-        'parent_field': parentField,
+        'parent': parent.toJson(),
         'operator': operator.name,
         'value': value,
       };
 
   static VisibilityCondition fromJson(Map<String, Object?> json) => VisibilityCondition(
-        parentField: json['parent_field'] as String? ?? '',
+        // 'parent_field' is the pre-id spelling, still read so older drafts load.
+        parent: FieldRef.fromJson(json['parent'] ?? json['parent_field'] ?? ''),
         operator: ConditionOperator.fromWire(json['operator'] as String?),
         value: json['value'] as String? ?? '',
       );

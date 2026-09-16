@@ -236,11 +236,15 @@ class _FormEditorViewState extends State<FormEditorView> {
                 ..alignment = f.alignment
                 ..multiSelect = f.multiSelect
                 ..validationPattern = f.validation.pattern ?? ''
-                ..conditionField = f.condition?.parentField ?? ''
+                ..conditionField = f.condition == null
+                    ? ''
+                    : _nameForId(schema, f.condition!.parent)
                 ..conditionOperator = f.condition?.operator ?? engine.ConditionOperator.equals
                 ..conditionValue = f.condition?.value ?? ''
                 ..calcFunction = f.calculation?.function ?? engine.CalculationFunction.sum
-                ..calcFields = (f.calculation?.fields ?? const []).join(', '),
+                ..calcFields = (f.calculation?.fields ?? const <engine.FieldRef>[])
+                    .map((r) => _nameForId(schema, r))
+                    .join(', '),
             );
       }
     });
@@ -295,6 +299,27 @@ class _FormEditorViewState extends State<FormEditorView> {
 
   /// Adds a field of [type] near the page centre, cascaded so successive fields
   /// don't stack exactly on top of one another, then selects it.
+  /// Resolves a field name typed in the inspector to that field's id.
+  ///
+  /// Falls back to the name itself when nothing matches, so a rule typed before its target
+  /// exists is preserved and reported as dangling rather than silently discarded.
+  String _idForName(String name) {
+    for (final pageFields in _pageFields.values) {
+      for (final field in pageFields) {
+        if (field.name == name) return field.id;
+      }
+    }
+    return name;
+  }
+
+  /// The display name for a stored reference, for showing in the inspector.
+  String _nameForId(engine.FormSchema schema, engine.FieldRef ref) {
+    for (final field in schema.fields) {
+      if (field.id == ref.id) return field.name;
+    }
+    return ref.name ?? ref.id; // deleted target: show what it used to be
+  }
+
   /// Records the current layout so the next change can be undone.
   void _pushUndo() {
     _undoStack.add(const engine.SchemaCodec().encode(_toSchema()));
@@ -786,10 +811,15 @@ class _FormEditorViewState extends State<FormEditorView> {
               engine.TextFormat.none,
           validation: engine.FieldValidation(
               pattern: f.validationPattern.isEmpty ? null : f.validationPattern),
-          condition: f.conditionField.isEmpty
+          // The inspector takes field *names* because that is what the author sees on the
+          // canvas, but rules are stored by id so a later rename cannot silently rewire them.
+          // An unresolved name is kept verbatim and surfaces as a dangling reference rather
+          // than being dropped.
+          condition: f.conditionField.trim().isEmpty
               ? null
               : engine.VisibilityCondition(
-                  parentField: f.conditionField,
+                  parent: engine.FieldRef(
+                      _idForName(f.conditionField.trim()), f.conditionField.trim()),
                   operator: f.conditionOperator,
                   value: f.conditionValue),
           calculation: f.calcFields.trim().isEmpty
@@ -800,6 +830,7 @@ class _FormEditorViewState extends State<FormEditorView> {
                       .split(',')
                       .map((e) => e.trim())
                       .where((e) => e.isNotEmpty)
+                      .map((name) => engine.FieldRef(_idForName(name), name))
                       .toList()),
         ));
       }
