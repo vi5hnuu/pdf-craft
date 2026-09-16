@@ -880,5 +880,8 @@
   "formDraftFoundTitle": "सेव न किए गए फ़ील्ड मिले",
   "formDraftFoundBody": "आपने पिछली बार इस PDF पर {count} फ़ील्ड लगाए थे। उन्हें वापस लाएँ?",
   "formDraftRestore": "वापस लाएँ",
-  "formDraftStartFresh": "नए सिरे से शुरू करें"
+  "formDraftStartFresh": "नए सिरे से शुरू करें",
+  "gateWatchAd": "क्रेडिट के लिए छोटा विज्ञापन देखें",
+  "gateAdReward": "इनाम भेजा जा रहा है — आपके क्रेडिट कुछ ही देर में दिखेंगे।",
+  "gateAdUnavailable": "अभी कोई विज्ञापन उपलब्ध नहीं है। बाद में कोशिश करें।"
 }

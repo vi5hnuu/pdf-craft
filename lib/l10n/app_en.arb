@@ -1407,5 +1407,8 @@
     }
   },
   "formDraftRestore": "Restore",
-  "formDraftStartFresh": "Start fresh"
+  "formDraftStartFresh": "Start fresh",
+  "gateWatchAd": "Watch a short ad for credits",
+  "gateAdReward": "Reward is on its way — your credits will appear shortly.",
+  "gateAdUnavailable": "No ad available right now. Please try again later."
 }

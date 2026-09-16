@@ -8,6 +8,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
 import 'package:pdf_craft/singletons/LoggerSingleton.dart';
 import 'package:pdf_craft/singletons/RewardedAdManager.dart';
+import 'package:pdf_craft/singletons/RewardedInterstitialAdManager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/AppLogo.dart';
@@ -25,12 +26,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void initState() {
-    MobileAds.instance.updateRequestConfiguration(
-      RequestConfiguration(
-        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
-      ),
-    );
-
     // Navigate as soon as ad init completes — no fixed minimum delay (the
     // splash previously always waited the full timer). MobileAds init is the
     // only gate.
@@ -43,6 +38,9 @@ class _SplashScreenState extends State<SplashScreen> {
       AppOpenAdManager().loadAd();
       // Preload a rewarded ad for the first heavy-tool gate.
       RewardedAdManager().loadAd();
+      // And one rewarded interstitial, so the out-of-credits dialog can offer it
+      // instead of dead-ending at "buy credits".
+      RewardedInterstitialAdManager().loadAd();
       LoggerSingleton().logger.i('Ads ${value.adapterStatuses.keys.join(',')} : ${value.adapterStatuses.values.join(',')}');
     });
     // Show the brand briefly so the splash doesn't just flash, then continue.
