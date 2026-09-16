@@ -1,0 +1,13 @@
+name: form_engine
+description: >-
+  Pure-Dart core for the PDF form builder: the field schema, the field-type
+  registry that makes new field types a one-line addition, and the codecs that
+  serialise a schema to storage and to the backend's AcroForm wire format.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.5.4
+
+dev_dependencies:
+  test: ^1.25.0

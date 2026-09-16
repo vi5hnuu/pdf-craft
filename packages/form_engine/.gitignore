@@ -1,0 +1,3 @@
+# Library package: the lock file is not checked in (the app's lock pins versions)
+.dart_tool/
+pubspec.lock
