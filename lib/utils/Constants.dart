@@ -1,17 +1,21 @@
 import 'package:flutter/foundation.dart';
 
 class Constants {
-  // Dev host for the backends.
-  //   - Android emulator  → 10.0.2.2 (canonical alias for the host machine; never changes)
-  //   - iOS simulator     → localhost / 127.0.0.1
-  //   - Physical device   → your computer's LAN IP (e.g. 192.168.x.x) on the same Wi-Fi
-  // Debug cleartext HTTP is permitted for any host (see network_security_config.xml).
-  // 10.0.2.2 is the Android emulator's alias for the host machine and works on any
-  // developer's setup. Override with --dart-define=DEV_HOST=192.168.x.x when running on a
-  // physical device. It was previously hardcoded to one machine's LAN address, which broke
-  // for everyone else and on the emulator.
+  // Dev host for the backends. Debug cleartext HTTP is permitted for any host
+  // (see network_security_config.xml).
+  //
+  // Defaults to 127.0.0.1, which reaches the developer's machine from an emulator *and*
+  // from a physical device once the ports are forwarded:
+  //
+  //     adb reverse tcp:8081 tcp:8081   # auth
+  //     adb reverse tcp:8082 tcp:8082   # api
+  //
+  // The previous default, 10.0.2.2, is the Android *emulator's* alias for the host and
+  // routes nowhere on a real handset: every request simply hung until it timed out, which
+  // looked like a broken server rather than a misconfigured host. Overriding with a LAN IP
+  // still works: --dart-define=DEV_HOST=192.168.x.x
   static const String _devHost =
-      String.fromEnvironment('DEV_HOST', defaultValue: '10.0.2.2');
+      String.fromEnvironment('DEV_HOST', defaultValue: '127.0.0.1');
 
   static String get baseUrl => kDebugMode
       ? "http://$_devHost:8082/api/v1"

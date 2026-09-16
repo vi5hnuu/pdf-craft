@@ -25,7 +25,14 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loaded ? refreshBalance() : load();
+      if (!_loaded) {
+        load();
+        return;
+      }
+      refreshBalance();
+      // Repair a cost table that an earlier attempt failed to fetch, so a single
+      // start-up blip does not leave every tool looking free until the app restarts.
+      if (!_costsLoaded) _reloadCosts();
     }
   }
 
@@ -34,6 +41,15 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
   int _balance = 0;
   Map<String, ToolCost> _costs = {}; // toolId -> full pricing row
   bool _loaded = false;
+
+  /// Whether the cost table was actually fetched.
+  ///
+  /// Separate from [_loaded]: start-up races the guest token, so /credits/costs often
+  /// answers 401 on a cold start. That left the table empty while [_loaded] still said
+  /// "done", so every tool priced itself at 0, [CreditGate] saw a free tool and skipped
+  /// the confirm-spend dialog — the user was never told a tool costs credits, for the
+  /// whole session, while the server charged anyway.
+  bool _costsLoaded = false;
   String? _lastUserId;
 
   void _onAuthChanged() {
@@ -41,6 +57,9 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
     if (id != _lastUserId) {
       _lastUserId = id;
       refreshBalance(); // different account → its own balance
+      // Now that a token exists, retry the pricing that a cold start could not fetch.
+      // Also re-read it on a genuine account switch, since pricing can differ per account.
+      _reloadCosts();
     }
   }
 
@@ -97,10 +116,22 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
       _costs = {
         for (final row in list) row['toolId'] as String: ToolCost.fromJson(row)
       };
+      _costsLoaded = true;
     } catch (e) {
       LoggerSingleton().logger.w('Costs fetch failed: $e');
     }
   }
+
+  /// Re-fetches the cost table and tells listeners, so any screen already showing a
+  /// price picks the real one up.
+  Future<void> _reloadCosts() async {
+    await _loadCosts();
+    if (_costsLoaded) notifyListeners();
+  }
+
+  /// Whether the pricing table is known. Callers that must not imply "free" when the
+  /// price is merely unknown can check this.
+  bool get costsLoaded => _costsLoaded;
 
   /// Claims the daily free allowance. Returns the granted amount (throws on 409 if already claimed).
   Future<int> claimDaily() async {
