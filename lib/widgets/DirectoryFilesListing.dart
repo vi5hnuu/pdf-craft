@@ -113,6 +113,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           router.pop();
         } else {
           setState(() {
+            _clearNameFilterForNavigation();
             pathToDirectory.removeLast();
             _loadDirectoryFiles(pathToDirectory.last);
           });
@@ -258,6 +259,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                     onTap: i < pathToDirectory.length - 1
                         ? () {
                             setState(() {
+                              _clearNameFilterForNavigation();
                               pathToDirectory =
                                   pathToDirectory.sublist(0, i + 1);
                               _loadDirectoryFiles(pathToDirectory.last);
@@ -371,6 +373,19 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     if (file is Directory) return false;
     if (_browseMode) return SelectionService().contains(file.path);
     return selectedFiles.any((selectedFile) => selectedFile.path == file.path);
+  }
+
+  /// Drops the name filter when the listing moves to a different folder.
+  ///
+  /// The filter describes what you were looking for *here*; carried into the next folder it
+  /// silently hides everything, so opening a folder full of files showed "No matching files"
+  /// and the folder looked empty. The file-type filter is deliberately kept — that one reads
+  /// as a browsing preference rather than a one-off search.
+  void _clearNameFilterForNavigation() {
+    if (_nameFilter.isEmpty && _searchController.text.isEmpty) return;
+    _filterDebouncer.cancel();
+    _searchController.clear();
+    _nameFilter = '';
   }
 
   _loadDirectoryFiles(String path) {
@@ -601,6 +616,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   _onItemClick({required FileSystemEntity file}) async {
     try {
       if (file is Directory) {
+        setState(_clearNameFilterForNavigation);
         _loadDirectoryFiles((pathToDirectory..add(file.path)).last);
         return;
       }

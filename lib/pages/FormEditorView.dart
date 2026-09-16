@@ -245,9 +245,25 @@ class _FormEditorViewState extends State<FormEditorView> {
   /// don't stack exactly on top of one another, then selects it.
   void _addField(FieldType type) {
     final size = type.defaultSize;
-    final step = _fields.length % 6;
-    final left = (0.12 + step * 0.03).clamp(0.0, 1 - size.width);
-    final top = (0.18 + step * 0.05).clamp(0.0, 1 - size.height);
+    // Stack each new field under the previous one instead of nudging it by a fixed step.
+    // The old step was 0.05 of the page while a Paragraph field is 0.12 tall, so placing a
+    // few in a row buried them in each other and every one had to be dragged apart first.
+    const gap = 0.012;
+    double left = 0.12;
+    double top = 0.18;
+    if (_fields.isNotEmpty) {
+      final last = _fields.last.rect;
+      left = last.left;
+      top = last.bottom + gap;
+      if (top + size.height > 1.0) {
+        // Off the bottom of the page — start a fresh column rather than stacking into the margin.
+        top = 0.18;
+        left = last.left + last.width + gap;
+        if (left + size.width > 1.0) left = 0.12;
+      }
+    }
+    left = left.clamp(0.0, 1 - size.width);
+    top = top.clamp(0.0, 1 - size.height);
     final field = _Field(type: type, rect: Rect.fromLTWH(left, top, size.width, size.height), name: '${type.wire}_${_autoName++}');
     setState(() {
       _fields.add(field);
@@ -564,6 +580,11 @@ class _FormEditorViewState extends State<FormEditorView> {
       );
     }
 
+    // The three 26px handles sit on the corners, which is fine on a text box but hides a
+    // checkbox entirely — the field it is meant to be editing disappears under its own
+    // controls. On a small field they move fully outside the bounds instead.
+    final outward = (w < 90 || h < 64) ? 14.0 : 0.0;
+
     return Stack(clipBehavior: Clip.none, children: [
       // Move body.
       Positioned(
@@ -579,18 +600,24 @@ class _FormEditorViewState extends State<FormEditorView> {
         ),
       ),
       // Edit (top-left).
-      Positioned(left: screenTL.dx - 13, top: screenTL.dy - 13, child: circle(Icons.edit, primary, () => _showProperties(f))),
+      Positioned(
+          left: screenTL.dx - 13 - outward,
+          top: screenTL.dy - 13 - outward,
+          child: circle(Icons.edit, primary, () => _showProperties(f))),
       // Delete (top-right).
       Positioned(
-        left: screenTL.dx + w - 13,
-        top: screenTL.dy - 13,
+        left: screenTL.dx + w - 13 + outward,
+        top: screenTL.dy - 13 - outward,
         child: circle(Icons.close, Colors.red, () => setState(() {
               _fields.remove(f);
               _selectedId = null;
             })),
       ),
       // Resize (bottom-right).
-      Positioned(left: screenTL.dx + w - 13, top: screenTL.dy + h - 13, child: circle(Icons.open_in_full, primary, null, onDrag: resize)),
+      Positioned(
+          left: screenTL.dx + w - 13 + outward,
+          top: screenTL.dy + h - 13 + outward,
+          child: circle(Icons.open_in_full, primary, null, onDrag: resize)),
     ]);
   }
 
