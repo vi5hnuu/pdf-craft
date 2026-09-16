@@ -373,9 +373,29 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     return selectedFiles.any((selectedFile) => selectedFile.path == file.path);
   }
 
+  /// Path the listing last asked the bloc for, so a *move* to another folder can be told
+  /// apart from a refresh of the current one.
+  String? _lastLoadedPath;
+
   _loadDirectoryFiles(String path) {
     if (bloc.state.isLoading(forr: HttpStates.LOAD_DIRECTORY_FILES)) return;
-    bloc.add(LoadDirectoryFilesEvent(path: pathToDirectory.last));
+    final target = pathToDirectory.last;
+
+    // Drop the name filter whenever the listing moves to a different folder. The filter
+    // describes what you were looking for *there*; carried across it silently hides
+    // everything, so opening a folder full of files showed "No matching files" and the
+    // folder looked empty. Done here rather than at each navigation site because every
+    // one of them funnels through this method — missing a single call site reintroduces
+    // the bug. A refresh of the same folder (after a rename or delete) keeps the filter.
+    // The file-type chip is deliberately kept: that reads as a browsing preference.
+    if (_lastLoadedPath != null && _lastLoadedPath != target) {
+      _filterDebouncer.cancel();
+      _searchController.clear();
+      _nameFilter = '';
+    }
+    _lastLoadedPath = target;
+
+    bloc.add(LoadDirectoryFilesEvent(path: target));
   }
 
   // Shows a bottom sheet with rename (and future actions) for long-pressed items

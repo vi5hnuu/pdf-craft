@@ -13,15 +13,23 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'dart:async';
+
+import 'package:form_engine/form_engine.dart' as engine;
+import 'package:pdf_craft/services/forms/FormDraftStore.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
-enum FieldType { text, multiline, checkbox, radio, dropdown, date, signature }
+enum FieldType { text, multiline, number, email, phone, checkbox, radio, dropdown, listbox, date, signature }
 
 extension FieldTypeX on FieldType {
   String get label => switch (this) {
         FieldType.text => 'Text',
         FieldType.multiline => 'Paragraph',
+        FieldType.number => 'Number',
+        FieldType.email => 'Email',
+        FieldType.phone => 'Phone',
+        FieldType.listbox => 'List',
         FieldType.checkbox => 'Checkbox',
         FieldType.radio => 'Radio',
         FieldType.dropdown => 'Dropdown',
@@ -32,6 +40,10 @@ extension FieldTypeX on FieldType {
   String localizedLabel(BuildContext context) => switch (this) {
         FieldType.text => L10n.of(context).fieldText,
         FieldType.multiline => L10n.of(context).fieldParagraph,
+        FieldType.number => L10n.of(context).fieldNumber,
+        FieldType.email => L10n.of(context).fieldEmail,
+        FieldType.phone => L10n.of(context).fieldPhone,
+        FieldType.listbox => L10n.of(context).fieldList,
         FieldType.checkbox => L10n.of(context).fieldCheckbox,
         FieldType.radio => L10n.of(context).fieldRadio,
         FieldType.dropdown => L10n.of(context).fieldDropdown,
@@ -41,6 +53,10 @@ extension FieldTypeX on FieldType {
   IconData get icon => switch (this) {
         FieldType.text => Icons.text_fields,
         FieldType.multiline => Icons.notes,
+        FieldType.number => Icons.pin_outlined,
+        FieldType.email => Icons.alternate_email,
+        FieldType.phone => Icons.phone_outlined,
+        FieldType.listbox => Icons.list_alt_outlined,
         FieldType.checkbox => Icons.check_box_outlined,
         FieldType.radio => Icons.radio_button_checked,
         FieldType.dropdown => Icons.arrow_drop_down_circle_outlined,
@@ -50,6 +66,10 @@ extension FieldTypeX on FieldType {
   String get wire => switch (this) {
         FieldType.text => 'text',
         FieldType.multiline => 'multiline',
+        FieldType.number => 'number',
+        FieldType.email => 'email',
+        FieldType.phone => 'phone',
+        FieldType.listbox => 'listbox',
         FieldType.checkbox => 'checkbox',
         FieldType.radio => 'radio',
         FieldType.dropdown => 'dropdown',
@@ -57,17 +77,23 @@ extension FieldTypeX on FieldType {
         FieldType.signature => 'signature',
       };
 
-  // ── Per-type config (single source of truth — adding a type touches only here) ──
-  Size get defaultSize => switch (this) {
-        FieldType.multiline => const Size(0.42, 0.12),
-        FieldType.checkbox || FieldType.radio => const Size(0.05, 0.032),
-        FieldType.signature => const Size(0.32, 0.08),
-        _ => const Size(0.36, 0.045),
-      };
-  bool get isToggle => this == FieldType.checkbox || this == FieldType.radio;
-  bool get hasOptions => this == FieldType.dropdown;
-  bool get hasValue => this == FieldType.text || this == FieldType.multiline || this == FieldType.date;
+  // ── Per-type behaviour comes from the engine's registry ──────────────────────
+  // The enum stays as the UI's handle, but every behavioural question is answered
+  // by the registered descriptor, so a type's rules live in exactly one place and
+  // are unit-tested in `packages/form_engine` without a device.
+  engine.FieldTypeDescriptor get _descriptor => formFieldTypes[wire];
+
+  Size get defaultSize => Size(_descriptor.defaultSize.width, _descriptor.defaultSize.height);
+  bool get isToggle => _descriptor.isToggle;
+  bool get hasOptions => _descriptor.acceptsOptions;
+  bool get hasValue => _descriptor.acceptsValue;
+  bool get isGrouped => _descriptor.isGrouped;
 }
+
+/// The field types this app offers. Built once; the engine's registry owns the
+/// per-type rules and this is simply the app's handle to it.
+final engine.FieldTypeRegistry formFieldTypes =
+    engine.FieldTypeRegistry(engine.builtinFieldTypes);
 
 /// A placed form field. [rect] is stored in **fractional** page coordinates
 /// (0..1), which makes it independent of zoom and per-page pixel size.
@@ -83,6 +109,33 @@ class _Field {
   double fontSize = 0;
   bool required = false;
   bool checked = false; // checkbox/radio prefill (on by default)
+
+  // ── Rich properties, carried straight through to the engine schema ──────────────
+  String tooltip = '';
+  bool readOnly = false;
+  int maxLength = 0; // 0 = no cap
+  bool comb = false;
+  engine.TextAlignment alignment = engine.TextAlignment.left;
+  bool multiSelect = false;
+  String validationPattern = '';
+  /// What the author typed in the inspector, shown back to them verbatim.
+  ///
+  /// The authoritative link is [conditionRef] / [calcRefs]: those hold the resolved **id**,
+  /// captured the moment the name is entered. Resolving at save time instead meant that
+  /// renaming the target first left the lookup with nothing to find, and the rule silently
+  /// degraded to a dangling reference.
+  String conditionField = '';
+  engine.ConditionOperator conditionOperator = engine.ConditionOperator.equals;
+  String conditionValue = '';
+  engine.CalculationFunction calcFunction = engine.CalculationFunction.sum;
+  /// Comma-separated field names feeding the calculation, as typed.
+  String calcFields = '';
+
+  /// Resolved reference for [conditionField], captured when it was entered.
+  engine.FieldRef? conditionRef;
+
+  /// Resolved references for [calcFields], captured when they were entered.
+  List<engine.FieldRef> calcRefs = const [];
 
   _Field({required this.type, required this.rect, required this.name}) : id = UniqueKey().toString();
 }
@@ -112,8 +165,17 @@ class _FormEditorViewState extends State<FormEditorView> {
   String? _selectedId;
   int _autoName = 1;
 
+  /// Snapshots of the whole layout, newest last.
+  ///
+  /// Placing and dragging fields is fiddly on a phone and a mistaken delete used to mean
+  /// re-placing the field by hand. Encoded schemas are cheap and avoid any risk of the
+  /// snapshot sharing mutable state with the live fields.
+  final List<Map<String, Object?>> _undoStack = [];
+  static const _maxUndo = 30;
+
   final TransformationController _tc = TransformationController();
   CancelToken? _cancelToken;
+  FormDraftStore? _drafts;
 
   @override
   void initState() {
@@ -122,11 +184,94 @@ class _FormEditorViewState extends State<FormEditorView> {
     _open();
   }
 
+  /// Restores a layout left behind on a previous visit to this document.
+  ///
+  /// Placing fields is slow, deliberate work, so it is not thrown away when the
+  /// editor closes. The draft is offered rather than applied silently: the user
+  /// may well have come back to start over.
+  Future<void> _restoreDraft() async {
+    final store = _drafts = await FormDraftStore.forApp();
+    final draft = await store.load(widget.file.path);
+    if (draft == null || draft.fields.isEmpty || !mounted) return;
+
+    final restore = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx).formDraftFoundTitle),
+        content: Text(L10n.of(ctx).formDraftFoundBody(draft.fields.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.of(ctx).formDraftStartFresh),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.of(ctx).formDraftRestore),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (restore == true) {
+      _applySchema(draft);
+    } else {
+      await store.delete(widget.file.path);
+    }
+  }
+
+  /// Rebuilds the editor's fields from a stored schema.
+  void _applySchema(engine.FormSchema schema) {
+    setState(() {
+      _pageFields.clear();
+      for (final f in schema.fields) {
+        final type = FieldType.values.firstWhere(
+          (t) => t.wire == f.typeId,
+          // A type this build does not know about (an older app opening a newer
+          // draft) is skipped rather than crashing the editor.
+          orElse: () => FieldType.text,
+        );
+        if (type.wire != f.typeId) continue;
+        _pageFields.putIfAbsent(f.page, () => []).add(
+              _Field(type: type, rect: Rect.fromLTWH(f.rect.left, f.rect.top, f.rect.width, f.rect.height), name: f.name)
+                ..value = f.value
+                ..options = List<String>.from(f.options)
+                ..group = f.group
+                ..exportValue = f.exportValue
+                ..fontSize = f.fontSize
+                ..required = f.required
+                ..checked = f.checked
+                ..tooltip = f.tooltip
+                ..readOnly = f.readOnly
+                ..maxLength = f.maxLength ?? 0
+                ..comb = f.comb
+                ..alignment = f.alignment
+                ..multiSelect = f.multiSelect
+                ..validationPattern = f.validation.pattern ?? ''
+                ..conditionRef = f.condition?.parent
+                ..conditionField = f.condition == null
+                    ? ''
+                    : _nameForId(schema, f.condition!.parent)
+                ..conditionOperator = f.condition?.operator ?? engine.ConditionOperator.equals
+                ..conditionValue = f.condition?.value ?? ''
+                ..calcFunction = f.calculation?.function ?? engine.CalculationFunction.sum
+                ..calcRefs = List<engine.FieldRef>.from(
+                    f.calculation?.fields ?? const <engine.FieldRef>[])
+                ..calcFields = (f.calculation?.fields ?? const <engine.FieldRef>[])
+                    .map((r) => _nameForId(schema, r))
+                    .join(', '),
+            );
+      }
+    });
+  }
+
   Future<void> _open() async {
     try {
       _doc = await PdfDocument.openFile(widget.file.path);
       _totalPages = _doc!.pagesCount;
       await _loadPage(1);
+      // Only after the first page is measured: restoring needs the page size to
+      // be known so fractional rects land in the right place.
+      await _restoreDraft();
     } catch (_) {
       if (mounted) setState(() => _loadingPage = false);
     }
@@ -168,11 +313,99 @@ class _FormEditorViewState extends State<FormEditorView> {
 
   /// Adds a field of [type] near the page centre, cascaded so successive fields
   /// don't stack exactly on top of one another, then selects it.
+  /// Resolves a field name typed in the inspector to that field's id.
+  ///
+  /// Falls back to the name itself when nothing matches, so a rule typed before its target
+  /// exists is preserved and reported as dangling rather than silently discarded.
+  String _idForName(String name) {
+    for (final pageFields in _pageFields.values) {
+      for (final field in pageFields) {
+        if (field.name == name) return field.id;
+      }
+    }
+    return name;
+  }
+
+  /// The display name for a stored reference, for showing in the inspector.
+  String _nameForId(engine.FormSchema schema, engine.FieldRef ref) {
+    for (final field in schema.fields) {
+      if (field.id == ref.id) return field.name;
+    }
+    return ref.name ?? ref.id; // deleted target: show what it used to be
+  }
+
+  /// Records the current layout so the next change can be undone.
+  void _pushUndo() {
+    _undoStack.add(const engine.SchemaCodec().encode(_toSchema()));
+    if (_undoStack.length > _maxUndo) _undoStack.removeAt(0);
+  }
+
+  void _undo() {
+    if (_undoStack.isEmpty) return;
+    final previous = _undoStack.removeLast();
+    _applySchema(const engine.SchemaCodec().decode(previous));
+    setState(() => _selectedId = null);
+  }
+
+  /// Copies the selected field, offset slightly so the copy is visibly separate.
+  void _duplicate(_Field source) {
+    _pushUndo();
+    final copy = _Field(
+      type: source.type,
+      rect: Rect.fromLTWH(
+        (source.rect.left + 0.02).clamp(0.0, 1 - source.rect.width),
+        (source.rect.top + 0.02).clamp(0.0, 1 - source.rect.height),
+        source.rect.width,
+        source.rect.height,
+      ),
+      name: '${source.type.wire}_${_autoName++}',
+    )
+      ..value = source.value
+      ..options = List<String>.from(source.options)
+      ..group = source.group
+      ..fontSize = source.fontSize
+      ..required = source.required
+      ..checked = source.checked
+      ..tooltip = source.tooltip
+      ..readOnly = source.readOnly
+      ..maxLength = source.maxLength
+      ..comb = source.comb
+      ..alignment = source.alignment
+      ..multiSelect = source.multiSelect
+      ..validationPattern = source.validationPattern
+      ..conditionField = source.conditionField
+      ..conditionOperator = source.conditionOperator
+      ..conditionValue = source.conditionValue
+      ..calcFunction = source.calcFunction
+      ..calcFields = source.calcFields;
+    setState(() {
+      _fields.add(copy);
+      _selectedId = copy.id;
+    });
+  }
+
   void _addField(FieldType type) {
     final size = type.defaultSize;
-    final step = _fields.length % 6;
-    final left = (0.12 + step * 0.03).clamp(0.0, 1 - size.width);
-    final top = (0.18 + step * 0.05).clamp(0.0, 1 - size.height);
+    // Stack each new field under the previous one instead of nudging it by a fixed step.
+    // The old step was 0.05 of the page while a Paragraph field is 0.12 tall, so placing a
+    // few in a row buried them in each other and every one had to be dragged apart first.
+    const gap = 0.012;
+    double left = 0.12;
+    double top = 0.18;
+    if (_fields.isNotEmpty) {
+      final last = _fields.last.rect;
+      left = last.left;
+      top = last.bottom + gap;
+      if (top + size.height > 1.0) {
+        // Off the bottom of the page — start a fresh column rather than stacking into the margin.
+        top = 0.18;
+        left = last.left + last.width + gap;
+        if (left + size.width > 1.0) left = 0.12;
+      }
+    }
+    _pushUndo();
+    left = left.clamp(0.0, 1 - size.width);
+    top = top.clamp(0.0, 1 - size.height);
     final field = _Field(type: type, rect: Rect.fromLTWH(left, top, size.width, size.height), name: '${type.wire}_${_autoName++}');
     setState(() {
       _fields.add(field);
@@ -229,6 +462,19 @@ class _FormEditorViewState extends State<FormEditorView> {
       appBar: AppBar(
         title: Text(ToolStrings.name(context, 'fill-form')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.undo),
+            tooltip: L10n.of(context).undoAction,
+            onPressed: _undoStack.isEmpty ? null : _undo,
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy_all_outlined),
+            tooltip: L10n.of(context).duplicateField,
+            onPressed: () {
+              final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
+              if (selected != null) _duplicate(selected);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.fit_screen_outlined),
             tooltip: L10n.of(context).fitToScreen,
@@ -489,6 +735,11 @@ class _FormEditorViewState extends State<FormEditorView> {
       );
     }
 
+    // The three 26px handles sit on the corners, which is fine on a text box but hides a
+    // checkbox entirely — the field it is meant to be editing disappears under its own
+    // controls. On a small field they move fully outside the bounds instead.
+    final outward = (w < 90 || h < 64) ? 14.0 : 0.0;
+
     return Stack(clipBehavior: Clip.none, children: [
       // Move body.
       Positioned(
@@ -504,18 +755,27 @@ class _FormEditorViewState extends State<FormEditorView> {
         ),
       ),
       // Edit (top-left).
-      Positioned(left: screenTL.dx - 13, top: screenTL.dy - 13, child: circle(Icons.edit, primary, () => _showProperties(f))),
+      Positioned(
+          left: screenTL.dx - 13 - outward,
+          top: screenTL.dy - 13 - outward,
+          child: circle(Icons.edit, primary, () => _showProperties(f))),
       // Delete (top-right).
       Positioned(
-        left: screenTL.dx + w - 13,
-        top: screenTL.dy - 13,
-        child: circle(Icons.close, Colors.red, () => setState(() {
-              _fields.remove(f);
-              _selectedId = null;
-            })),
+        left: screenTL.dx + w - 13 + outward,
+        top: screenTL.dy - 13 - outward,
+        child: circle(Icons.close, Colors.red, () {
+          _pushUndo();
+          setState(() {
+            _fields.remove(f);
+            _selectedId = null;
+          });
+        }),
       ),
       // Resize (bottom-right).
-      Positioned(left: screenTL.dx + w - 13, top: screenTL.dy + h - 13, child: circle(Icons.open_in_full, primary, null, onDrag: resize)),
+      Positioned(
+          left: screenTL.dx + w - 13 + outward,
+          top: screenTL.dy + h - 13 + outward,
+          child: circle(Icons.open_in_full, primary, null, onDrag: resize)),
     ]);
   }
 
@@ -527,35 +787,78 @@ class _FormEditorViewState extends State<FormEditorView> {
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
-      builder: (_) => _FieldPropertiesSheet(field: f),
+      builder: (_) => _FieldPropertiesSheet(
+        field: f,
+        resolve: (name) => engine.FieldRef(_idForName(name), name),
+      ),
     ).whenComplete(() {
       if (mounted) setState(() {}); // refresh badges/state after edits
     });
   }
 
-  Future<void> _onSave() async {
-    final specs = <FormFieldSpec>[];
-    _pageFields.forEach((page, fields) {
-      final pts = _pagePoints[page];
-      if (pts == null) return;
-      for (final f in fields) {
-        specs.add(FormFieldSpec(
-          type: f.type.wire,
-          name: f.type == FieldType.radio ? f.group : f.name,
-          page: page - 1,
-          x: f.rect.left * pts.width,
-          y: f.rect.top * pts.height,
-          width: f.rect.width * pts.width,
-          height: f.rect.height * pts.height,
-          value: f.value.isEmpty ? null : f.value,
-          options: f.type == FieldType.dropdown ? f.options : null,
-          exportValue: f.type == FieldType.radio ? (f.exportValue.isEmpty ? f.name : f.exportValue) : null,
-          fontSize: f.type.hasValue && f.fontSize > 0 ? f.fontSize : null,
-          required: f.required ? true : null,
-          checked: f.type.isToggle ? f.checked : null,
+  /// The placed layout as an engine schema.
+  ///
+  /// This is the editor's output and the thing worth persisting: page-relative
+  /// coordinates, so the same layout survives any zoom or render size, and no
+  /// knowledge of the backend's wire format.
+  engine.FormSchema _toSchema() {
+    final fields = <engine.FormFieldModel>[];
+    _pageFields.forEach((page, pageFields) {
+      for (final f in pageFields) {
+        fields.add(engine.FormFieldModel(
+          id: f.id,
+          typeId: f.type.wire,
+          page: page,
+          rect: engine.FractionalRect(f.rect.left, f.rect.top, f.rect.width, f.rect.height),
+          name: f.name,
+          value: f.value,
+          options: List<String>.from(f.options),
+          group: f.group,
+          exportValue: f.exportValue,
+          fontSize: f.fontSize,
+          required: f.required,
+          checked: f.checked,
+          tooltip: f.tooltip,
+          readOnly: f.readOnly,
+          maxLength: f.maxLength > 0 ? f.maxLength : null,
+          comb: f.comb,
+          alignment: f.alignment,
+          multiSelect: f.multiSelect,
+          format: formFieldTypes.lookup(f.type.wire)?.defaultFormat ??
+              engine.TextFormat.none,
+          validation: engine.FieldValidation(
+              pattern: f.validationPattern.isEmpty ? null : f.validationPattern),
+          // The inspector takes field *names* because that is what the author sees on the
+          // canvas, but rules are stored by id so a later rename cannot silently rewire them.
+          // An unresolved name is kept verbatim and surfaces as a dangling reference rather
+          // than being dropped.
+          // References were resolved to ids when they were typed; a rename since then
+          // changes the display name only, never the link.
+          condition: f.conditionRef == null
+              ? null
+              : engine.VisibilityCondition(
+                  parent: f.conditionRef!,
+                  operator: f.conditionOperator,
+                  value: f.conditionValue),
+          calculation: f.calcRefs.isEmpty
+              ? null
+              : engine.Calculation(function: f.calcFunction, fields: f.calcRefs),
         ));
       }
     });
+    return engine.FormSchema(
+      fields: fields,
+      pageSizes: {
+        for (final e in _pagePoints.entries)
+          e.key: engine.PageSizePoints(e.value.width, e.value.height),
+      },
+    );
+  }
+
+  Future<void> _onSave() async {
+    // The mapping to the backend's request lives in the engine, where a golden
+    // test pins the exact JSON the running server parses.
+    final specs = engine.AcroFormSpecMapper(formFieldTypes).toSpecs(_toSchema());
 
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
@@ -653,6 +956,10 @@ class _FormEditorViewState extends State<FormEditorView> {
 
   @override
   void dispose() {
+    // Keep the layout for next time. Fire-and-forget: dispose cannot await, and
+    // a failed draft write must never hold up closing the screen.
+    final store = _drafts;
+    if (store != null) unawaited(store.save(widget.file.path, _toSchema()));
     _tc.dispose();
     _doc?.close();
     super.dispose();
@@ -664,7 +971,13 @@ class _FormEditorViewState extends State<FormEditorView> {
 /// correct values, and writes edits straight back to the [field].
 class _FieldPropertiesSheet extends StatefulWidget {
   final _Field field;
-  const _FieldPropertiesSheet({required this.field});
+
+  /// Turns a field name typed by the author into a stable reference, resolved against the
+  /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
+  /// later rename harmless.
+  final engine.FieldRef Function(String name) resolve;
+
+  const _FieldPropertiesSheet({required this.field, required this.resolve});
 
   @override
   State<_FieldPropertiesSheet> createState() => _FieldPropertiesSheetState();
@@ -677,6 +990,12 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
   late final _options = TextEditingController(text: widget.field.options.join(', '));
   late final _value = TextEditingController(text: widget.field.value);
   late final _fontSize = TextEditingController(text: widget.field.fontSize > 0 ? widget.field.fontSize.toStringAsFixed(0) : '');
+  late final _tooltip = TextEditingController(text: widget.field.tooltip);
+  late final _maxLength = TextEditingController(text: widget.field.maxLength > 0 ? '${widget.field.maxLength}' : '');
+  late final _pattern = TextEditingController(text: widget.field.validationPattern);
+  late final _condField = TextEditingController(text: widget.field.conditionField);
+  late final _condValue = TextEditingController(text: widget.field.conditionValue);
+  late final _calcFields = TextEditingController(text: widget.field.calcFields);
 
   @override
   void dispose() {
@@ -686,6 +1005,12 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
     _options.dispose();
     _value.dispose();
     _fontSize.dispose();
+    _tooltip.dispose();
+    _maxLength.dispose();
+    _pattern.dispose();
+    _condField.dispose();
+    _condValue.dispose();
+    _calcFields.dispose();
     super.dispose();
   }
 
@@ -695,6 +1020,9 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
     final f = widget.field;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+      // The sheet grew well past a phone screen once rules and logic moved in, so it scrolls
+      // rather than overflowing.
+      child: SingleChildScrollView(
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
@@ -712,8 +1040,9 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
               (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
         if (f.type.hasValue) _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
         if (f.type.hasValue)
-          _field(_fontSize, 'Font size (0 = auto)', (v) => f.fontSize = double.tryParse(v) ?? 0,
+          _field(_fontSize, L10n.of(context).fontSizeAuto, (v) => f.fontSize = double.tryParse(v) ?? 0,
               keyboard: TextInputType.number),
+        _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
         if (f.type.isToggle)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -728,14 +1057,130 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
           value: f.required,
           onChanged: (v) => setState(() => f.required = v),
         ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(L10n.of(context).fieldReadOnly),
+          value: f.readOnly,
+          onChanged: (v) => setState(() => f.readOnly = v),
+        ),
+        if (f.type == FieldType.listbox)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(L10n.of(context).fieldMultiSelect),
+            value: f.multiSelect,
+            onChanged: (v) => setState(() => f.multiSelect = v),
+          ),
+
+        // ── Appearance ────────────────────────────────────────────────────────────
+        if (f.type.hasValue) ...[
+          _sectionTitle(theme, L10n.of(context).sectionAppearance),
+          _field(_maxLength, L10n.of(context).fieldMaxLength,
+              (v) => f.maxLength = int.tryParse(v) ?? 0, keyboard: TextInputType.number),
+          // Comb needs a character cap and a single line — offering it otherwise would let the
+          // user set a flag the PDF spec makes the backend drop.
+          if (f.maxLength > 0 && f.type != FieldType.multiline)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(L10n.of(context).fieldComb),
+              value: f.comb,
+              onChanged: (v) => setState(() => f.comb = v),
+            ),
+          const SizedBox(height: 4),
+          Text(L10n.of(context).fieldAlignment, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          SegmentedButton<engine.TextAlignment>(
+            segments: [
+              ButtonSegment(value: engine.TextAlignment.left, label: Text(L10n.of(context).alignLeft)),
+              ButtonSegment(value: engine.TextAlignment.center, label: Text(L10n.of(context).alignCenter)),
+              ButtonSegment(value: engine.TextAlignment.right, label: Text(L10n.of(context).alignRight)),
+            ],
+            selected: {f.alignment},
+            onSelectionChanged: (sel) => setState(() => f.alignment = sel.first),
+          ),
+          _sectionTitle(theme, L10n.of(context).sectionRules),
+          _field(_pattern, L10n.of(context).fieldPattern, (v) => f.validationPattern = v),
+        ],
+
+        // ── Logic ─────────────────────────────────────────────────────────────────
+        _sectionTitle(theme, L10n.of(context).sectionLogic),
+        Text(L10n.of(context).conditionShowWhen, style: theme.textTheme.bodySmall),
         const SizedBox(height: 4),
+        _field(_condField, L10n.of(context).conditionFieldName, (v) {
+          f.conditionField = v;
+          final name = v.trim();
+          f.conditionRef = name.isEmpty ? null : widget.resolve(name);
+        }),
+        DropdownButtonFormField<engine.ConditionOperator>(
+          initialValue: f.conditionOperator,
+          isExpanded: true,
+          decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+          items: engine.ConditionOperator.values
+              .map((o) => DropdownMenuItem(value: o, child: Text(_operatorLabel(context, o))))
+              .toList(),
+          onChanged: (v) => setState(() => f.conditionOperator = v ?? engine.ConditionOperator.equals),
+        ),
+        const SizedBox(height: 8),
+        _field(_condValue, L10n.of(context).conditionValue, (v) => f.conditionValue = v),
+
+        if (f.type.hasValue) ...[
+          const SizedBox(height: 8),
+          Text(L10n.of(context).calcTitle, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<engine.CalculationFunction>(
+            initialValue: f.calcFunction,
+            isExpanded: true,
+            decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+            items: engine.CalculationFunction.values
+                .map((c) => DropdownMenuItem(value: c, child: Text(_calcLabel(context, c))))
+                .toList(),
+            onChanged: (v) => setState(() => f.calcFunction = v ?? engine.CalculationFunction.sum),
+          ),
+          const SizedBox(height: 8),
+          _field(_calcFields, L10n.of(context).calcFieldsHint, (v) {
+            f.calcFields = v;
+            f.calcRefs = v
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .map(widget.resolve)
+                .toList();
+          }),
+        ],
+
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: FilledButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done)),
         ),
       ]),
+      ),
     );
   }
+
+  Widget _sectionTitle(ThemeData theme, String text) => Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 6),
+        child: Text(text,
+            style: theme.textTheme.labelLarge
+                ?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.w700)),
+      );
+
+  String _operatorLabel(BuildContext context, engine.ConditionOperator o) => switch (o) {
+        engine.ConditionOperator.equals => L10n.of(context).opEquals,
+        engine.ConditionOperator.notEquals => L10n.of(context).opNotEquals,
+        engine.ConditionOperator.contains => L10n.of(context).opContains,
+        engine.ConditionOperator.isEmpty => L10n.of(context).opIsEmpty,
+        engine.ConditionOperator.isNotEmpty => L10n.of(context).opIsNotEmpty,
+        engine.ConditionOperator.greaterThan => L10n.of(context).opGreaterThan,
+        engine.ConditionOperator.lessThan => L10n.of(context).opLessThan,
+      };
+
+  String _calcLabel(BuildContext context, engine.CalculationFunction c) => switch (c) {
+        engine.CalculationFunction.sum => L10n.of(context).calcSum,
+        engine.CalculationFunction.average => L10n.of(context).calcAverage,
+        engine.CalculationFunction.product => L10n.of(context).calcProduct,
+        engine.CalculationFunction.min => L10n.of(context).calcMin,
+        engine.CalculationFunction.max => L10n.of(context).calcMax,
+      };
 
   Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged, {TextInputType? keyboard}) {
     return Padding(

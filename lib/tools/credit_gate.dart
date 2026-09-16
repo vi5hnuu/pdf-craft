@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/singletons/CreditService.dart' as credits_service;
+import 'package:pdf_craft/singletons/NotificationService.dart';
+import 'package:pdf_craft/singletons/RewardedInterstitialAdManager.dart';
 import 'package:pdf_craft/singletons/CreditService.dart';
 import 'package:pdf_craft/utils/UploadLimits.dart';
 
@@ -85,6 +88,29 @@ class CreditGate {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(L10n.of(ctx).cancel),
           ),
+          // Out of credits: offer the ad alongside buying. This dialog doubles as the
+          // introductory screen AdMob requires before a rewarded interstitial — it
+          // states the reward and leaves Cancel plainly available, so the ad is never
+          // forced on anyone. Shown only when an ad is actually cached, so the offer
+          // is never a dead end.
+          if (!enough && RewardedInterstitialAdManager().isReady)
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop(false);
+                RewardedInterstitialAdManager().show(
+                  onRewardEarned: () {
+                    // The credit itself is granted server-side from AdMob's
+                    // verification callback, so refresh rather than adding locally.
+                    credits_service.CreditService().refreshBalance();
+                    NotificationService.showSnackbar(
+                        text: L10n.current.gateAdReward, color: Colors.green);
+                  },
+                  onUnavailable: () => NotificationService.showSnackbar(
+                      text: L10n.current.gateAdUnavailable, color: Colors.orange),
+                );
+              },
+              child: Text(L10n.of(ctx).gateWatchAd),
+            ),
           if (!enough)
             FilledButton(
               onPressed: () {

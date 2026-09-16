@@ -12,19 +12,18 @@ class AdUnits {
   static const _testInterstitial = 'ca-app-pub-3940256099942544/1033173712';
   static const _testAppOpen = 'ca-app-pub-3940256099942544/9257395921';
   static const _testRewarded = 'ca-app-pub-3940256099942544/5224354917';
+  static const _testRewardedInterstitial = 'ca-app-pub-3940256099942544/5354046379';
 
   static const _prodBanner = 'ca-app-pub-4715945578201106/3610792197';
   static const _prodInterstitial = 'ca-app-pub-4715945578201106/9362646476';
   static const _prodAppOpen = 'ca-app-pub-4715945578201106/5084422823';
 
-  /// Not yet created in the AdMob console.
-  ///
-  /// This was set to the test unit, so release builds served Google's sample rewarded ad to
-  /// real users — no revenue, and a policy breach that can cost the account. Left empty
-  /// deliberately: an empty id disables rewarded ads rather than shipping test ones, and
-  /// [rewarded] returning null is what the rest of the app keys off. Paste the real unit id
-  /// here once it exists and the feature turns itself back on.
-  static const _prodRewarded = '';
+  static const _prodRewarded = 'ca-app-pub-4715945578201106/5259576789';
+
+  /// Rewarded interstitial: shown at a natural break when the user is out of credits.
+  /// Unlike [rewarded], the user does not seek it out — which is exactly why Google
+  /// requires an opt-out on the intro screen before it plays.
+  static const _prodRewardedInterstitial = 'ca-app-pub-4715945578201106/3946495118';
 
   static String get banner => kDebugMode ? _testBanner : _prodBanner;
 
@@ -41,6 +40,14 @@ class AdUnits {
     if (kDebugMode) return _testRewarded;
     return _prodRewarded.isEmpty ? null : _prodRewarded;
   }
+
+  /// The rewarded interstitial unit, or null when none is configured.
+  static String? get rewardedInterstitial {
+    if (kDebugMode) return _testRewardedInterstitial;
+    return _prodRewardedInterstitial.isEmpty ? null : _prodRewardedInterstitial;
+  }
+
+  static bool get rewardedInterstitialAvailable => rewardedInterstitial != null;
 
   /// Whether the rewarded feature can be offered at all. Drives the UI so a user is never
   /// shown a way to earn credits that cannot work.
