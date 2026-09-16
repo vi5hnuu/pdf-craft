@@ -1396,5 +1396,16 @@
   "compressRecommended": "Compress (recommended)",
   "optimizeExplainer": "• Removes embedded page thumbnails\n• Re-compresses document streams\n• Reduces file size without quality loss",
   "placeImageEmpty": "Select an image above\nto position it on this page",
-  "qrEmptyHint": "Enter a URL or text above\nto generate a QR code"
+  "qrEmptyHint": "Enter a URL or text above\nto generate a QR code",
+  "formDraftFoundTitle": "Unsaved fields found",
+  "formDraftFoundBody": "{count, plural, =1{You placed 1 field on this PDF last time. Restore it?} other{You placed {count} fields on this PDF last time. Restore them?}}",
+  "@formDraftFoundBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "formDraftRestore": "Restore",
+  "formDraftStartFresh": "Start fresh"
 }

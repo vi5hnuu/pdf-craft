@@ -876,5 +876,9 @@
   "compressRecommended": "कंप्रेस करें (सुझाया गया)",
   "optimizeExplainer": "• पेज के एम्बेडेड थंबनेल हटाता है\n• डॉक्यूमेंट स्ट्रीम दोबारा कंप्रेस करता है\n• क्वालिटी घटाए बिना फ़ाइल छोटी करता है",
   "placeImageEmpty": "ऊपर से इमेज चुनें\nताकि उसे इस पेज पर रखा जा सके",
-  "qrEmptyHint": "ऊपर URL या टेक्स्ट डालें\nताकि QR कोड बन सके"
+  "qrEmptyHint": "ऊपर URL या टेक्स्ट डालें\nताकि QR कोड बन सके",
+  "formDraftFoundTitle": "सेव न किए गए फ़ील्ड मिले",
+  "formDraftFoundBody": "आपने पिछली बार इस PDF पर {count} फ़ील्ड लगाए थे। उन्हें वापस लाएँ?",
+  "formDraftRestore": "वापस लाएँ",
+  "formDraftStartFresh": "नए सिरे से शुरू करें"
 }

@@ -76,6 +76,10 @@ dependencies:
   form_engine:
     path: packages/form_engine
 
+  # Already in the dependency tree transitively; declared directly because we
+  # import it (to name draft files by a hash instead of the document's path).
+  crypto: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

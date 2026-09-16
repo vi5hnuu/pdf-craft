@@ -13,7 +13,10 @@ import 'package:pdf_craft/singletons/NotificationService.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/httpStates.dart';
 import 'package:pdf_craft/widgets/LoadingOverlay.dart';
+import 'dart:async';
+
 import 'package:form_engine/form_engine.dart' as engine;
+import 'package:pdf_craft/services/forms/FormDraftStore.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
@@ -121,6 +124,7 @@ class _FormEditorViewState extends State<FormEditorView> {
 
   final TransformationController _tc = TransformationController();
   CancelToken? _cancelToken;
+  FormDraftStore? _drafts;
 
   @override
   void initState() {
@@ -129,11 +133,75 @@ class _FormEditorViewState extends State<FormEditorView> {
     _open();
   }
 
+  /// Restores a layout left behind on a previous visit to this document.
+  ///
+  /// Placing fields is slow, deliberate work, so it is not thrown away when the
+  /// editor closes. The draft is offered rather than applied silently: the user
+  /// may well have come back to start over.
+  Future<void> _restoreDraft() async {
+    final store = _drafts = await FormDraftStore.forApp();
+    final draft = await store.load(widget.file.path);
+    if (draft == null || draft.fields.isEmpty || !mounted) return;
+
+    final restore = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx).formDraftFoundTitle),
+        content: Text(L10n.of(ctx).formDraftFoundBody(draft.fields.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.of(ctx).formDraftStartFresh),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.of(ctx).formDraftRestore),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (restore == true) {
+      _applySchema(draft);
+    } else {
+      await store.delete(widget.file.path);
+    }
+  }
+
+  /// Rebuilds the editor's fields from a stored schema.
+  void _applySchema(engine.FormSchema schema) {
+    setState(() {
+      _pageFields.clear();
+      for (final f in schema.fields) {
+        final type = FieldType.values.firstWhere(
+          (t) => t.wire == f.typeId,
+          // A type this build does not know about (an older app opening a newer
+          // draft) is skipped rather than crashing the editor.
+          orElse: () => FieldType.text,
+        );
+        if (type.wire != f.typeId) continue;
+        _pageFields.putIfAbsent(f.page, () => []).add(
+              _Field(type: type, rect: Rect.fromLTWH(f.rect.left, f.rect.top, f.rect.width, f.rect.height), name: f.name)
+                ..value = f.value
+                ..options = List<String>.from(f.options)
+                ..group = f.group
+                ..exportValue = f.exportValue
+                ..fontSize = f.fontSize
+                ..required = f.required
+                ..checked = f.checked,
+            );
+      }
+    });
+  }
+
   Future<void> _open() async {
     try {
       _doc = await PdfDocument.openFile(widget.file.path);
       _totalPages = _doc!.pagesCount;
       await _loadPage(1);
+      // Only after the first page is measured: restoring needs the page size to
+      // be known so fractional rects land in the right place.
+      await _restoreDraft();
     } catch (_) {
       if (mounted) setState(() => _loadingPage = false);
     }
@@ -675,6 +743,10 @@ class _FormEditorViewState extends State<FormEditorView> {
 
   @override
   void dispose() {
+    // Keep the layout for next time. Fire-and-forget: dispose cannot await, and
+    // a failed draft write must never hold up closing the screen.
+    final store = _drafts;
+    if (store != null) unawaited(store.save(widget.file.path, _toSchema()));
     _tc.dispose();
     _doc?.close();
     super.dispose();
