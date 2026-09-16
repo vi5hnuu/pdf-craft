@@ -1,3 +1,4 @@
+import '../model/field_rules.dart';
 import '../model/geometry.dart';
 
 /// Everything the engine needs to know about one field type.
@@ -26,6 +27,13 @@ class FieldTypeDescriptor {
   /// Part of a radio group, where the group name is the real PDF field name.
   final bool isGrouped;
 
+  /// Accepts more than one selected option (a list box rather than a dropdown).
+  final bool allowsMultiSelect;
+
+  /// What this type expects by default. A `number` field is still a PDF text field; the
+  /// format is what gives it a numeric keyboard, numeric validation and a format action.
+  final TextFormat defaultFormat;
+
   /// Drawn/applied signature rather than data entry. Kept as its own flag so a
   /// certified eSign provider (Aadhaar eSign, DSC) can later be attached to
   /// exactly these fields without reinterpreting other types.
@@ -39,5 +47,7 @@ class FieldTypeDescriptor {
     this.acceptsValue = false,
     this.isGrouped = false,
     this.isSignature = false,
+    this.allowsMultiSelect = false,
+    this.defaultFormat = TextFormat.none,
   });
 }

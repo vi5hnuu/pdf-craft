@@ -1,6 +1,8 @@
+import '../model/field_rules.dart';
 import '../model/form_field.dart';
 import '../model/form_schema.dart';
 import '../model/geometry.dart';
+import '../registry/builtin_field_types.dart';
 import '../registry/field_type_registry.dart';
 
 /// Stage 2 of the pipeline: schema -> the backend's `create-form` wire format.
@@ -58,6 +60,23 @@ class AcroFormSpecMapper {
       if (type.acceptsValue && f.fontSize > 0) 'font_size': f.fontSize,
       if (f.required) 'required': true,
       if (type.isToggle) 'checked': f.checked,
+      if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
+      if (f.readOnly) 'read_only': true,
+      if (f.maxLength != null && f.maxLength! > 0) 'max_length': f.maxLength,
+      // The spec only permits a comb field with a length and a single line, so the rule is
+      // enforced here rather than trusting the editor to have disabled the control.
+      if (f.comb && (f.maxLength ?? 0) > 0 && f.typeId != FieldTypes.multiline) 'comb': true,
+      if (f.alignment != TextAlignment.left) 'alignment': f.alignment.quadding,
+      if (type.allowsMultiSelect && f.multiSelect) 'multi_select': true,
+      if (f.format != TextFormat.none) 'format': f.format.name,
+      if (f.validation.pattern != null && f.validation.pattern!.isNotEmpty)
+        'validation_pattern': f.validation.pattern,
+      if (f.condition != null) 'condition': f.condition!.toJson(),
+      if (f.calculation != null && !f.calculation!.isEmpty)
+        'calculation': {
+          'function': f.calculation!.function.acrobatName,
+          'fields': f.calculation!.fields,
+        },
     };
   }
 }

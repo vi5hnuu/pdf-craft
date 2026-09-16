@@ -1,3 +1,6 @@
+import '../logic/calculation.dart';
+import '../logic/condition.dart';
+import '../model/field_rules.dart';
 import '../model/form_field.dart';
 import '../model/form_schema.dart';
 import '../model/geometry.dart';
@@ -37,6 +40,17 @@ class SchemaCodec {
         if (f.required) 'required': true,
         if (f.checked) 'checked': true,
         if (f.recipientId != null) 'recipient_id': f.recipientId,
+        if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
+        if (f.readOnly) 'read_only': true,
+        if (f.maxLength != null) 'max_length': f.maxLength,
+        if (f.comb) 'comb': true,
+        if (f.alignment != TextAlignment.left) 'alignment': f.alignment.name,
+        if (f.multiSelect) 'multi_select': true,
+        if (f.format != TextFormat.none) 'format': f.format.name,
+        if (!f.validation.isEmpty) 'validation': f.validation.toJson(),
+        if (f.condition != null) 'condition': f.condition!.toJson(),
+        if (f.calculation != null && !f.calculation!.isEmpty)
+          'calculation': f.calculation!.toJson(),
       };
 
   /// Reads a stored schema, migrating it forward if it was written by an older
@@ -75,6 +89,8 @@ class SchemaCodec {
     const known = {
       'id', 'type', 'page', 'rect', 'name', 'value', 'options', 'group',
       'export_value', 'font_size', 'required', 'checked', 'recipient_id',
+      'tooltip', 'read_only', 'max_length', 'comb', 'alignment', 'multi_select',
+      'format', 'validation', 'condition', 'calculation',
     };
     return FormFieldModel(
       id: json['id'] as String,
@@ -90,6 +106,22 @@ class SchemaCodec {
       required: json['required'] as bool? ?? false,
       checked: json['checked'] as bool? ?? false,
       recipientId: json['recipient_id'] as String?,
+      tooltip: json['tooltip'] as String? ?? '',
+      readOnly: json['read_only'] as bool? ?? false,
+      maxLength: (json['max_length'] as num?)?.toInt(),
+      comb: json['comb'] as bool? ?? false,
+      alignment: TextAlignment.fromWire(json['alignment'] as String?),
+      multiSelect: json['multi_select'] as bool? ?? false,
+      format: TextFormat.fromWire(json['format'] as String?),
+      validation: json['validation'] == null
+          ? const FieldValidation()
+          : FieldValidation.fromJson((json['validation'] as Map).cast<String, Object?>()),
+      condition: json['condition'] == null
+          ? null
+          : VisibilityCondition.fromJson((json['condition'] as Map).cast<String, Object?>()),
+      calculation: json['calculation'] == null
+          ? null
+          : Calculation.fromJson((json['calculation'] as Map).cast<String, Object?>()),
       // Anything this build does not recognise rides along untouched.
       extras: {
         for (final e in json.entries)

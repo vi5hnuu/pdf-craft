@@ -1,3 +1,6 @@
+import '../logic/calculation.dart';
+import '../logic/condition.dart';
+import 'field_rules.dart';
 import 'geometry.dart';
 
 /// One placed field in a form.
@@ -45,6 +48,38 @@ class FormFieldModel {
   /// Checkbox/radio prefilled as on.
   bool checked;
 
+  /// Help text shown on hover/long-press and written to the PDF as `/TU`.
+  String tooltip;
+
+  /// Filled in already and not editable (a reference number, a pre-agreed date).
+  bool readOnly;
+
+  /// Character cap. Also what a comb field divides itself into.
+  int? maxLength;
+
+  /// Draws the field as [maxLength] equally spaced boxes, the way a form asks for a PIN or
+  /// a reference code one character per cell. The PDF spec only allows this with a maxLength
+  /// and on a single-line field, which [AcroFormSpecMapper] enforces.
+  bool comb;
+
+  /// Text justification inside the box.
+  TextAlignment alignment;
+
+  /// Whether a list field accepts more than one selection.
+  bool multiSelect;
+
+  /// What the field expects, which drives keyboard, validation and PDF format actions.
+  TextFormat format;
+
+  /// Input rules enforced by the app's own runtime.
+  FieldValidation validation;
+
+  /// Shows this field only when another field holds a given value.
+  VisibilityCondition? condition;
+
+  /// Derives this field's value from other fields.
+  Calculation? calculation;
+
   /// Role this field belongs to. Single-device filling ignores it today; it
   /// exists from the start so multi-party sending is additive later rather than
   /// a schema migration.
@@ -69,6 +104,16 @@ class FormFieldModel {
     this.required = false,
     this.checked = false,
     this.recipientId,
+    this.tooltip = '',
+    this.readOnly = false,
+    this.maxLength,
+    this.comb = false,
+    this.alignment = TextAlignment.left,
+    this.multiSelect = false,
+    this.format = TextFormat.none,
+    this.validation = const FieldValidation(),
+    this.condition,
+    this.calculation,
     Map<String, Object?>? extras,
   })  : options = options ?? <String>[],
         extras = extras ?? <String, Object?>{};
@@ -86,6 +131,16 @@ class FormFieldModel {
     bool? required,
     bool? checked,
     String? recipientId,
+    String? tooltip,
+    bool? readOnly,
+    int? maxLength,
+    bool? comb,
+    TextAlignment? alignment,
+    bool? multiSelect,
+    TextFormat? format,
+    FieldValidation? validation,
+    VisibilityCondition? condition,
+    Calculation? calculation,
   }) =>
       FormFieldModel(
         id: id,
@@ -101,6 +156,16 @@ class FormFieldModel {
         required: required ?? this.required,
         checked: checked ?? this.checked,
         recipientId: recipientId ?? this.recipientId,
+        tooltip: tooltip ?? this.tooltip,
+        readOnly: readOnly ?? this.readOnly,
+        maxLength: maxLength ?? this.maxLength,
+        comb: comb ?? this.comb,
+        alignment: alignment ?? this.alignment,
+        multiSelect: multiSelect ?? this.multiSelect,
+        format: format ?? this.format,
+        validation: validation ?? this.validation,
+        condition: condition ?? this.condition,
+        calculation: calculation ?? this.calculation,
         extras: Map<String, Object?>.from(extras),
       );
 }

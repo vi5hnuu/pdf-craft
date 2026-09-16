@@ -11,6 +11,10 @@
 /// `dart test` and could later back a web builder.
 library form_engine;
 
+export 'src/logic/calculation.dart';
+export 'src/logic/condition.dart';
+export 'src/logic/form_runtime.dart';
+export 'src/model/field_rules.dart';
 export 'src/model/form_field.dart';
 export 'src/model/form_schema.dart';
 export 'src/model/geometry.dart';

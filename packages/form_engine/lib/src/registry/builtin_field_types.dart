@@ -1,3 +1,4 @@
+import '../model/field_rules.dart';
 import '../model/geometry.dart';
 import 'field_type_descriptor.dart';
 
@@ -11,6 +12,12 @@ abstract final class FieldTypes {
   static const dropdown = 'dropdown';
   static const date = 'date';
   static const signature = 'signature';
+
+  // Added once the registry made a type a single registration rather than eight switch arms.
+  static const number = 'number';
+  static const email = 'email';
+  static const phone = 'phone';
+  static const listbox = 'listbox';
 }
 
 /// The types shipped today, in palette order.
@@ -53,5 +60,32 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     id: FieldTypes.signature,
     defaultSize: FractionalSize(0.32, 0.08),
     isSignature: true,
+  ),
+  // Each of the following is a PDF text field; the format is what makes it behave like a
+  // number, an address or a phone number in the app and in desktop readers.
+  FieldTypeDescriptor(
+    id: FieldTypes.number,
+    defaultSize: FractionalSize(0.22, 0.045),
+    acceptsValue: true,
+    defaultFormat: TextFormat.number,
+  ),
+  FieldTypeDescriptor(
+    id: FieldTypes.email,
+    defaultSize: FractionalSize(0.42, 0.045),
+    acceptsValue: true,
+    defaultFormat: TextFormat.email,
+  ),
+  FieldTypeDescriptor(
+    id: FieldTypes.phone,
+    defaultSize: FractionalSize(0.30, 0.045),
+    acceptsValue: true,
+    defaultFormat: TextFormat.phone,
+  ),
+  FieldTypeDescriptor(
+    id: FieldTypes.listbox,
+    defaultSize: FractionalSize(0.36, 0.12),
+    acceptsOptions: true,
+    acceptsValue: true,
+    allowsMultiSelect: true,
   ),
 ];
