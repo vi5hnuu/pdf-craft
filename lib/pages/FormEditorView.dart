@@ -154,6 +154,14 @@ class _FormEditorViewState extends State<FormEditorView> {
   String? _selectedId;
   int _autoName = 1;
 
+  /// Snapshots of the whole layout, newest last.
+  ///
+  /// Placing and dragging fields is fiddly on a phone and a mistaken delete used to mean
+  /// re-placing the field by hand. Encoded schemas are cheap and avoid any risk of the
+  /// snapshot sharing mutable state with the live fields.
+  final List<Map<String, Object?>> _undoStack = [];
+  static const _maxUndo = 30;
+
   final TransformationController _tc = TransformationController();
   CancelToken? _cancelToken;
   FormDraftStore? _drafts;
@@ -287,6 +295,56 @@ class _FormEditorViewState extends State<FormEditorView> {
 
   /// Adds a field of [type] near the page centre, cascaded so successive fields
   /// don't stack exactly on top of one another, then selects it.
+  /// Records the current layout so the next change can be undone.
+  void _pushUndo() {
+    _undoStack.add(const engine.SchemaCodec().encode(_toSchema()));
+    if (_undoStack.length > _maxUndo) _undoStack.removeAt(0);
+  }
+
+  void _undo() {
+    if (_undoStack.isEmpty) return;
+    final previous = _undoStack.removeLast();
+    _applySchema(const engine.SchemaCodec().decode(previous));
+    setState(() => _selectedId = null);
+  }
+
+  /// Copies the selected field, offset slightly so the copy is visibly separate.
+  void _duplicate(_Field source) {
+    _pushUndo();
+    final copy = _Field(
+      type: source.type,
+      rect: Rect.fromLTWH(
+        (source.rect.left + 0.02).clamp(0.0, 1 - source.rect.width),
+        (source.rect.top + 0.02).clamp(0.0, 1 - source.rect.height),
+        source.rect.width,
+        source.rect.height,
+      ),
+      name: '${source.type.wire}_${_autoName++}',
+    )
+      ..value = source.value
+      ..options = List<String>.from(source.options)
+      ..group = source.group
+      ..fontSize = source.fontSize
+      ..required = source.required
+      ..checked = source.checked
+      ..tooltip = source.tooltip
+      ..readOnly = source.readOnly
+      ..maxLength = source.maxLength
+      ..comb = source.comb
+      ..alignment = source.alignment
+      ..multiSelect = source.multiSelect
+      ..validationPattern = source.validationPattern
+      ..conditionField = source.conditionField
+      ..conditionOperator = source.conditionOperator
+      ..conditionValue = source.conditionValue
+      ..calcFunction = source.calcFunction
+      ..calcFields = source.calcFields;
+    setState(() {
+      _fields.add(copy);
+      _selectedId = copy.id;
+    });
+  }
+
   void _addField(FieldType type) {
     final size = type.defaultSize;
     // Stack each new field under the previous one instead of nudging it by a fixed step.
@@ -306,6 +364,7 @@ class _FormEditorViewState extends State<FormEditorView> {
         if (left + size.width > 1.0) left = 0.12;
       }
     }
+    _pushUndo();
     left = left.clamp(0.0, 1 - size.width);
     top = top.clamp(0.0, 1 - size.height);
     final field = _Field(type: type, rect: Rect.fromLTWH(left, top, size.width, size.height), name: '${type.wire}_${_autoName++}');
@@ -364,6 +423,19 @@ class _FormEditorViewState extends State<FormEditorView> {
       appBar: AppBar(
         title: Text(ToolStrings.name(context, 'fill-form')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.undo),
+            tooltip: L10n.of(context).undoAction,
+            onPressed: _undoStack.isEmpty ? null : _undo,
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy_all_outlined),
+            tooltip: L10n.of(context).duplicateField,
+            onPressed: () {
+              final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
+              if (selected != null) _duplicate(selected);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.fit_screen_outlined),
             tooltip: L10n.of(context).fitToScreen,
@@ -652,10 +724,13 @@ class _FormEditorViewState extends State<FormEditorView> {
       Positioned(
         left: screenTL.dx + w - 13 + outward,
         top: screenTL.dy - 13 - outward,
-        child: circle(Icons.close, Colors.red, () => setState(() {
-              _fields.remove(f);
-              _selectedId = null;
-            })),
+        child: circle(Icons.close, Colors.red, () {
+          _pushUndo();
+          setState(() {
+            _fields.remove(f);
+            _selectedId = null;
+          });
+        }),
       ),
       // Resize (bottom-right).
       Positioned(
