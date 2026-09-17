@@ -368,9 +368,9 @@ class ToolCard extends StatelessWidget {
       button: true,
       label: cost > 0
           ? L10n.of(context).a11yToolCard(
-              tool.localizedName(context), tool.localizedDescription(context), cost)
+              tool.localizedName(context), _spokenDescription(context), cost)
           : L10n.of(context).a11yToolCardFree(
-              tool.localizedName(context), tool.localizedDescription(context)),
+              tool.localizedName(context), _spokenDescription(context)),
       hint: isFav ? L10n.of(context).a11yFavourited : null,
       // The card now describes itself, so its decorative children are excluded rather than
       // announced one by one.
@@ -473,6 +473,15 @@ class ToolCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// The description with any trailing full stop removed.
+  ///
+  /// The label template supplies its own sentence breaks, so a description that already ends in
+  /// a stop produced "…and more.. Free." when read aloud.
+  String _spokenDescription(BuildContext context) {
+    final text = tool.localizedDescription(context).trim();
+    return text.endsWith('.') ? text.substring(0, text.length - 1) : text;
   }
 
   void _showInfo(BuildContext context) {
