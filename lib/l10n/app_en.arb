@@ -1484,5 +1484,16 @@
     }
   },
   "createAnyway": "Create anyway",
-  "goBackAndFix": "Go back and fix"
+  "goBackAndFix": "Go back and fix",
+  "groupBadgeAndCount": "Group {letter} · {count, plural, =1{1 option} other{{count} options}}",
+  "@groupBadgeAndCount": {
+    "placeholders": {
+      "letter": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

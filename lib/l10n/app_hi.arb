@@ -929,5 +929,6 @@
   "issueDangling": "{field} एक ऐसे फ़ील्ड से जुड़ा है जो अब मौजूद नहीं",
   "issueSelfReference": "{field} खुद से ही गणना कर रहा है",
   "createAnyway": "फिर भी बनाएँ",
-  "goBackAndFix": "वापस जाकर ठीक करें"
+  "goBackAndFix": "वापस जाकर ठीक करें",
+  "groupBadgeAndCount": "समूह {letter} · {count} विकल्प"
 }

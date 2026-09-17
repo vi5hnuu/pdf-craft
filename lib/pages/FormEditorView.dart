@@ -704,10 +704,69 @@ class _FormEditorViewState extends State<FormEditorView> {
     setState(() => _selectedId = null);
   }
 
+  /// Distinct colours for grouped fields.
+  ///
+  /// Chosen to stay legible over a white page and to remain distinguishable for the common
+  /// forms of colour blindness (blue/orange/purple/teal carry different lightness as well as
+  /// hue). Colour alone is never the only cue — every grouped field also carries the group's
+  /// letter, so the grouping survives a greyscale print or a colour-blind reader.
+  static const List<Color> _groupPalette = [
+    Color(0xFF1565C0), // blue
+    Color(0xFFEF6C00), // orange
+    Color(0xFF6A1B9A), // purple
+    Color(0xFF00838F), // teal
+    Color(0xFFC62828), // red
+    Color(0xFF2E7D32), // green
+    Color(0xFF4E342E), // brown
+    Color(0xFFAD1457), // pink
+  ];
+
+  /// Groups on the current page, in the order they first appear, so a group's colour and
+  /// letter stay put while the author works rather than shuffling on every edit.
+  List<String> get _groupOrder {
+    final seen = <String>[];
+    for (final f in _fields) {
+      if (f.type.isGrouped && f.group.isNotEmpty && !seen.contains(f.group)) {
+        seen.add(f.group);
+      }
+    }
+    return seen;
+  }
+
+  Color _groupColor(String group) {
+    final index = _groupOrder.indexOf(group);
+    return index < 0 ? Colors.grey : _groupPalette[index % _groupPalette.length];
+  }
+
+  /// A, B, C… for the group. Wraps to A1, B1… beyond 26 groups, which no real form reaches
+  /// but which keeps the label unambiguous if one does.
+  String _groupLetter(String group) {
+    final index = _groupOrder.indexOf(group);
+    if (index < 0) return '?';
+    final letter = String.fromCharCode(65 + (index % 26));
+    final cycle = index ~/ 26;
+    return cycle == 0 ? letter : '$letter$cycle';
+  }
+
   Widget _fieldVisual(_Field f, double dispW, double dispH, ThemeData theme) {
     final r = Rect.fromLTWH(f.rect.left * dispW, f.rect.top * dispH, f.rect.width * dispW, f.rect.height * dispH);
     final isSel = f.id == _selectedId;
-    final primary = theme.colorScheme.primary;
+    final grouped = f.type.isGrouped && f.group.isNotEmpty;
+
+    // Grouped fields take their group's colour so membership is visible at a glance; a radio
+    // is far too small to carry a readable name, which is why the group used to be invisible
+    // unless you opened each field in turn.
+    final primary = grouped ? _groupColor(f.group) : theme.colorScheme.primary;
+
+    // Selecting one option lights up the rest of its group, which answers "what else is in
+    // here?" without the author hunting for matching colours.
+    final selected = _fields.where((x) => x.id == _selectedId).firstOrNull;
+    final isSibling = !isSel &&
+        grouped &&
+        selected != null &&
+        selected.type.isGrouped &&
+        selected.group == f.group;
+
     return Positioned(
       left: r.left,
       top: r.top,
@@ -716,8 +775,11 @@ class _FormEditorViewState extends State<FormEditorView> {
       child: IgnorePointer(
         child: Container(
           decoration: BoxDecoration(
-            color: primary.withValues(alpha: isSel ? 0.12 : 0.06),
-            border: Border.all(color: isSel ? primary : primary.withValues(alpha: 0.45), width: isSel ? 1.8 : 1),
+            color: primary.withValues(alpha: isSel ? 0.12 : (isSibling ? 0.10 : 0.06)),
+            border: Border.all(
+              color: isSel || isSibling ? primary : primary.withValues(alpha: 0.45),
+              width: isSel ? 1.8 : (isSibling ? 1.6 : 1),
+            ),
             borderRadius: BorderRadius.circular(AppRadius.surface),
           ),
           // Type badge, plus the field's own name once the box is big enough to hold it.
@@ -737,11 +799,35 @@ class _FormEditorViewState extends State<FormEditorView> {
                 child: Icon(f.type.icon, size: 10, color: Colors.white),
               ),
             ),
+            // The group's letter, in the opposite corner to the type badge. This is the cue
+            // that works where the name label cannot: a radio is about 50x25px on screen, far
+            // too narrow for text, so without this its group was invisible on the canvas.
+            if (grouped)
+              Align(
+                alignment: Alignment.topRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 0.5),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: isSel || isSibling ? 1 : 0.7),
+                    borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(AppRadius.surface),
+                        bottomLeft: Radius.circular(AppRadius.surface)),
+                  ),
+                  child: Text(
+                    _groupLetter(f.group),
+                    style: const TextStyle(
+                        fontSize: 8.5,
+                        height: 1.2,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
             // Small fields (a checkbox is ~30x25pt) have no room for a label, and a radio's
             // useful identity is its group rather than its own name.
             if (r.width > 70 && r.height > 18)
               Padding(
-                padding: const EdgeInsets.only(left: 16, right: 3, top: 1),
+                padding: EdgeInsets.only(left: 16, right: grouped ? 16 : 3, top: 1),
                 child: Text(
                   f.type.isGrouped && f.group.isNotEmpty ? f.group : f.name,
                   maxLines: 1,
@@ -859,6 +945,7 @@ class _FormEditorViewState extends State<FormEditorView> {
         onAddOption: _addOptionToGroup,
         optionsInGroup: (g) =>
             _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
+        groupLetter: _groupLetter,
       ),
     ).whenComplete(() {
       if (mounted) setState(() {}); // refresh badges/state after edits
@@ -1105,6 +1192,9 @@ class _FieldPropertiesSheet extends StatefulWidget {
   /// How many options already share a group, so the sheet can say so.
   final int Function(String group) optionsInGroup;
 
+  /// The group's letter as shown on the canvas badge, so the author can connect the two.
+  final String Function(String group) groupLetter;
+
   /// Turns a field name typed by the author into a stable reference, resolved against the
   /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
   /// later rename harmless.
@@ -1115,6 +1205,7 @@ class _FieldPropertiesSheet extends StatefulWidget {
     required this.resolve,
     required this.onAddOption,
     required this.optionsInGroup,
+    required this.groupLetter,
   });
 
   @override
@@ -1174,8 +1265,11 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
           _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
           Row(children: [
             Expanded(
-              child: Text(L10n.of(context).optionsInGroup(widget.optionsInGroup(f.group)),
-                  style: theme.textTheme.bodySmall),
+              child: Text(
+                  L10n.of(context).groupBadgeAndCount(
+                      widget.groupLetter(f.group), widget.optionsInGroup(f.group)),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
             ),
             TextButton.icon(
               icon: const Icon(Icons.add, size: 18),
