@@ -920,5 +920,14 @@
   "calcMax": "अधिकतम",
   "fontSizeAuto": "फ़ॉन्ट साइज़ (0 = अपने आप)",
   "duplicateField": "कॉपी बनाएँ",
-  "undoAction": "पहले जैसा"
+  "undoAction": "पहले जैसा",
+  "addOptionToGroup": "इस समूह में एक और विकल्प जोड़ें",
+  "groupLabel": "समूह",
+  "optionsInGroup": "इस समूह में {count} विकल्प",
+  "formIssuesTitle": "बनाने से पहले इन्हें देखें",
+  "issueDuplicateName": "दो फ़ील्ड का नाम \"{name}\" है — PDF में वे एक ही बन जाएँगे",
+  "issueDangling": "{field} एक ऐसे फ़ील्ड से जुड़ा है जो अब मौजूद नहीं",
+  "issueSelfReference": "{field} खुद से ही गणना कर रहा है",
+  "createAnyway": "फिर भी बनाएँ",
+  "goBackAndFix": "वापस जाकर ठीक करें"
 }

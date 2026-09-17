@@ -1447,5 +1447,42 @@
   "calcMax": "Maximum",
   "fontSizeAuto": "Font size (0 = auto)",
   "duplicateField": "Duplicate",
-  "undoAction": "Undo"
+  "undoAction": "Undo",
+  "addOptionToGroup": "Add another option to this group",
+  "groupLabel": "Group",
+  "optionsInGroup": "{count, plural, =1{1 option in this group} other{{count} options in this group}}",
+  "@optionsInGroup": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "formIssuesTitle": "Check these before creating",
+  "issueDuplicateName": "Two fields are named \"{name}\" — they will merge into one in the PDF",
+  "@issueDuplicateName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "issueDangling": "{field} refers to a field that no longer exists",
+  "@issueDangling": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "issueSelfReference": "{field} calculates from itself",
+  "@issueSelfReference": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "createAnyway": "Create anyway",
+  "goBackAndFix": "Go back and fix"
 }

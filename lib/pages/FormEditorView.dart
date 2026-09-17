@@ -104,7 +104,13 @@ class _Field {
   String name;
   String value = '';
   List<String> options = ['Option 1', 'Option 2'];
-  String group = 'group1';
+  /// Radio group this option belongs to. Every option sharing a group behaves as one
+  /// PDF field, so only one of them can be on at a time.
+  ///
+  /// Assigned per placement rather than defaulting to a shared constant: a bank form has
+  /// several independent questions ("Account type", "Marital status"), and a shared default
+  /// silently merged them into one group where choosing Savings cleared Married.
+  String group = '';
   String exportValue = '';
   double fontSize = 0;
   bool required = false;
@@ -406,10 +412,48 @@ class _FormEditorViewState extends State<FormEditorView> {
     _pushUndo();
     left = left.clamp(0.0, 1 - size.width);
     top = top.clamp(0.0, 1 - size.height);
-    final field = _Field(type: type, rect: Rect.fromLTWH(left, top, size.width, size.height), name: '${type.wire}_${_autoName++}');
+    final n = _autoName++;
+    final field = _Field(
+        type: type,
+        rect: Rect.fromLTWH(left, top, size.width, size.height),
+        name: '${type.wire}_$n');
+    if (type.isGrouped) {
+      // Its own group, and its own export value, so a second radio placed later is a
+      // separate question until the author explicitly adds it to this group.
+      field.group = '${type.wire}_group_$n';
+      field.exportValue = 'option_1';
+    }
     setState(() {
       _fields.add(field);
       _selectedId = field.id;
+    });
+  }
+
+  /// Adds another option to [source]'s group, placed just below it.
+  ///
+  /// This is what makes a grouped question workable on a real document: the options of one
+  /// question rarely sit in a neat column — on a bank form each sits beside its own printed
+  /// label — so a new option is created linked but free, and the author drags it into place.
+  void _addOptionToGroup(_Field source) {
+    _pushUndo();
+    final existing = _fields.where((f) => f.group == source.group).length;
+    final copy = _Field(
+      type: source.type,
+      rect: Rect.fromLTWH(
+        source.rect.left,
+        (source.rect.bottom + 0.012).clamp(0.0, 1 - source.rect.height),
+        source.rect.width,
+        source.rect.height,
+      ),
+      name: '${source.group}_${existing + 1}',
+    )
+      ..group = source.group
+      ..exportValue = 'option_${existing + 1}'
+      ..required = source.required
+      ..tooltip = source.tooltip;
+    setState(() {
+      _fields.add(copy);
+      _selectedId = copy.id;
     });
   }
 
@@ -422,7 +466,7 @@ class _FormEditorViewState extends State<FormEditorView> {
       for (int i = 0; i < labels.length; i++) {
         final top = (0.2 + i * (size.height + 0.03)).clamp(0.0, 1 - size.height);
         final f = _Field(type: type, rect: Rect.fromLTWH(0.12, top, size.width, size.height), name: '${groupName}_${i + 1}');
-        if (type == FieldType.radio) {
+        if (type.isGrouped) {
           f.group = groupName;
           f.exportValue = labels[i];
         }
@@ -676,18 +720,40 @@ class _FormEditorViewState extends State<FormEditorView> {
             border: Border.all(color: isSel ? primary : primary.withValues(alpha: 0.45), width: isSel ? 1.8 : 1),
             borderRadius: BorderRadius.circular(AppRadius.surface),
           ),
-          // A small type badge in the corner — no inline name label (less noise).
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: Container(
-              padding: const EdgeInsets.all(1.5),
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: isSel ? 0.9 : 0.5),
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(AppRadius.surface), bottomRight: Radius.circular(AppRadius.surface)),
+          // Type badge, plus the field's own name once the box is big enough to hold it.
+          // A form of any size is unreadable from icons alone — every text field looks
+          // identical, so finding "account_number" meant opening each one in turn.
+          child: Stack(children: [
+            Align(
+              alignment: Alignment.topLeft,
+              child: Container(
+                padding: const EdgeInsets.all(1.5),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: isSel ? 0.9 : 0.5),
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.surface),
+                      bottomRight: Radius.circular(AppRadius.surface)),
+                ),
+                child: Icon(f.type.icon, size: 10, color: Colors.white),
               ),
-              child: Icon(f.type.icon, size: 10, color: Colors.white),
             ),
-          ),
+            // Small fields (a checkbox is ~30x25pt) have no room for a label, and a radio's
+            // useful identity is its group rather than its own name.
+            if (r.width > 70 && r.height > 18)
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 3, top: 1),
+                child: Text(
+                  f.type.isGrouped && f.group.isNotEmpty ? f.group : f.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 9,
+                      height: 1.1,
+                      color: primary.withValues(alpha: isSel ? 1 : 0.75),
+                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w500),
+                ),
+              ),
+          ]),
         ),
       ),
     );
@@ -790,6 +856,9 @@ class _FormEditorViewState extends State<FormEditorView> {
       builder: (_) => _FieldPropertiesSheet(
         field: f,
         resolve: (name) => engine.FieldRef(_idForName(name), name),
+        onAddOption: _addOptionToGroup,
+        optionsInGroup: (g) =>
+            _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
       ),
     ).whenComplete(() {
       if (mounted) setState(() {}); // refresh badges/state after edits
@@ -855,7 +924,64 @@ class _FormEditorViewState extends State<FormEditorView> {
     );
   }
 
+  /// Shows anything structurally wrong with the form before it is built.
+  ///
+  /// The engine has detected these all along; nothing surfaced them, so a form with two
+  /// fields sharing a name silently produced a PDF where one value overwrote the other.
+  /// Reported rather than blocked: the author may be mid-edit and know better.
+  Future<bool> _confirmIssues() async {
+    final issues = engine.FormRuntime(_toSchema()).integrityIssues();
+    if (issues.isEmpty) return true;
+
+    final names = {for (final f in _pageFields.values.expand((l) => l)) f.id: f.name};
+    String describe(engine.SchemaIssue i) {
+      final field = names[i.fieldId] ?? i.fieldId;
+      return switch (i.problem) {
+        engine.SchemaProblem.duplicateName => L10n.current.issueDuplicateName(i.target),
+        engine.SchemaProblem.selfReference => L10n.current.issueSelfReference(field),
+        engine.SchemaProblem.danglingCondition ||
+        engine.SchemaProblem.danglingCalculation =>
+          L10n.current.issueDangling(field),
+      };
+    }
+
+    // The same problem on several fields reads as one problem to the author.
+    final lines = issues.map(describe).toSet().toList();
+    if (!mounted) return false;
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx).formIssuesTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('• '),
+                  Expanded(child: Text(line)),
+                ]),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(L10n.of(ctx).goBackAndFix)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(L10n.of(ctx).createAnyway)),
+        ],
+      ),
+    );
+    return proceed == true;
+  }
+
   Future<void> _onSave() async {
+    if (!await _confirmIssues()) return;
+    if (!mounted) return;
     // The mapping to the backend's request lives in the engine, where a golden
     // test pins the exact JSON the running server parses.
     final specs = engine.AcroFormSpecMapper(formFieldTypes).toSpecs(_toSchema());
@@ -972,12 +1098,24 @@ class _FormEditorViewState extends State<FormEditorView> {
 class _FieldPropertiesSheet extends StatefulWidget {
   final _Field field;
 
+  /// Adds a sibling option to the selected field's group. The new option is linked but
+  /// positioned freely, so it can be dragged next to whatever the document prints there.
+  final void Function(_Field source) onAddOption;
+
+  /// How many options already share a group, so the sheet can say so.
+  final int Function(String group) optionsInGroup;
+
   /// Turns a field name typed by the author into a stable reference, resolved against the
   /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
   /// later rename harmless.
   final engine.FieldRef Function(String name) resolve;
 
-  const _FieldPropertiesSheet({required this.field, required this.resolve});
+  const _FieldPropertiesSheet({
+    required this.field,
+    required this.resolve,
+    required this.onAddOption,
+    required this.optionsInGroup,
+  });
 
   @override
   State<_FieldPropertiesSheet> createState() => _FieldPropertiesSheetState();
@@ -1031,9 +1169,23 @@ class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
         ]),
         const SizedBox(height: 12),
         _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
-        if (f.type == FieldType.radio) ...[
+        if (f.type.isGrouped) ...[
           _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
           _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
+          Row(children: [
+            Expanded(
+              child: Text(L10n.of(context).optionsInGroup(widget.optionsInGroup(f.group)),
+                  style: theme.textTheme.bodySmall),
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(L10n.of(context).addOptionToGroup),
+              onPressed: () {
+                Navigator.pop(context);
+                widget.onAddOption(f);
+              },
+            ),
+          ]),
         ],
         if (f.type.hasOptions)
           _field(_options, L10n.of(context).optionsCommaSeparated,
