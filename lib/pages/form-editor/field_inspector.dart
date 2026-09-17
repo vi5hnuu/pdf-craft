@@ -50,6 +50,9 @@ class _FieldInspectorState extends State<FieldInspector> {
   late final _tooltip = TextEditingController(text: widget.field.tooltip);
   late final _maxLength = TextEditingController(text: widget.field.maxLength > 0 ? '${widget.field.maxLength}' : '');
   late final _pattern = TextEditingController(text: widget.field.validationPattern);
+  late final _minValue = TextEditingController(text: widget.field.minValue);
+  late final _maxValue = TextEditingController(text: widget.field.maxValue);
+  late final _minLength = TextEditingController(text: widget.field.minLength);
   late final _condField = TextEditingController(text: widget.field.conditionField);
   late final _condValue = TextEditingController(text: widget.field.conditionValue);
   late final _calcFields = TextEditingController(text: widget.field.calcFields);
@@ -65,6 +68,9 @@ class _FieldInspectorState extends State<FieldInspector> {
     _tooltip.dispose();
     _maxLength.dispose();
     _pattern.dispose();
+    _minValue.dispose();
+    _maxValue.dispose();
+    _minLength.dispose();
     _condField.dispose();
     _condValue.dispose();
     _calcFields.dispose();
@@ -172,7 +178,39 @@ class _FieldInspectorState extends State<FieldInspector> {
             onSelectionChanged: (sel) => setState(() => f.alignment = sel.first),
           ),
           _sectionTitle(theme, L10n.of(context).sectionRules),
+          // A number field could not be bounded from the UI at all, even though the runtime has
+          // always enforced min/max. Shown only for numbers, where a bound means something.
+          if (f.type == FieldType.number) ...[
+            Row(children: [
+              Expanded(
+                  child: _field(_minValue, L10n.of(context).fieldMinValue,
+                      (v) => f.minValue = v, keyboard: TextInputType.number)),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: _field(_maxValue, L10n.of(context).fieldMaxValue,
+                      (v) => f.maxValue = v, keyboard: TextInputType.number)),
+            ]),
+          ] else
+            _field(_minLength, L10n.of(context).fieldMinLength,
+                (v) => f.minLength = v, keyboard: TextInputType.number),
           _field(_pattern, L10n.of(context).fieldPattern, (v) => f.validationPattern = v),
+          // Email and phone validate by type, which was invisible — the author could not tell
+          // them apart from a plain Text field in the inspector.
+          if (f.type == FieldType.email || f.type == FieldType.phone)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(children: [
+                Icon(Icons.verified_outlined, size: 15, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    L10n.of(context).fieldFormatBadge(f.type.localizedLabel(context)),
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.primary),
+                  ),
+                ),
+              ]),
+            ),
         ],
 
         // ── Logic ─────────────────────────────────────────────────────────────────

@@ -37,6 +37,12 @@ class EditorField {
   engine.TextAlignment alignment = engine.TextAlignment.left;
   bool multiSelect = false;
   String validationPattern = '';
+
+  /// Bounds the engine's runtime already enforces but the inspector never exposed, so a number
+  /// field could not be constrained from the UI at all.
+  String minValue = '';
+  String maxValue = '';
+  String minLength = '';
   /// What the author typed in the inspector, shown back to them verbatim.
   ///
   /// The authoritative link is [conditionRef] / [calcRefs]: those hold the resolved **id**,

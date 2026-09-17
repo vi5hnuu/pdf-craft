@@ -947,5 +947,14 @@
   "nextPage": "अगला पेज",
   "restorePurchasesTitle": "खरीद वापस पाएँ",
   "restorePurchasesSub": "पिछली खरीद के क्रेडिट वापस पाएँ",
-  "restorePurchasesDone": "पिछली खरीद देख ली गई।"
+  "restorePurchasesDone": "पिछली खरीद देख ली गई।",
+  "fieldMinValue": "कम से कम वैल्यू",
+  "fieldMaxValue": "ज़्यादा से ज़्यादा वैल्यू",
+  "fieldMinLength": "कम से कम अक्षर",
+  "fieldFormatBadge": "{format} के रूप में जाँचा जाएगा",
+  "fontSizeAutoPreset": "अपने आप",
+  "fieldListTitle": "इस पेज के फ़ील्ड",
+  "fieldListEmpty": "अभी कोई फ़ील्ड नहीं लगाया",
+  "fieldListCount": "{count} फ़ील्ड",
+  "a11yOpenFieldList": "फ़ील्ड सूची खोलें"
 }

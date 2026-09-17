@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:pdf_craft/pages/form-editor/editor_field.dart';
 import 'package:pdf_craft/pages/form-editor/field_inspector.dart';
+import 'package:pdf_craft/pages/form-editor/field_list_sheet.dart';
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
 
 import 'package:dio/dio.dart';
@@ -132,6 +133,9 @@ class _FormEditorViewState extends State<FormEditorView> {
                 ..alignment = f.alignment
                 ..multiSelect = f.multiSelect
                 ..validationPattern = f.validation.pattern ?? ''
+                ..minValue = f.validation.min?.toString() ?? ''
+                ..maxValue = f.validation.max?.toString() ?? ''
+                ..minLength = f.validation.minLength?.toString() ?? ''
                 ..conditionRef = f.condition?.parent
                 ..conditionField = f.condition == null
                     ? ''
@@ -217,6 +221,30 @@ class _FormEditorViewState extends State<FormEditorView> {
       if (field.id == ref.id) return field.name;
     }
     return ref.name ?? ref.id; // deleted target: show what it used to be
+  }
+
+  /// Lists the fields on this page so one can be found by name rather than hunted for on the
+  /// canvas, and reordered to set the tab order of the finished PDF.
+  void _showFieldList() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => FieldListSheet(
+        fields: List<EditorField>.from(_fields),
+        selectedId: _selectedId,
+        groupColor: _groupColor,
+        groupLetter: _groupLetter,
+        onSelect: (f) => setState(() => _selectedId = f.id),
+        onReorder: (oldIndex, newIndex) {
+          _pushUndo();
+          setState(() {
+            final moved = _fields.removeAt(oldIndex);
+            _fields.insert(newIndex, moved);
+          });
+        },
+      ),
+    );
   }
 
   /// Records the current layout so the next change can be undone.
@@ -391,17 +419,40 @@ class _FormEditorViewState extends State<FormEditorView> {
             onPressed: _undoStack.isEmpty ? null : _undo,
           ),
           IconButton(
-            icon: const Icon(Icons.copy_all_outlined),
-            tooltip: L10n.of(context).duplicateField,
-            onPressed: () {
-              final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
-              if (selected != null) _duplicate(selected);
-            },
+            icon: const Icon(Icons.list_alt_outlined),
+            tooltip: L10n.of(context).a11yOpenFieldList,
+            onPressed: _showFieldList,
           ),
-          IconButton(
-            icon: const Icon(Icons.fit_screen_outlined),
-            tooltip: L10n.of(context).fitToScreen,
-            onPressed: () => setState(() => _tc.value = Matrix4.identity()),
+          // Duplicate and fit-to-screen moved into an overflow menu: with five actions plus the
+          // Create button the title had no room left and truncated to "For…".
+          PopupMenuButton<String>(
+            onSelected: (v) {
+              if (v == 'duplicate') {
+                final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
+                if (selected != null) _duplicate(selected);
+              } else if (v == 'fit') {
+                setState(() => _tc.value = Matrix4.identity());
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'duplicate',
+                enabled: _selectedId != null,
+                child: Row(children: [
+                  const Icon(Icons.copy_all_outlined, size: 20),
+                  const SizedBox(width: 12),
+                  Text(L10n.of(context).duplicateField),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'fit',
+                child: Row(children: [
+                  const Icon(Icons.fit_screen_outlined, size: 20),
+                  const SizedBox(width: 12),
+                  Text(L10n.of(context).fitToScreen),
+                ]),
+              ),
+            ],
           ),
           // Primary action — enabled once there's at least one field and no
           // submit in flight.
@@ -827,6 +878,19 @@ class _FormEditorViewState extends State<FormEditorView> {
           });
         }),
       ),
+      // Add-another-option (bottom-left), for grouped fields only.
+      //
+      // Adding a second radio previously meant opening the properties sheet and scrolling past
+      // Appearance and Rules to find the button — three steps for the single most common thing
+      // you do with a radio. On a bank form each option sits beside its own printed label, so
+      // the new option appears linked but free and is dragged into place.
+      if (f.type.isGrouped && f.group.isNotEmpty)
+        Positioned(
+          left: screenTL.dx - 13 - outward,
+          top: screenTL.dy + h - 13 + outward,
+          child: circle(Icons.add, _groupColor(f.group), () => _addOptionToGroup(f),
+              semanticLabel: L10n.of(context).a11yAddOption),
+        ),
       // Resize (bottom-right).
       Positioned(
           left: screenTL.dx + w - 13 + outward,
@@ -888,7 +952,12 @@ class _FormEditorViewState extends State<FormEditorView> {
           format: formFieldTypes.lookup(f.type.wire)?.defaultFormat ??
               engine.TextFormat.none,
           validation: engine.FieldValidation(
-              pattern: f.validationPattern.isEmpty ? null : f.validationPattern),
+            pattern: f.validationPattern.isEmpty ? null : f.validationPattern,
+            // Bounds the runtime has always enforced; until now nothing in the UI could set them.
+            min: num.tryParse(f.minValue.trim()),
+            max: num.tryParse(f.maxValue.trim()),
+            minLength: int.tryParse(f.minLength.trim()),
+          ),
           // The inspector takes field *names* because that is what the author sees on the
           // canvas, but rules are stored by id so a later rename cannot silently rewire them.
           // An unresolved name is kept verbatim and surfaces as a dangling reference rather

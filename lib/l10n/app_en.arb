@@ -1585,5 +1585,28 @@
   "nextPage": "Next page",
   "restorePurchasesTitle": "Restore purchases",
   "restorePurchasesSub": "Recover credits from a previous purchase",
-  "restorePurchasesDone": "Checked for previous purchases."
+  "restorePurchasesDone": "Checked for previous purchases.",
+  "fieldMinValue": "Minimum value",
+  "fieldMaxValue": "Maximum value",
+  "fieldMinLength": "Minimum characters",
+  "fieldFormatBadge": "Validated as {format}",
+  "@fieldFormatBadge": {
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "fontSizeAutoPreset": "Auto",
+  "fieldListTitle": "Fields on this page",
+  "fieldListEmpty": "No fields placed yet",
+  "fieldListCount": "{count, plural, =1{1 field} other{{count} fields}}",
+  "@fieldListCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yOpenFieldList": "Open field list"
 }
