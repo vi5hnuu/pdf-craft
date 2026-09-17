@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/widgets/pdf_effect_preview.dart';
 import 'package:pdf_craft/extensions/string_etension.dart';
 import 'package:pdf_craft/models/color_info.dart';
 import 'package:pdf_craft/models/enums/font.dart';
@@ -19,7 +20,6 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/theme/app_radius.dart';
 
 class PageNumberPdfView extends StatefulWidget {
   final File file;
@@ -252,47 +252,45 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
                           const SizedBox(height: 20),
 
                           // Preview
-                          _sectionLabel(theme, 'Preview'),
+                          _sectionLabel(theme, L10n.of(context).preview),
                           const SizedBox(height: 8),
-                          Container(
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.width * 1.26,
-                            decoration: BoxDecoration(
-                              // White because it simulates a paper page
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(AppRadius.surface),
-                              border: Border.all(color: theme.dividerColor),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Align(
-                              alignment: _getAlignment(_horizontalPosition, _verticalPosition),
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                  left: _padding.left,
-                                  top: _padding.top,
-                                  right: _padding.right,
-                                  bottom: _padding.bottom,
-                                ),
-                                child: Text(
-                                  _pageNoType.type.split('_').join(' '),
-                                  style: TextStyle(
-                                    fontSize: double.tryParse(_fontSizeC.text) ?? 20,
-                                    color: Color.fromARGB(
-                                      _fillColor.a ?? 255,
-                                      _fillColor.r,
-                                      _fillColor.g,
-                                      _fillColor.b,
+                          // The real first page, not a white rectangle standing in for paper.
+                          // The stand-in had the wrong aspect ratio for any page that was not
+                          // 1:1.26, and showed none of the document's own content — so a number
+                          // that would land on top of a footer looked perfectly placed here.
+                          PdfEffectPreview(
+                            filePath: widget.file.path,
+                            maxHeight: MediaQuery.of(context).size.width * 1.1,
+                            overlayBuilder: (context, canvas, pagePoints) {
+                              // Font size and padding are in PDF points, so they are scaled to
+                              // the render rather than used as logical pixels.
+                              final scale = canvas.width / pagePoints.width;
+                              return Align(
+                                alignment: _getAlignment(
+                                    _horizontalPosition, _verticalPosition),
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    left: _padding.left * scale,
+                                    top: _padding.top * scale,
+                                    right: _padding.right * scale,
+                                    bottom: _padding.bottom * scale,
+                                  ),
+                                  child: Text(
+                                    _pageNoType.type.split('_').join(' '),
+                                    style: TextStyle(
+                                      fontSize:
+                                          (double.tryParse(_fontSizeC.text) ?? 20) * scale,
+                                      color: Color.fromARGB(
+                                        _fillColor.a ?? 255,
+                                        _fillColor.r,
+                                        _fillColor.g,
+                                        _fillColor.b,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                         ],

@@ -27,12 +27,23 @@ class PdfEffectPreview extends StatefulWidget {
   /// Largest height the preview may take, so it cannot push the settings off screen.
   final double maxHeight;
 
+  /// Lets the overlay receive touches, for a tool where the preview is also the control — Stamp
+  /// positions its artwork by dragging it on the page. Read-only previews leave this false so a
+  /// stray touch cannot be mistaken for a gesture the tool does not have.
+  final bool interactive;
+
+  /// Which page to render (1-based). Most tools preview page one; a tool whose effect starts
+  /// part-way through the document can show the page it will actually change.
+  final int pageNumber;
+
   const PdfEffectPreview({
     super.key,
     required this.filePath,
     required this.overlayBuilder,
     this.caption,
     this.maxHeight = 260,
+    this.interactive = false,
+    this.pageNumber = 1,
   });
 
   @override
@@ -55,7 +66,7 @@ class _PdfEffectPreviewState extends State<PdfEffectPreview> {
   @override
   void didUpdateWidget(PdfEffectPreview old) {
     super.didUpdateWidget(old);
-    if (old.filePath != widget.filePath) _load();
+    if (old.filePath != widget.filePath || old.pageNumber != widget.pageNumber) _load();
   }
 
   Future<void> _load() async {
@@ -65,7 +76,7 @@ class _PdfEffectPreviewState extends State<PdfEffectPreview> {
     });
     try {
       final doc = await PdfDocument.openFile(widget.filePath);
-      final page = await doc.getPage(1);
+      final page = await doc.getPage(widget.pageNumber);
       _widthPt = page.width;
       _heightPt = page.height;
       // Rendered a little above the display size so it stays crisp, but nowhere near the
@@ -150,10 +161,13 @@ class _PdfEffectPreviewState extends State<PdfEffectPreview> {
                     child: Image.memory(_image!.bytes, fit: BoxFit.fill),
                   ),
                   Positioned.fill(
-                    child: IgnorePointer(
-                      child: widget.overlayBuilder(
-                          context, canvas, Size(_widthPt, _heightPt)),
-                    ),
+                    child: widget.interactive
+                        ? widget.overlayBuilder(
+                            context, canvas, Size(_widthPt, _heightPt))
+                        : IgnorePointer(
+                            child: widget.overlayBuilder(
+                                context, canvas, Size(_widthPt, _heightPt)),
+                          ),
                   ),
                 ]),
               ),

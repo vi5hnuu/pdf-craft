@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:pdfx/pdfx.dart';
+import 'dart:typed_data';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -70,7 +73,11 @@ class _NUpPdfViewState extends State<NUpPdfView>
                   const SizedBox(width: 12),
                   _layoutOption(theme, 4, '4-Up', L10n.of(context).nUpPortraitGrid, Icons.grid_view_outlined),
                 ]),
-                const Spacer(),
+                const SizedBox(height: 20),
+                // The real pages, tiled the way the output will tile them. Two icon chips were
+                // the only signal before, so "2-Up" and "4-Up" meant whatever the user guessed.
+                Expanded(child: _NUpPreview(file: widget.file, nUp: _nUp)),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
@@ -139,5 +146,127 @@ class _NUpPdfViewState extends State<NUpPdfView>
         outFileName: '${baseName}_${_nUp}up',
         file: uploadFile,
       ), cancelToken: cancelToken));
+  }
+}
+
+/// Shows the document's first [nUp] pages arranged on one sheet, the way the output arranges
+/// them: 2-Up puts two portrait pages side by side on a landscape sheet, 4-Up puts four in a
+/// 2x2 grid on a portrait sheet.
+///
+/// Rendered locally from the file the user already picked — no request, so the preview costs
+/// nothing and works offline.
+class _NUpPreview extends StatefulWidget {
+  final File file;
+  final int nUp;
+
+  const _NUpPreview({required this.file, required this.nUp});
+
+  @override
+  State<_NUpPreview> createState() => _NUpPreviewState();
+}
+
+class _NUpPreviewState extends State<_NUpPreview> {
+  /// Thumbnails of the first few pages, in order. Fewer than [widget.nUp] when the document is
+  /// shorter, which the sheet then shows with blank cells — which is what the output does too.
+  List<Uint8List>? _pages;
+  double _pageAspect = 595 / 842;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(_NUpPreview old) {
+    super.didUpdateWidget(old);
+    if (old.nUp != widget.nUp || old.file.path != widget.file.path) _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final doc = await PdfDocument.openFile(widget.file.path);
+      final count = math.min(widget.nUp, doc.pagesCount);
+      final thumbs = <Uint8List>[];
+      for (var i = 1; i <= count; i++) {
+        final page = await doc.getPage(i);
+        if (i == 1) _pageAspect = page.width / page.height;
+        // Small: several of these sit on one sheet at thumbnail size.
+        final image = await page.render(
+          width: 220,
+          height: 220 / (page.width / page.height),
+          format: PdfPageImageFormat.jpeg,
+          backgroundColor: '#FFFFFF',
+        );
+        await page.close();
+        if (image != null) thumbs.add(image.bytes);
+      }
+      await doc.close();
+      if (!mounted) return;
+      setState(() => _pages = thumbs);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (_failed) {
+      return Center(
+        child: Text(L10n.of(context).previewUnavailable,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+      );
+    }
+    final pages = _pages;
+    if (pages == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // 2-Up lays two portrait pages across a landscape sheet; 4-Up keeps the sheet portrait.
+    const columns = 2;
+    final rows = widget.nUp == 2 ? 1 : 2;
+    final sheetAspect = (_pageAspect * columns) / rows;
+
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Expanded(
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: sheetAspect,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: theme.dividerColor),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
+              ),
+              child: GridView.count(
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: columns,
+                childAspectRatio: _pageAspect,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 4,
+                children: [
+                  for (var i = 0; i < widget.nUp; i++)
+                    DecoratedBox(
+                      decoration: BoxDecoration(border: Border.all(color: theme.dividerColor)),
+                      child: i < pages.length
+                          ? Image.memory(pages[i], fit: BoxFit.contain)
+                          : const SizedBox.shrink(),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(L10n.of(context).nUpPreviewCaption,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+    ]);
   }
 }
