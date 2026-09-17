@@ -1,0 +1,410 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/models/request/crop_pdf.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/widgets/page_range_selector.dart';
+
+class CropPdfView extends StatefulWidget {
+  final File file;
+  const CropPdfView({super.key, required this.file});
+
+  @override
+  State<CropPdfView> createState() => _CropPdfViewState();
+}
+
+class _CropPdfViewState extends State<CropPdfView>
+    with ToolResultHandler, ToolViewMixin {
+  late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
+  final TextEditingController _outFileNameC = TextEditingController();
+
+  /// 0-indexed pages to crop. Empty means the whole document.
+  final Set<int> _pages = <int>{};
+
+  PdfPageImage? _pageImage;
+  double _pageWidthPt = 595.0;  // fallback A4
+  double _pageHeightPt = 842.0;
+
+  // Crop fractions: 0.0 = no crop on that edge, up to 0.9 max
+  double _cropTop = 0.0;
+  double _cropBottom = 0.0;
+  double _cropLeft = 0.0;
+  double _cropRight = 0.0;
+
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    _loadFirstPage();
+    resetToolState([HttpStates.cropPdf]);
+  }
+
+  Future<void> _loadFirstPage() async {
+    try {
+      final doc = await PdfDocument.openFile(widget.file.path);
+      final page = await doc.getPage(1);
+      _pageWidthPt = page.width;
+      _pageHeightPt = page.height;
+      final img = await page.render(
+        width: page.width * 1.5,
+        height: page.height * 1.5,
+        format: PdfPageImageFormat.jpeg,
+      );
+      await page.close();
+      await doc.close();
+      if (!mounted) return;
+      setState(() {
+        _pageImage = img;
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  // Shown to the user so the numbers are legible. Only for display: these are measured against
+  // the page in the preview, and the document's other pages may be a different size — which is
+  // why the request now carries the fractions themselves and lets the server resolve them
+  // against each page.
+  double get _marginTopPt => _cropTop * _pageHeightPt;
+  double get _marginBottomPt => _cropBottom * _pageHeightPt;
+  double get _marginLeftPt => _cropLeft * _pageWidthPt;
+  double get _marginRightPt => _cropRight * _pageWidthPt;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'crop'))),
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) =>
+            p.httpStates[HttpStates.cropPdf] != c.httpStates[HttpStates.cropPdf],
+        listenWhen: (p, c) =>
+            p.httpStates[HttpStates.cropPdf] != c.httpStates[HttpStates.cropPdf],
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.cropPdf], successMessage: L10n.current.toolDone),
+        builder: (context, state) {
+          return Stack(children: [
+            Column(children: [
+              // Compact header — filename + hint (fixed, no scroll).
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _outFileNameC,
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).outputFileName,
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      L10n.of(context).cropHint,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                    ),
+                    // Presented as a sheet rather than inline: the canvas below deliberately
+                    // fills the rest of the screen so dragging a handle never fights a scroll.
+                    Row(
+                      children: [
+                        Text(L10n.of(context).applyTo, style: theme.textTheme.bodySmall),
+                        const Spacer(),
+                        Flexible(
+                          child: TextButton(
+                            onPressed: _pickPages,
+                            child: Text('$_pageSummary · ${L10n.of(context).change}',
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Canvas fills the remaining space; generous margin keeps every
+              // handle fully visible and reachable (no scroll-vs-drag fight).
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(30, 20, 30, 20),
+                        child: _buildCropCanvas(theme),
+                      ),
+              ),
+              _buildMarginReadout(theme),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  border: Border(top: BorderSide(color: theme.dividerColor)),
+                ),
+                child: FilledButton(
+                  onPressed: _onCrop,
+                  child: Text(ToolStrings.name(context, 'crop')),
+                ),
+              ),
+            ]),
+            processingOverlay(state.httpStates[HttpStates.cropPdf], label: L10n.of(context).procWorking),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildCropCanvas(ThemeData theme) {
+    return LayoutBuilder(builder: (context, constraints) {
+      // Fit the page within the available area (both width AND height) so it
+      // never overflows/scrolls and all handles stay on screen.
+      final pageAspect = _pageWidthPt / _pageHeightPt;
+      double canvasW, canvasH;
+      if (constraints.maxWidth / constraints.maxHeight > pageAspect) {
+        canvasH = constraints.maxHeight;
+        canvasW = canvasH * pageAspect;
+      } else {
+        canvasW = constraints.maxWidth;
+        canvasH = canvasW / pageAspect;
+      }
+      final cropColor = theme.colorScheme.primary.withValues(alpha: 0.25);
+      const handleColor = Colors.blue;
+      const handleThickness = 3.0;
+      const handleHitArea = 32.0;
+
+      return Center(
+        child: SizedBox(
+        width: canvasW,
+        height: canvasH,
+        // Clip.none so the edge handles (which sit slightly outside the page)
+        // remain visible within the surrounding margin.
+        child: Stack(clipBehavior: Clip.none, children: [
+          // Page image
+          Positioned.fill(
+            child: _pageImage != null
+                ? Image.memory(_pageImage!.bytes, fit: BoxFit.fill)
+                : Container(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: const Center(child: Icon(Icons.picture_as_pdf, size: 64)),
+                  ),
+          ),
+
+          // Top crop overlay
+          Positioned(
+            top: 0, left: 0, right: 0,
+            height: _cropTop * canvasH,
+            child: Container(color: cropColor),
+          ),
+          // Bottom crop overlay
+          Positioned(
+            bottom: 0, left: 0, right: 0,
+            height: _cropBottom * canvasH,
+            child: Container(color: cropColor),
+          ),
+          // Left crop overlay
+          Positioned(
+            top: 0, bottom: 0, left: 0,
+            width: _cropLeft * canvasW,
+            child: Container(color: cropColor),
+          ),
+          // Right crop overlay
+          Positioned(
+            top: 0, bottom: 0, right: 0,
+            width: _cropRight * canvasW,
+            child: Container(color: cropColor),
+          ),
+
+          // Top handle — draggable horizontal line
+          Positioned(
+            top: (_cropTop * canvasH) - (handleHitArea / 2),
+            left: 0, right: 0, height: handleHitArea,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanUpdate: (d) {
+                setState(() {
+                  _cropTop = (_cropTop + d.delta.dy / canvasH)
+                      .clamp(0.0, 0.9 - _cropBottom);
+                });
+              },
+              child: Stack(children: [
+                Positioned(
+                  top: (handleHitArea - handleThickness) / 2,
+                  left: 0, right: 0, height: handleThickness,
+                  child: Container(color: handleColor),
+                ),
+                Center(child: _handleKnob()),
+              ]),
+            ),
+          ),
+
+          // Bottom handle
+          Positioned(
+            bottom: (_cropBottom * canvasH) - (handleHitArea / 2),
+            left: 0, right: 0, height: handleHitArea,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanUpdate: (d) {
+                setState(() {
+                  _cropBottom = (_cropBottom - d.delta.dy / canvasH)
+                      .clamp(0.0, 0.9 - _cropTop);
+                });
+              },
+              child: Stack(children: [
+                Positioned(
+                  top: (handleHitArea - handleThickness) / 2,
+                  left: 0, right: 0, height: handleThickness,
+                  child: Container(color: handleColor),
+                ),
+                Center(child: _handleKnob()),
+              ]),
+            ),
+          ),
+
+          // Left handle
+          Positioned(
+            left: (_cropLeft * canvasW) - (handleHitArea / 2),
+            top: 0, bottom: 0, width: handleHitArea,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanUpdate: (d) {
+                setState(() {
+                  _cropLeft = (_cropLeft + d.delta.dx / canvasW)
+                      .clamp(0.0, 0.9 - _cropRight);
+                });
+              },
+              child: Stack(children: [
+                Positioned(
+                  left: (handleHitArea - handleThickness) / 2,
+                  top: 0, bottom: 0, width: handleThickness,
+                  child: Container(color: handleColor),
+                ),
+                Center(child: _handleKnob()),
+              ]),
+            ),
+          ),
+
+          // Right handle
+          Positioned(
+            right: (_cropRight * canvasW) - (handleHitArea / 2),
+            top: 0, bottom: 0, width: handleHitArea,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanUpdate: (d) {
+                setState(() {
+                  _cropRight = (_cropRight - d.delta.dx / canvasW)
+                      .clamp(0.0, 0.9 - _cropLeft);
+                });
+              },
+              child: Stack(children: [
+                Positioned(
+                  left: (handleHitArea - handleThickness) / 2,
+                  top: 0, bottom: 0, width: handleThickness,
+                  child: Container(color: handleColor),
+                ),
+                Center(child: _handleKnob()),
+              ]),
+            ),
+          ),
+        ]),
+      ),
+      );
+    });
+  }
+
+  Widget _handleKnob() => Container(
+        width: 28, height: 28,
+        decoration: const BoxDecoration(
+          color: Colors.blue,
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+        ),
+        child: const Icon(Icons.drag_handle, color: Colors.white, size: 14),
+      );
+
+  Widget _buildMarginReadout(ThemeData theme) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _margin(L10n.of(context).marginTop, _marginTopPt),
+            _margin(L10n.of(context).marginBottom, _marginBottomPt),
+            _margin(L10n.of(context).marginLeft, _marginLeftPt),
+            _margin(L10n.of(context).marginRight, _marginRightPt),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _margin(String label, double pt) => Column(
+        children: [
+          Text(label,
+              style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text('${pt.toStringAsFixed(0)} pt',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        ],
+      );
+
+  String get _pageSummary {
+    if (_pages.isEmpty) return L10n.of(context).allPages;
+    if (_pages.length == 1) return L10n.of(context).cropScopePage(_pages.first + 1);
+    final sorted = _pages.toList()..sort();
+    return L10n.of(context).cropScopePages(sorted.length);
+  }
+
+  Future<void> _pickPages() async {
+    final chosen = await PageRangeSelector.show(
+      context,
+      file: widget.file,
+      selected: _pages,
+    );
+    if (chosen == null || !mounted) return;
+    setState(() {
+      _pages
+        ..clear()
+        ..addAll(chosen);
+    });
+  }
+
+  void _onCrop() async {
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => CropPdfEvent(
+      cropPdf: CropPdf(
+        outFileName: _outFileNameC.text.trim().isEmpty
+            ? 'cropped_file'
+            : _outFileNameC.text.trim(),
+        keepXFrac: _cropLeft,
+        keepYFrac: _cropTop,
+        keepWidthFrac: 1 - _cropLeft - _cropRight,
+        keepHeightFrac: 1 - _cropTop - _cropBottom,
+        marginTop: _marginTopPt,
+        marginBottom: _marginBottomPt,
+        marginLeft: _marginLeftPt,
+        marginRight: _marginRightPt,
+        pages: _pages.toList()..sort(),
+        file: uploadFile,
+      ), cancelToken: cancelToken));
+  }
+
+  @override
+  void dispose() {
+    _outFileNameC.dispose();
+    super.dispose();
+  }
+}

@@ -1,0 +1,192 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/models/request/image_to_pdf.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/utils/reorder_utils.dart';
+
+class ImageToPdfView extends StatefulWidget {
+  final List<File> files;
+  final String? outFileName;
+
+  // const MergePdfView({super.key,required this.files,this.outFileName}):assert(files.length>1);
+  const ImageToPdfView({super.key, required this.files, this.outFileName});
+
+  @override
+  State<ImageToPdfView> createState() => _ImageToPdfViewState();
+}
+
+class _ImageToPdfViewState extends State<ImageToPdfView>
+    with ToolResultHandler, ToolViewMixin {
+  late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
+
+  /// Page geometry for the generated document. A4 rather than one point per pixel, which
+  /// produced pages several feet across from an ordinary photo.
+  String _pageSize = 'A4';
+  String _orientation = 'AUTO';
+  final TextEditingController outFileNameC=TextEditingController();
+
+  @override
+  void initState() {
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    super.initState();
+    resetToolState([HttpStates.imageToPdf]);
+  }
+
+  @override
+  void dispose() {
+    outFileNameC.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final md=MediaQuery.of(context);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'image-to-pdf')), elevation: 5),
+      body: BlocConsumer<PdfBloc,PdfState>(
+          buildWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
+          listenWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
+          listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.imageToPdf], successMessage: L10n.current.toolDone),builder: (context, state) {
+        return Stack(
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(keyboardType: TextInputType.text,
+                    decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: const OutlineInputBorder()),
+                    controller: outFileNameC),
+                ),
+                Expanded(child: ReorderableListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  onReorderItem: _reorder,
+                  scrollDirection: Axis.vertical,
+                  itemCount: widget.files.length,
+                  header: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: RichText(
+                      text: TextSpan(
+                        text: L10n.of(context).reorderFilesTitle,
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        children: [
+                          TextSpan(
+                            text: L10n.of(context).longPressToDrag,
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  itemBuilder: (context, index) {
+                    final file = widget.files[index];
+                    return Padding(
+                        key: ValueKey(file.path),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 6),
+                        child: Flex(
+                          direction: Axis.horizontal,
+                          children: [
+                            Image.file(
+                              file,
+                              width: md.size.width * 0.25,
+                              fit: BoxFit.fitWidth,
+                              // A reorderable list of full-resolution camera photos decoded at
+                              // their native size is tens of megabytes each; bound the decode to
+                              // the thumbnail actually drawn.
+                              cacheWidth: (md.size.width * 0.25 *
+                                      MediaQuery.devicePixelRatioOf(context))
+                                  .round(),
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+                            ),
+                            Flexible(child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(children: [
+                                Expanded(child: Text(Utility.fileName(file: file),style: const TextStyle(overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold))),
+                                Icon(Icons.drag_indicator, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+                              ],),
+                            ))
+                          ],
+                        )
+                    );
+                  },
+                )),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Row(children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _pageSize,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                            labelText: L10n.of(context).imgPageSize, border: const OutlineInputBorder(), isDense: true),
+                        items: [
+                          const DropdownMenuItem(value: 'A4', child: Text('A4')),
+                          DropdownMenuItem(value: 'LETTER', child: Text(L10n.of(context).usLetter)),
+                          DropdownMenuItem(value: 'LEGAL', child: Text(L10n.of(context).usLegal)),
+                          DropdownMenuItem(value: 'MATCH_IMAGE', child: Text(L10n.of(context).matchEachImage)),
+                        ],
+                        onChanged: (v) => setState(() => _pageSize = v ?? 'A4'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _orientation,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                            labelText: L10n.of(context).orientation, border: const OutlineInputBorder(), isDense: true),
+                        // Meaningless when each page simply takes its image's dimensions.
+                        items: [
+                          DropdownMenuItem(value: 'AUTO', child: Text(L10n.of(context).matchImage)),
+                          DropdownMenuItem(value: 'PORTRAIT', child: Text(L10n.of(context).portrait)),
+                          DropdownMenuItem(value: 'LANDSCAPE', child: Text(L10n.of(context).landscape)),
+                        ],
+                        onChanged: _pageSize == 'MATCH_IMAGE'
+                            ? null
+                            : (v) => setState(() => _orientation = v ?? 'AUTO'),
+                      ),
+                    ),
+                  ]),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  child: FilledButton(onPressed: _onConvertToPdf, child: Text(ToolStrings.name(context, 'image-to-pdf'))),
+                )
+              ],
+            ),
+            processingOverlay(state.httpStates[HttpStates.imageToPdf], label: L10n.of(context).procWorking),
+          ],
+        );
+      },)
+    );
+  }
+
+  void _reorder(oldIndex, newIndex) {
+    setState(() => ReorderUtils.moveInPlace(widget.files, oldIndex, newIndex));
+  }
+
+  void _onConvertToPdf() async {
+    final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
+    runTool((cancelToken) => ImageToPdfEvent(
+        imageToPdf: ImageToPdf(
+          outFileName: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text,
+          pageSize: _pageSize,
+          orientation: _orientation,
+          files: files,
+        ),
+        cancelToken: cancelToken));
+  }
+}

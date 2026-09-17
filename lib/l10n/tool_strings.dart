@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
 
 /// Translated tool and category names, keyed by [ToolDef.id] / [ToolCategory.name].
 ///

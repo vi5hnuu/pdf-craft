@@ -1,0 +1,130 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/models/request/flip_image.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+
+/// Flip Image: mirrors a picture horizontally or vertically.
+class FlipImageView extends StatefulWidget {
+  final File file;
+  const FlipImageView({super.key, required this.file});
+
+  @override
+  State<FlipImageView> createState() => _FlipImageViewState();
+}
+
+class _FlipImageViewState extends State<FlipImageView>
+    with ToolResultHandler, ToolViewMixin {
+  bool _horizontal = true;
+
+  @override
+  void initState() {
+    super.initState();
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    resetToolState([HttpStates.flipImage]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'img-flip'))),
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) => p.httpStates[HttpStates.flipImage] != c.httpStates[HttpStates.flipImage],
+        listenWhen: (p, c) => p.httpStates[HttpStates.flipImage] != c.httpStates[HttpStates.flipImage],
+        listener: (context, state) => handleToolState(
+          state.httpStates[HttpStates.flipImage],
+          successMessage: L10n.of(context).imageFlipped,
+          onDone: (f) => OpenFile.open(f.path),
+        ),
+        builder: (context, state) {
+          final loading = state.httpStates[HttpStates.flipImage]?.loading == true;
+          return Stack(children: [
+            Column(children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(children: [
+                    Expanded(
+                      child: Center(
+                        child: Transform(
+                          alignment: Alignment.center,
+                          transform: _horizontal
+                              ? Matrix4.diagonal3Values(-1, 1, 1)
+                              : Matrix4.diagonal3Values(1, -1, 1),
+                          child: Image.file(
+                            widget.file,
+                            fit: BoxFit.contain,
+                            // The source is a user's photo, often far larger than this preview.
+                            cacheWidth: (MediaQuery.sizeOf(context).width *
+                                    MediaQuery.devicePixelRatioOf(context))
+                                .round(),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // RadioGroup supplies the selection to the tiles below it. Besides
+                    // replacing the deprecated per-tile groupValue/onChanged, it gives the set
+                    // arrow-key navigation, which loose radios never had.
+                    RadioGroup<bool>(
+                      groupValue: _horizontal,
+                      onChanged: (v) => setState(() => _horizontal = v ?? _horizontal),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          RadioListTile<bool>(
+                            value: true,
+                            title: Text(L10n.of(context).flipHorizontalDesc),
+                            secondary: const Icon(Icons.flip),
+                          ),
+                          RadioListTile<bool>(
+                            value: false,
+                            title: Text(L10n.of(context).flipVerticalDesc),
+                            secondary: const Icon(Icons.flip_camera_android),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  border: Border(top: BorderSide(color: theme.dividerColor)),
+                ),
+                child: FilledButton.icon(
+                  onPressed: loading ? null : _onApply,
+                  icon: const Icon(Icons.flip),
+                  label: Text(ToolStrings.name(context, 'img-flip')),
+                ),
+              ),
+            ]),
+            processingOverlay(state.httpStates[HttpStates.flipImage], label: L10n.of(context).procWorking),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Future<void> _onApply() async {
+    final file = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => FlipImageEvent(
+          flipImage: FlipImage(direction: _horizontal ? 'HORIZONTAL' : 'VERTICAL', file: file),
+          cancelToken: cancelToken,
+        ));
+  }
+}

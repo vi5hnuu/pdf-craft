@@ -79,7 +79,6 @@ class AppRoutes{
   static AppRoute pdfFilePreviewRoute=AppRoute(name: 'pdf-file-preview', path: '/pdf-file-preview/:pdfFilePath');
 
 
-  static AppRoute homeRoute=AppRoute(name: 'home', path: '/');
 
   static AppRoute filesRoute=AppRoute(name: 'files', path: '/files');
   static AppRoute filesListingRoute=AppRoute(name: 'list', path: 'list');

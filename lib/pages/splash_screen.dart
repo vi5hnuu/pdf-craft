@@ -1,0 +1,142 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/app_open_ad_manager.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
+import 'package:pdf_craft/singletons/rewarded_ad_manager.dart';
+import 'package:pdf_craft/singletons/rewarded_interstitial_ad_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/app_logo.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  Timer? timer;
+  bool _navigated = false; // ensure we navigate exactly once
+
+  @override
+  void initState() {
+    // Navigate as soon as ad init completes — no fixed minimum delay (the
+    // splash previously always waited the full timer). MobileAds init is the
+    // only gate.
+    // Ads initialise in the background and no longer gate navigation. The splash used to wait
+    // for MobileAds.initialize() (or a 3s fallback), so a slow ad SDK — common on poor networks —
+    // held every launch here. The preloads are singletons and don't need this screen mounted.
+    MobileAds.instance.initialize().then((value) {
+      // Preload an App Open ad now that MobileAds is initialized, so the first
+      // background->foreground (warm resume) has an ad ready to show.
+      AppOpenAdManager().loadAd();
+      // Preload a rewarded ad for the first heavy-tool gate.
+      RewardedAdManager().loadAd();
+      // And one rewarded interstitial, so the out-of-credits dialog can offer it
+      // instead of dead-ending at "buy credits".
+      RewardedInterstitialAdManager().loadAd();
+      LoggerSingleton().logger.i('Ads ${value.adapterStatuses.keys.join(',')} : ${value.adapterStatuses.values.join(',')}');
+    });
+    // Show the brand briefly so the splash doesn't just flash, then continue.
+    timer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      _goOnce();
+    });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Scaffold(
+      body: Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutCubic,
+          builder: (context, t, child) => Opacity(
+            opacity: t,
+            child: Transform.scale(scale: 0.9 + 0.1 * t, child: child),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Logo on a soft rounded card — lightweight, no animation file.
+              Container(
+                width: 112,
+                height: 112,
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(AppRadius.surface),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(20),
+                child: const AppLogo(fit: BoxFit.contain),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                L10n.of(context).appName,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                L10n.of(context).splashTagline,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                ),
+              ),
+              const SizedBox(height: 36),
+              SpinKitThreeBounce(color: primary, size: 22),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Navigates to the next screen exactly once, whichever trigger (ad init or
+  /// the safety timer) fires first.
+  void _goOnce() {
+    if (_navigated) return;
+    _navigated = true;
+    timer?.cancel();
+    goToHome();
+  }
+
+  Future<void> goToHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
+    if (!mounted) return;
+    if (onboardingDone) {
+      GoRouter.of(context).goNamed(AppRoutes.filesRoute.name);
+    } else {
+      GoRouter.of(context).goNamed(AppRoutes.onboardingRoute.name);
+    }
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+}

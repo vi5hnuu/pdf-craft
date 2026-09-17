@@ -46,6 +46,10 @@ class SchemaCodec {
         if (f.required) 'required': true,
         if (f.checked) 'checked': true,
         if (f.recipientId != null) 'recipient_id': f.recipientId,
+        if (f.label.isNotEmpty) 'label': f.label,
+        if (f.labelSize > 0) 'label_size': f.labelSize,
+        if (f.label.isNotEmpty && f.labelPosition != LabelPosition.right)
+          'label_position': f.labelPosition.name,
         if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
         if (f.readOnly) 'read_only': true,
         if (f.maxLength != null) 'max_length': f.maxLength,
@@ -53,6 +57,7 @@ class SchemaCodec {
         if (f.alignment != TextAlignment.left) 'alignment': f.alignment.name,
         if (f.multiSelect) 'multi_select': true,
         if (f.format != TextFormat.none) 'format': f.format.name,
+        if (f.dateFormat.isNotEmpty) 'date_format': f.dateFormat,
         if (!f.validation.isEmpty) 'validation': f.validation.toJson(),
         if (f.condition != null) 'condition': f.condition!.toJson(),
         if (f.calculation != null && !f.calculation!.isEmpty)
@@ -102,8 +107,9 @@ class SchemaCodec {
     const known = {
       'id', 'type', 'page', 'rect', 'name', 'value', 'options', 'group',
       'export_value', 'font_size', 'required', 'checked', 'recipient_id',
+      'label', 'label_size', 'label_position',
       'tooltip', 'read_only', 'max_length', 'comb', 'alignment', 'multi_select',
-      'format', 'validation', 'condition', 'calculation',
+      'format', 'date_format', 'validation', 'condition', 'calculation',
     };
     return FormFieldModel(
       id: json['id'] as String,
@@ -119,6 +125,9 @@ class SchemaCodec {
       required: json['required'] as bool? ?? false,
       checked: json['checked'] as bool? ?? false,
       recipientId: json['recipient_id'] as String?,
+      label: json['label'] as String? ?? '',
+      labelSize: (json['label_size'] as num?)?.toDouble() ?? 0,
+      labelPosition: LabelPosition.fromWire(json['label_position'] as String?),
       tooltip: json['tooltip'] as String? ?? '',
       readOnly: json['read_only'] as bool? ?? false,
       maxLength: (json['max_length'] as num?)?.toInt(),
@@ -126,6 +135,7 @@ class SchemaCodec {
       alignment: TextAlignment.fromWire(json['alignment'] as String?),
       multiSelect: json['multi_select'] as bool? ?? false,
       format: TextFormat.fromWire(json['format'] as String?),
+      dateFormat: json['date_format'] as String? ?? '',
       validation: json['validation'] == null
           ? const FieldValidation()
           : FieldValidation.fromJson((json['validation'] as Map).cast<String, Object?>()),

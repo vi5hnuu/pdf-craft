@@ -13,7 +13,24 @@ class FieldTypeDescriptor {
   final String id;
 
   /// Size a freshly dropped field gets, as a fraction of the page.
+  ///
+  /// Used only when [defaultPointSize] is null: a fraction is right for a field whose size is
+  /// relative to the page (a text box spanning a third of the width), and wrong for one whose
+  /// size is absolute (a checkbox is 12pt whatever the paper).
   final FractionalSize defaultSize;
+
+  /// Size in PDF points a freshly dropped field gets, when the type has an absolute size.
+  ///
+  /// Checkboxes and radios are the case this exists for. As fractions of A4 they came out
+  /// 29.8 x 26.9pt — far larger than any printed form's box, and not even square, because the
+  /// same fraction means different points on each axis.
+  final PointSize? defaultPointSize;
+
+  /// Width and height move together, so the field can only ever be square.
+  ///
+  /// The PDF draws a checkbox's tick and a radio's ring against `min(width, height)`, so a
+  /// non-square toggle puts a round glyph in an oval box. Nothing good comes of it.
+  final bool lockAspect;
 
   /// Checkbox-like: holds an on/off state rather than text.
   final bool isToggle;
@@ -42,6 +59,8 @@ class FieldTypeDescriptor {
   const FieldTypeDescriptor({
     required this.id,
     required this.defaultSize,
+    this.defaultPointSize,
+    this.lockAspect = false,
     this.isToggle = false,
     this.acceptsOptions = false,
     this.acceptsValue = false,

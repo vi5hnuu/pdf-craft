@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pdf_craft/singletons/CreditService.dart';
+import 'package:pdf_craft/singletons/credit_service.dart';
 
 /// The client quotes a price before spending credits, so its arithmetic has to match the
 /// server's exactly — a quote that is lower than the charge is how users lose trust in a

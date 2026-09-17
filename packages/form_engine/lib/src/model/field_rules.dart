@@ -14,6 +14,20 @@ enum TextAlignment {
       TextAlignment.values.firstWhere((a) => a.name == name, orElse: () => TextAlignment.left);
 }
 
+/// Where a field's visible caption sits relative to the field.
+///
+/// Presets rather than free coordinates: a caption is always attached to its field, and four
+/// sides cover every form layout while staying predictable when the field is moved or resized.
+enum LabelPosition {
+  right,
+  left,
+  above,
+  below;
+
+  static LabelPosition fromWire(String? name) => LabelPosition.values
+      .firstWhere((p) => p.name == name, orElse: () => LabelPosition.right);
+}
+
 /// The kind of content a text field expects.
 ///
 /// Drives three separate things: the keyboard the filler gets, the validation the app runs,

@@ -1,0 +1,236 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/models/request/duplicate_pages.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
+import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
+
+class DuplicatePagesView extends StatefulWidget {
+  final File file;
+  const DuplicatePagesView({super.key, required this.file});
+
+  @override
+  State<DuplicatePagesView> createState() => _DuplicatePagesViewState();
+}
+
+class _DuplicatePagesViewState extends State<DuplicatePagesView>
+    with ToolResultHandler, ToolViewMixin {
+  PdfDocument? _doc;
+  int _totalPages = 0;
+  // 0-indexed page -> copies to insert. A page is "selected" when it has an entry.
+  final Map<int, int> _pageCounts = {};
+
+  @override
+  void initState() {
+    super.initState();
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    _openDocument();
+    resetToolState([HttpStates.duplicatePages]);
+  }
+
+  Future<void> _openDocument() async {
+    try {
+      final doc = await PdfDocument.openFile(widget.file.path);
+      if (mounted) setState(() { _doc = doc; _totalPages = doc.pagesCount; });
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(ToolStrings.name(context, 'duplicate-pages')),
+        actions: [
+          if (_pageCounts.isNotEmpty)
+            TextButton(
+              onPressed: () => setState(() => _pageCounts.clear()),
+              child: Text(L10n.of(context).clear),
+            ),
+        ],
+      ),
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) =>
+            p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
+        listenWhen: (p, c) =>
+            p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.duplicatePages], successMessage: L10n.current.pagesDuplicated),
+        builder: (context, state) {
+          final loading = state.httpStates[HttpStates.duplicatePages]?.loading == true;
+          return Stack(children: [
+            Column(children: [
+              // Instruction
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Text(
+                  L10n.of(context).duplicateHint,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+
+              // Page thumbnail grid
+              Expanded(
+                child: _doc == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(12),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 0.7,
+                        ),
+                        itemCount: _totalPages,
+                        itemBuilder: (context, i) => _buildPageTile(i),
+                      ),
+              ),
+
+              // Count stepper + submit
+              _buildBottomBar(theme, loading),
+            ]),
+            processingOverlay(state.httpStates[HttpStates.duplicatePages],
+              label: L10n.of(context).duplicatingPages,
+            ),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildPageTile(int i) {
+    final selected = _pageCounts.containsKey(i);
+    final count = _pageCounts[i] ?? 1;
+    return GestureDetector(
+      onTap: () => setState(() {
+        if (selected) {
+          _pageCounts.remove(i);
+        } else {
+          _pageCounts[i] = 1;
+        }
+      }),
+      child: Stack(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.surface),
+          child: PdfPageThumbnail(
+            document: _doc!,
+            pageNumber: i + 1,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+        ),
+        // Selection overlay with a per-page copy stepper.
+        if (selected)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.30),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
+                border: Border.all(color: Colors.blue, width: 2),
+              ),
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(AppRadius.surface),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    _stepBtn(Icons.remove, count > 1
+                        ? () => setState(() => _pageCounts[i] = count - 1)
+                        : null),
+                    Text('×$count',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    _stepBtn(Icons.add, count < 20
+                        ? () => setState(() => _pageCounts[i] = count + 1)
+                        : null),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+        // Page number label
+        Positioned(
+          bottom: 4, left: 0, right: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(AppRadius.surface),
+              ),
+              child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 11)),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _stepBtn(IconData icon, VoidCallback? onTap) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon, size: 18, color: onTap == null ? Colors.white38 : Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(ThemeData theme, bool loading) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _pageCounts.isEmpty || loading ? null : _onDuplicate,
+            icon: loading
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.copy_all),
+            label: Text(_pageCounts.isEmpty
+                ? L10n.of(context).selectPagesToDuplicate
+                : L10n.of(context).duplicateAction(_totalCopies, _pageCounts.length)),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  int get _totalCopies => _pageCounts.values.fold(0, (a, b) => a + b);
+
+  Future<void> _onDuplicate() async {
+    final file = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => DuplicatePagesEvent(
+      duplicatePages: DuplicatePages(
+        pageCounts: Map<int, int>.from(_pageCounts),
+        file: file,
+      ),
+      cancelToken: cancelToken,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _doc?.close();
+    super.dispose();
+  }
+}

@@ -69,6 +69,12 @@ class AcroFormSpecMapper {
       if (type.acceptsValue && f.fontSize > 0) 'font_size': f.fontSize,
       if (f.required) 'required': true,
       if (type.isToggle) 'checked': f.checked,
+      // A visible caption drawn beside the widget. `tooltip` below is /TU — hover help that
+      // never reaches paper — so without this a radio group's options are three identical
+      // circles with nothing to tell them apart in the output.
+      if (f.label.isNotEmpty) 'label': f.label,
+      if (f.label.isNotEmpty && f.labelSize > 0) 'label_size': f.labelSize,
+      if (f.label.isNotEmpty) 'label_position': f.labelPosition.name,
       if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
       if (f.readOnly) 'read_only': true,
       if (f.maxLength != null && f.maxLength! > 0) 'max_length': f.maxLength,
@@ -78,6 +84,8 @@ class AcroFormSpecMapper {
       if (f.alignment != TextAlignment.left) 'alignment': f.alignment.quadding,
       if (type.allowsMultiSelect && f.multiSelect) 'multi_select': true,
       if (f.format != TextFormat.none) 'format': f.format.name,
+      // Only meaningful on a date field; the backend writes it as the field's format action.
+      if (f.dateFormat.isNotEmpty) 'date_format': f.dateFormat,
       if (f.validation.pattern != null && f.validation.pattern!.isNotEmpty)
         'validation_pattern': f.validation.pattern,
       // Rules travel as ids, but the PDF's own scripts address fields by NAME, so the

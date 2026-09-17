@@ -48,6 +48,21 @@ class FormFieldModel {
   /// Checkbox/radio prefilled as on.
   bool checked;
 
+  /// Visible caption drawn on the page beside the field.
+  ///
+  /// Not the same thing as [tooltip], which is `/TU` — hover help that never appears on paper
+  /// and that most mobile readers do not show at all. A radio group's options are otherwise
+  /// indistinguishable in the output: three identical circles with nothing to say which is
+  /// "Savings" and which is "Current". Empty means draw nothing, which is right when the
+  /// document already prints its own labels.
+  String label;
+
+  /// Point size for [label]. 0 takes the backend's default.
+  double labelSize;
+
+  /// Which side of the field the caption sits on.
+  LabelPosition labelPosition;
+
   /// Help text shown on hover/long-press and written to the PDF as `/TU`.
   String tooltip;
 
@@ -70,6 +85,9 @@ class FormFieldModel {
 
   /// What the field expects, which drives keyboard, validation and PDF format actions.
   TextFormat format;
+
+  /// Display format for a date field, e.g. `dd/mm/yyyy`. Empty for every other type.
+  String dateFormat;
 
   /// Input rules enforced by the app's own runtime.
   FieldValidation validation;
@@ -104,6 +122,9 @@ class FormFieldModel {
     this.required = false,
     this.checked = false,
     this.recipientId,
+    this.label = '',
+    this.labelSize = 0,
+    this.labelPosition = LabelPosition.right,
     this.tooltip = '',
     this.readOnly = false,
     this.maxLength,
@@ -111,6 +132,7 @@ class FormFieldModel {
     this.alignment = TextAlignment.left,
     this.multiSelect = false,
     this.format = TextFormat.none,
+    this.dateFormat = '',
     this.validation = const FieldValidation(),
     this.condition,
     this.calculation,
@@ -131,6 +153,9 @@ class FormFieldModel {
     bool? required,
     bool? checked,
     String? recipientId,
+    String? label,
+    double? labelSize,
+    LabelPosition? labelPosition,
     String? tooltip,
     bool? readOnly,
     int? maxLength,
@@ -138,6 +163,7 @@ class FormFieldModel {
     TextAlignment? alignment,
     bool? multiSelect,
     TextFormat? format,
+    String? dateFormat,
     FieldValidation? validation,
     VisibilityCondition? condition,
     Calculation? calculation,
@@ -156,6 +182,9 @@ class FormFieldModel {
         required: required ?? this.required,
         checked: checked ?? this.checked,
         recipientId: recipientId ?? this.recipientId,
+        label: label ?? this.label,
+        labelSize: labelSize ?? this.labelSize,
+        labelPosition: labelPosition ?? this.labelPosition,
         tooltip: tooltip ?? this.tooltip,
         readOnly: readOnly ?? this.readOnly,
         maxLength: maxLength ?? this.maxLength,
@@ -163,6 +192,7 @@ class FormFieldModel {
         alignment: alignment ?? this.alignment,
         multiSelect: multiSelect ?? this.multiSelect,
         format: format ?? this.format,
+        dateFormat: dateFormat ?? this.dateFormat,
         validation: validation ?? this.validation,
         condition: condition ?? this.condition,
         calculation: calculation ?? this.calculation,

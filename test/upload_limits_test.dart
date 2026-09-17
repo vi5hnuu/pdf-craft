@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pdf_craft/utils/UploadLimits.dart';
+import 'package:pdf_craft/utils/upload_limits.dart';
 
 /// The client stops oversized uploads before they start; the rule must match the server's
 /// per-file and per-request limits so nothing it would accept is blocked.

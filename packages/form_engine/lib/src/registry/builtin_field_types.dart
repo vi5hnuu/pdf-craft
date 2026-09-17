@@ -35,14 +35,22 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     defaultSize: FractionalSize(0.42, 0.12),
     acceptsValue: true,
   ),
+  // Square and sized in points, not as a fraction: the former FractionalSize(0.05, 0.032) was
+  // 29.8 x 26.9pt on A4, too big for a printed form's box and not even square, so the tick sat
+  // in an oval. 18pt is a comfortable default — big enough to see and grab on a phone — and the
+  // inspector's Position & size box types an exact figure when one has to match a printed box.
   FieldTypeDescriptor(
     id: FieldTypes.checkbox,
     defaultSize: FractionalSize(0.05, 0.032),
+    defaultPointSize: PointSize(18, 18),
+    lockAspect: true,
     isToggle: true,
   ),
   FieldTypeDescriptor(
     id: FieldTypes.radio,
     defaultSize: FractionalSize(0.05, 0.032),
+    defaultPointSize: PointSize(18, 18),
+    lockAspect: true,
     isToggle: true,
     isGrouped: true,
   ),

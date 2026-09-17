@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pdf_craft/models/HttpState.dart';
+import 'package:pdf_craft/models/http_state.dart';
 
 /// Errors from tools must explain what went wrong — the server's own reason when there is one,
 /// otherwise a clear transport message — and never Dio's internal text.

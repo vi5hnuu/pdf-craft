@@ -26,6 +26,29 @@ class FractionalSize {
   String toString() => 'FractionalSize($width, $height)';
 }
 
+/// A size in PDF points, for the field types whose size is absolute rather than relative to
+/// the page — a checkbox is 12pt on A4 and 12pt on Letter.
+class PointSize {
+  final double width;
+  final double height;
+
+  const PointSize(this.width, this.height);
+
+  /// This size as a fraction of a page [pageWidth] x [pageHeight] points.
+  FractionalSize toFraction(double pageWidth, double pageHeight) =>
+      FractionalSize(width / pageWidth, height / pageHeight);
+
+  @override
+  bool operator ==(Object other) =>
+      other is PointSize && other.width == width && other.height == height;
+
+  @override
+  int get hashCode => Object.hash(width, height);
+
+  @override
+  String toString() => 'PointSize($width, $height)';
+}
+
 /// A rectangle in fractional page coordinates, origin at the page's top-left.
 ///
 /// The backend expects PDF points with a top-left origin and flips Y itself, so

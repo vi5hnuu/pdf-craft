@@ -3,14 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
-import 'package:pdf_craft/models/file-selection-config.dart';
-import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
+import 'package:pdf_craft/models/file_selection_config.dart';
+import 'package:pdf_craft/models/request/image_studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
-import 'package:pdf_craft/singletons/RecentToolsService.dart';
+import 'package:pdf_craft/singletons/recent_tools_service.dart';
 import 'package:pdf_craft/tools/credit_gate.dart';
-import 'package:pdf_craft/singletons/CreditService.dart';
-import 'package:pdf_craft/utils/Constants.dart';
-import 'package:pdf_craft/utils/UploadLimits.dart';
+import 'package:pdf_craft/singletons/credit_service.dart';
+import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/utils/upload_limits.dart';
 
 /// A tool category (used for grouping + accent colour on the Tools screen).
 class ToolCategory {
