@@ -771,7 +771,12 @@ final GoRouter appRouter = GoRouter(
         name: AppRoutes.pdfFilePreviewRoute.name,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: PdfPreview(pdfFilePath: state.pathParameters['pdfFilePath']!),
+          // `from=tool` tells the preview it is a tool's result, so the next-tool action
+          // leads instead of sitting beside Share.
+          child: PdfPreview(
+            pdfFilePath: state.pathParameters['pdfFilePath']!,
+            fromTool: state.uri.queryParameters['from'] == 'tool',
+          ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/widgets/next_tool_sheet.dart';
 
@@ -23,7 +24,7 @@ mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
       action: output == null
           ? null
           : SnackBarAction(
-              label: 'Next tool',
+              label: L10n.current.useInAnotherTool,
               textColor: Colors.white,
               onPressed: () {
                 if (mounted) NextToolSheet.show(context, output);

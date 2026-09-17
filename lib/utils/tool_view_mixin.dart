@@ -63,7 +63,6 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
   }) {
     if (s == null) return;
     if (s.done == true) {
-      if (showInterstitial) AdsSingleton().dispatch(ShowInterstitialAd());
       // A paid tool debited credits server-side — refresh the balance shown in the UI.
       CreditService().refreshBalance();
       final saved = s.extras?['savedFile'];
@@ -75,9 +74,14 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
           GoRouter.of(context).pushNamed(
             AppRoutes.pdfFilePreviewRoute.name,
             pathParameters: {'pdfFilePath': saved.path},
+            queryParameters: const {'from': 'tool'},
           );
         }
       }
+      // Shown *after* the result is on screen. Dispatched first, the interstitial covered the
+      // confirmation for most of the snackbar's four seconds, so the one affordance that led
+      // to the next tool expired behind an ad.
+      if (showInterstitial) AdsSingleton().dispatch(ShowInterstitialAd());
     } else if (s.error != null) {
       // Keyed off the 402 status rather than searching the message for "credit", which
       // broke as soon as the server reworded anything.

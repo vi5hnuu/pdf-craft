@@ -23,7 +23,17 @@ class PdfPreview extends StatefulWidget {
   final String pdfFilePath;
   final String? password;
 
-  const PdfPreview({super.key, required this.pdfFilePath, this.password});
+  /// True when this screen is a tool's result rather than a file the user opened to read.
+  /// Only changes emphasis: "Use in another tool" becomes the primary action, because
+  /// chaining is the likely next step after a tool finishes.
+  final bool fromTool;
+
+  const PdfPreview({
+    super.key,
+    required this.pdfFilePath,
+    this.password,
+    this.fromTool = false,
+  });
 
   @override
   State<PdfPreview> createState() => _PdfPreviewState();
@@ -128,13 +138,6 @@ class _PdfPreviewState extends State<PdfPreview> {
             tooltip: L10n.of(context).uploadToDrive,
             onPressed: _uploadToDrive,
           ),
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            tooltip: L10n.of(context).actionShare,
-            // The share sheet leaves the app; coming back from it is not a resume worth an ad.
-            onPressed: () => FullScreenAdPolicy()
-                .runExternal(() => Share.shareXFiles([XFile(_path)])),
-          ),
           // Our in-app viewer is intentionally lightweight; offer a way out to
           // a full external PDF viewer at any time (not just on error).
           PopupMenuButton<String>(
@@ -144,37 +147,15 @@ class _PdfPreviewState extends State<PdfPreview> {
                   _openExternally();
                 case 'rename':
                   _rename();
-                case 'save_copy':
-                  _saveCopyToDownloads();
-                case 'next_tool':
-                  NextToolSheet.show(context, File(_path));
               }
             },
             itemBuilder: (_) => [
-              // A tool's result used to end here: running a second tool on it meant leaving,
-              // opening the file browser and finding the output again by name.
-              PopupMenuItem(
-                value: 'next_tool',
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.auto_awesome_motion_outlined),
-                  title: Text(L10n.of(context).useInAnotherTool),
-                ),
-              ),
               PopupMenuItem(
                 value: 'rename',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.drive_file_rename_outline),
                   title: Text(L10n.of(context).rename),
-                ),
-              ),
-              PopupMenuItem(
-                value: 'save_copy',
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.download_outlined),
-                  title: Text(L10n.of(context).saveCopyToDownloads),
                 ),
               ),
               PopupMenuItem(
@@ -190,6 +171,7 @@ class _PdfPreviewState extends State<PdfPreview> {
         ],
       ),
       body: _buildBody(theme, primary),
+      bottomNavigationBar: _loadError ? null : _buildActionBar(theme),
       // A guaranteed way back to original size — pinch-out can occasionally
       // stall just above the fit scale, so surface a reset control when zoomed.
       floatingActionButton: _controller == null
@@ -207,6 +189,57 @@ class _PdfPreviewState extends State<PdfPreview> {
                 );
               },
             ),
+    );
+  }
+
+  /// The persistent action bar under the page.
+  ///
+  /// "Use in another tool" used to live only in the overflow menu, and the transient version —
+  /// a snackbar action from `ToolResultHandler` — existed on 19 of 54 tool screens and was
+  /// covered by the app's own interstitial for most of its four seconds. Every tool that
+  /// produces a PDF lands on this screen, so putting the action here is what actually makes
+  /// chaining reachable. It leads rather than follows when we arrived from a tool.
+  Widget _buildActionBar(ThemeData theme) {
+    final l = L10n.of(context);
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(top: BorderSide(color: theme.dividerColor)),
+        ),
+        child: Row(children: [
+          Expanded(
+            child: widget.fromTool
+                ? FilledButton.icon(
+                    onPressed: () => NextToolSheet.show(context, File(_path)),
+                    icon: const Icon(Icons.auto_awesome_motion_outlined, size: 18),
+                    label: Text(l.useInAnotherTool,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: () => NextToolSheet.show(context, File(_path)),
+                    icon: const Icon(Icons.auto_awesome_motion_outlined, size: 18),
+                    label: Text(l.useInAnotherTool,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: l.saveCopyToDownloads,
+            onPressed: _saveCopyToDownloads,
+            icon: const Icon(Icons.download_outlined),
+          ),
+          IconButton(
+            tooltip: l.actionShare,
+            // The share sheet leaves the app; coming back from it is not a resume worth an ad.
+            onPressed: () => FullScreenAdPolicy()
+                .runExternal(() => Share.shareXFiles([XFile(_path)])),
+            icon: const Icon(Icons.share_outlined),
+          ),
+        ]),
+      ),
     );
   }
 
