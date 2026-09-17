@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/widgets/app_logo.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/services/auth/auth_api.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
@@ -45,196 +47,218 @@ class _AuthScreenState extends State<AuthScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        // A labelled way out rather than a bare X: the app is guest-first, so leaving here is a
+        // legitimate choice and should read like one.
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: L10n.of(context).authContinueAsGuest,
+          onPressed: _busy ? null : () => Navigator.of(context).maybePop(),
+        ),
+      ),
       body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Close (keep using as guest).
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: _busy ? null : () => Navigator.of(context).maybePop(),
-                    ),
-                  ),
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // The app's own mark, not a generic trophy in a circle. Every other surface in
+              // this app is squared to AppRadius.surface (2) on purpose — "that reads as soft
+              // and inconsistent rather than like a tool" — and a 72px circle was the softest
+              // shape in the product sitting on its most important screen.
+              const Center(child: AppLogo(width: 132)),
+              const SizedBox(height: 24),
 
-                  // Hero.
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: cs.primaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.workspace_premium_rounded,
-                          size: 38, color: cs.onPrimaryContainer),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _createMode ? L10n.of(context).authCreateTitle : L10n.of(context).authSignInTitle,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _createMode
-                        ? L10n.of(context).authCreateSubtitle
-                        : L10n.of(context).authSignInSubtitle,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Form.
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (_createMode) ...[
-                          TextFormField(
-                            controller: _name,
-                            enabled: !_busy,
-                            textCapitalization: TextCapitalization.words,
-                            textInputAction: TextInputAction.next,
-                            decoration: InputDecoration(
-                              labelText: L10n.of(context).authNameOptional,
-                              prefixIcon: const Icon(Icons.person_outline),
-                              border: const OutlineInputBorder(),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                        ],
-                        TextFormField(
-                          controller: _email,
-                          enabled: !_busy,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.email],
-                          decoration: InputDecoration(
-                            labelText: L10n.of(context).authEmail,
-                            prefixIcon: const Icon(Icons.email_outlined),
-                            border: const OutlineInputBorder(),
-                          ),
-                          validator: (v) => (v == null || !v.contains('@') || v.trim().length < 3)
-                              ? L10n.of(context).authInvalidEmail
-                              : null,
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _password,
-                          enabled: !_busy,
-                          obscureText: _obscure,
-                          textInputAction: TextInputAction.done,
-                          autofillHints: const [AutofillHints.password],
-                          onFieldSubmitted: (_) => _busy ? null : _submit(),
-                          decoration: InputDecoration(
-                            labelText: L10n.of(context).authPassword,
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                              onPressed: () => setState(() => _obscure = !_obscure),
-                            ),
-                          ),
-                          validator: (v) => (v == null || v.length < 8)
-                              ? L10n.of(context).authPasswordMin
-                              : null,
-                        ),
-                        if (!_createMode)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _busy ? null : _forgotPassword,
-                              child: Text(L10n.of(context).authForgotPassword),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50)),
-                    onPressed: _busy ? null : _submit,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.4))
-                        : Text(_createMode ? L10n.of(context).authCreateAccount : L10n.of(context).authSignIn),
-                  ),
-
-                  // Divider.
-                  const SizedBox(height: 20),
-                  Row(children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(L10n.of(context).authOr, style: TextStyle(color: cs.onSurfaceVariant)),
-                    ),
-                    const Expanded(child: Divider()),
-                  ]),
-                  const SizedBox(height: 20),
-
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50)),
-                    onPressed: _busy ? null : _google,
-                    icon: const FaIcon(FontAwesomeIcons.google, size: 18),
-                    label: Text(L10n.of(context).authContinueGoogle),
-                  ),
-
-                  const SizedBox(height: 24),
-                  Center(
-                    child: TextButton(
-                      onPressed: _busy
-                          ? null
-                          : () => setState(() => _createMode = !_createMode),
-                      child: Text.rich(TextSpan(
-                        text: _createMode
-                            ? L10n.of(context).authHaveAccount
-                            : L10n.of(context).authNoAccount,
-                        style: TextStyle(color: cs.onSurfaceVariant),
-                        children: [
-                          TextSpan(
-                            text: _createMode ? L10n.of(context).authSignIn : L10n.of(context).authCreateOne,
-                            style: TextStyle(
-                                color: cs.primary, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      )),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    L10n.of(context).authGuestNote,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                  if (_createMode) ...[
-                    const SizedBox(height: 12),
-                    _legalDisclaimer(theme),
-                  ],
+              // One control, two modes. This used to be a text link below the fold, so the
+              // screen always opened in create-account mode and returning users had to hunt.
+              SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(value: true, label: Text(L10n.of(context).authModeCreate)),
+                  ButtonSegment(value: false, label: Text(L10n.of(context).authModeSignIn)),
                 ],
+                selected: {_createMode},
+                showSelectedIcon: false,
+                onSelectionChanged:
+                    _busy ? null : (sel) => setState(() => _createMode = sel.first),
+                style: ButtonStyle(
+                  shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.surface))),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+
+              Text(
+                _createMode
+                    ? L10n.of(context).authCreateTitle
+                    : L10n.of(context).authSignInTitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _createMode
+                    ? L10n.of(context).authCreateSubtitle
+                    : L10n.of(context).authSignInSubtitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 24),
+
+              // Google first, at full weight. It is one tap against an email, a password and a
+              // verification mail, so burying it under the form put the slowest path first.
+              _googleButton(theme, cs),
+              const SizedBox(height: 20),
+              Row(children: [
+                Expanded(child: Divider(color: theme.dividerColor)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(L10n.of(context).authOr,
+                      style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                ),
+                Expanded(child: Divider(color: theme.dividerColor)),
+              ]),
+              const SizedBox(height: 20),
+
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_createMode) ...[
+                      TextFormField(
+                        controller: _name,
+                        enabled: !_busy,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: L10n.of(context).authNameOptional,
+                          prefixIcon: const Icon(Icons.person_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    TextFormField(
+                      controller: _email,
+                      enabled: !_busy,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).authEmail,
+                        prefixIcon: const Icon(Icons.email_outlined),
+                      ),
+                      validator: (v) => (v == null || !v.contains('@') || v.trim().length < 3)
+                          ? L10n.of(context).authInvalidEmail
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _password,
+                      enabled: !_busy,
+                      obscureText: _obscure,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.password],
+                      onFieldSubmitted: (_) => _busy ? null : _submit(),
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).authPassword,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscure
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined),
+                          tooltip: L10n.of(context).authPassword,
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                        ),
+                      ),
+                      validator: (v) =>
+                          (v == null || v.length < 8) ? L10n.of(context).authPasswordMin : null,
+                    ),
+                    if (!_createMode)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _busy ? null : _forgotPassword,
+                          child: Text(L10n.of(context).authForgotPassword),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              SizedBox(height: _createMode ? 20 : 8),
+
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.surface)),
+                ),
+                onPressed: _busy ? null : _submit,
+                child: _busy
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.4))
+                    : Text(_createMode
+                        ? L10n.of(context).authCreateAccount
+                        : L10n.of(context).authSignIn),
+              ),
+
+              // Why bother having an account at all. The old screen asserted the benefit once,
+              // in grey, as a subtitle; a guest had no reason to read it.
+              if (_createMode) ...[
+                const SizedBox(height: 24),
+                _benefit(theme, cs, Icons.savings_outlined, L10n.of(context).authBenefitCredits),
+                _benefit(theme, cs, Icons.devices_outlined, L10n.of(context).authBenefitSync),
+                _benefit(
+                    theme, cs, Icons.restore_outlined, L10n.of(context).authBenefitRestore),
+              ],
+
+              const SizedBox(height: 20),
+              Text(
+                L10n.of(context).authGuestNote,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              if (_createMode) ...[
+                const SizedBox(height: 12),
+                _legalDisclaimer(theme),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+  /// Google's button, given the same height and squared corners as the primary action so the
+  /// two read as equal choices rather than a button and an afterthought.
+  Widget _googleButton(ThemeData theme, ColorScheme cs) => OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(52),
+          side: BorderSide(color: theme.dividerColor),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
+        ),
+        onPressed: _busy ? null : _google,
+        icon: const FaIcon(FontAwesomeIcons.google, size: 18),
+        label: Text(L10n.of(context).authContinueGoogle,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+      );
+
+  Widget _benefit(ThemeData theme, ColorScheme cs, IconData icon, String text) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(children: [
+          Icon(icon, size: 18, color: cs.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text,
+                style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+          ),
+        ]),
+      );
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
