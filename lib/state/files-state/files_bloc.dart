@@ -9,6 +9,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/extensions/map_entensions.dart';
 import 'package:pdf_craft/models/with_http_state.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/utils/storage_permissions.dart';
 import 'package:pdf_craft/utils/http_states.dart';
@@ -206,6 +207,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     try {
       await file.delete(); // Permanently deletes the file
+      FileStore().changed();
     } catch (e) {
       throw Exception('${L10n.current.filesDeleteFailed}: $e');
     }

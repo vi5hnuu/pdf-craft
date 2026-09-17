@@ -11,6 +11,7 @@ import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/selection/selection_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/debouncer.dart';
 import 'package:pdf_craft/utils/file_sort_filter.dart';
 import 'package:pdf_craft/utils/http_states.dart';
@@ -572,6 +573,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         await file.copy(destPath);
         NotificationService.showSnackbar(text: L10n.current.copiedTo(destDir), color: Colors.green);
       }
+      FileStore().changed();
       _loadDirectoryFiles(pathToDirectory.last);
     } catch (e) {
       NotificationService.showSnackbar(text: L10n.current.operationFailed, color: Colors.red);
@@ -598,6 +600,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
       final dir = entity.parent.path;
       final newPath = '$dir/$newName$ext';
       await entity.rename(newPath);
+      FileStore().changed();
       // Refresh listing
       _loadDirectoryFiles(pathToDirectory.last);
       NotificationService.showSnackbar(text: L10n.current.renamedSuccessfully, color: Colors.green);

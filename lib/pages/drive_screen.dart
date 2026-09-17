@@ -10,6 +10,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -176,6 +177,7 @@ class _DriveScreenState extends State<DriveScreen> {
       final tmpFile = await _drive.downloadFile(f.id!, f.name!);
       final dest = File('${Constants.processedDirPath}/${f.name}');
       await tmpFile.copy(dest.path);
+      FileStore().changed();
       if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloaded, color: Colors.green);
     } catch (e) {
       if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloadFailed('$e'), color: Colors.red);

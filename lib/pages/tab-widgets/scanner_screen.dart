@@ -17,6 +17,7 @@ import 'package:pdf_craft/utils/upload_limits.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
@@ -369,6 +370,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       if (!await rootDir.exists()) await rootDir.create(recursive: true);
       final source = File.fromUri(Uri.file(pdf.uri));
       final target = await source.copy('${Constants.processedDirPath}/$fileName.pdf');
+      FileStore().changed();
       if (!mounted) return;
       setState(() => _result = null);
       NotificationService.showSnackbar(text: L10n.current.savedTo(target.path), color: Colors.green);

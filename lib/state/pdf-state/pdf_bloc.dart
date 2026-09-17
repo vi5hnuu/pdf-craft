@@ -59,6 +59,7 @@ import 'package:pdf_craft/models/request/remove_blank_pages.dart';
 import 'package:pdf_craft/models/request/optimize_pdf.dart';
 import 'package:pdf_craft/models/request/n_up.dart';
 import 'package:pdf_craft/services/apis/pdf_service.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/utils/storage_permissions.dart';
 import 'package:pdf_craft/utils/http_states.dart';
@@ -536,6 +537,9 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     final suggested = _filenameFromContentDisposition(fileRes.headers.value('content-disposition')) ?? fallback;
     final file = File(_uniquePath(directory.path, suggested));
     await file.writeAsBytes(fileRes.data!);
+    // Every server-backed tool lands here, so this one line is what makes a fresh result show
+    // up in Recent Files and the Processed count without the user restarting the app.
+    FileStore().changed();
     return file;
   }
 

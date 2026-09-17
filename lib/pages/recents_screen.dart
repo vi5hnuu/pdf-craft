@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/singletons/recent_files_service.dart';
 import 'package:pdf_craft/widgets/file_actions_sheet.dart';
 import 'package:pdf_craft/widgets/file_tile.dart';
@@ -26,6 +27,19 @@ class _RecentsScreenState extends State<RecentsScreen> {
   void initState() {
     super.initState();
     _load();
+    // Deleting or renaming elsewhere (the file actions sheet, the preview screen)
+    // used to leave this list showing files that no longer exist.
+    FileStore().addListener(_onFilesChanged);
+  }
+
+  @override
+  void dispose() {
+    FileStore().removeListener(_onFilesChanged);
+    super.dispose();
+  }
+
+  void _onFilesChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _load() async {

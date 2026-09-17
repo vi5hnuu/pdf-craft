@@ -34,13 +34,38 @@ class FilePreviewCard extends StatefulWidget {
 }
 
 class _FilePreviewCardState extends State<FilePreviewCard> {
-  // Thumbnail bytes cached by path so re-displaying never re-renders.
+  /// Thumbnail bytes, keyed by path **and the file's identity on disk**.
+  ///
+  /// Keying by path alone meant a file rewritten in place — a tool saving over its own output,
+  /// a rename back onto a known name — kept the previous page's thumbnail for the rest of the
+  /// session. Including mtime and size makes a changed file a cache miss.
+  ///
+  /// Capped because this map is static and lives for the process: the Files tab scrolls through
+  /// the whole device, and every JPEG thumbnail stayed resident forever.
   static final Map<String, Uint8List?> _cache = {};
+  static const _cacheLimit = 48;
 
   Uint8List? _thumb;
   bool _loading = true;
 
   bool get _isPdf => widget.file.path.toLowerCase().endsWith('.pdf');
+
+  /// Path plus the file's modification time and size, so overwriting invalidates the entry.
+  String get _cacheKey {
+    try {
+      final stat = widget.file.statSync();
+      return '${widget.file.path}|${stat.modified.millisecondsSinceEpoch}|${stat.size}';
+    } catch (_) {
+      // Unreadable/removed: fall back to the path so we still avoid re-rendering in a loop.
+      return widget.file.path;
+    }
+  }
+
+  static void _remember(String key, Uint8List? bytes) {
+    // Insertion-ordered, so removing the first key evicts the oldest entry.
+    if (_cache.length >= _cacheLimit) _cache.remove(_cache.keys.first);
+    _cache[key] = bytes;
+  }
 
   @override
   void initState() {
@@ -48,8 +73,19 @@ class _FilePreviewCardState extends State<FilePreviewCard> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(FilePreviewCard old) {
+    super.didUpdateWidget(old);
+    // A row is rebuilt with a different file when the listing refreshes; without this the card
+    // kept showing the previous file's page.
+    if (old.file.path != widget.file.path) {
+      setState(() => _loading = true);
+      _load();
+    }
+  }
+
   Future<void> _load() async {
-    final path = widget.file.path;
+    final path = _cacheKey;
     if (_cache.containsKey(path)) {
       setState(() {
         _thumb = _cache[path];
@@ -58,12 +94,12 @@ class _FilePreviewCardState extends State<FilePreviewCard> {
       return;
     }
     if (!_isPdf) {
-      _cache[path] = null;
+      _remember(path, null);
       if (mounted) setState(() => _loading = false);
       return;
     }
     try {
-      final doc = await PdfDocument.openFile(path);
+      final doc = await PdfDocument.openFile(widget.file.path);
       final page = await doc.getPage(1);
       // Render at a modest width to keep memory/CPU low for a thumbnail.
       const targetWidth = 200.0;
@@ -76,7 +112,7 @@ class _FilePreviewCardState extends State<FilePreviewCard> {
       );
       await page.close();
       await doc.close();
-      _cache[path] = image?.bytes;
+      _remember(path, image?.bytes);
       if (mounted) {
         setState(() {
           _thumb = image?.bytes;
@@ -84,7 +120,7 @@ class _FilePreviewCardState extends State<FilePreviewCard> {
         });
       }
     } catch (_) {
-      _cache[path] = null;
+      _remember(path, null);
       if (mounted) setState(() => _loading = false);
     }
   }

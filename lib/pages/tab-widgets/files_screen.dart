@@ -7,6 +7,7 @@ import 'package:pdf_craft/models/file_selection_config.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/favorites_service.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/singletons/recent_files_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
@@ -65,7 +66,7 @@ class FilesScreen extends StatefulWidget {
   State<FilesScreen> createState() => _FilesScreenState();
 }
 
-class _FilesScreenState extends State<FilesScreen> {
+class _FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
   BehaviorSubject<StorageStats> storageStats =
       BehaviorSubject.seeded(StorageStats.zero());
   List<File> _recentPdfs = [];
@@ -74,7 +75,37 @@ class _FilesScreenState extends State<FilesScreen> {
   @override
   void initState() {
     _loadStats();
+    // This tab lives inside a StatefulShellRoute, so it is kept alive across tab switches and
+    // never rebuilt. Without these two subscriptions the listing showed whatever was on disk
+    // when the app started: run a tool, come back, and the new file simply was not there.
+    FileStore().addListener(_refresh);
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    FileStore().removeListener(_refresh);
+    WidgetsBinding.instance.removeObserver(this);
+    storageStats.close();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Files also arrive from outside the app — a download, a file manager, another app's share.
+    // Coming back to the foreground is the one moment we know something may have changed.
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
+
+  /// Re-scans without touching permissions. [_loadStats] asks for storage access, which is the
+  /// right thing on first mount but wrong on every later refresh: it would put a system prompt
+  /// in front of the user each time a tool finished.
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    if (!await StoragePermissions.isStoragePermissionGranted()) return;
+    await _reloadListings();
   }
 
   @override
@@ -255,31 +286,7 @@ class _FilesScreenState extends State<FilesScreen> {
     try {
       if (await StoragePermissions.requestStoragePermissions()) {
         await _createMainDirs();
-        storageStats.sink.add(storageStats.value.copyWith(isLoading: true));
-        final stats = await Future.wait([
-          Directory(Constants.rootStoragePath).list(followLinks: false).length,
-          Directory(Constants.downloadsStoragePath)
-              .list(followLinks: false)
-              .length,
-          Directory(Constants.documentsStoragePath)
-              .list(followLinks: false)
-              .length,
-          Directory(Constants.processedDirPath).list(followLinks: false).length,
-        ]);
-        storageStats.sink.add(StorageStats(
-            totalItemsInRoot: stats[0],
-            totalItemsInDownloads: stats[1],
-            totalItemsInDocuments: stats[2],
-            totalProcessedFiles: stats[3]));
-
-        final recents = await RecentFilesService().getRecentFiles(limit: 10);
-        final favorites = await FavoritesService().getFavorites();
-        if (mounted) {
-          setState(() {
-          _recentPdfs = recents;
-          _favoritePdfs = favorites;
-        });
-        }
+        await _reloadListings();
       } else {
         // A bare "denied" toast is a dead end once Android stops showing the dialog: the
         // only way to grant is Settings, and nothing here said so. ErrorPage already has
@@ -297,6 +304,33 @@ class _FilesScreenState extends State<FilesScreen> {
       NotificationService.showSnackbar(
           text: L10n.current.errSomethingWrong, color: Colors.red);
     }
+  }
+
+  /// Counts the storage folders and reloads the recent/favourite rows.
+  ///
+  /// Split out of [_loadStats] so a refresh can re-scan without re-requesting permissions.
+  Future<void> _reloadListings() async {
+    storageStats.sink.add(storageStats.value.copyWith(isLoading: true));
+    final stats = await Future.wait([
+      Directory(Constants.rootStoragePath).list(followLinks: false).length,
+      Directory(Constants.downloadsStoragePath).list(followLinks: false).length,
+      Directory(Constants.documentsStoragePath).list(followLinks: false).length,
+      Directory(Constants.processedDirPath).list(followLinks: false).length,
+    ]);
+    if (storageStats.isClosed) return;
+    storageStats.sink.add(StorageStats(
+        totalItemsInRoot: stats[0],
+        totalItemsInDownloads: stats[1],
+        totalItemsInDocuments: stats[2],
+        totalProcessedFiles: stats[3]));
+
+    final recents = await RecentFilesService().getRecentFiles(limit: 10);
+    final favorites = await FavoritesService().getFavorites();
+    if (!mounted) return;
+    setState(() {
+      _recentPdfs = recents;
+      _favoritePdfs = favorites;
+    });
   }
 
   Future<void> _createMainDirs() async {

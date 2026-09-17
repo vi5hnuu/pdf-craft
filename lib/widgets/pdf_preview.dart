@@ -8,6 +8,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/pdf_service.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/pref_flags.dart';
 import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:pdf_craft/widgets/input_dialog.dart';
@@ -299,6 +300,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     }
     try {
       await File(_path).rename(newPath);
+      FileStore().changed();
       if (!mounted) return;
       setState(() => _path = newPath);
       NotificationService.showSnackbar(text: L10n.current.renamedSuccessfully, color: Colors.green);
@@ -322,6 +324,7 @@ class _PdfPreviewState extends State<PdfPreview> {
         dest = '${dir.path}/$base-${DateTime.now().millisecondsSinceEpoch}$ext';
       }
       await File(_path).copy(dest);
+      FileStore().changed();
       NotificationService.showSnackbar(text: L10n.current.savedToDownloads, color: Colors.green);
     } catch (_) {
       NotificationService.showSnackbar(text: L10n.current.saveToDownloadsFailed, color: Colors.red);

@@ -7,6 +7,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/file_actions_sheet.dart';
 import 'package:pdf_craft/widgets/file_tile.dart';
@@ -31,6 +32,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
   void initState() {
     super.initState();
     _load();
+    // Deleting or renaming elsewhere (the file actions sheet, the preview screen)
+    // used to leave this list showing files that no longer exist.
+    FileStore().addListener(_onFilesChanged);
+  }
+
+  @override
+  void dispose() {
+    FileStore().removeListener(_onFilesChanged);
+    super.dispose();
+  }
+
+  void _onFilesChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _load() async {
@@ -71,7 +85,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
     try {
       await file.delete();
     } catch (_) {}
-    await _load();
+    // The FileStore listener reloads this list, and every other listing too.
+    FileStore().changed();
   }
 
   Future<void> _clearAll() async {
@@ -97,7 +112,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         await f.delete();
       } catch (_) {}
     }
-    await _load();
+    FileStore().changed();
     NotificationService.showSnackbar(text: L10n.current.resultsCleared, color: Colors.orange);
   }
 

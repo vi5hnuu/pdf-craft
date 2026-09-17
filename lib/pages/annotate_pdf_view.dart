@@ -18,6 +18,7 @@ import 'package:pdf_craft/singletons/ads_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdfx/pdfx.dart';
@@ -718,6 +719,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
           if (!outDir.existsSync()) await outDir.create(recursive: true);
           final outFile = File('${outDir.path}/$baseName.pdf');
           await outFile.writeAsBytes(resp.data!);
+          FileStore().changed();
           inputFile = outFile;
         }
       }
