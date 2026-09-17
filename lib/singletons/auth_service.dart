@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -114,6 +115,9 @@ class AuthService extends ChangeNotifier {
 
   /// Sets the current user, persists it, and notifies listeners.
   Future<void> _setUser(AuthUser user) async {
+    // Account id only — never the email — so a crash can be correlated without
+    // identifying the person.
+    unawaited(CrashReporter().setUser(user.id));
     _user = user;
     await _storage.saveUser(jsonEncode(user.toJson()));
     notifyListeners();

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:pdf_craft/singletons/crash_reporter.dart';
 
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/l10n/locale_manager.dart';
@@ -83,6 +84,8 @@ class DioSingleton {
               return handler.resolve(response);
             } catch (retryErr) {
               LoggerSingleton().logger.w('Retry after refresh failed: $retryErr');
+              CrashReporter().recordNonFatal(retryErr, StackTrace.current,
+                  reason: 'Retry after token refresh failed');
             }
           }
         }

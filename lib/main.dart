@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -31,7 +32,18 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 /// (e.g. a malformed deep link or a route restored with no extra).
 
 Future<void> main() async {
+  // runZonedGuarded catches async errors that escape every other handler — the class of failure
+  // that previously vanished without trace because nothing was listening.
+  runZonedGuarded(_bootstrap, (error, stack) {
+    CrashReporter().recordNonFatal(error, stack, reason: 'Uncaught zone error');
+    LoggerSingleton().logger.e('Uncaught: $error', error: error, stackTrace: stack);
+  });
+}
+
+Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Before anything else, so a failure during start-up is itself reported.
+  await CrashReporter().init();
   await ThemeManager().init();
   await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame
