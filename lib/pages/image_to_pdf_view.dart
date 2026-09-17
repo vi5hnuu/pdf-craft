@@ -3,17 +3,15 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/image_to_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
 
 class ImageToPdfView extends StatefulWidget {
@@ -27,7 +25,8 @@ class ImageToPdfView extends StatefulWidget {
   State<ImageToPdfView> createState() => _ImageToPdfViewState();
 }
 
-class _ImageToPdfViewState extends State<ImageToPdfView> {
+class _ImageToPdfViewState extends State<ImageToPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   CancelToken? _cancelToken;
 
@@ -41,6 +40,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.imageToPdf]);
   }
 
   @override
@@ -58,16 +58,8 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
       body: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
-          listener: (context, state) {
-        final httpState=state.httpStates[HttpStates.imageToPdf];
-        if(httpState?.done==true){
-          AdsSingleton().dispatch(ShowInterstitialAd());
-          NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
-          if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
-        }else if(httpState?.error!=null){
-          NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-        }
-      },builder: (context, state) {
+          listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.imageToPdf], successMessage: L10n.current.toolDone),builder: (context, state) {
         return Stack(
           children: [
             Column(
@@ -176,7 +168,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
                 )
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.imageToPdf], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+            processingOverlay(state.httpStates[HttpStates.imageToPdf], label: L10n.of(context).procWorking),
           ],
         );
       },)
@@ -190,7 +182,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView> {
   void _onConvertToPdf() async {
     _cancelToken = CancelToken();
     final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
-    bloc.add(ImageToPdfEvent(
+    runTool((cancelToken) => ImageToPdfEvent(
         imageToPdf: ImageToPdf(
           outFileName: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text,
           pageSize: _pageSize,

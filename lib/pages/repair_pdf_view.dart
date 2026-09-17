@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/repair_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class RepairPdfView extends StatefulWidget {
@@ -23,8 +21,8 @@ class RepairPdfView extends StatefulWidget {
   State<RepairPdfView> createState() => _RepairPdfViewState();
 }
 
-class _RepairPdfViewState extends State<RepairPdfView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _RepairPdfViewState extends State<RepairPdfView>
+    with ToolResultHandler, ToolViewMixin {
   final TextEditingController _outFileNameC = TextEditingController();
   CancelToken? _cancelToken;
 
@@ -32,6 +30,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.repairPdf]);
   }
 
   @override
@@ -41,18 +40,8 @@ class _RepairPdfViewState extends State<RepairPdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.repairPdf] != c.httpStates[HttpStates.repairPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.repairPdf] != c.httpStates[HttpStates.repairPdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.repairPdf];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.repairPdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -105,7 +94,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.repairPdf], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+              processingOverlay(state.httpStates[HttpStates.repairPdf], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -116,7 +105,7 @@ class _RepairPdfViewState extends State<RepairPdfView> {
   void _onRepair() async {
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
-    _bloc.add(RepairPdfEvent(
+    runTool((cancelToken) => RepairPdfEvent(
       repairPdf: RepairPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         file: file,

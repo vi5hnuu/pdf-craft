@@ -2,17 +2,16 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/extensions/map_entensions.dart';
 import 'package:pdf_craft/models/request/rotate_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/widgets/rotatable_item.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -33,7 +32,8 @@ class RotatePdfView extends StatefulWidget {
   State<RotatePdfView> createState() => _RotatePdfViewState();
 }
 
-class _RotatePdfViewState extends State<RotatePdfView> {
+class _RotatePdfViewState extends State<RotatePdfView>
+    with ToolResultHandler, ToolViewMixin {
   final TextEditingController pageNoC = TextEditingController();
   final TextEditingController pageAngleC = TextEditingController();
   final TextEditingController outFileNameC = TextEditingController();
@@ -78,6 +78,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
       if (v != fileAngle) setState(() => fileAngle = v);
     });
     super.initState();
+    resetToolState([HttpStates.rotatePdf]);
   }
 
   @override
@@ -104,26 +105,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
             listenWhen: (previous, current) =>
                 previous.httpStates[HttpStates.rotatePdf] !=
                 current.httpStates[HttpStates.rotatePdf],
-            listener: (context, state) {
-              final httpState = state.httpStates[HttpStates.rotatePdf];
-              if (httpState?.done == true) {
-                AdsSingleton().dispatch(ShowInterstitialAd());
-                NotificationService.showSnackbar(
-                    text: L10n.current.toolDone, color: Colors.green);
-                if (httpState?.extras?['savedFile'] is File) {
-                  GoRouter.of(context).pushNamed(
-                    AppRoutes.pdfFilePreviewRoute.name,
-                    pathParameters: {
-                      'pdfFilePath':
-                          (httpState!.extras!['savedFile'] as File).path
-                    },
-                  );
-                }
-              } else if (httpState?.error != null) {
-                NotificationService.showSnackbar(
-                    text: httpState!.error!, color: Colors.red);
-              }
-            },
+            listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.rotatePdf], successMessage: L10n.current.toolDone),
             builder: (context, state) {
               return Stack(
                 children: [
@@ -359,8 +342,7 @@ class _RotatePdfViewState extends State<RotatePdfView> {
                       ),
                     ],
                   ),
-                  LoadingOverlay(
-                      httpState: state.httpStates[HttpStates.rotatePdf],
+                  processingOverlay(state.httpStates[HttpStates.rotatePdf],
                       label: L10n.of(context).rotatingPdf),
                 ],
               );
@@ -394,7 +376,9 @@ class _RotatePdfViewState extends State<RotatePdfView> {
     final zeroIndexed = Map.fromEntries(
       pageAngles.entries.map((e) => MapEntry(e.key - 1, e.value)),
     );
-    bloc.add(RotatePdfEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => RotatePdfEvent(
       rotatePdf: RotatePdf(
         outFileName: outFileNameC.text.trim().isEmpty
             ? 'rotated_file'
@@ -402,9 +386,8 @@ class _RotatePdfViewState extends State<RotatePdfView> {
         fileAngle: fileAngle,
         maintainRatio: maintainRatio,
         pageAngles: zeroIndexed,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   _tryRenderingNextThumbnails() async {

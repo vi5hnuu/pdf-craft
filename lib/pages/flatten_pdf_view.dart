@@ -3,18 +3,16 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/fill_flatten.dart';
 import 'package:pdf_craft/models/request/flatten_pdf.dart';
 import 'package:pdf_craft/models/request/get_form_fields.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 /// Flatten PDF. If the PDF already has fillable form fields, they're listed so
 /// the user can fill them and flatten in one step; otherwise it's a plain flatten.
@@ -26,8 +24,8 @@ class FlattenPdfView extends StatefulWidget {
   State<FlattenPdfView> createState() => _FlattenPdfViewState();
 }
 
-class _FlattenPdfViewState extends State<FlattenPdfView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _FlattenPdfViewState extends State<FlattenPdfView>
+    with ToolResultHandler, ToolViewMixin {
   final TextEditingController _outFileNameC = TextEditingController();
 
   List<Map<String, dynamic>>? _fields; // null = still loading
@@ -38,10 +36,13 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadFields());
+    resetToolState([HttpStates.fillFlatten, HttpStates.flattenPdf, HttpStates.getFormFields]);
   }
 
   Future<void> _loadFields() async {
-    _bloc.add(GetFormFieldsEvent(getFormFields: GetFormFields(file: await MultipartFile.fromFile(widget.file.path))));
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => GetFormFieldsEvent(getFormFields: GetFormFields(file: uploadFile), cancelToken: cancelToken));
   }
 
   @override
@@ -72,27 +73,20 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
             setState(() => _fields = []); // fall back to plain flatten
           }
 
-          // Navigate on either flatten path completing.
+          // Navigate on either flatten path completing. Each key is cleared once handled, so a
+          // finished run cannot announce itself again when the other path later completes.
           for (final key in [HttpStates.flattenPdf, HttpStates.fillFlatten]) {
-            final s = state.httpStates[key];
-            if (s?.done == true) {
-              AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-              if (s?.extras?['savedFile'] is File) {
-                GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
-                    pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-              }
-            } else if (s?.error != null) {
-              NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-            }
+            final fs = state.httpStates[key];
+            if (fs?.done != true && fs?.error == null) continue;
+            handleToolState(fs, successMessage: L10n.current.toolDone);
+            resetToolState([key]);
           }
         },
         builder: (context, state) {
           final busy = _isBusy(state);
           return Stack(children: [
             _fields == null ? const Center(child: CircularProgressIndicator()) : _buildBody(theme, busy),
-            LoadingOverlay(
-              httpState: state.httpStates[HttpStates.fillFlatten]?.loading == true
+            processingOverlay(state.httpStates[HttpStates.fillFlatten]?.loading == true
                   ? state.httpStates[HttpStates.fillFlatten]
                   : state.httpStates[HttpStates.flattenPdf],
               label: L10n.of(context).flatteningPdf,
@@ -198,22 +192,24 @@ class _FlattenPdfViewState extends State<FlattenPdfView> {
   }
 
   void _onFlatten() async {
-    _bloc.add(FlattenPdfEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => FlattenPdfEvent(
       flattenPdf: FlattenPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   void _onFillFlatten() async {
-    _bloc.add(FillFlattenEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => FillFlattenEvent(
       fillFlatten: FillFlatten(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         values: Map<String, String>.from(_values),
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

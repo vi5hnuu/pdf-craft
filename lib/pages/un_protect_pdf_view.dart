@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/unlock_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UnProtectPdfView extends StatefulWidget {
@@ -25,7 +23,8 @@ class UnProtectPdfView extends StatefulWidget {
   State<UnProtectPdfView> createState() => _UnProtectPdfViewState();
 }
 
-class _UnProtectPdfViewState extends State<UnProtectPdfView> {
+class _UnProtectPdfViewState extends State<UnProtectPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   TextEditingController outputFileNameC=TextEditingController();
   String password="";
@@ -38,6 +37,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
     _loadPasswordHint();
+    resetToolState([HttpStates.unprotectPdf]);
   }
 
   Future<void> _loadPasswordHint() async {
@@ -62,16 +62,8 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
       body:BlocConsumer<PdfBloc,PdfState>(
         buildWhen: (previous, current) => previous.httpStates[HttpStates.unprotectPdf]!=current.httpStates[HttpStates.unprotectPdf],
         listenWhen: (previous, current) => previous.httpStates[HttpStates.unprotectPdf]!=current.httpStates[HttpStates.unprotectPdf],
-          listener: (context, state) {
-            final httpState=state.httpStates[HttpStates.unprotectPdf];
-            if(httpState?.done==true){
-              AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
-              if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
-            }else if(httpState?.error!=null){
-              NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-            }
-          },
+          listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.unprotectPdf], successMessage: L10n.current.toolDone),
           builder: (context, state) {
            return Stack(
              children:[
@@ -114,7 +106,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
                    ],
                  ),
                ),
-               LoadingOverlay(httpState: state.httpStates[HttpStates.unprotectPdf], label: L10n.of(context).procWorking),
+               processingOverlay(state.httpStates[HttpStates.unprotectPdf], label: L10n.of(context).procWorking),
              ],
            );
           },),
@@ -122,6 +114,8 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView> {
   }
 
   void _onUnProtectPdf() async{
-    bloc.add(UnprotectPdfEvent(unlockPdf: UnProtectPdf(outFileName: outputFileNameC.text.isEmpty ? "protected" : outputFileNameC.text, password: password, file: await MultipartFile.fromFile(widget.file.path))));
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => UnprotectPdfEvent(unlockPdf: UnProtectPdf(outFileName: outputFileNameC.text.isEmpty ? "protected" : outputFileNameC.text, password: password, file: uploadFile), cancelToken: cancelToken));
   }
 }

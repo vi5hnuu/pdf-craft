@@ -3,18 +3,16 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/enums/compression_level.dart';
 import 'package:pdf_craft/models/request/compress_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 class CompressPdfView extends StatefulWidget {
   final File file;
@@ -25,7 +23,8 @@ class CompressPdfView extends StatefulWidget {
   State<CompressPdfView> createState() => _CompressPdfViewState();
 }
 
-class _CompressPdfViewState extends State<CompressPdfView> {
+class _CompressPdfViewState extends State<CompressPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
   CompressionLevel _level = CompressionLevel.RECOMMENDED;
@@ -36,6 +35,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.compressPdf]);
   }
 
   @override
@@ -45,18 +45,8 @@ class _CompressPdfViewState extends State<CompressPdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.compressPdf] != c.httpStates[HttpStates.compressPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.compressPdf] != c.httpStates[HttpStates.compressPdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.compressPdf];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.compressPdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -105,10 +95,8 @@ class _CompressPdfViewState extends State<CompressPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(
-                httpState: state.httpStates[HttpStates.compressPdf],
+              processingOverlay(state.httpStates[HttpStates.compressPdf],
                 label: L10n.of(context).compressingPdf,
-                onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
               ),
             ],
           );
@@ -120,7 +108,7 @@ class _CompressPdfViewState extends State<CompressPdfView> {
   void _onCompress() async {
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
-    bloc.add(CompressPdfEvent(
+    runTool((cancelToken) => CompressPdfEvent(
       compressPdf: CompressPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'compressed_file',
         level: _level,

@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/redact_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Draw black redaction boxes over content, then **reposition, resize or delete
@@ -26,7 +24,8 @@ class RedactPdfView extends StatefulWidget {
   State<RedactPdfView> createState() => _RedactPdfViewState();
 }
 
-class _RedactPdfViewState extends State<RedactPdfView> {
+class _RedactPdfViewState extends State<RedactPdfView>
+    with ToolResultHandler, ToolViewMixin {
   PdfDocument? _doc;
   int _currentPage = 1;
   int _totalPages = 0;
@@ -54,6 +53,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     _openDocument();
+    resetToolState([HttpStates.redactPdf]);
   }
 
   Future<void> _openDocument() async {
@@ -122,21 +122,8 @@ class _RedactPdfViewState extends State<RedactPdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.redactPdf];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.redactPdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.redactPdf]?.loading == true;
           return Stack(children: [
@@ -152,10 +139,8 @@ class _RedactPdfViewState extends State<RedactPdfView> {
               if (_totalPages > 1) _buildPageNav(theme),
               _buildSaveBar(theme, loading),
             ]),
-            LoadingOverlay(
-              httpState: state.httpStates[HttpStates.redactPdf],
+            processingOverlay(state.httpStates[HttpStates.redactPdf],
               label: L10n.of(context).redactingPdf,
-              onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
             ),
           ]);
         },
@@ -317,7 +302,7 @@ class _RedactPdfViewState extends State<RedactPdfView> {
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
-    BlocProvider.of<PdfBloc>(context).add(RedactPdfEvent(
+    runTool((cancelToken) => RedactPdfEvent(
       redactPdf: RedactPdf(regions: regions, file: file),
       cancelToken: _cancelToken,
     ));

@@ -2,17 +2,15 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/merge_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
 
@@ -26,7 +24,8 @@ class MergePdfView extends StatefulWidget {
   State<MergePdfView> createState() => _MergePdfViewState();
 }
 
-class _MergePdfViewState extends State<MergePdfView> {
+class _MergePdfViewState extends State<MergePdfView>
+    with ToolResultHandler, ToolViewMixin {
   final TextEditingController outFileNameC=TextEditingController();
   int? draggingItemIndex;
   CancelToken? _cancelToken;
@@ -35,6 +34,7 @@ class _MergePdfViewState extends State<MergePdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.mergePdf]);
   }
 
   @override
@@ -50,16 +50,8 @@ class _MergePdfViewState extends State<MergePdfView> {
       body: BlocConsumer<PdfBloc,PdfState>(
         listenWhen: (previous, current) => previous.httpStates[HttpStates.mergePdf]!=current.httpStates[HttpStates.mergePdf],
         buildWhen: (previous, current) => previous.httpStates[HttpStates.mergePdf]!=current.httpStates[HttpStates.mergePdf],
-        listener: (context, state) {
-          final httpState=state.httpStates[HttpStates.mergePdf];
-          if(httpState?.done==true){
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
-            if(httpState?.extras?['savedFile'] is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath':(httpState?.extras?['savedFile'] as File).path});
-          }else if(httpState?.error!=null){
-            NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.mergePdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
         return Stack(
           children: [
@@ -115,7 +107,7 @@ class _MergePdfViewState extends State<MergePdfView> {
                 Container(width: double.infinity,padding: const EdgeInsets.all(16),child: FilledButton(onPressed: _startMerge, child: Text(ToolStrings.name(context, 'merge'))),)
               ],
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.mergePdf], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+            processingOverlay(state.httpStates[HttpStates.mergePdf], label: L10n.of(context).procWorking),
           ],
         );
       },),
@@ -128,8 +120,7 @@ class _MergePdfViewState extends State<MergePdfView> {
 
   void _startMerge() async {
     _cancelToken = CancelToken();
-    final bloc = BlocProvider.of<PdfBloc>(context);
     final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
-    bloc.add(MergePdfEvent(mergePdf: MergePdf(outFileName: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: files), cancelToken: _cancelToken));
+    runTool((cancelToken) => MergePdfEvent(mergePdf: MergePdf(outFileName: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: files), cancelToken: _cancelToken));
   }
 }

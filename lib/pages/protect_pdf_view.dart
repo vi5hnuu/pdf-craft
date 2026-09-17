@@ -11,10 +11,10 @@ import 'package:pdf_craft/models/enums/user_access_permission.dart';
 import 'package:pdf_craft/models/request/protect_pdf.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProtectPdfView extends StatefulWidget {
@@ -28,7 +28,8 @@ class ProtectPdfView extends StatefulWidget {
   State<ProtectPdfView> createState() => _ProtectPdfViewState();
 }
 
-class _ProtectPdfViewState extends State<ProtectPdfView> {
+class _ProtectPdfViewState extends State<ProtectPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   final TextEditingController outFileNameC=TextEditingController();
   final TextEditingController _hintC=TextEditingController();
@@ -43,6 +44,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.protectPdf]);
   }
 
   @override
@@ -62,21 +64,24 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
       body: BlocConsumer<PdfBloc,PdfState>(
         buildWhen: (previous, current) => previous.httpStates[HttpStates.protectPdf]!=current.httpStates[HttpStates.protectPdf],
         listenWhen: (previous, current) => previous.httpStates[HttpStates.protectPdf]!=current.httpStates[HttpStates.protectPdf],
-          listener: (context, state) {
-            final httpState=state.httpStates[HttpStates.protectPdf];
-            if(httpState?.done==true){
-              AdsSingleton().dispatch(ShowInterstitialAd());
-              NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
-              final savedFile = httpState?.extras?['savedFile'];
-              if (savedFile is File && _hintC.text.trim().isNotEmpty) {
-                SharedPreferences.getInstance().then((prefs) =>
-                  prefs.setString('pwd_hint_${savedFile.path.split('/').last}', _hintC.text.trim()));
+          // onDone rather than the default navigation: the hint has to be stored against the
+          // produced file's name before we leave, so the unlock screen can offer it later.
+          listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.protectPdf],
+            successMessage: L10n.current.toolDone,
+            onDone: (savedFile) {
+              final hint = _hintC.text.trim();
+              if (hint.isNotEmpty) {
+                SharedPreferences.getInstance().then((prefs) => prefs.setString(
+                    'pwd_hint_${savedFile.path.split('/').last}', hint));
               }
-              if(savedFile is File) GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,pathParameters: {'pdfFilePath': savedFile.path});
-            }else if(httpState?.error!=null){
-              NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-            }
-          },
+              GoRouter.of(context).pushNamed(
+                AppRoutes.pdfFilePreviewRoute.name,
+                pathParameters: {'pdfFilePath': savedFile.path},
+                queryParameters: const {'from': 'tool'},
+              );
+            },
+          ),
           builder: (context, state) {
             return Stack(
               children: [
@@ -180,7 +185,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
                     ],
                   ),
                 ),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.protectPdf], label: L10n.of(context).procWorking),
+                processingOverlay(state.httpStates[HttpStates.protectPdf], label: L10n.of(context).procWorking),
               ],
             );
           },)
@@ -188,6 +193,8 @@ class _ProtectPdfViewState extends State<ProtectPdfView> {
   }
 
   void _onProtectPdf() async{
-    bloc.add(ProtectPdfEvent(protectPdf: ProtectPdf(outFileName: outFileNameC.text.isNotEmpty ? outFileNameC.text : "protected_file", ownerPassword: ownerPassword, userPassword: userPassword, userAccessPermissions: userPermissions.toSet(), file: await MultipartFile.fromFile(widget.file.path))));
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => ProtectPdfEvent(protectPdf: ProtectPdf(outFileName: outFileNameC.text.isNotEmpty ? outFileNameC.text : "protected_file", ownerPassword: ownerPassword, userPassword: userPassword, userAccessPermissions: userPermissions.toSet(), file: uploadFile), cancelToken: cancelToken));
   }
 }

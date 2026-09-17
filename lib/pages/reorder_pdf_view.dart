@@ -3,18 +3,16 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/reorder_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdfx/pdfx.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
 
@@ -36,7 +34,8 @@ class ReorderPdfView extends StatefulWidget {
   State<ReorderPdfView> createState() => _ReorderPdfViewState();
 }
 
-class _ReorderPdfViewState extends State<ReorderPdfView> {
+class _ReorderPdfViewState extends State<ReorderPdfView>
+    with ToolResultHandler, ToolViewMixin {
   final ScrollController _scrollController = ScrollController();
   final Map<int, _Thumbnail> _thumbnails = {};
 
@@ -54,6 +53,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
     AdsSingleton().dispatch(LoadInterstitialAd());
     _scrollController.addListener(_onScroll);
     _loadDocument();
+    resetToolState([HttpStates.reorderPdf]);
   }
 
   Future<void> _loadDocument() async {
@@ -123,21 +123,8 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
         buildWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listener: (context, state) {
-          final httpState = state.httpStates[HttpStates.reorderPdf];
-          if (httpState?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (httpState?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (httpState!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (httpState?.error != null) {
-            NotificationService.showSnackbar(text: httpState!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.reorderPdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -171,7 +158,7 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
                   ),
                 ],
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.reorderPdf], label: L10n.of(context).procWorking),
+              processingOverlay(state.httpStates[HttpStates.reorderPdf], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -289,13 +276,14 @@ class _ReorderPdfViewState extends State<ReorderPdfView> {
   }
 
   Future<void> _onReorderPages() async {
-    BlocProvider.of<PdfBloc>(context).add(ReorderPdfEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => ReorderPdfEvent(
       reorderPdf: ReorderPdf(
         outFileName: _outFileNameC.text.isEmpty ? 'reordered_file' : _outFileNameC.text,
         order: _pageIndexes,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

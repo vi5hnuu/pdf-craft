@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/extensions/string_etension.dart';
@@ -14,12 +13,12 @@ import 'package:pdf_craft/models/enums/page_no_type.dart';
 import 'package:pdf_craft/models/enums/position_info.dart';
 import 'package:pdf_craft/models/padding_info.dart';
 import 'package:pdf_craft/models/request/page_numbers.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class PageNumberPdfView extends StatefulWidget {
@@ -32,7 +31,8 @@ class PageNumberPdfView extends StatefulWidget {
   State<PageNumberPdfView> createState() => _PageNumberPdfViewState();
 }
 
-class _PageNumberPdfViewState extends State<PageNumberPdfView> {
+class _PageNumberPdfViewState extends State<PageNumberPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late final PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
 
   PageNoType _pageNoType = PageNoType.PAGE_X_OF_Y;
@@ -50,6 +50,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
+    resetToolState([HttpStates.pageNumbers]);
   }
 
   @override
@@ -66,21 +67,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
             prev.httpStates[HttpStates.pageNumbers] != curr.httpStates[HttpStates.pageNumbers],
         listenWhen: (prev, curr) =>
             prev.httpStates[HttpStates.pageNumbers] != curr.httpStates[HttpStates.pageNumbers],
-        listener: (context, state) {
-          final httpState = state.httpStates[HttpStates.pageNumbers];
-          if (httpState?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (httpState?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (httpState!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (httpState?.error != null) {
-            NotificationService.showSnackbar(text: httpState!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.pageNumbers], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -327,7 +315,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
                 ],
               ),
 
-              LoadingOverlay(httpState: state.httpStates[HttpStates.pageNumbers], label: L10n.of(context).procWorking),
+              processingOverlay(state.httpStates[HttpStates.pageNumbers], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -373,7 +361,9 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
       NotificationService.showSnackbar(text: L10n.current.invalidFontSize, color: Colors.red);
       return;
     }
-    bloc.add(PageNumbersEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => PageNumbersEvent(
       pageNumber: PageNumbers(
         outFileName: _outFileNameC.text.isEmpty ? 'page_numbers' : _outFileNameC.text,
         pageNoType: _pageNoType,
@@ -385,9 +375,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView> {
         fromPage: _fromPage,
         toPage: _toPage,
         fontName: _fontName,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

@@ -10,8 +10,9 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 /// Unified Image Studio view: compress, convert to/from JPG, and resize.
 /// The [op] parameter selects the initial tab.
@@ -26,7 +27,7 @@ class ImageStudioView extends StatefulWidget {
 }
 
 class _ImageStudioViewState extends State<ImageStudioView>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ToolResultHandler, ToolViewMixin {
   late TabController _tabC;
 
   // Compress
@@ -53,6 +54,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     try {
       _sizeLabel = '${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB';
     } catch (_) {}
+    resetToolState([HttpStates.filterImage, HttpStates.imageStudio]);
   }
 
   @override
@@ -82,20 +84,22 @@ class _ImageStudioViewState extends State<ImageStudioView>
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.imageStudio] != c.httpStates[HttpStates.imageStudio] ||
             p.httpStates[HttpStates.filterImage] != c.httpStates[HttpStates.filterImage],
+        // The result is an image saved to the processed folder, so there is nothing to navigate
+        // to; onDone with no body keeps the user on the tab they were working in.
+        //
+        // Each key is cleared once handled. Both are inspected on every state change, so a key
+        // left sitting at done:true from an earlier run announced itself again every time the
+        // other one finished — run a filter, then a compress, and "Filtered image saved"
+        // appeared a second time.
         listener: (context, state) {
-          final s = state.httpStates[HttpStates.imageStudio];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.imageSaved, color: Colors.green);
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-          final fs = state.httpStates[HttpStates.filterImage];
-          if (fs?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.filteredImageSaved, color: Colors.green);
-          } else if (fs?.error != null) {
-            NotificationService.showSnackbar(text: fs!.error!, color: Colors.red);
+          for (final entry in {
+            HttpStates.imageStudio: L10n.current.imageSaved,
+            HttpStates.filterImage: L10n.current.filteredImageSaved,
+          }.entries) {
+            final s = state.httpStates[entry.key];
+            if (s?.done != true && s?.error == null) continue;
+            handleToolState(s, successMessage: entry.value, onDone: (_) {});
+            resetToolState([entry.key]);
           }
         },
         builder: (context, state) {
@@ -131,7 +135,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.imageStudio] ?? state.httpStates[HttpStates.filterImage], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.imageStudio] ?? state.httpStates[HttpStates.filterImage], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -330,40 +334,44 @@ class _ImageStudioViewState extends State<ImageStudioView>
   // ── Submit handlers ───────────────────────────────────────────────────────────
 
   Future<void> _onCompress() async {
-    BlocProvider.of<PdfBloc>(context).add(CompressImageEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => CompressImageEvent(
       compressImage: img_studio.CompressImage(
         quality: _compressQuality,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   Future<void> _onConvertToJpg() async {
-    BlocProvider.of<PdfBloc>(context).add(ConvertToJpgEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => ConvertToJpgEvent(
       convertToJpg: img_studio.ConvertToJpg(
         quality: _toJpgQuality,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   Future<void> _onConvertFromJpg() async {
-    BlocProvider.of<PdfBloc>(context).add(ConvertFromJpgEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => ConvertFromJpgEvent(
       convertFromJpg: img_studio.ConvertFromJpg(
         format: _fromJpgFormat,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   Future<void> _onFilter() async {
-    BlocProvider.of<PdfBloc>(context).add(FilterImageEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => FilterImageEvent(
       filterImage: fi.FilterImage(
         filterType: _filterType,
         intensity: _filterIntensity,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   Future<void> _onResize() async {
@@ -373,14 +381,15 @@ class _ImageStudioViewState extends State<ImageStudioView>
       NotificationService.showSnackbar(text: L10n.current.enterDimension, color: Colors.orange);
       return;
     }
-    BlocProvider.of<PdfBloc>(context).add(ResizeImageEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => ResizeImageEvent(
       resizeImage: img_studio.ResizeImage(
         width: w,
         height: h,
         maintainAspectRatio: _maintainAspect,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

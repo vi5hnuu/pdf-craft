@@ -5,19 +5,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/color_info.dart';
 import 'package:pdf_craft/models/enums/position.dart';
 import 'package:pdf_craft/models/request/watermark_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/widgets/pdf_effect_preview.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/singletons/tool_settings_service.dart';
@@ -31,7 +29,8 @@ class WatermarkPdfView extends StatefulWidget {
   State<WatermarkPdfView> createState() => _WatermarkPdfViewState();
 }
 
-class _WatermarkPdfViewState extends State<WatermarkPdfView> {
+class _WatermarkPdfViewState extends State<WatermarkPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
   final TextEditingController _textC = TextEditingController(text: 'CONFIDENTIAL');
@@ -50,6 +49,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
     _restoreSettings();
+    resetToolState([HttpStates.watermarkPdf]);
   }
 
   /// Reapplies the last configuration. Applying the same watermark across a set of documents
@@ -124,18 +124,8 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.watermarkPdf] != c.httpStates[HttpStates.watermarkPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.watermarkPdf] != c.httpStates[HttpStates.watermarkPdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.watermarkPdf];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.watermarkPdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -245,7 +235,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.watermarkPdf], label: L10n.of(context).procWorking),
+              processingOverlay(state.httpStates[HttpStates.watermarkPdf], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -282,7 +272,9 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
     // Saved on use rather than on every keystroke: what the user actually ran with is the
     // configuration worth restoring next time.
     unawaited(_rememberSettings());
-    bloc.add(WatermarkPdfEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => WatermarkPdfEvent(
       watermarkPdf: WatermarkPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'watermarked_file',
         text: _textC.text.isEmpty ? 'CONFIDENTIAL' : _textC.text,
@@ -292,9 +284,8 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView> {
         angle: _angle,
         verticalPosition: _verticalPos,
         horizontalPosition: _horizontalPos,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

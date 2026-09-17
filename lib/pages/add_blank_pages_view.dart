@@ -3,16 +3,15 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/add_blank_pages.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 class AddBlankPagesView extends StatefulWidget {
   final File file;
@@ -22,8 +21,8 @@ class AddBlankPagesView extends StatefulWidget {
   State<AddBlankPagesView> createState() => _AddBlankPagesViewState();
 }
 
-class _AddBlankPagesViewState extends State<AddBlankPagesView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _AddBlankPagesViewState extends State<AddBlankPagesView>
+    with ToolResultHandler, ToolViewMixin {
 
   final _outFileNameC = TextEditingController();
   // Comma-separated page numbers (1-based) to insert a blank page before.
@@ -37,6 +36,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.addBlankPages]);
   }
 
   @override
@@ -46,18 +46,8 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
         listenWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.addBlankPages];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.addBlankPages], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -118,7 +108,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.addBlankPages], label: L10n.of(context).procWorking),
+              processingOverlay(state.httpStates[HttpStates.addBlankPages], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -146,16 +136,17 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView> {
       NotificationService.showSnackbar(text: L10n.current.enterPagePosition, color: Colors.orange);
       return;
     }
-    _bloc.add(AddBlankPagesEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => AddBlankPagesEvent(
       addBlankPages: AddBlankPages(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         // Fields are 1-based ("before page N"); the API takes 0-based insertion points.
         positions:   positions.map((p) => p > 0 ? p - 1 : 0).toList(),
         pageWidth:   _pageWidth,
         pageHeight:  _pageHeight,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

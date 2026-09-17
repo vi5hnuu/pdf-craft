@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/edit_metadata.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 class EditMetadataView extends StatefulWidget {
   final File file;
@@ -22,8 +20,8 @@ class EditMetadataView extends StatefulWidget {
   State<EditMetadataView> createState() => _EditMetadataViewState();
 }
 
-class _EditMetadataViewState extends State<EditMetadataView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _EditMetadataViewState extends State<EditMetadataView>
+    with ToolResultHandler, ToolViewMixin {
   final _outFileNameC = TextEditingController();
   final _titleC      = TextEditingController();
   final _authorC     = TextEditingController();
@@ -36,6 +34,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.editMetadata]);
   }
 
   @override
@@ -45,18 +44,8 @@ class _EditMetadataViewState extends State<EditMetadataView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.editMetadata] != c.httpStates[HttpStates.editMetadata],
         listenWhen: (p, c) => p.httpStates[HttpStates.editMetadata] != c.httpStates[HttpStates.editMetadata],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.editMetadata];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.editMetadata], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -102,7 +91,7 @@ class _EditMetadataViewState extends State<EditMetadataView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.editMetadata], label: L10n.of(context).procWorking),
+              processingOverlay(state.httpStates[HttpStates.editMetadata], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -116,7 +105,9 @@ class _EditMetadataViewState extends State<EditMetadataView> {
       );
 
   void _onSave() async {
-    _bloc.add(EditMetadataEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => EditMetadataEvent(
       editMetadata: EditMetadata(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         title:    _titleC.text.isNotEmpty    ? _titleC.text    : null,
@@ -125,9 +116,8 @@ class _EditMetadataViewState extends State<EditMetadataView> {
         keywords: _keywordsC.text.isNotEmpty ? _keywordsC.text : null,
         creator:  _creatorC.text.isNotEmpty  ? _creatorC.text  : null,
         producer: _producerC.text.isNotEmpty ? _producerC.text : null,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

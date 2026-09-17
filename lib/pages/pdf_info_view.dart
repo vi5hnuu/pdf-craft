@@ -9,6 +9,8 @@ import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/get_metadata.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
@@ -20,20 +22,22 @@ class PdfInfoView extends StatefulWidget {
   State<PdfInfoView> createState() => _PdfInfoViewState();
 }
 
-class _PdfInfoViewState extends State<PdfInfoView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _PdfInfoViewState extends State<PdfInfoView>
+    with ToolResultHandler, ToolViewMixin {
 
   @override
   void initState() {
     super.initState();
     // Auto-fetch metadata on open
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
+    resetToolState([HttpStates.getMetadata]);
   }
 
   void _fetch() async {
-    _bloc.add(GetMetadataEvent(
-      getMetadata: GetMetadata(file: await MultipartFile.fromFile(widget.file.path)),
-    ));
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => GetMetadataEvent(
+      getMetadata: GetMetadata(file: uploadFile), cancelToken: cancelToken));
   }
 
   @override

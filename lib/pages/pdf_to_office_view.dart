@@ -7,10 +7,10 @@ import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/pdf_to_office.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 class PdfToOfficeView extends StatefulWidget {
   final File file;
@@ -22,8 +22,8 @@ class PdfToOfficeView extends StatefulWidget {
   State<PdfToOfficeView> createState() => _PdfToOfficeViewState();
 }
 
-class _PdfToOfficeViewState extends State<PdfToOfficeView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _PdfToOfficeViewState extends State<PdfToOfficeView>
+    with ToolResultHandler, ToolViewMixin {
   final TextEditingController _outFileNameC = TextEditingController();
   CancelToken? _cancelToken;
 
@@ -74,6 +74,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
+    resetToolState([HttpStates.pdfToExcel, HttpStates.pdfToPptx, HttpStates.pdfToWord]);
   }
 
   @override
@@ -83,18 +84,12 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[_stateKey] != c.httpStates[_stateKey],
         listenWhen: (p, c) => p.httpStates[_stateKey] != c.httpStates[_stateKey],
-        listener: (context, state) {
-          final s = state.httpStates[_stateKey];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              OpenFile.open((s!.extras!['savedFile'] as File).path);
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        // The output is a Word/Excel/PowerPoint file, so it opens externally.
+        listener: (context, state) => handleToolState(
+              state.httpStates[_stateKey],
+              successMessage: L10n.current.toolDone,
+              onDone: (saved) => OpenFile.open(saved.path),
+            ),
         builder: (context, state) {
           return Stack(
             children: [
@@ -126,10 +121,8 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
                   ],
                 ),
               ),
-              LoadingOverlay(
-                httpState: state.httpStates[_stateKey],
+              processingOverlay(state.httpStates[_stateKey],
                 label: L10n.of(context).convertingPdf,
-                onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
               ),
             ],
           );
@@ -142,7 +135,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView> {
     final name = _outFileNameC.text.trim().isEmpty ? _defaultName : _outFileNameC.text.trim();
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
-    _bloc.add(PdfToOfficeEvent(
+    runTool((cancelToken) => PdfToOfficeEvent(
       pdfToOffice: PdfToOffice(
         outFileName: name,
         format: widget.format,

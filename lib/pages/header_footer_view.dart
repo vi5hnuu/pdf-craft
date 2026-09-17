@@ -5,20 +5,18 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/color_info.dart';
 import 'package:pdf_craft/models/enums/font_name.dart';
 import 'package:pdf_craft/models/request/header_footer.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/widgets/pdf_effect_preview.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/singletons/tool_settings_service.dart';
 
@@ -30,8 +28,8 @@ class HeaderFooterView extends StatefulWidget {
   State<HeaderFooterView> createState() => _HeaderFooterViewState();
 }
 
-class _HeaderFooterViewState extends State<HeaderFooterView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _HeaderFooterViewState extends State<HeaderFooterView>
+    with ToolResultHandler, ToolViewMixin {
 
   final _outFileNameC = TextEditingController();
   final _headerTextC  = TextEditingController();
@@ -56,6 +54,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
     super.initState();
     _loadPageCount();
     _restoreSettings();
+    resetToolState([HttpStates.headerFooter]);
   }
 
   /// Reapplies the last configuration. Stamping the same header across a set of documents used
@@ -120,18 +119,8 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
         listenWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.headerFooter];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.headerFooter], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -262,7 +251,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.headerFooter], label: L10n.of(context).procWorking),
+              processingOverlay(state.httpStates[HttpStates.headerFooter], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -337,7 +326,9 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
     // Saved on use rather than on every keystroke: what the user actually ran with is the
     // configuration worth restoring next time.
     unawaited(_rememberSettings());
-    _bloc.add(HeaderFooterEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => HeaderFooterEvent(
       headerFooter: HeaderFooter(
         outFileName:    _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         headerText:     _headerTextC.text.isNotEmpty  ? _headerTextC.text  : null,
@@ -351,9 +342,8 @@ class _HeaderFooterViewState extends State<HeaderFooterView> {
         toPage:         _oneBasedToIndex(_toPageC.text),
         topPadding:     _topPadding,
         bottomPadding:  _bottomPadding,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   /// Converts a 1-based page field to the 0-based index the API expects.

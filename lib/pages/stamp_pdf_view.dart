@@ -4,16 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/stamp_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class StampPdfView extends StatefulWidget {
@@ -24,8 +22,8 @@ class StampPdfView extends StatefulWidget {
   State<StampPdfView> createState() => _StampPdfViewState();
 }
 
-class _StampPdfViewState extends State<StampPdfView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _StampPdfViewState extends State<StampPdfView>
+    with ToolResultHandler, ToolViewMixin {
 
   final _outFileNameC = TextEditingController();
   final _fromPageC    = TextEditingController(text: '1');
@@ -38,6 +36,7 @@ class _StampPdfViewState extends State<StampPdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.stampPdf]);
   }
 
   @override
@@ -48,18 +47,8 @@ class _StampPdfViewState extends State<StampPdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.stampPdf];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name, pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path});
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.stampPdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(
             children: [
@@ -133,7 +122,7 @@ class _StampPdfViewState extends State<StampPdfView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.stampPdf], label: L10n.of(context).procWorking),
+              processingOverlay(state.httpStates[HttpStates.stampPdf], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -160,7 +149,10 @@ class _StampPdfViewState extends State<StampPdfView> {
 
   void _onStamp() async {
     if (_stampFile == null) return;
-    _bloc.add(StampPdfEvent(
+    final documentUpload = await MultipartFile.fromFile(widget.file.path);
+    final stampUpload = await MultipartFile.fromFile(_stampFile!.path);
+    if (!mounted) return;
+    runTool((cancelToken) => StampPdfEvent(
       stampPdf: StampPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         opacity:     _opacity,
@@ -168,10 +160,9 @@ class _StampPdfViewState extends State<StampPdfView> {
         // 0-indexed, so the conversion happens here rather than in the user's head.
         fromPage:    _oneBasedToIndex(_fromPageC.text) ?? 0,
         toPage:      _oneBasedToIndex(_toPageC.text),
-        file:  await MultipartFile.fromFile(widget.file.path),
-        stamp: await MultipartFile.fromFile(_stampFile!.path),
-      ),
-    ));
+        file:  documentUpload,
+        stamp: stampUpload,
+      ), cancelToken: cancelToken));
   }
 
   /// Converts a 1-based page field to the 0-based index the API expects.

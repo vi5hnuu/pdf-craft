@@ -10,6 +10,8 @@ import 'package:pdf_craft/models/request/analyze_pdf.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -24,18 +26,21 @@ class AnalyzePdfView extends StatefulWidget {
   State<AnalyzePdfView> createState() => _AnalyzePdfViewState();
 }
 
-class _AnalyzePdfViewState extends State<AnalyzePdfView> {
-  late final PdfBloc _bloc = BlocProvider.of<PdfBloc>(context);
+class _AnalyzePdfViewState extends State<AnalyzePdfView>
+    with ToolResultHandler, ToolViewMixin {
 
   @override
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
+    resetToolState([HttpStates.analyzePdf]);
   }
 
   Future<void> _fetch() async {
-    _bloc.add(AnalyzePdfEvent(analyzePdf: AnalyzePdf(file: await MultipartFile.fromFile(widget.file.path))));
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => AnalyzePdfEvent(analyzePdf: AnalyzePdf(file: uploadFile), cancelToken: cancelToken));
   }
 
   @override

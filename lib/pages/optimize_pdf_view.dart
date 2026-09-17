@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/optimize_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 class OptimizePdfView extends StatefulWidget {
   final File file;
@@ -22,7 +20,8 @@ class OptimizePdfView extends StatefulWidget {
   State<OptimizePdfView> createState() => _OptimizePdfViewState();
 }
 
-class _OptimizePdfViewState extends State<OptimizePdfView> {
+class _OptimizePdfViewState extends State<OptimizePdfView>
+    with ToolResultHandler, ToolViewMixin {
   CancelToken? _cancelToken;
   String _sizeKb = '';
 
@@ -33,6 +32,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
     try {
       _sizeKb = (widget.file.lengthSync() / 1024).toStringAsFixed(1);
     } catch (_) {}
+    resetToolState([HttpStates.optimizePdf]);
   }
 
   @override
@@ -46,21 +46,8 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.optimizePdf] != c.httpStates[HttpStates.optimizePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.optimizePdf] != c.httpStates[HttpStates.optimizePdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.optimizePdf];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.optimizeDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.optimizePdf], successMessage: L10n.current.optimizeDone),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.optimizePdf]?.loading == true;
           return Stack(children: [
@@ -105,7 +92,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.optimizePdf], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.optimizePdf], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -115,9 +102,8 @@ class _OptimizePdfViewState extends State<OptimizePdfView> {
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
     _cancelToken = CancelToken();
-    final bloc = BlocProvider.of<PdfBloc>(context);
     final file = await MultipartFile.fromFile(widget.file.path);
-    bloc.add(OptimizePdfEvent(
+    runTool((cancelToken) => OptimizePdfEvent(
       optimizePdf: OptimizePdf(
         outFileName: '${baseName}_optimized',
         file: file,

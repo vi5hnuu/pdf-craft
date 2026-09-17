@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/crop_pdf.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
 
@@ -24,7 +22,8 @@ class CropPdfView extends StatefulWidget {
   State<CropPdfView> createState() => _CropPdfViewState();
 }
 
-class _CropPdfViewState extends State<CropPdfView> {
+class _CropPdfViewState extends State<CropPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
 
@@ -48,6 +47,7 @@ class _CropPdfViewState extends State<CropPdfView> {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     _loadFirstPage();
+    resetToolState([HttpStates.cropPdf]);
   }
 
   Future<void> _loadFirstPage() async {
@@ -92,23 +92,8 @@ class _CropPdfViewState extends State<CropPdfView> {
             p.httpStates[HttpStates.cropPdf] != c.httpStates[HttpStates.cropPdf],
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.cropPdf] != c.httpStates[HttpStates.cropPdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.cropPdf];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(
-                text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
-                  pathParameters: {
-                    'pdfFilePath': (s!.extras!['savedFile'] as File).path
-                  });
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(
-                text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.cropPdf], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(children: [
             Column(children: [
@@ -174,7 +159,7 @@ class _CropPdfViewState extends State<CropPdfView> {
                 ),
               ),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.cropPdf], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.cropPdf], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -397,7 +382,9 @@ class _CropPdfViewState extends State<CropPdfView> {
   }
 
   void _onCrop() async {
-    bloc.add(CropPdfEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => CropPdfEvent(
       cropPdf: CropPdf(
         outFileName: _outFileNameC.text.trim().isEmpty
             ? 'cropped_file'
@@ -411,9 +398,8 @@ class _CropPdfViewState extends State<CropPdfView> {
         marginLeft: _marginLeftPt,
         marginRight: _marginRightPt,
         pages: _pages.toList()..sort(),
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 
   @override

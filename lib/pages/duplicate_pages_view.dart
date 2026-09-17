@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/duplicate_pages.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -25,7 +23,8 @@ class DuplicatePagesView extends StatefulWidget {
   State<DuplicatePagesView> createState() => _DuplicatePagesViewState();
 }
 
-class _DuplicatePagesViewState extends State<DuplicatePagesView> {
+class _DuplicatePagesViewState extends State<DuplicatePagesView>
+    with ToolResultHandler, ToolViewMixin {
   PdfDocument? _doc;
   int _totalPages = 0;
   // 0-indexed page -> copies to insert. A page is "selected" when it has an entry.
@@ -37,6 +36,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
     _openDocument();
+    resetToolState([HttpStates.duplicatePages]);
   }
 
   Future<void> _openDocument() async {
@@ -65,21 +65,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
             p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.duplicatePages];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.pagesDuplicated, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.duplicatePages], successMessage: L10n.current.pagesDuplicated),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.duplicatePages]?.loading == true;
           return Stack(children: [
@@ -115,10 +102,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
               // Count stepper + submit
               _buildBottomBar(theme, loading),
             ]),
-            LoadingOverlay(
-              httpState: state.httpStates[HttpStates.duplicatePages],
+            processingOverlay(state.httpStates[HttpStates.duplicatePages],
               label: L10n.of(context).duplicatingPages,
-              onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
             ),
           ]);
         },
@@ -236,7 +221,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView> {
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
-    BlocProvider.of<PdfBloc>(context).add(DuplicatePagesEvent(
+    runTool((cancelToken) => DuplicatePagesEvent(
       duplicatePages: DuplicatePages(
         pageCounts: Map<int, int>.from(_pageCounts),
         file: file,

@@ -11,12 +11,12 @@ import 'package:pdf_craft/models/enums/direction.dart';
 import 'package:pdf_craft/models/enums/quality.dart';
 import 'package:pdf_craft/models/request/pdf_to_jpg.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
 
 class PdfToJpgView extends StatefulWidget {
@@ -30,7 +30,8 @@ class PdfToJpgView extends StatefulWidget {
   State<PdfToJpgView> createState() => _PdfToJpgViewState();
 }
 
-class _PdfToJpgViewState extends State<PdfToJpgView> {
+class _PdfToJpgViewState extends State<PdfToJpgView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
   CancelToken? _cancelToken;
 
@@ -46,6 +47,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.pdfToJpg]);
   }
 
   @override
@@ -65,17 +67,12 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
       body: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.pdfToJpg]!=current.httpStates[HttpStates.pdfToJpg],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.pdfToJpg]!=current.httpStates[HttpStates.pdfToJpg],
-          listener: (context, state) {
-        final httpState=state.httpStates[HttpStates.pdfToJpg];
-        if(httpState?.done==true){
-          AdsSingleton().dispatch(ShowInterstitialAd());
-          final file=httpState?.extras?['savedFile'];
-          NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
-          if(file is File) _openFile(file);
-        }else if(httpState?.error!=null){
-          NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-        }
-      },
+          // The output is an image (or a zip of them), so it opens externally.
+      listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.pdfToJpg],
+            successMessage: L10n.current.toolDone,
+            onDone: _openFile,
+          ),
       builder: (context, state) {
         return Stack(
           children: [
@@ -179,7 +176,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
                   )
                 ],),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.pdfToJpg], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+            processingOverlay(state.httpStates[HttpStates.pdfToJpg], label: L10n.of(context).procWorking),
           ],
         );
       },),
@@ -189,7 +186,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView> {
   void _onPdfToJpf() async {
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
-    bloc.add(PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(outFileName: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null, pages: _pages.toList()..sort())), cancelToken: _cancelToken));
+    runTool((cancelToken) => PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(outFileName: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null, pages: _pages.toList()..sort())), cancelToken: _cancelToken));
   }
 
   void _openFile(File file) {

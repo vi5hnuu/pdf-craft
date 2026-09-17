@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/n_up.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class NUpPdfView extends StatefulWidget {
@@ -23,7 +21,8 @@ class NUpPdfView extends StatefulWidget {
   State<NUpPdfView> createState() => _NUpPdfViewState();
 }
 
-class _NUpPdfViewState extends State<NUpPdfView> {
+class _NUpPdfViewState extends State<NUpPdfView>
+    with ToolResultHandler, ToolViewMixin {
   int _nUp = 2;
   // Read once (off the build path) so rebuilds don't re-stat the file.
   String _sizeLabel = '';
@@ -35,6 +34,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
     try {
       _sizeLabel = '${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB';
     } catch (_) {}
+    resetToolState([HttpStates.nUpPdf]);
   }
 
   @override
@@ -47,21 +47,8 @@ class _NUpPdfViewState extends State<NUpPdfView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.nUpPdf] != c.httpStates[HttpStates.nUpPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.nUpPdf] != c.httpStates[HttpStates.nUpPdf],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.nUpPdf];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.nUpDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.nUpPdf], successMessage: L10n.current.nUpDone),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.nUpPdf]?.loading == true;
           return Stack(children: [
@@ -96,7 +83,7 @@ class _NUpPdfViewState extends State<NUpPdfView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.nUpPdf], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.nUpPdf], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -144,12 +131,13 @@ class _NUpPdfViewState extends State<NUpPdfView> {
 
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
-    BlocProvider.of<PdfBloc>(context).add(NUpPdfEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => NUpPdfEvent(
       nUp: NUp(
         nUp: _nUp,
         outFileName: '${baseName}_${_nUp}up',
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 }

@@ -3,16 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/remove_blank_pages.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 class RemoveBlankPagesView extends StatefulWidget {
   final File file;
@@ -22,7 +20,8 @@ class RemoveBlankPagesView extends StatefulWidget {
   State<RemoveBlankPagesView> createState() => _RemoveBlankPagesViewState();
 }
 
-class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
+class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView>
+    with ToolResultHandler, ToolViewMixin {
   // 0.85 = low sensitivity (only very blank), 0.98 = high sensitivity
   double _sensitivity = 0.95;
 
@@ -41,6 +40,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
     try {
       _sizeLabel = '${(widget.file.lengthSync() / 1024).toStringAsFixed(1)} KB';
     } catch (_) {}
+    resetToolState([HttpStates.removeBlankPages]);
   }
 
   @override
@@ -53,21 +53,8 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.removeBlankPages] != c.httpStates[HttpStates.removeBlankPages],
         listenWhen: (p, c) => p.httpStates[HttpStates.removeBlankPages] != c.httpStates[HttpStates.removeBlankPages],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.removeBlankPages];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.blankPagesRemoved, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.removeBlankPages], successMessage: L10n.current.blankPagesRemoved),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.removeBlankPages]?.loading == true;
           return Stack(children: [
@@ -107,7 +94,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
                 ),
               ]),
             ),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.removeBlankPages], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.removeBlankPages], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -115,11 +102,12 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView> {
   }
 
   Future<void> _onApply() async {
-    BlocProvider.of<PdfBloc>(context).add(RemoveBlankPagesEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => RemoveBlankPagesEvent(
       removeBlankPages: RemoveBlankPages(
         threshold: _sensitivity,
-        file: await MultipartFile.fromFile(widget.file.path),
-      ),
-    ));
+        file: uploadFile,
+      ), cancelToken: cancelToken));
   }
 }

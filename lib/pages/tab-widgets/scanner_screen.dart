@@ -21,7 +21,7 @@ import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
+import 'package:pdf_craft/widgets/processing_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -76,7 +76,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               const BannerAdd(),
             ]),
           ),
-          LoadingOverlay(httpState: state.httpStates[HttpStates.imageToPdf], label: L10n.of(context).scanCreatingPdf),
+          ProcessingOverlay(httpState: state.httpStates[HttpStates.imageToPdf], label: L10n.of(context).scanCreatingPdf),
         ]);
       },
     );

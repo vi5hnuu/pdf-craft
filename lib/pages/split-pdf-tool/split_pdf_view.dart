@@ -12,12 +12,12 @@ import 'package:pdf_craft/models/request/split_pdf.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/split_config.dart';
 import 'package:pdf_craft/pages/split-pdf-tool/split_range.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 
 class SplitPdfView extends StatefulWidget {
   final File file;
@@ -29,7 +29,8 @@ class SplitPdfView extends StatefulWidget {
   State<SplitPdfView> createState() => _SplitPdfViewState();
 }
 
-class _SplitPdfViewState extends State<SplitPdfView> {
+class _SplitPdfViewState extends State<SplitPdfView>
+    with ToolResultHandler, ToolViewMixin {
   late GoRouter router=GoRouter.of(context);
   late PdfBloc bloc=BlocProvider.of(context);
   SplitType? type=SplitType.EXTRACT_ALL_PAGES;
@@ -41,6 +42,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.splitPdf]);
   }
 
   @override
@@ -70,16 +72,13 @@ class _SplitPdfViewState extends State<SplitPdfView> {
         child: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.splitPdf]!=current.httpStates[HttpStates.splitPdf],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.splitPdf]!=current.httpStates[HttpStates.splitPdf],
-            listener: (context, state) {
-              final httpState=state.httpStates[HttpStates.splitPdf];
-              if(httpState?.done==true){
-                final file=httpState?.extras?['savedFile'];
-                NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
-                if(file is File) OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]);
-              }else if(httpState?.error!=null){
-                NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-              }
-            },
+            // Splitting yields a zip of parts, not a single PDF, so it opens externally.
+            listener: (context, state) => handleToolState(
+                  state.httpStates[HttpStates.splitPdf],
+                  successMessage: L10n.current.toolDone,
+                  onDone: (saved) => OpenFile.open(saved.path,
+                      type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(saved)]),
+                ),
           builder: (context, state) {
             return Stack(
               children: [
@@ -102,7 +101,7 @@ class _SplitPdfViewState extends State<SplitPdfView> {
                     ),
                   )
                 ],),
-                LoadingOverlay(httpState: state.httpStates[HttpStates.splitPdf], label: L10n.of(context).procWorking),
+                processingOverlay(state.httpStates[HttpStates.splitPdf], label: L10n.of(context).procWorking),
               ],
             );
           },
@@ -112,13 +111,15 @@ class _SplitPdfViewState extends State<SplitPdfView> {
 
   _onExtractAllPages() async {
     final noRangesTypes = [SplitType.FIXED_RANGE, SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK];
-    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(
+    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => SplitPdfEvent(splitPdf: SplitPdf(
       outFileName: outFileNameC.text.isEmpty ? 'splitted_file' : outFileNameC.text,
       type: type!,
       fixed: type == SplitType.FIXED_RANGE ? ranges.first.from : null,
       ranges: noRangesTypes.contains(type) ? null : ranges,
-      file: await MultipartFile.fromFile(widget.file.path),
-    )));
+      file: uploadFile,
+    ), cancelToken: cancelToken));
   }
 }
 

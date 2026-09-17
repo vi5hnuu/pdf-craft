@@ -20,7 +20,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
+import 'package:pdf_craft/widgets/processing_overlay.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
@@ -220,7 +220,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
               _buildOptionsPanel(theme),
               _buildSaveBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.stampPdf], label: L10n.of(context).procWorking),
+            ProcessingOverlay(httpState: state.httpStates[HttpStates.stampPdf], label: L10n.of(context).procWorking),
           ]);
         },
       ),

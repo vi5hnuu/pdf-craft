@@ -6,15 +6,13 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/place_image.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
@@ -39,7 +37,8 @@ class PlaceImageView extends StatefulWidget {
   State<PlaceImageView> createState() => _PlaceImageViewState();
 }
 
-class _PlaceImageViewState extends State<PlaceImageView> {
+class _PlaceImageViewState extends State<PlaceImageView>
+    with ToolResultHandler, ToolViewMixin {
   // PDF page
   PdfDocument? _doc;
   int _currentPage = 1;
@@ -77,6 +76,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
       _decodeAndCenter(widget.preloadedImageBytes!);
     }
     _openDocument();
+    resetToolState([HttpStates.placeImage]);
   }
 
   Future<void> _decodeAndCenter(Uint8List bytes) async {
@@ -174,23 +174,8 @@ class _PlaceImageViewState extends State<PlaceImageView> {
             p.httpStates[HttpStates.placeImage] != c.httpStates[HttpStates.placeImage],
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.placeImage] != c.httpStates[HttpStates.placeImage],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.placeImage];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {
-                  'pdfFilePath': (s!.extras!['savedFile'] as File).path,
-                },
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.placeImage], successMessage: L10n.current.toolDone),
         builder: (context, state) {
           return Stack(children: [
             Column(children: [
@@ -241,7 +226,7 @@ class _PlaceImageViewState extends State<PlaceImageView> {
               // Bottom bar: aspect lock + confirm
               _buildBottomBar(theme, state),
             ]),
-            LoadingOverlay(httpState: state.httpStates[HttpStates.placeImage], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.placeImage], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -516,7 +501,9 @@ class _PlaceImageViewState extends State<PlaceImageView> {
     final h = _hFrac.clamp(0.01, 1.0 - y);
     final pdfName = widget.pdfFile.path.split('/').last.replaceAll('.pdf', '');
 
-    BlocProvider.of<PdfBloc>(context).add(PlaceImageEvent(
+    final uploadFile = await MultipartFile.fromFile(widget.pdfFile.path);
+    if (!mounted) return;
+    runTool((cancelToken) => PlaceImageEvent(
       placeImage: PlaceImage(
         outFileName: '${pdfName}_image',
         page: _currentPage - 1,
@@ -527,14 +514,13 @@ class _PlaceImageViewState extends State<PlaceImageView> {
         // The server keeps the image's proportions by default. Unlocking the aspect here is a
         // deliberate choice to distort it, so it has to be passed on or it would be undone.
         stretch: !_lockAspect,
-        file: await MultipartFile.fromFile(widget.pdfFile.path),
+        file: uploadFile,
         image: MultipartFile.fromBytes(
           _imageBytes!,
           filename: 'image.png',
           contentType: DioMediaType.parse('image/png'),
         ),
-      ),
-    ));
+      ), cancelToken: cancelToken));
   }
 
   @override

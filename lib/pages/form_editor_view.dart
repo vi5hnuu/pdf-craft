@@ -7,16 +7,14 @@ import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/create_form.dart';
-import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'dart:async';
 
 import 'package:form_engine/form_engine.dart' as engine;
@@ -37,7 +35,8 @@ class FormEditorView extends StatefulWidget {
   State<FormEditorView> createState() => _FormEditorViewState();
 }
 
-class _FormEditorViewState extends State<FormEditorView> {
+class _FormEditorViewState extends State<FormEditorView>
+    with ToolResultHandler, ToolViewMixin {
   PdfDocument? _doc;
   int _currentPage = 1;
   int _totalPages = 0;
@@ -60,7 +59,6 @@ class _FormEditorViewState extends State<FormEditorView> {
   static const _maxUndo = 30;
 
   final TransformationController _tc = TransformationController();
-  CancelToken? _cancelToken;
   FormDraftStore? _drafts;
 
   @override
@@ -475,21 +473,8 @@ class _FormEditorViewState extends State<FormEditorView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
         listenWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.createForm];
-          if (s?.done == true) {
-            AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.formCreated, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              GoRouter.of(context).pushNamed(
-                AppRoutes.pdfFilePreviewRoute.name,
-                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
-              );
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        listener: (context, state) => handleToolState(
+            state.httpStates[HttpStates.createForm], successMessage: L10n.current.formCreated),
         builder: (context, state) {
           return Stack(children: [
             Column(children: [
@@ -500,11 +485,8 @@ class _FormEditorViewState extends State<FormEditorView> {
               ),
               _buildPalette(theme),
             ]),
-            LoadingOverlay(
-              httpState: state.httpStates[HttpStates.createForm],
-              label: L10n.of(context).creatingForm,
-              onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
-            ),
+            processingOverlay(state.httpStates[HttpStates.createForm],
+                label: L10n.of(context).creatingForm),
           ]);
         },
       ),
@@ -1049,17 +1031,16 @@ class _FormEditorViewState extends State<FormEditorView> {
     // test pins the exact JSON the running server parses.
     final specs = engine.AcroFormSpecMapper(formFieldTypes).toSpecs(_toSchema());
 
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
-    BlocProvider.of<PdfBloc>(context).add(CreateFormEvent(
-      createForm: CreateForm(
-        outFileName: 'fillable_${widget.file.path.split('/').last.replaceAll('.pdf', '')}',
-        fields: specs,
-        file: file,
-      ),
-      cancelToken: _cancelToken,
-    ));
+    runTool((cancelToken) => CreateFormEvent(
+          createForm: CreateForm(
+            outFileName: 'fillable_${widget.file.path.split('/').last.replaceAll('.pdf', '')}',
+            fields: specs,
+            file: file,
+          ),
+          cancelToken: cancelToken,
+        ));
   }
 
   // ── Bottom palette ───────────────────────────────────────────────────────────

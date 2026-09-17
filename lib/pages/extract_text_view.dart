@@ -8,10 +8,10 @@ import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/extract_text.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/widgets/loading_overlay.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
 
 class ExtractTextView extends StatefulWidget {
@@ -23,7 +23,8 @@ class ExtractTextView extends StatefulWidget {
   State<ExtractTextView> createState() => _ExtractTextViewState();
 }
 
-class _ExtractTextViewState extends State<ExtractTextView> {
+class _ExtractTextViewState extends State<ExtractTextView>
+    with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
   /// 0-indexed pages the tool applies to. Empty means the whole document.
@@ -35,6 +36,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
+    resetToolState([HttpStates.extractText]);
   }
 
   @override
@@ -44,18 +46,12 @@ class _ExtractTextViewState extends State<ExtractTextView> {
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.extractText] != c.httpStates[HttpStates.extractText],
         listenWhen: (p, c) => p.httpStates[HttpStates.extractText] != c.httpStates[HttpStates.extractText],
-        listener: (context, state) {
-          final s = state.httpStates[HttpStates.extractText];
-          if (s?.done == true) {
-          AdsSingleton().dispatch(ShowInterstitialAd());
-            NotificationService.showSnackbar(text: L10n.current.toolDone, color: Colors.green);
-            if (s?.extras?['savedFile'] is File) {
-              OpenFile.open((s!.extras!['savedFile'] as File).path);
-            }
-          } else if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-          }
-        },
+        // The output is a .txt, not a PDF, so it opens externally instead of in our viewer.
+        listener: (context, state) => handleToolState(
+              state.httpStates[HttpStates.extractText],
+              successMessage: L10n.current.toolDone,
+              onDone: (saved) => OpenFile.open(saved.path),
+            ),
         builder: (context, state) {
           return Stack(
             children: [
@@ -91,7 +87,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
                   ],
                 ),
               ),
-              LoadingOverlay(httpState: state.httpStates[HttpStates.extractText], label: L10n.of(context).procWorking, onCancel: () => _cancelToken?.cancel('cancelled-by-user')),
+              processingOverlay(state.httpStates[HttpStates.extractText], label: L10n.of(context).procWorking),
             ],
           );
         },
@@ -102,7 +98,7 @@ class _ExtractTextViewState extends State<ExtractTextView> {
   void _onExtract() async {
     _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
-    bloc.add(ExtractTextEvent(
+    runTool((cancelToken) => ExtractTextEvent(
       extractText: ExtractText(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'extracted_text',
         pages: _pages.toList()..sort(),
