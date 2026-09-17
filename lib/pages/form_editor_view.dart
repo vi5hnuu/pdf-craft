@@ -532,16 +532,9 @@ class _FormEditorViewState extends State<FormEditorView>
       appBar: AppBar(
         title: Text(ToolStrings.name(context, 'fill-form')),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.undo),
-            tooltip: L10n.of(context).undoAction,
-            onPressed: _undoStack.isEmpty ? null : _undo,
-          ),
-          IconButton(
-            icon: const Icon(Icons.list_alt_outlined),
-            tooltip: L10n.of(context).a11yOpenFieldList,
-            onPressed: _showFieldList,
-          ),
+          // Only two icons besides Create. Undo, the field list, duplicate and fit all moved
+          // into the overflow: with them inline the title had no room and truncated to "For…",
+          // and adding the preview toggle would have made it worse.
           IconButton(
             icon: Icon(_previewMode ? Icons.visibility_off_outlined : Icons.visibility_outlined),
             tooltip: _previewMode
@@ -550,18 +543,38 @@ class _FormEditorViewState extends State<FormEditorView>
             isSelected: _previewMode,
             onPressed: () => setState(() => _previewMode = !_previewMode),
           ),
-          // Duplicate and fit-to-screen moved into an overflow menu: with five actions plus the
-          // Create button the title had no room left and truncated to "For…".
           PopupMenuButton<String>(
             onSelected: (v) {
-              if (v == 'duplicate') {
-                final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
-                if (selected != null) _duplicate(selected);
-              } else if (v == 'fit') {
-                setState(() => _tc.value = Matrix4.identity());
+              switch (v) {
+                case 'undo':
+                  _undo();
+                case 'fields':
+                  _showFieldList();
+                case 'duplicate':
+                  final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
+                  if (selected != null) _duplicate(selected);
+                case 'fit':
+                  setState(() => _tc.value = Matrix4.identity());
               }
             },
             itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'undo',
+                enabled: _undoStack.isNotEmpty,
+                child: Row(children: [
+                  const Icon(Icons.undo, size: 20),
+                  const SizedBox(width: 12),
+                  Text(L10n.of(context).undoAction),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'fields',
+                child: Row(children: [
+                  const Icon(Icons.list_alt_outlined, size: 20),
+                  const SizedBox(width: 12),
+                  Text(L10n.of(context).a11yOpenFieldList),
+                ]),
+              ),
               PopupMenuItem(
                 value: 'duplicate',
                 enabled: _selectedId != null,
