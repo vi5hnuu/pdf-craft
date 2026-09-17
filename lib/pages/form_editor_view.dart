@@ -126,6 +126,13 @@ class _FormEditorViewState extends State<FormEditorView>
   void _applySchema(engine.FormSchema schema) {
     setState(() {
       _pageFields.clear();
+      // Page sizes travel with the draft. Without them `toSpecs` skips every field on a page
+      // the author never opened this session (it cannot convert fractions to points without a
+      // page size), so re-opening a multi-page draft and pressing Create silently dropped them.
+      for (final entry in schema.pageSizes.entries) {
+        _pagePoints.putIfAbsent(
+            entry.key, () => Size(entry.value.width, entry.value.height));
+      }
       for (final f in schema.fields) {
         final type = FieldType.values.firstWhere(
           (t) => t.wire == f.typeId,
@@ -168,7 +175,25 @@ class _FormEditorViewState extends State<FormEditorView>
                     .join(', '),
             );
       }
+      // Restart auto-naming past anything the draft already used, so the next placed field
+      // cannot collide with a restored one and trip the duplicate-name check on Create.
+      _autoName = 1 + _highestAutoNameIn(schema);
     });
+  }
+
+  /// Largest trailing number in any restored field or group name, so `_autoName` resumes above
+  /// it. Names are of the form `text_3` / `radio_group_7`.
+  int _highestAutoNameIn(engine.FormSchema schema) {
+    var highest = 0;
+    final trailingNumber = RegExp(r'_(\d+)$');
+    for (final f in schema.fields) {
+      for (final candidate in [f.name, f.group]) {
+        final match = trailingNumber.firstMatch(candidate);
+        final value = match == null ? 0 : int.tryParse(match.group(1)!) ?? 0;
+        if (value > highest) highest = value;
+      }
+    }
+    return highest;
   }
 
   Future<void> _open() async {
@@ -366,10 +391,20 @@ class _FormEditorViewState extends State<FormEditorView>
       ..alignment = source.alignment
       ..multiSelect = source.multiSelect
       ..validationPattern = source.validationPattern
+      ..minValue = source.minValue
+      ..maxValue = source.maxValue
+      ..minLength = source.minLength
+      ..dateFormat = source.dateFormat
+      ..exportValue = source.exportValue
       ..conditionField = source.conditionField
       ..conditionOperator = source.conditionOperator
       ..conditionValue = source.conditionValue
+      // The refs, not just the display strings. `_toSchema` serialises conditionRef/calcRefs;
+      // copying only the typed names left the duplicate with a rule that pointed at nothing, so
+      // its visibility condition and calculation quietly stopped working.
+      ..conditionRef = source.conditionRef
       ..calcFunction = source.calcFunction
+      ..calcRefs = List<engine.FieldRef>.from(source.calcRefs)
       ..calcFields = source.calcFields;
     setState(() {
       _fields.add(copy);

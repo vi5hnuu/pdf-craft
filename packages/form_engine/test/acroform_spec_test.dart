@@ -14,6 +14,35 @@ void main() {
         pageSizes: {1: const PageSizePoints(595, 842)},
       );
 
+  test('a field on a page with no recorded size is dropped, not guessed at', () {
+    // This is the contract the editor has to respect: a fractional rect cannot become points
+    // without a page size, so the mapper refuses rather than inventing A4. The editor records
+    // page sizes as it renders pages and must restore them with a draft — when it did not,
+    // re-opening a multi-page draft and pressing Create silently lost every field on a page
+    // the author had not opened in that session.
+    final specs = mapper.toSpecs(FormSchema(
+      pageSizes: {1: const PageSizePoints(595, 842)},
+      fields: [
+        FormFieldModel(
+          id: 'onPage1',
+          typeId: FieldTypes.text,
+          page: 1,
+          rect: const FractionalRect(0.1, 0.1, 0.2, 0.05),
+          name: 'kept',
+        ),
+        FormFieldModel(
+          id: 'onPage2',
+          typeId: FieldTypes.text,
+          page: 2,
+          rect: const FractionalRect(0.1, 0.1, 0.2, 0.05),
+          name: 'dropped',
+        ),
+      ],
+    ));
+
+    expect(specs.map((s) => s['name']), ['kept']);
+  });
+
   test('fractional rect is converted to PDF points against the page size', () {
     final specs = mapper.toSpecs(schemaWith([
       FormFieldModel(
