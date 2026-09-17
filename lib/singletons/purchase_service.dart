@@ -155,6 +155,20 @@ class PurchaseService extends ChangeNotifier {
     }
   }
 
+  /// Re-checks Google Play for purchases this device has made.
+  ///
+  /// [init] already does this at launch, but a user who reinstalls, changes device or simply
+  /// does not see credits arrive had no way to ask for it. The purchase stream handles whatever
+  /// comes back, so this only has to trigger the query.
+  Future<void> restore() async {
+    if (!_available) return;
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      LoggerSingleton().logger.w('Restore purchases failed: $e');
+    }
+  }
+
   @override
   void dispose() {
     _sub?.cancel();

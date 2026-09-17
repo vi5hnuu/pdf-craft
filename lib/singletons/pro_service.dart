@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Holds the "ad-free" entitlement flag that ad widgets read to suppress ads.
+/// The ad-free entitlement that the ad widgets read to suppress ads.
 ///
-/// The real source of truth is moving to the backend credit/subscription system
-/// (with auth) — once that lands, [setPro] will be driven by the server-verified
-/// entitlement. For now it's a persisted local flag so ad-suppression is wired
-/// and testable. Extends [ChangeNotifier] so ad widgets rebuild on change.
+/// **The server owns this.** It used to be a plain local preference, which meant switching ads
+/// off was a matter of editing shared preferences — the app trusted a value the user controlled.
+/// `/credits/balance` now returns `ad_free` on every launch and that value wins.
+///
+/// The local copy remains, but only as an offline cache so a user who has paid still gets an
+/// ad-free app on a plane. It is written exclusively from a server response, never from the UI.
 class ProService extends ChangeNotifier {
   static final ProService _instance = ProService._();
   ProService._();
@@ -16,18 +18,26 @@ class ProService extends ChangeNotifier {
   bool _isPro = false;
   bool get isPro => _isPro;
 
-  /// Loads the persisted entitlement (call once in main()).
+  /// Whether the value came from the server this session, as opposed to the offline cache.
+  bool _verified = false;
+  bool get isVerified => _verified;
+
+  /// Loads the cached entitlement so the first frame is correct before the network answers.
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     _isPro = prefs.getBool(_key) ?? false;
     notifyListeners();
   }
 
-  /// Sets and persists the ad-free entitlement (called by the entitlement layer).
-  Future<void> setPro(bool value) async {
+  /// Applies the entitlement reported by the server and caches it for offline use.
+  ///
+  /// Only [CreditService] calls this, from the `/credits/balance` response.
+  Future<void> applyFromServer({required bool adFree}) async {
+    _verified = true;
+    if (_isPro == adFree) return;
+    _isPro = adFree;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_key, value);
-    _isPro = value;
+    await prefs.setBool(_key, adFree);
     notifyListeners();
   }
 }

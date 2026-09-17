@@ -1582,5 +1582,8 @@
     }
   },
   "previousPage": "Previous page",
-  "nextPage": "Next page"
+  "nextPage": "Next page",
+  "restorePurchasesTitle": "Restore purchases",
+  "restorePurchasesSub": "Recover credits from a previous purchase",
+  "restorePurchasesDone": "Checked for previous purchases."
 }

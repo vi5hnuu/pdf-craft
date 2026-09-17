@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
 import 'package:pdf_craft/singletons/dio_singleton.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
+import 'package:pdf_craft/singletons/pro_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
 
 /// Client-side view of the user's credit balance and the per-tool price list.
@@ -102,7 +104,12 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> refreshBalance() async {
     try {
       final res = await _dio.get('${Constants.baseUrl}/credits/balance');
-      _balance = (res.data['data']['credits'] as num).toInt();
+      final data = res.data['data'] as Map;
+      _balance = (data['credits'] as num).toInt();
+      // The ad-free entitlement rides along on this call, so the client never has to rely on
+      // its own cached copy while it is online.
+      final adFree = data['ad_free'];
+      if (adFree is bool) unawaited(ProService().applyFromServer(adFree: adFree));
       notifyListeners();
     } catch (e) {
       LoggerSingleton().logger.w('Balance fetch failed: $e');

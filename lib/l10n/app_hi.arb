@@ -944,5 +944,8 @@
   "a11yProcessing": "{label}. कृपया प्रतीक्षा करें.",
   "a11yFileRow": "{name}, {size}, {date} को बदला गया",
   "previousPage": "पिछला पेज",
-  "nextPage": "अगला पेज"
+  "nextPage": "अगला पेज",
+  "restorePurchasesTitle": "खरीद वापस पाएँ",
+  "restorePurchasesSub": "पिछली खरीद के क्रेडिट वापस पाएँ",
+  "restorePurchasesDone": "पिछली खरीद देख ली गई।"
 }

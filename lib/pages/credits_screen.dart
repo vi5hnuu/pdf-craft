@@ -98,6 +98,19 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
+              // A user who reinstalled or switched device could previously only wait and hope;
+              // the restore ran silently at launch with no way to ask for it again.
+              _earnTile(
+                icon: Icons.restore,
+                title: L10n.of(context).restorePurchasesTitle,
+                subtitle: L10n.of(context).restorePurchasesSub,
+                onTap: () async {
+                  await PurchaseService().restore();
+                  await CreditService().refreshBalance();
+                  NotificationService.showSnackbar(
+                      text: L10n.current.restorePurchasesDone, color: Colors.green);
+                },
+              ),
             ],
           ),
         ),
