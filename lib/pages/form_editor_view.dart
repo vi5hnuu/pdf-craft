@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:pdf_craft/pages/form-editor/editor_field.dart';
 import 'package:pdf_craft/pages/form-editor/field_inspector.dart';
 import 'package:pdf_craft/pages/form-editor/field_list_sheet.dart';
@@ -59,8 +60,18 @@ class _FormEditorViewState extends State<FormEditorView>
   final List<Map<String, Object?>> _undoStack = [];
   static const _maxUndo = 30;
 
+  /// How far the canvas can be zoomed. A 12pt box is about 6 logical pixels at fit scale on a
+  /// phone, so the old 5x ceiling left the author aiming at something they could not see.
+  static const double _maxZoom = 12;
+
   final TransformationController _tc = TransformationController();
   FormDraftStore? _drafts;
+
+  /// Live "W x H pt" shown beside the field while it is being dragged or resized.
+  ///
+  /// Placement was entirely by eye: nothing in the editor ever said how big a field was, so
+  /// matching the box already printed on a form was guesswork.
+  String? _dragReadout;
 
   /// Hides all editing chrome so the canvas shows only what the produced PDF will contain.
   ///
@@ -198,6 +209,68 @@ class _FormEditorViewState extends State<FormEditorView>
     }
   }
 
+  // ── Points ────────────────────────────────────────────────────────────────────
+  // A field's rect is stored as a fraction of the page, and `AcroFormSpecMapper` turns it into
+  // PDF points by multiplying by the page size. These do the same multiplication, so what the
+  // author reads on screen is exactly what the backend receives — not an approximation of it.
+
+  /// The current page's size in PDF points, or A4 if it has not been measured yet.
+  Size get _currentPagePoints => _pagePoints[_currentPage] ?? const Size(595, 842);
+
+  /// Smallest field size, expressed as a fraction of the current page.
+  Size _minFraction() {
+    const minPoints = 4.0;
+    final p = _currentPagePoints;
+    return Size(minPoints / p.width, minPoints / p.height);
+  }
+
+  /// [f]'s rectangle in PDF points — the numbers the backend will be given.
+  Rect _rectInPoints(EditorField f) {
+    final p = _currentPagePoints;
+    return Rect.fromLTWH(
+      f.rect.left * p.width,
+      f.rect.top * p.height,
+      f.rect.width * p.width,
+      f.rect.height * p.height,
+    );
+  }
+
+  /// Writes [f]'s rectangle from PDF points, clamped to the page and to the minimum size.
+  void _setRectFromPoints(EditorField f, Rect points) {
+    final p = _currentPagePoints;
+    final min = _minFraction();
+    final w = (points.width / p.width).clamp(min.width, 1.0);
+    final h = (points.height / p.height).clamp(min.height, 1.0);
+    final l = (points.left / p.width).clamp(0.0, 1 - w);
+    final t = (points.top / p.height).clamp(0.0, 1 - h);
+    setState(() => f.rect = Rect.fromLTWH(l, t, w, h));
+  }
+
+  /// Every other field on this page, by name, with its size in points — so a field can be made
+  /// exactly the size of one already placed. Forms repeat the same box; measuring it once
+  /// should be enough.
+  Map<String, Size> _sizesOfFieldsOtherThan(EditorField f) {
+    final result = <String, Size>{};
+    for (final other in _fields) {
+      if (other.id == f.id) continue;
+      final r = _rectInPoints(other);
+      result[other.name] = Size(r.width, r.height);
+    }
+    return result;
+  }
+
+  /// "142.0, 318.5 pt" — where the field's top-left corner sits on the page.
+  String _positionLabel(EditorField f) {
+    final r = _rectInPoints(f);
+    return '${r.left.toStringAsFixed(1)}, ${r.top.toStringAsFixed(1)} pt';
+  }
+
+  /// "12.0 x 12.0 pt" — the size the backend will be given.
+  String _sizeLabel(EditorField f) {
+    final r = _rectInPoints(f);
+    return '${r.width.toStringAsFixed(1)} x ${r.height.toStringAsFixed(1)} pt';
+  }
+
   EditorField? get _selected {
     for (final f in _fields) {
       if (f.id == _selectedId) return f;
@@ -305,7 +378,7 @@ class _FormEditorViewState extends State<FormEditorView>
   }
 
   void _addField(FieldType type) {
-    final size = type.defaultSize;
+    final size = type.defaultSizeOn(_pagePoints[_currentPage]);
     // Stack each new field under the previous one instead of nudging it by a fixed step.
     // The old step was 0.05 of the page while a Paragraph field is 0.12 tall, so placing a
     // few in a row buried them in each other and every one had to be dragged apart first.
@@ -374,7 +447,8 @@ class _FormEditorViewState extends State<FormEditorView>
   /// Adds a group of linked [type] (radio or checkbox) options in a neat column
   /// from a list of labels. Radios share one group name; checkboxes share a base.
   void _addGroup(FieldType type, List<String> labels) {
-    final size = type.defaultSize;
+    _pushUndo();
+    final size = type.defaultSizeOn(_pagePoints[_currentPage]);
     final groupName = '${type.wire}_group_${_autoName++}';
     setState(() {
       for (int i = 0; i < labels.length; i++) {
@@ -522,6 +596,13 @@ class _FormEditorViewState extends State<FormEditorView>
           right: 0,
           child: Center(child: _pagePill(theme)),
         ),
+      // Precision controls for the selected field. A drag moves in whole logical pixels, and at
+      // fit scale one pixel is roughly 1.5pt on A4 — so a field simply cannot be landed on a
+      // printed box by finger alone. These move it a point at a time.
+      if (_selected != null && !_previewMode)
+        Positioned(right: 8, bottom: 12, child: _nudgePad(theme)),
+      // Zoom, so a 12pt box is big enough to aim at.
+      Positioned(left: 8, bottom: 12, child: _zoomPad(theme)),
       // Empty-state hint for the current page.
       if (_fields.isEmpty)
         Positioned(
@@ -567,6 +648,93 @@ class _FormEditorViewState extends State<FormEditorView>
     );
   }
 
+  /// One-point nudge in each direction for the selected field.
+  Widget _nudgePad(ThemeData theme) {
+    final l = L10n.of(context);
+    Widget arrow(IconData icon, Offset deltaPoints, String label) => Semantics(
+          button: true,
+          label: label,
+          child: IconButton(
+            iconSize: 18,
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            icon: Icon(icon),
+            onPressed: () => _nudge(deltaPoints),
+          ),
+        );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(AppRadius.surface),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        arrow(Icons.keyboard_arrow_up, const Offset(0, -1), l.nudgeUp),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          arrow(Icons.keyboard_arrow_left, const Offset(-1, 0), l.nudgeLeft),
+          arrow(Icons.keyboard_arrow_right, const Offset(1, 0), l.nudgeRight),
+        ]),
+        arrow(Icons.keyboard_arrow_down, const Offset(0, 1), l.nudgeDown),
+      ]),
+    );
+  }
+
+  /// Moves the selected field by [deltaPoints] PDF points and shows the new position.
+  void _nudge(Offset deltaPoints) {
+    final f = _selected;
+    if (f == null) return;
+    _pushUndo();
+    final r = _rectInPoints(f);
+    _setRectFromPoints(f, r.translate(deltaPoints.dx, deltaPoints.dy));
+    setState(() => _dragReadout = _positionLabel(f));
+  }
+
+  /// Zoom in/out with a readout, next to the canvas rather than buried in the overflow menu.
+  Widget _zoomPad(ThemeData theme) {
+    return AnimatedBuilder(
+      animation: _tc,
+      builder: (context, _) {
+        final scale = _tc.value.getMaxScaleOnAxis();
+        void zoomTo(double target) {
+          final clamped = target.clamp(1.0, _maxZoom);
+          setState(() =>
+              _tc.value = Matrix4.identity()..scaleByDouble(clamped, clamped, 1, 1));
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            IconButton(
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              tooltip: L10n.of(context).zoomOut,
+              icon: const Icon(Icons.remove),
+              onPressed: scale > 1.01 ? () => zoomTo(scale / 1.5) : null,
+            ),
+            ExcludeSemantics(
+              child: Text('${(scale * 100).round()}%',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+            ),
+            IconButton(
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              tooltip: L10n.of(context).zoomIn,
+              icon: const Icon(Icons.add),
+              onPressed: scale < _maxZoom - 0.01 ? () => zoomTo(scale * 1.5) : null,
+            ),
+          ]),
+        );
+      },
+    );
+  }
+
   Widget _buildCanvas(ThemeData theme) {
     return LayoutBuilder(builder: (ctx, constraints) {
       final pageSize = _pagePoints[_currentPage] ?? const Size(595, 842);
@@ -595,7 +763,9 @@ class _FormEditorViewState extends State<FormEditorView>
                 child: InteractiveViewer(
                   transformationController: _tc,
                   minScale: 1,
-                  maxScale: 5,
+                  // 5x was not enough to see a 12pt checkbox, let alone place one: at fit scale
+                  // on a phone a point is well under a logical pixel.
+                  maxScale: _maxZoom,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTapUp: (d) => _selectAt(d.localPosition, dispW, dispH),
@@ -824,6 +994,7 @@ class _FormEditorViewState extends State<FormEditorView>
         final nl = (f.rect.left + dxFrac).clamp(0.0, 1 - f.rect.width);
         final nt = (f.rect.top + dyFrac).clamp(0.0, 1 - f.rect.height);
         f.rect = Rect.fromLTWH(nl, nt, f.rect.width, f.rect.height);
+        _dragReadout = _positionLabel(f);
       });
     }
 
@@ -831,9 +1002,30 @@ class _FormEditorViewState extends State<FormEditorView>
       final dwFrac = (screenDelta.dx / scale) / dispW;
       final dhFrac = (screenDelta.dy / scale) / dispH;
       setState(() {
-        final nw = (f.rect.width + dwFrac).clamp(0.02, 1 - f.rect.left);
-        final nh = (f.rect.height + dhFrac).clamp(0.02, 1 - f.rect.top);
+        // The floor is four points, not a fraction of the page. A flat 0.02 floor meant a
+        // minimum of 11.9pt wide and 16.8pt tall on A4, so a 12pt checkbox — the size printed
+        // on the forms these get placed on — could not be reached at all.
+        final minW = _minFraction().width;
+        final minH = _minFraction().height;
+        var nw = (f.rect.width + dwFrac).clamp(minW, 1 - f.rect.left);
+        var nh = (f.rect.height + dhFrac).clamp(minH, 1 - f.rect.top);
+        if (f.type.lockAspect) {
+          // Both axes follow whichever the finger moved further, in points rather than in
+          // fractions, so the field stays physically square instead of square-in-fractions.
+          final points = _pagePoints[_currentPage] ?? const Size(595, 842);
+          final sidePt = (dwFrac.abs() * points.width >= dhFrac.abs() * points.height)
+              ? nw * points.width
+              : nh * points.height;
+          nw = (sidePt / points.width).clamp(minW, 1 - f.rect.left);
+          nh = (sidePt / points.height).clamp(minH, 1 - f.rect.top);
+          // The clamps can pull the axes apart at the page edge; take the smaller side so the
+          // field stays square and inside the page.
+          final side = math.min(nw * points.width, nh * points.height);
+          nw = side / points.width;
+          nh = side / points.height;
+        }
         f.rect = Rect.fromLTWH(f.rect.left, f.rect.top, nw, nh);
+        _dragReadout = _sizeLabel(f);
       });
     }
 
@@ -845,7 +1037,9 @@ class _FormEditorViewState extends State<FormEditorView>
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: onTap,
+          onPanStart: onDrag == null ? null : (_) => _pushUndo(),
           onPanUpdate: onDrag == null ? null : (d) => onDrag(d.delta),
+          onPanEnd: onDrag == null ? null : (_) => setState(() => _dragReadout = null),
           // The visible dot stays 26px so it does not swamp a small field, but the *touch*
           // target is padded out to the 48dp minimum. At 26px these handles were below the
           // accessibility guideline and genuinely fiddly to hit on a phone.
@@ -882,7 +1076,9 @@ class _FormEditorViewState extends State<FormEditorView>
         height: h,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
+          onPanStart: (_) => _pushUndo(),
           onPanUpdate: (d) => move(d.delta),
+          onPanEnd: (_) => setState(() => _dragReadout = null),
           onTap: () => _showProperties(f),
           child: const SizedBox.expand(),
         ),
@@ -924,6 +1120,27 @@ class _FormEditorViewState extends State<FormEditorView>
           top: screenTL.dy + h - 13 + outward,
           child: circle(Icons.open_in_full, primary, null,
               onDrag: resize, semanticLabel: L10n.of(context).a11yResizeField)),
+      // Live size/position readout. Sits above the field, or below it when the field is near
+      // the top of the page, so it never leaves the canvas.
+      if (_dragReadout != null)
+        Positioned(
+          left: screenTL.dx,
+          top: screenTL.dy > 40 ? screenTL.dy - 30 : screenTL.dy + h + 8,
+          child: ExcludeSemantics(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
+              ),
+              child: Text(
+                _dragReadout!,
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ),
     ]);
   }
 
@@ -935,13 +1152,24 @@ class _FormEditorViewState extends State<FormEditorView>
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
-      builder: (_) => FieldInspector(
-        field: f,
-        resolve: (name) => engine.FieldRef(_idForName(name), name),
-        onAddOption: _addOptionToGroup,
-        optionsInGroup: (g) =>
-            _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
-        groupLetter: _groupLetter,
+      // StatefulBuilder so typing a new size redraws the sheet's own boxes as well as the
+      // canvas; without it the numbers would only catch up when the sheet was reopened.
+      builder: (_) => StatefulBuilder(
+        builder: (context, setSheetState) => FieldInspector(
+          field: f,
+          rectInPoints: _rectInPoints(f),
+          onRectChanged: (points) {
+            _pushUndo();
+            _setRectFromPoints(f, points);
+            setSheetState(() {});
+          },
+          sizesOfOtherFields: _sizesOfFieldsOtherThan(f),
+          resolve: (name) => engine.FieldRef(_idForName(name), name),
+          onAddOption: _addOptionToGroup,
+          optionsInGroup: (g) =>
+              _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
+          groupLetter: _groupLetter,
+        ),
       ),
     ).whenComplete(() {
       if (mounted) setState(() {}); // refresh badges/state after edits

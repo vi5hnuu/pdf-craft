@@ -72,6 +72,20 @@ extension FieldTypeX on FieldType {
   engine.FieldTypeDescriptor get _descriptor => formFieldTypes[wire];
 
   Size get defaultSize => Size(_descriptor.defaultSize.width, _descriptor.defaultSize.height);
+
+  /// Width and height are tied together, so the field can only be square (checkbox, radio).
+  bool get lockAspect => _descriptor.lockAspect;
+
+  /// The type's default size as a fraction of a page [pagePoints] in size.
+  ///
+  /// Types with an absolute size — a checkbox is 12pt whatever the paper — are converted from
+  /// points here, so the same field is the same physical size on A4 and on Letter.
+  Size defaultSizeOn(Size? pagePoints) {
+    final points = _descriptor.defaultPointSize;
+    if (points == null || pagePoints == null) return defaultSize;
+    final fraction = points.toFraction(pagePoints.width, pagePoints.height);
+    return Size(fraction.width, fraction.height);
+  }
   bool get isToggle => _descriptor.isToggle;
   bool get hasOptions => _descriptor.acceptsOptions;
   bool get hasValue => _descriptor.acceptsValue;

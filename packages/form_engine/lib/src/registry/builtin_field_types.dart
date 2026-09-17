@@ -35,14 +35,21 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     defaultSize: FractionalSize(0.42, 0.12),
     acceptsValue: true,
   ),
+  // 12pt square, because that is the size of the box already printed on the forms these get
+  // placed on. The former FractionalSize(0.05, 0.032) was 29.8 x 26.9pt on A4 — too big to sit
+  // on a bank form's checkbox, and not square, so the tick sat in an oval.
   FieldTypeDescriptor(
     id: FieldTypes.checkbox,
     defaultSize: FractionalSize(0.05, 0.032),
+    defaultPointSize: PointSize(12, 12),
+    lockAspect: true,
     isToggle: true,
   ),
   FieldTypeDescriptor(
     id: FieldTypes.radio,
     defaultSize: FractionalSize(0.05, 0.032),
+    defaultPointSize: PointSize(12, 12),
+    lockAspect: true,
     isToggle: true,
     isGrouped: true,
   ),

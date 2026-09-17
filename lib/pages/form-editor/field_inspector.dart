@@ -6,6 +6,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:form_engine/form_engine.dart' as engine;
 import 'package:pdf_craft/pages/form-editor/editor_field.dart';
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
+import 'package:pdf_craft/pages/form-editor/geometry_editor.dart';
 import 'package:pdf_craft/pages/form-editor/options_editor.dart';
 
 /// Properties editor for a single field, opened as a modal sheet. Owns its own
@@ -13,6 +14,16 @@ import 'package:pdf_craft/pages/form-editor/options_editor.dart';
 /// correct values, and writes edits straight back to the [field].
 class FieldInspector extends StatefulWidget {
   final EditorField field;
+
+  /// [field]'s rectangle in PDF points, and a setter for it.
+  ///
+  /// Geometry lives with the host, which owns the page size the conversion needs; the sheet
+  /// only presents it and hands edits back.
+  final Rect rectInPoints;
+  final ValueChanged<Rect> onRectChanged;
+
+  /// The other fields on this page and their sizes in points, so one can be copied.
+  final Map<String, Size> sizesOfOtherFields;
 
   /// Adds a sibling option to the selected field's group. The new option is linked but
   /// positioned freely, so it can be dragged next to whatever the document prints there.
@@ -31,6 +42,9 @@ class FieldInspector extends StatefulWidget {
 
   const FieldInspector({super.key, 
     required this.field,
+    required this.rectInPoints,
+    required this.onRectChanged,
+    required this.sizesOfOtherFields,
     required this.resolve,
     required this.onAddOption,
     required this.optionsInGroup,
@@ -185,6 +199,18 @@ class _FieldInspectorState extends State<FieldInspector> {
             value: f.multiSelect,
             onChanged: (v) => setState(() => f.multiSelect = v),
           ),
+
+        // Position & size ─────────────────────────────────────────────────────────
+        // Ungated: a checkbox has hasValue == false and so used to get nothing at all between
+        // the tooltip switches and the Logic section — which is exactly the field whose size
+        // matters most.
+        _sectionTitle(theme, L10n.of(context).sectionPositionSize),
+        GeometryEditor(
+          rectInPoints: widget.rectInPoints,
+          lockAspect: f.type.lockAspect,
+          sizesOfOtherFields: widget.sizesOfOtherFields,
+          onChanged: widget.onRectChanged,
+        ),
 
         // ── Appearance ────────────────────────────────────────────────────────────
         if (f.type.hasValue) ...[
