@@ -360,11 +360,26 @@ class ToolCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isFav = FavoriteToolsService().isFavorite(tool.id);
-    return GestureDetector(
-      onTap: () => tool.openPicker(context),
-      // Long-press to pin/unpin from favourites.
-      onLongPress: () => _toggleFavorite(context),
-      child: Container(
+    final cost = tool.creditCost;
+    // One sentence describing the whole card. Without it a screen reader announced the card as a
+    // bare icon name, which said nothing about which of 61 tools the user had landed on, and then
+    // read the info badge, cost badge and label as three more unexplained nodes.
+    return Semantics(
+      button: true,
+      label: cost > 0
+          ? L10n.of(context).a11yToolCard(
+              tool.localizedName(context), tool.localizedDescription(context), cost)
+          : L10n.of(context).a11yToolCardFree(
+              tool.localizedName(context), tool.localizedDescription(context)),
+      hint: isFav ? L10n.of(context).a11yFavourited : null,
+      // The card now describes itself, so its decorative children are excluded rather than
+      // announced one by one.
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () => tool.openPicker(context),
+        // Long-press to pin/unpin from favourites.
+        onLongPress: () => _toggleFavorite(context),
+        child: Container(
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(AppRadius.surface),
@@ -453,7 +468,8 @@ class ToolCard extends StatelessWidget {
                 right: 0,
                 child: Icon(Icons.star, size: 14, color: Colors.amber),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

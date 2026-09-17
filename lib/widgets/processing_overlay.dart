@@ -62,10 +62,16 @@ class ProcessingOverlay extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
+          // A live region so a screen reader announces that work started and what it is,
+          // rather than leaving the user on a silent screen that appears frozen.
+          child: Semantics(
+            liveRegion: true,
+            label: l.a11yProcessing(label ?? l.procWorking),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SpinKitFadingCube(color: primary, size: 34),
+              // Decorative: the live region above already says what is happening.
+              ExcludeSemantics(child: SpinKitFadingCube(color: primary, size: 34)),
               const SizedBox(height: 20),
               Text(
                 label ?? l.procWorking,
@@ -112,6 +118,7 @@ class ProcessingOverlay extends StatelessWidget {
                 ),
               ],
             ],
+          ),
           ),
         ),
       ),

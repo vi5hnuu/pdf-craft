@@ -652,7 +652,13 @@ class _FormEditorViewState extends State<FormEditorView> {
       width: r.width,
       height: r.height,
       child: IgnorePointer(
-        child: Container(
+        child: Semantics(
+          label: grouped
+              ? L10n.of(context).a11yFieldInGroup(
+                  f.type.localizedLabel(context), f.name, _groupLetter(f.group))
+              : L10n.of(context).a11yField(f.type.localizedLabel(context), f.name),
+          selected: isSel,
+          child: Container(
           decoration: BoxDecoration(
             color: primary.withValues(alpha: isSel ? 0.12 : (isSibling ? 0.10 : 0.06)),
             border: Border.all(
@@ -720,6 +726,7 @@ class _FormEditorViewState extends State<FormEditorView> {
               ),
           ]),
         ),
+        ),
       ),
     );
   }
@@ -752,16 +759,33 @@ class _FormEditorViewState extends State<FormEditorView> {
       });
     }
 
-    Widget circle(IconData icon, Color color, VoidCallback? onTap, {void Function(Offset)? onDrag}) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        onPanUpdate: onDrag == null ? null : (d) => onDrag(d.delta),
-        child: Container(
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-          child: Icon(icon, color: Colors.white, size: 14),
+    Widget circle(IconData icon, Color color, VoidCallback? onTap,
+        {void Function(Offset)? onDrag, required String semanticLabel}) {
+      return Semantics(
+        button: true,
+        label: semanticLabel,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          onPanUpdate: onDrag == null ? null : (d) => onDrag(d.delta),
+          // The visible dot stays 26px so it does not swamp a small field, but the *touch*
+          // target is padded out to the 48dp minimum. At 26px these handles were below the
+          // accessibility guideline and genuinely fiddly to hit on a phone.
+          child: Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            color: Colors.transparent,
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2)),
+              child: Icon(icon, color: Colors.white, size: 14),
+            ),
+          ),
         ),
       );
     }
@@ -789,12 +813,13 @@ class _FormEditorViewState extends State<FormEditorView> {
       Positioned(
           left: screenTL.dx - 13 - outward,
           top: screenTL.dy - 13 - outward,
-          child: circle(Icons.edit, primary, () => _showProperties(f))),
+          child: circle(Icons.edit, primary, () => _showProperties(f),
+              semanticLabel: L10n.of(context).a11yEditField)),
       // Delete (top-right).
       Positioned(
         left: screenTL.dx + w - 13 + outward,
         top: screenTL.dy - 13 - outward,
-        child: circle(Icons.close, Colors.red, () {
+        child: circle(Icons.close, Colors.red, semanticLabel: L10n.of(context).a11yDeleteField, () {
           _pushUndo();
           setState(() {
             _fields.remove(f);
@@ -806,7 +831,8 @@ class _FormEditorViewState extends State<FormEditorView> {
       Positioned(
           left: screenTL.dx + w - 13 + outward,
           top: screenTL.dy + h - 13 + outward,
-          child: circle(Icons.open_in_full, primary, null, onDrag: resize)),
+          child: circle(Icons.open_in_full, primary, null,
+              onDrag: resize, semanticLabel: L10n.of(context).a11yResizeField)),
     ]);
   }
 

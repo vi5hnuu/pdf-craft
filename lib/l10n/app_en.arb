@@ -1495,5 +1495,92 @@
         "type": "int"
       }
     }
-  }
+  },
+  "a11yToolCard": "{tool}. {description}. Costs {credits} credits. Double tap to open, long press to favourite.",
+  "@a11yToolCard": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "description": {
+        "type": "String"
+      },
+      "credits": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yToolCardFree": "{tool}. {description}. Free. Double tap to open, long press to favourite.",
+  "@a11yToolCardFree": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      },
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yAboutTool": "About {tool}",
+  "@a11yAboutTool": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yFavourited": "Favourited",
+  "a11yField": "{type} field named {name}",
+  "@a11yField": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yFieldInGroup": "{type} field named {name}, group {group}",
+  "@a11yFieldInGroup": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yEditField": "Edit field",
+  "a11yDeleteField": "Delete field",
+  "a11yResizeField": "Resize field",
+  "a11yAddOption": "Add another option to this group",
+  "a11yProcessing": "{label}. Please wait.",
+  "@a11yProcessing": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yFileRow": "{name}, {size}, modified {date}",
+  "@a11yFileRow": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "previousPage": "Previous page",
+  "nextPage": "Next page"
 }

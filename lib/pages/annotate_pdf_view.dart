@@ -492,11 +492,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         IconButton(
           icon: const Icon(Icons.chevron_left),
+          tooltip: L10n.of(context).previousPage,
           onPressed: _currentPage > 1 ? () => _loadPage(_currentPage - 1) : null,
         ),
         Text('$_currentPage / $_totalPages'),
         IconButton(
           icon: const Icon(Icons.chevron_right),
+          tooltip: L10n.of(context).nextPage,
           onPressed: _currentPage < _totalPages ? () => _loadPage(_currentPage + 1) : null,
         ),
       ]),

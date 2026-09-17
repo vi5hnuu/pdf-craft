@@ -186,11 +186,13 @@ class _PdfCompareViewState extends State<PdfCompareView> {
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         IconButton(
           icon: const Icon(Icons.chevron_left),
+          tooltip: L10n.of(context).previousPage,
           onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
         ),
         Text(L10n.of(context).pageOfPages(_currentPage, maxPage)),
         IconButton(
           icon: const Icon(Icons.chevron_right),
+          tooltip: L10n.of(context).nextPage,
           onPressed: _currentPage < maxPage ? () => _goToPage(_currentPage + 1) : null,
         ),
       ]),
