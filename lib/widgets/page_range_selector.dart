@@ -52,6 +52,9 @@ class PageRangeSelector extends StatefulWidget {
   }) {
     return showModalBottomSheet<Set<int>>(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       isScrollControlled: true,
       builder: (sheetContext) => _PageRangeSheet(
         file: file,

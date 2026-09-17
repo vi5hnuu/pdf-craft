@@ -68,24 +68,68 @@ class _GeometryEditorState extends State<GeometryEditor> {
   late final _w = TextEditingController();
   late final _h = TextEditingController();
 
+  /// One per box, so the editor can tell whether the author is mid-edit.
+  ///
+  /// While a box has focus its text is the source of truth and the model is downstream. Without
+  /// this the host's clamp to a 4pt minimum rewrote the box on every keystroke: typing "18"
+  /// into a 12pt field went 1 -> clamped to 4 -> "4.0" -> "4.18".
+  late final _focus = {
+    _x: FocusNode(),
+    _y: FocusNode(),
+    _w: FocusNode(),
+    _h: FocusNode(),
+  };
+
+  bool get _editing => _focus.values.any((f) => f.hasFocus);
+
   /// True while a controller is being rewritten from the model, so the resulting `onChanged`
   /// is not fed straight back in as if the author had typed it.
   bool _syncing = false;
+
+  /// The last rectangle this editor sent upwards.
+  ///
+  /// The host applies an edit, which comes back as a new [widget.rectInPoints], which would
+  /// otherwise rewrite the boxes *while the author is still typing in them*: typing "18" into
+  /// a 12pt field went 1 -> clamped -> re-synced -> "11.1". Recognising our own change and
+  /// leaving the text alone is what makes the field typeable.
+  Rect? _lastEmitted;
 
   @override
   void initState() {
     super.initState();
     _syncControllers();
+    // On leaving a box, show the value the model actually settled on — the clamp to the page
+    // and to the minimum size may have adjusted it, and silently disagreeing would be worse.
+    for (final node in _focus.values) {
+      node.addListener(() {
+        if (!node.hasFocus && mounted) setState(_syncControllers);
+      });
+    }
   }
 
   @override
   void didUpdateWidget(GeometryEditor old) {
     super.didUpdateWidget(old);
-    if (old.rectInPoints != widget.rectInPoints) _syncControllers();
+    if (old.rectInPoints == widget.rectInPoints) return;
+    // Mid-edit, or our own edit coming back: leave the boxes as typed.
+    if (_editing) return;
+    if (_lastEmitted != null && _closeEnough(_lastEmitted!, widget.rectInPoints)) return;
+    _syncControllers();
   }
+
+  /// Equal to within a twentieth of a point — the host clamps to the page and to a minimum
+  /// size, so a value we sent can return very slightly changed without being a new edit.
+  static bool _closeEnough(Rect a, Rect b) =>
+      (a.left - b.left).abs() < 0.05 &&
+      (a.top - b.top).abs() < 0.05 &&
+      (a.width - b.width).abs() < 0.05 &&
+      (a.height - b.height).abs() < 0.05;
 
   @override
   void dispose() {
+    for (final node in _focus.values) {
+      node.dispose();
+    }
     _x.dispose();
     _y.dispose();
     _w.dispose();
@@ -111,8 +155,11 @@ class _GeometryEditorState extends State<GeometryEditor> {
     if (_syncing) return;
     final r = widget.rectInPoints;
     double read(TextEditingController c, double fallback) {
-      final parsed = double.tryParse(c.text.trim());
-      return parsed == null ? fallback : _unit.toPoints(parsed);
+      final text = c.text.trim();
+      // A half-typed value ("", ".", "1.") is not an edit yet — keep the current number rather
+      // than pushing a zero the host would clamp, which then rewrote the box mid-keystroke.
+      final parsed = text.isEmpty ? null : double.tryParse(text);
+      return (parsed == null || parsed <= 0) ? fallback : _unit.toPoints(parsed);
     }
 
     var w = read(_w, r.width);
@@ -123,8 +170,16 @@ class _GeometryEditorState extends State<GeometryEditor> {
       final side = (w != r.width) ? w : h;
       w = side;
       h = side;
+      // The height box is disabled when locked, so show the author what it became.
+      if (!_focus[_h]!.hasFocus) {
+        _syncing = true;
+        _h.text = _unit.fromPoints(h).toStringAsFixed(1);
+        _syncing = false;
+      }
     }
-    widget.onChanged(Rect.fromLTWH(read(_x, r.left), read(_y, r.top), w, h));
+    final next = Rect.fromLTWH(read(_x, r.left), read(_y, r.top), w, h);
+    _lastEmitted = next;
+    widget.onChanged(next);
   }
 
   @override
@@ -213,6 +268,7 @@ class _GeometryEditorState extends State<GeometryEditor> {
 
   Widget _box(TextEditingController c, String label, {bool enabled = true}) => TextField(
         controller: c,
+        focusNode: _focus[c],
         enabled: enabled,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],

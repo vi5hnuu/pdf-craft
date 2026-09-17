@@ -19,6 +19,9 @@ class NextToolSheet extends StatelessWidget {
   static Future<void> show(BuildContext context, File file) {
     return showModalBottomSheet<void>(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       isScrollControlled: true,
       builder: (_) => NextToolSheet(file: file),
     );

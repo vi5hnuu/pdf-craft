@@ -404,6 +404,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     final isDir = file is Directory;
     showModalBottomSheet(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => SafeArea(
         child: Column(
@@ -489,6 +492,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
     showModalBottomSheet(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => SafeArea(
         child: Padding(

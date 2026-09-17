@@ -32,6 +32,9 @@ class FileActionsSheet {
   }) {
     return showModalBottomSheet(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (_) => _FileActionsBody(

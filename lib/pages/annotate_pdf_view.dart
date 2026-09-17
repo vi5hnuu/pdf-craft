@@ -567,6 +567,9 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> {
     Color stickyColor = Colors.yellow;
     showModalBottomSheet(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setS) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),

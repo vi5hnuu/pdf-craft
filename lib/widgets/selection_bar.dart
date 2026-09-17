@@ -58,6 +58,9 @@ void showToolsForSelection(BuildContext context) {
   final applicable = ToolRegistry.toolsForSelection(files);
   showModalBottomSheet(
     context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
     shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
     builder: (_) => SafeArea(
@@ -107,6 +110,9 @@ void showToolsForSelection(BuildContext context) {
 void showManageSelections(BuildContext context) {
   showModalBottomSheet(
     context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
     shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
     builder: (_) => SafeArea(

@@ -333,6 +333,9 @@ class _FormEditorViewState extends State<FormEditorView>
   void _showFieldList() {
     showModalBottomSheet(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => FieldListSheet(
@@ -1200,6 +1203,9 @@ class _FormEditorViewState extends State<FormEditorView>
   void _showProperties(EditorField f) {
     showModalBottomSheet(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),

@@ -409,6 +409,9 @@ class _PdfPreviewState extends State<PdfPreview> {
   Future<void> _showOutline() async {
     await showModalBottomSheet(
       context: context,
+      // Without this the sheet runs under the status bar and the display cutout —
+      // on a punch-hole phone the top of a tall sheet sits behind the camera.
+      useSafeArea: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
