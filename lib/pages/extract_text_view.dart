@@ -30,7 +30,6 @@ class _ExtractTextViewState extends State<ExtractTextView>
   /// 0-indexed pages the tool applies to. Empty means the whole document.
   final Set<int> _pages = <int>{};
 
-  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -96,7 +95,6 @@ class _ExtractTextViewState extends State<ExtractTextView>
   }
 
   void _onExtract() async {
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     runTool((cancelToken) => ExtractTextEvent(
       extractText: ExtractText(
@@ -104,7 +102,7 @@ class _ExtractTextViewState extends State<ExtractTextView>
         pages: _pages.toList()..sort(),
         file: file,
       ),
-      cancelToken: _cancelToken,
+      cancelToken: cancelToken,
     ));
   }
 

@@ -95,7 +95,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
                     Text(
                       _position == 0
                           ? L10n.of(context).atTheVeryBeginning
-                          : 'After page $_position of the base document',
+                          : L10n.of(context).insertAfterPage(_position),
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                     ),
@@ -105,7 +105,9 @@ class _InsertPdfViewState extends State<InsertPdfView>
                         min: 0,
                         max: _basePages.toDouble(),
                         divisions: _basePages,
-                        label: _position == 0 ? 'Start' : 'After $_position',
+                        label: _position == 0
+                            ? L10n.of(context).insertSliderStart
+                            : L10n.of(context).insertSliderAfter(_position),
                         onChanged: (v) => setState(() => _position = v.round()),
                       )
                     else

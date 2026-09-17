@@ -341,10 +341,10 @@ class _CropPdfViewState extends State<CropPdfView>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _margin('Top', _marginTopPt),
-            _margin('Bottom', _marginBottomPt),
-            _margin('Left', _marginLeftPt),
-            _margin('Right', _marginRightPt),
+            _margin(L10n.of(context).marginTop, _marginTopPt),
+            _margin(L10n.of(context).marginBottom, _marginBottomPt),
+            _margin(L10n.of(context).marginLeft, _marginLeftPt),
+            _margin(L10n.of(context).marginRight, _marginRightPt),
           ],
         ),
       ),
@@ -361,10 +361,10 @@ class _CropPdfViewState extends State<CropPdfView>
       );
 
   String get _pageSummary {
-    if (_pages.isEmpty) return 'All pages';
-    if (_pages.length == 1) return 'Page ${_pages.first + 1}';
+    if (_pages.isEmpty) return L10n.of(context).allPages;
+    if (_pages.length == 1) return L10n.of(context).cropScopePage(_pages.first + 1);
     final sorted = _pages.toList()..sort();
-    return '${sorted.length} pages';
+    return L10n.of(context).cropScopePages(sorted.length);
   }
 
   Future<void> _pickPages() async {

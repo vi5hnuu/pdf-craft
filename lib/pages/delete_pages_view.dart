@@ -109,7 +109,7 @@ class _DeletePagesViewState extends State<DeletePagesView>
                       ? L10n.of(context).selectPagesToDelete
                       : _remaining < 1
                           ? L10n.of(context).keepAtLeastOnePage
-                          : 'Delete ${_selected.length} page(s) · $_remaining left'),
+                          : L10n.of(context).deletePagesAction(_selected.length, _remaining)),
                   style: FilledButton.styleFrom(backgroundColor: Colors.red),
                 ),
               ),

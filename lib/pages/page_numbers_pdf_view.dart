@@ -109,7 +109,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
                           const SizedBox(height: 20),
 
                           // Font
-                          _sectionLabel(theme, 'Font'),
+                          _sectionLabel(theme, L10n.of(context).sectionFont),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<FontName>(
                             decoration: const InputDecoration(border: OutlineInputBorder()),
@@ -128,7 +128,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
                           const SizedBox(height: 20),
 
                           // Font size
-                          _sectionLabel(theme, 'Font Size'),
+                          _sectionLabel(theme, L10n.of(context).sectionFontSize),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _fontSizeC,
@@ -142,7 +142,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
                           const SizedBox(height: 20),
 
                           // Position
-                          _sectionLabel(theme, 'Position'),
+                          _sectionLabel(theme, L10n.of(context).sectionPosition),
                           const SizedBox(height: 8),
                           Row(
                             children: [
@@ -188,17 +188,17 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
                           const SizedBox(height: 20),
 
                           // Padding
-                          _sectionLabel(theme, 'Padding'),
+                          _sectionLabel(theme, L10n.of(context).sectionPadding),
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              _paddingField('Top', _padding.top, (v) => setState(() => _padding.top = v)),
+                              _paddingField(L10n.of(context).marginTop, _padding.top, (v) => setState(() => _padding.top = v)),
                               const SizedBox(width: 8),
-                              _paddingField('Right', _padding.right, (v) => setState(() => _padding.right = v)),
+                              _paddingField(L10n.of(context).marginRight, _padding.right, (v) => setState(() => _padding.right = v)),
                               const SizedBox(width: 8),
-                              _paddingField('Bottom', _padding.bottom, (v) => setState(() => _padding.bottom = v)),
+                              _paddingField(L10n.of(context).marginBottom, _padding.bottom, (v) => setState(() => _padding.bottom = v)),
                               const SizedBox(width: 8),
-                              _paddingField('Left', _padding.left, (v) => setState(() => _padding.left = v)),
+                              _paddingField(L10n.of(context).marginLeft, _padding.left, (v) => setState(() => _padding.left = v)),
                             ],
                           ),
                           const SizedBox(height: 20),

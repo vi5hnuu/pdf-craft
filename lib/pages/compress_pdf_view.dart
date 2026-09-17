@@ -29,7 +29,6 @@ class _CompressPdfViewState extends State<CompressPdfView>
   final TextEditingController _outFileNameC = TextEditingController();
   CompressionLevel _level = CompressionLevel.RECOMMENDED;
   // Token for the in-flight request so the overlay's Cancel can abort it.
-  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -106,7 +105,6 @@ class _CompressPdfViewState extends State<CompressPdfView>
   }
 
   void _onCompress() async {
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     runTool((cancelToken) => CompressPdfEvent(
       compressPdf: CompressPdf(
@@ -114,7 +112,7 @@ class _CompressPdfViewState extends State<CompressPdfView>
         level: _level,
         file: file,
       ),
-      cancelToken: _cancelToken,
+      cancelToken: cancelToken,
     ));
   }
 

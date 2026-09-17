@@ -273,14 +273,17 @@ class _ImageStudioViewState extends State<ImageStudioView>
 
   // ── Filter tab ────────────────────────────────────────────────────────────────
 
-  static const _filterLabels = <fi.ImageFilterType, String>{
-    fi.ImageFilterType.grayscale: 'Grayscale',
-    fi.ImageFilterType.sepia: 'Sepia',
-    fi.ImageFilterType.sharpen: 'Sharpen',
-    fi.ImageFilterType.brightness: 'Brightness',
-    fi.ImageFilterType.contrast: 'Contrast',
-    fi.ImageFilterType.vintage: 'Vintage',
-  };
+  /// Filter names, localized at call time — a const map cannot hold them because the strings
+  /// depend on the active locale.
+  String _filterLabel(BuildContext context, fi.ImageFilterType type) => switch (type) {
+        fi.ImageFilterType.grayscale => L10n.of(context).filterGrayscale,
+        fi.ImageFilterType.sepia => L10n.of(context).filterSepia,
+        fi.ImageFilterType.sharpen => L10n.of(context).filterSharpen,
+        fi.ImageFilterType.brightness => L10n.of(context).filterBrightness,
+        fi.ImageFilterType.contrast => L10n.of(context).filterContrast,
+        fi.ImageFilterType.vintage => L10n.of(context).filterVintage,
+      };
+
 
   Widget _buildFilterTab(ThemeData theme, bool loading) {
     final showIntensity = _filterType != fi.ImageFilterType.grayscale &&
@@ -293,7 +296,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
         Wrap(
           spacing: 8, runSpacing: 8,
           children: fi.ImageFilterType.values.map((type) => ChoiceChip(
-            label: Text(_filterLabels[type] ?? type.name),
+            label: Text(_filterLabel(context, type)),
             selected: _filterType == type,
             onSelected: (_) => setState(() => _filterType = type),
           )).toList(),

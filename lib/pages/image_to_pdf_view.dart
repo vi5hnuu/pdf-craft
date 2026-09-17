@@ -28,7 +28,6 @@ class ImageToPdfView extends StatefulWidget {
 class _ImageToPdfViewState extends State<ImageToPdfView>
     with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
-  CancelToken? _cancelToken;
 
   /// Page geometry for the generated document. A4 rather than one point per pixel, which
   /// produced pages several feet across from an ordinary photo.
@@ -180,7 +179,6 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
   }
 
   void _onConvertToPdf() async {
-    _cancelToken = CancelToken();
     final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
     runTool((cancelToken) => ImageToPdfEvent(
         imageToPdf: ImageToPdf(
@@ -189,6 +187,6 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
           orientation: _orientation,
           files: files,
         ),
-        cancelToken: _cancelToken));
+        cancelToken: cancelToken));
   }
 }

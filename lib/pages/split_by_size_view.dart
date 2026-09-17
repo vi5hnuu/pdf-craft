@@ -54,7 +54,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
         listenWhen: (p, c) => p.httpStates[HttpStates.splitBySize] != c.httpStates[HttpStates.splitBySize],
         listener: (context, state) => handleToolState(
           state.httpStates[HttpStates.splitBySize],
-          successMessage: 'PDF split',
+          successMessage: L10n.current.splitDone,
           onDone: (f) => OpenFile.open(f.path),
         ),
         builder: (context, state) {

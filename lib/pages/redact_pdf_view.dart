@@ -40,7 +40,6 @@ class _RedactPdfViewState extends State<RedactPdfView>
   List<_RedactRegion> get _rects => _pageRects[_currentPage] ??= [];
 
   String? _selectedId;
-  CancelToken? _cancelToken;
 
   // In-progress draw rectangle.
   Offset? _dragStart;
@@ -299,12 +298,11 @@ class _RedactPdfViewState extends State<RedactPdfView>
       }
     });
 
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
     runTool((cancelToken) => RedactPdfEvent(
       redactPdf: RedactPdf(regions: regions, file: file),
-      cancelToken: _cancelToken,
+      cancelToken: cancelToken,
     ));
   }
 

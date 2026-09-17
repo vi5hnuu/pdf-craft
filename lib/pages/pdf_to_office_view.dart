@@ -25,7 +25,6 @@ class PdfToOfficeView extends StatefulWidget {
 class _PdfToOfficeViewState extends State<PdfToOfficeView>
     with ToolResultHandler, ToolViewMixin {
   final TextEditingController _outFileNameC = TextEditingController();
-  CancelToken? _cancelToken;
 
   String get _stateKey {
     switch (widget.format) {
@@ -133,7 +132,6 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView>
 
   void _onConvert() async {
     final name = _outFileNameC.text.trim().isEmpty ? _defaultName : _outFileNameC.text.trim();
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     runTool((cancelToken) => PdfToOfficeEvent(
       pdfToOffice: PdfToOffice(
@@ -141,7 +139,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView>
         format: widget.format,
         file: file,
       ),
-      cancelToken: _cancelToken,
+      cancelToken: cancelToken,
     ));
   }
 

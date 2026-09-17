@@ -29,7 +29,6 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
   int _totalPages = 0;
   // 0-indexed page -> copies to insert. A page is "selected" when it has an entry.
   final Map<int, int> _pageCounts = {};
-  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -208,7 +207,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
                 : const Icon(Icons.copy_all),
             label: Text(_pageCounts.isEmpty
                 ? L10n.of(context).selectPagesToDuplicate
-                : 'Add $_totalCopies cop${_totalCopies == 1 ? 'y' : 'ies'} across ${_pageCounts.length} page(s)'),
+                : L10n.of(context).duplicateAction(_totalCopies, _pageCounts.length)),
           ),
         ),
       ]),
@@ -218,7 +217,6 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
   int get _totalCopies => _pageCounts.values.fold(0, (a, b) => a + b);
 
   Future<void> _onDuplicate() async {
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
     runTool((cancelToken) => DuplicatePagesEvent(
@@ -226,7 +224,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
         pageCounts: Map<int, int>.from(_pageCounts),
         file: file,
       ),
-      cancelToken: _cancelToken,
+      cancelToken: cancelToken,
     ));
   }
 

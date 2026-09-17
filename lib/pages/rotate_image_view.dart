@@ -83,7 +83,7 @@ class _RotateImageViewState extends State<RotateImageView>
                   ]),
                 ),
               ),
-              _bar(theme, loading, 'Rotate', Icons.rotate_right, _onApply),
+              _bar(theme, loading, L10n.of(context).rotateAction, Icons.rotate_right, _onApply),
             ]),
             processingOverlay(state.httpStates[HttpStates.rotateImage], label: L10n.of(context).procWorking),
           ]);

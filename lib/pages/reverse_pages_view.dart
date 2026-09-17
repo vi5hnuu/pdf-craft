@@ -74,7 +74,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
                       Text(
                         pages == null
                             ? L10n.of(context).readingDocument
-                            : 'The last page becomes the first. This document has $pages page${pages == 1 ? '' : 's'}.',
+                            : L10n.of(context).reverseExplainer(pages),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),

@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:form_engine/form_engine.dart' as engine;
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
 
@@ -16,7 +17,14 @@ class EditorField {
   Rect rect;
   String name;
   String value = '';
-  List<String> options = ['Option 1', 'Option 2'];
+  /// Choices for a dropdown or list field.
+  ///
+  /// Localized, because these are not placeholders: they are written into the PDF as the
+  /// field's option values, so a Hindi author who does not edit them ships an English form.
+  List<String> options = [
+    L10n.current.optionLabelDefault(1),
+    L10n.current.optionLabelDefault(2),
+  ];
   /// Radio group this option belongs to. Every option sharing a group behaves as one
   /// PDF field, so only one of them can be on at a time.
   ///

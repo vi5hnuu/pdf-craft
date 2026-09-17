@@ -69,9 +69,9 @@ class _NUpPdfViewState extends State<NUpPdfView>
                 Text(L10n.of(context).pagesPerSheet, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 Row(children: [
-                  _layoutOption(theme, 2, '2-Up', L10n.of(context).nUpLandscapeSide, Icons.view_agenda_outlined),
+                  _layoutOption(theme, 2, L10n.of(context).nUpTwo, L10n.of(context).nUpLandscapeSide, Icons.view_agenda_outlined),
                   const SizedBox(width: 12),
-                  _layoutOption(theme, 4, '4-Up', L10n.of(context).nUpPortraitGrid, Icons.grid_view_outlined),
+                  _layoutOption(theme, 4, L10n.of(context).nUpFour, L10n.of(context).nUpPortraitGrid, Icons.grid_view_outlined),
                 ]),
                 const SizedBox(height: 20),
                 // The real pages, tiled the way the output will tile them. Two icon chips were
@@ -85,7 +85,9 @@ class _NUpPdfViewState extends State<NUpPdfView>
                     icon: loading
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.view_module_outlined),
-                    label: Text(loading ? 'Processing…' : 'Create $_nUp-Up PDF'),
+                    label: Text(loading
+                        ? L10n.of(context).processingEllipsis
+                        : L10n.of(context).nUpCreate(_nUp)),
                   ),
                 ),
               ]),

@@ -500,7 +500,10 @@ class _FormEditorViewState extends State<FormEditorView>
   }
 
   Future<void> _promptGroup(FieldType type) async {
-    final controller = TextEditingController(text: 'Option 1, Option 2, Option 3');
+    // Localized: these are used verbatim as the group's export values, so leaving them English
+    // put English option values inside a Hindi author's PDF.
+    final controller = TextEditingController(
+        text: [1, 2, 3].map(L10n.current.optionLabelDefault).join(', '));
     final labels = await showDialog<List<String>>(
       context: context,
       builder: (ctx) => AlertDialog(

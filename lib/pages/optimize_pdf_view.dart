@@ -22,7 +22,6 @@ class OptimizePdfView extends StatefulWidget {
 
 class _OptimizePdfViewState extends State<OptimizePdfView>
     with ToolResultHandler, ToolViewMixin {
-  CancelToken? _cancelToken;
   String _sizeKb = '';
 
   @override
@@ -101,14 +100,13 @@ class _OptimizePdfViewState extends State<OptimizePdfView>
 
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     runTool((cancelToken) => OptimizePdfEvent(
       optimizePdf: OptimizePdf(
         outFileName: '${baseName}_optimized',
         file: file,
       ),
-      cancelToken: _cancelToken,
+      cancelToken: cancelToken,
     ));
   }
 }

@@ -264,7 +264,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
             onPressed: () {
               final page = (int.tryParse(pageC.text) ?? 1).clamp(1, _totalPages) - 1;
               setState(() => _bookmarks.add(_BookmarkItem(
-                title: titleC.text.trim().isEmpty ? 'Bookmark' : titleC.text.trim(),
+                title: titleC.text.trim().isEmpty ? L10n.current.bookmarkDefaultTitle : titleC.text.trim(),
                 pageIndex: page,
                 indent: 0,
               )));

@@ -33,7 +33,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
     with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc = BlocProvider.of<PdfBloc>(context);
   final TextEditingController _outFileNameC = TextEditingController();
-  final TextEditingController _textC = TextEditingController(text: 'CONFIDENTIAL');
+  final TextEditingController _textC = TextEditingController(text: L10n.current.watermarkDefaultText);
   final TextEditingController _fontSizeC = TextEditingController(text: '48');
   double _opacity = 0.3;
   double _angle = 45;
@@ -92,7 +92,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
     await ToolSettingsService().clear(_toolId);
     if (!mounted) return;
     setState(() {
-      _textC.text = 'CONFIDENTIAL';
+      _textC.text = L10n.current.watermarkDefaultText;
       _fontSizeC.text = '48';
       _opacity = 0.3;
       _angle = 45;
@@ -144,7 +144,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
                                   L10n.of(context).approxPlacement,
                               overlayBuilder: (ctx, canvas, pagePoints) {
                                 final text = _textC.text.isEmpty
-                                    ? 'CONFIDENTIAL'
+                                    ? L10n.of(context).watermarkDefaultText
                                     : _textC.text;
                                 final pt = double.tryParse(_fontSizeC.text) ?? 48;
                                 // The size is in PDF points, so scale it by how much the page
@@ -277,7 +277,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
     runTool((cancelToken) => WatermarkPdfEvent(
       watermarkPdf: WatermarkPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'watermarked_file',
-        text: _textC.text.isEmpty ? 'CONFIDENTIAL' : _textC.text,
+        text: _textC.text.isEmpty ? L10n.current.watermarkDefaultText : _textC.text,
         fontSize: int.tryParse(_fontSizeC.text) ?? 48,
         color: ColorInfo.fromColor(_pickedColor),
         opacity: _opacity,

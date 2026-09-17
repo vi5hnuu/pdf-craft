@@ -24,7 +24,6 @@ class RepairPdfView extends StatefulWidget {
 class _RepairPdfViewState extends State<RepairPdfView>
     with ToolResultHandler, ToolViewMixin {
   final TextEditingController _outFileNameC = TextEditingController();
-  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -103,14 +102,13 @@ class _RepairPdfViewState extends State<RepairPdfView>
   }
 
   void _onRepair() async {
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
     runTool((cancelToken) => RepairPdfEvent(
       repairPdf: RepairPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
         file: file,
       ),
-      cancelToken: _cancelToken,
+      cancelToken: cancelToken,
     ));
   }
 

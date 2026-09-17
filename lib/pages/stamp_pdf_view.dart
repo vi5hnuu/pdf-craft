@@ -135,7 +135,7 @@ class _StampPdfViewState extends State<StampPdfView>
                             // Page range
                             Row(
                               children: [
-                                Expanded(child: _field(_fromPageC, 'From Page')),
+                                Expanded(child: _field(_fromPageC, L10n.of(context).fromPage)),
                                 const SizedBox(width: 12),
                                 Expanded(child: _field(_toPageC, L10n.of(context).toPageOptional)),
                               ],

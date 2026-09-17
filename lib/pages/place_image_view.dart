@@ -24,13 +24,15 @@ enum _Mode { place, zoom }
 class PlaceImageView extends StatefulWidget {
   final File pdfFile;
   final Uint8List? preloadedImageBytes;
-  final String title;
+  /// App-bar title supplied by whichever tool pushed this screen (QR Stamp, Sign PDF).
+  /// Null falls back to the generic localized name.
+  final String? title;
 
   const PlaceImageView({
     super.key,
     required this.pdfFile,
     this.preloadedImageBytes,
-    this.title = 'Place Image',
+    this.title,
   });
 
   @override
@@ -150,7 +152,7 @@ class _PlaceImageViewState extends State<PlaceImageView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.title}${_totalPages > 1 ? ' — ${L10n.of(context).pageOfPages(_currentPage, _totalPages)}' : ''}'),
+        title: Text('${widget.title ?? L10n.of(context).placeImageTitle}${_totalPages > 1 ? ' — ${L10n.of(context).pageOfPages(_currentPage, _totalPages)}' : ''}'),
         actions: [
           // Mode toggle: place ↔ zoom
           IconButton(
@@ -449,7 +451,7 @@ class _PlaceImageViewState extends State<PlaceImageView>
         OutlinedButton.icon(
           onPressed: () => setState(() => _lockAspect = !_lockAspect),
           icon: Icon(_lockAspect ? Icons.lock : Icons.lock_open, size: 18),
-          label: Text(_lockAspect ? 'Locked' : 'Free'),
+          label: Text(_lockAspect ? L10n.of(context).aspectLocked : L10n.of(context).aspectFree),
           style: OutlinedButton.styleFrom(
             foregroundColor: _lockAspect ? theme.colorScheme.primary : theme.colorScheme.onSurface,
             side: BorderSide(

@@ -151,7 +151,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
                               children: _presets.map((a) {
                                 final selected = fileAngle == a;
                                 return ActionChip(
-                                  label: Text(a == 0 ? 'None (0°)' : '$a°'),
+                                  label: Text(a == 0 ? L10n.of(context).rotateNone : '$a°'),
                                   backgroundColor: selected
                                       ? primary.withValues(alpha: 0.18)
                                       : null,

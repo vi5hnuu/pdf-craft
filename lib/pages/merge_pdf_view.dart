@@ -28,7 +28,6 @@ class _MergePdfViewState extends State<MergePdfView>
     with ToolResultHandler, ToolViewMixin {
   final TextEditingController outFileNameC=TextEditingController();
   int? draggingItemIndex;
-  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -119,8 +118,7 @@ class _MergePdfViewState extends State<MergePdfView>
   }
 
   void _startMerge() async {
-    _cancelToken = CancelToken();
     final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
-    runTool((cancelToken) => MergePdfEvent(mergePdf: MergePdf(outFileName: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: files), cancelToken: _cancelToken));
+    runTool((cancelToken) => MergePdfEvent(mergePdf: MergePdf(outFileName: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: files), cancelToken: cancelToken));
   }
 }

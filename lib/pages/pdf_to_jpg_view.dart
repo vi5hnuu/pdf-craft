@@ -33,7 +33,6 @@ class PdfToJpgView extends StatefulWidget {
 class _PdfToJpgViewState extends State<PdfToJpgView>
     with ToolResultHandler, ToolViewMixin {
   late PdfBloc bloc=BlocProvider.of<PdfBloc>(context);
-  CancelToken? _cancelToken;
 
   /// 0-indexed pages to render. Empty means the whole document.
   final Set<int> _pages = <int>{};
@@ -184,9 +183,8 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
   }
 
   void _onPdfToJpf() async {
-    _cancelToken = CancelToken();
     final file = await MultipartFile.fromFile(widget.file.path);
-    runTool((cancelToken) => PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(outFileName: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null, pages: _pages.toList()..sort())), cancelToken: _cancelToken));
+    runTool((cancelToken) => PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(outFileName: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null, pages: _pages.toList()..sort())), cancelToken: cancelToken));
   }
 
   void _openFile(File file) {
