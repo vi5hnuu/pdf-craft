@@ -1474,6 +1474,8 @@
   "authNotAllowed": "This action is not allowed.",
   "authAccountExists": "That account already exists.",
   "authServerProblem": "The server had a problem. Please try again shortly.",
+  "authGoogleNotRegistered": "This build isn't registered for Google sign-in. Its signing certificate has to be added to the Google Cloud project.",
+  "authGoogleUnavailable": "Google Play services is unavailable on this device.",
   "authGoogleCancelled": "Google sign-in cancelled.",
   "authGoogleNoCreds": "Could not obtain Google credentials.",
   "authVerifyEmailSent": "Account created. Check your e-mail to verify it.",

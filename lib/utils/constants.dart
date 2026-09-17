@@ -32,6 +32,24 @@ class Constants {
   // app.auth.expected-audience and be in the auth service's allowed-audiences.
   static const String apiAudience = "pdf-studio-api";
 
+  // OAuth **web** client ID for Google sign-in.
+  //
+  // Not the Android client ID. On Android the ID token is minted with the *web* client as its
+  // `aud`, which is what the auth service checks against AUTH_GOOGLE_CLIENT_IDS — so all three
+  // places that touch Google sign-in (this app, the web app's NEXT_PUBLIC_GOOGLE_CLIENT_ID and
+  // the auth service) must carry this same value.
+  //
+  // Passed explicitly rather than relying on the `default_web_client_id` string resource the
+  // google-services Gradle plugin generates: that resource only appears when
+  // google-services.json carries a type-3 oauth_client, and when it silently did not, the ID
+  // token came back null and sign-in failed with no indication why.
+  //
+  // Safe to keep in source: an OAuth *client ID* is a public identifier that ships inside every
+  // Android APK and every web page that uses it. A client *secret* is the thing that must never
+  // be committed, and this app never needs one.
+  static const String googleWebClientId =
+      '380531483609-8dg8o2lncr1q36982f01c1gtfsr03bgq.apps.googleusercontent.com';
+
   // Upload limits — must mirror pdf-studio-api's spring.servlet.multipart.max-file-size and
   // max-request-size (application.properties). Checked client-side before a tool uploads so an
   // oversized file fails fast with a clear message instead of after a long upload.

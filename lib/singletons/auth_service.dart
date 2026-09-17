@@ -3,7 +3,9 @@ import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/auth/auth_user.dart';
 import 'package:pdf_craft/services/auth/auth_api.dart';
@@ -148,9 +150,31 @@ class AuthService extends ChangeNotifier {
           firstName: firstName, lastName: lastName, username: username);
 
   Future<void> signInWithGoogle() async {
-    final googleSignIn = GoogleSignIn(scopes: const ['email']);
+    // serverClientId is what makes `authentication.idToken` non-null: without it the plugin
+    // looks for a `default_web_client_id` resource that only exists when google-services.json
+    // carries a type-3 oauth_client. It did not, so every attempt failed on a null token.
+    final googleSignIn = GoogleSignIn(
+      scopes: const ['email'],
+      serverClientId: Constants.googleWebClientId,
+    );
     // The account picker is a separate activity; returning from it must not trigger an ad.
-    final account = await FullScreenAdPolicy().runExternal(() => googleSignIn.signIn());
+    final GoogleSignInAccount? account;
+    try {
+      account = await FullScreenAdPolicy().runExternal(() => googleSignIn.signIn());
+    } on PlatformException catch (e) {
+      // Play services reports a misconfigured project as a bare status code. Untranslated, it
+      // surfaced as "Google sign-in failed." and said nothing about the actual cause, which is
+      // always a registration problem rather than anything the user did.
+      throw AuthException(switch (e.code) {
+        // DEVELOPER_ERROR (10): no OAuth client in the Google Cloud project matches this
+        // package name and signing certificate. Debug, upload and Play App Signing keys each
+        // need their own SHA-1 registered.
+        'sign_in_failed' when e.message?.contains('10') == true =>
+          L10n.current.authGoogleNotRegistered,
+        'sign_in_required' || 'network_error' => L10n.current.errUnreachable,
+        _ => L10n.current.authGoogleFailed,
+      });
+    }
     if (account == null) throw AuthException(L10n.current.authGoogleCancelled);
     final auth = await account.authentication;
     final idToken = auth.idToken;

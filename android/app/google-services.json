@@ -12,7 +12,20 @@
           "package_name": "com.vi5hnu.pdf_craft"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "380531483609-bbbgli551e1ntnllrhjbklqbrl7ustel.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vi5hnu.pdf_craft",
+            "certificate_hash": "a098a33bfa2b70cc054b139d1ea0222367ab2b14"
+          }
+        },
+        {
+          "client_id": "380531483609-8dg8o2lncr1q36982f01c1gtfsr03bgq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDCz6VbN62PHfrHsSsQoYNYgMnRPo_WTKM"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "380531483609-8dg8o2lncr1q36982f01c1gtfsr03bgq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

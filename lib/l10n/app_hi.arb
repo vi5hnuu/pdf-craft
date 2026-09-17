@@ -945,6 +945,8 @@
   "authNotAllowed": "यह काम करने की अनुमति नहीं है।",
   "authAccountExists": "यह अकाउंट पहले से मौजूद है।",
   "authServerProblem": "सर्वर में दिक्कत आई। कुछ देर बाद कोशिश करें।",
+  "authGoogleNotRegistered": "यह बिल्ड Google साइन-इन के लिए पंजीकृत नहीं है. इसका साइनिंग प्रमाणपत्र Google Cloud प्रोजेक्ट में जोड़ना होगा.",
+  "authGoogleUnavailable": "इस डिवाइस पर Google Play services उपलब्ध नहीं है.",
   "authGoogleCancelled": "Google साइन-इन रद्द कर दिया गया।",
   "authGoogleNoCreds": "Google की जानकारी नहीं मिल सकी।",
   "authVerifyEmailSent": "अकाउंट बन गया। इसे वेरिफ़ाई करने के लिए अपना ई-मेल देखें।",
