@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:pdf_craft/pages/form-editor/editor_field.dart';
+import 'package:pdf_craft/pages/form-editor/field_inspector.dart';
+import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -20,131 +23,7 @@ import 'package:pdf_craft/services/forms/form_draft_store.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
-enum FieldType { text, multiline, number, email, phone, checkbox, radio, dropdown, listbox, date, signature }
 
-extension FieldTypeX on FieldType {
-  String get label => switch (this) {
-        FieldType.text => 'Text',
-        FieldType.multiline => 'Paragraph',
-        FieldType.number => 'Number',
-        FieldType.email => 'Email',
-        FieldType.phone => 'Phone',
-        FieldType.listbox => 'List',
-        FieldType.checkbox => 'Checkbox',
-        FieldType.radio => 'Radio',
-        FieldType.dropdown => 'Dropdown',
-        FieldType.date => 'Date',
-        FieldType.signature => 'Signature',
-      };
-  /// Localized label for the UI; `label` above stays English for logs and wire use.
-  String localizedLabel(BuildContext context) => switch (this) {
-        FieldType.text => L10n.of(context).fieldText,
-        FieldType.multiline => L10n.of(context).fieldParagraph,
-        FieldType.number => L10n.of(context).fieldNumber,
-        FieldType.email => L10n.of(context).fieldEmail,
-        FieldType.phone => L10n.of(context).fieldPhone,
-        FieldType.listbox => L10n.of(context).fieldList,
-        FieldType.checkbox => L10n.of(context).fieldCheckbox,
-        FieldType.radio => L10n.of(context).fieldRadio,
-        FieldType.dropdown => L10n.of(context).fieldDropdown,
-        FieldType.date => L10n.of(context).fieldDate,
-        FieldType.signature => L10n.of(context).fieldSignature,
-      };
-  IconData get icon => switch (this) {
-        FieldType.text => Icons.text_fields,
-        FieldType.multiline => Icons.notes,
-        FieldType.number => Icons.pin_outlined,
-        FieldType.email => Icons.alternate_email,
-        FieldType.phone => Icons.phone_outlined,
-        FieldType.listbox => Icons.list_alt_outlined,
-        FieldType.checkbox => Icons.check_box_outlined,
-        FieldType.radio => Icons.radio_button_checked,
-        FieldType.dropdown => Icons.arrow_drop_down_circle_outlined,
-        FieldType.date => Icons.calendar_today_outlined,
-        FieldType.signature => Icons.draw_outlined,
-      };
-  String get wire => switch (this) {
-        FieldType.text => 'text',
-        FieldType.multiline => 'multiline',
-        FieldType.number => 'number',
-        FieldType.email => 'email',
-        FieldType.phone => 'phone',
-        FieldType.listbox => 'listbox',
-        FieldType.checkbox => 'checkbox',
-        FieldType.radio => 'radio',
-        FieldType.dropdown => 'dropdown',
-        FieldType.date => 'date',
-        FieldType.signature => 'signature',
-      };
-
-  // ── Per-type behaviour comes from the engine's registry ──────────────────────
-  // The enum stays as the UI's handle, but every behavioural question is answered
-  // by the registered descriptor, so a type's rules live in exactly one place and
-  // are unit-tested in `packages/form_engine` without a device.
-  engine.FieldTypeDescriptor get _descriptor => formFieldTypes[wire];
-
-  Size get defaultSize => Size(_descriptor.defaultSize.width, _descriptor.defaultSize.height);
-  bool get isToggle => _descriptor.isToggle;
-  bool get hasOptions => _descriptor.acceptsOptions;
-  bool get hasValue => _descriptor.acceptsValue;
-  bool get isGrouped => _descriptor.isGrouped;
-}
-
-/// The field types this app offers. Built once; the engine's registry owns the
-/// per-type rules and this is simply the app's handle to it.
-final engine.FieldTypeRegistry formFieldTypes =
-    engine.FieldTypeRegistry(engine.builtinFieldTypes);
-
-/// A placed form field. [rect] is stored in **fractional** page coordinates
-/// (0..1), which makes it independent of zoom and per-page pixel size.
-class _Field {
-  final String id;
-  FieldType type;
-  Rect rect;
-  String name;
-  String value = '';
-  List<String> options = ['Option 1', 'Option 2'];
-  /// Radio group this option belongs to. Every option sharing a group behaves as one
-  /// PDF field, so only one of them can be on at a time.
-  ///
-  /// Assigned per placement rather than defaulting to a shared constant: a bank form has
-  /// several independent questions ("Account type", "Marital status"), and a shared default
-  /// silently merged them into one group where choosing Savings cleared Married.
-  String group = '';
-  String exportValue = '';
-  double fontSize = 0;
-  bool required = false;
-  bool checked = false; // checkbox/radio prefill (on by default)
-
-  // ── Rich properties, carried straight through to the engine schema ──────────────
-  String tooltip = '';
-  bool readOnly = false;
-  int maxLength = 0; // 0 = no cap
-  bool comb = false;
-  engine.TextAlignment alignment = engine.TextAlignment.left;
-  bool multiSelect = false;
-  String validationPattern = '';
-  /// What the author typed in the inspector, shown back to them verbatim.
-  ///
-  /// The authoritative link is [conditionRef] / [calcRefs]: those hold the resolved **id**,
-  /// captured the moment the name is entered. Resolving at save time instead meant that
-  /// renaming the target first left the lookup with nothing to find, and the rule silently
-  /// degraded to a dangling reference.
-  String conditionField = '';
-  engine.ConditionOperator conditionOperator = engine.ConditionOperator.equals;
-  String conditionValue = '';
-  engine.CalculationFunction calcFunction = engine.CalculationFunction.sum;
-  /// Comma-separated field names feeding the calculation, as typed.
-  String calcFields = '';
-
-  /// Resolved reference for [conditionField], captured when it was entered.
-  engine.FieldRef? conditionRef;
-
-  /// Resolved references for [calcFields], captured when they were entered.
-  List<engine.FieldRef> calcRefs = const [];
-
-  _Field({required this.type, required this.rect, required this.name}) : id = UniqueKey().toString();
-}
 
 /// Full PDF form builder: place text / paragraph / checkbox / radio / dropdown /
 /// date / signature fields on any page, drag, resize & edit them, zoom in for
@@ -164,9 +43,9 @@ class _FormEditorViewState extends State<FormEditorView> {
   PdfPageImage? _pageImage;
   bool _loadingPage = true;
 
-  final Map<int, List<_Field>> _pageFields = {};
+  final Map<int, List<EditorField>> _pageFields = {};
   final Map<int, Size> _pagePoints = {};
-  List<_Field> get _fields => _pageFields[_currentPage] ??= [];
+  List<EditorField> get _fields => _pageFields[_currentPage] ??= [];
 
   String? _selectedId;
   int _autoName = 1;
@@ -238,7 +117,7 @@ class _FormEditorViewState extends State<FormEditorView> {
         );
         if (type.wire != f.typeId) continue;
         _pageFields.putIfAbsent(f.page, () => []).add(
-              _Field(type: type, rect: Rect.fromLTWH(f.rect.left, f.rect.top, f.rect.width, f.rect.height), name: f.name)
+              EditorField(type: type, rect: Rect.fromLTWH(f.rect.left, f.rect.top, f.rect.width, f.rect.height), name: f.name)
                 ..value = f.value
                 ..options = List<String>.from(f.options)
                 ..group = f.group
@@ -308,7 +187,7 @@ class _FormEditorViewState extends State<FormEditorView> {
     }
   }
 
-  _Field? get _selected {
+  EditorField? get _selected {
     for (final f in _fields) {
       if (f.id == _selectedId) return f;
     }
@@ -354,9 +233,9 @@ class _FormEditorViewState extends State<FormEditorView> {
   }
 
   /// Copies the selected field, offset slightly so the copy is visibly separate.
-  void _duplicate(_Field source) {
+  void _duplicate(EditorField source) {
     _pushUndo();
-    final copy = _Field(
+    final copy = EditorField(
       type: source.type,
       rect: Rect.fromLTWH(
         (source.rect.left + 0.02).clamp(0.0, 1 - source.rect.width),
@@ -413,7 +292,7 @@ class _FormEditorViewState extends State<FormEditorView> {
     left = left.clamp(0.0, 1 - size.width);
     top = top.clamp(0.0, 1 - size.height);
     final n = _autoName++;
-    final field = _Field(
+    final field = EditorField(
         type: type,
         rect: Rect.fromLTWH(left, top, size.width, size.height),
         name: '${type.wire}_$n');
@@ -434,10 +313,10 @@ class _FormEditorViewState extends State<FormEditorView> {
   /// This is what makes a grouped question workable on a real document: the options of one
   /// question rarely sit in a neat column — on a bank form each sits beside its own printed
   /// label — so a new option is created linked but free, and the author drags it into place.
-  void _addOptionToGroup(_Field source) {
+  void _addOptionToGroup(EditorField source) {
     _pushUndo();
     final existing = _fields.where((f) => f.group == source.group).length;
-    final copy = _Field(
+    final copy = EditorField(
       type: source.type,
       rect: Rect.fromLTWH(
         source.rect.left,
@@ -465,7 +344,7 @@ class _FormEditorViewState extends State<FormEditorView> {
     setState(() {
       for (int i = 0; i < labels.length; i++) {
         final top = (0.2 + i * (size.height + 0.03)).clamp(0.0, 1 - size.height);
-        final f = _Field(type: type, rect: Rect.fromLTWH(0.12, top, size.width, size.height), name: '${groupName}_${i + 1}');
+        final f = EditorField(type: type, rect: Rect.fromLTWH(0.12, top, size.width, size.height), name: '${groupName}_${i + 1}');
         if (type.isGrouped) {
           f.group = groupName;
           f.exportValue = labels[i];
@@ -748,7 +627,7 @@ class _FormEditorViewState extends State<FormEditorView> {
     return cycle == 0 ? letter : '$letter$cycle';
   }
 
-  Widget _fieldVisual(_Field f, double dispW, double dispH, ThemeData theme) {
+  Widget _fieldVisual(EditorField f, double dispW, double dispH, ThemeData theme) {
     final r = Rect.fromLTWH(f.rect.left * dispW, f.rect.top * dispH, f.rect.width * dispW, f.rect.height * dispH);
     final isSel = f.id == _selectedId;
     final grouped = f.type.isGrouped && f.group.isNotEmpty;
@@ -845,7 +724,7 @@ class _FormEditorViewState extends State<FormEditorView> {
     );
   }
 
-  Widget _buildHandles(_Field f, double dispW, double dispH, ThemeData theme) {
+  Widget _buildHandles(EditorField f, double dispW, double dispH, ThemeData theme) {
     final scale = _tc.value.getMaxScaleOnAxis();
     final sceneTL = Offset(f.rect.left * dispW, f.rect.top * dispH);
     final screenTL = MatrixUtils.transformPoint(_tc.value, sceneTL);
@@ -933,13 +812,13 @@ class _FormEditorViewState extends State<FormEditorView> {
 
   // ── Properties (modal sheet, rebuilt per open) ───────────────────────────────
 
-  void _showProperties(_Field f) {
+  void _showProperties(EditorField f) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
-      builder: (_) => _FieldPropertiesSheet(
+      builder: (_) => FieldInspector(
         field: f,
         resolve: (name) => engine.FieldRef(_idForName(name), name),
         onAddOption: _addOptionToGroup,
@@ -1176,272 +1055,5 @@ class _FormEditorViewState extends State<FormEditorView> {
     _tc.dispose();
     _doc?.close();
     super.dispose();
-  }
-}
-
-/// Properties editor for a single field, opened as a modal sheet. Owns its own
-/// controllers (created from the field) so switching fields always shows the
-/// correct values, and writes edits straight back to the [field].
-class _FieldPropertiesSheet extends StatefulWidget {
-  final _Field field;
-
-  /// Adds a sibling option to the selected field's group. The new option is linked but
-  /// positioned freely, so it can be dragged next to whatever the document prints there.
-  final void Function(_Field source) onAddOption;
-
-  /// How many options already share a group, so the sheet can say so.
-  final int Function(String group) optionsInGroup;
-
-  /// The group's letter as shown on the canvas badge, so the author can connect the two.
-  final String Function(String group) groupLetter;
-
-  /// Turns a field name typed by the author into a stable reference, resolved against the
-  /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
-  /// later rename harmless.
-  final engine.FieldRef Function(String name) resolve;
-
-  const _FieldPropertiesSheet({
-    required this.field,
-    required this.resolve,
-    required this.onAddOption,
-    required this.optionsInGroup,
-    required this.groupLetter,
-  });
-
-  @override
-  State<_FieldPropertiesSheet> createState() => _FieldPropertiesSheetState();
-}
-
-class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
-  late final _name = TextEditingController(text: widget.field.name);
-  late final _group = TextEditingController(text: widget.field.group);
-  late final _export = TextEditingController(text: widget.field.exportValue);
-  late final _options = TextEditingController(text: widget.field.options.join(', '));
-  late final _value = TextEditingController(text: widget.field.value);
-  late final _fontSize = TextEditingController(text: widget.field.fontSize > 0 ? widget.field.fontSize.toStringAsFixed(0) : '');
-  late final _tooltip = TextEditingController(text: widget.field.tooltip);
-  late final _maxLength = TextEditingController(text: widget.field.maxLength > 0 ? '${widget.field.maxLength}' : '');
-  late final _pattern = TextEditingController(text: widget.field.validationPattern);
-  late final _condField = TextEditingController(text: widget.field.conditionField);
-  late final _condValue = TextEditingController(text: widget.field.conditionValue);
-  late final _calcFields = TextEditingController(text: widget.field.calcFields);
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _group.dispose();
-    _export.dispose();
-    _options.dispose();
-    _value.dispose();
-    _fontSize.dispose();
-    _tooltip.dispose();
-    _maxLength.dispose();
-    _pattern.dispose();
-    _condField.dispose();
-    _condValue.dispose();
-    _calcFields.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final f = widget.field;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
-      // The sheet grew well past a phone screen once rules and logic moved in, so it scrolls
-      // rather than overflowing.
-      child: SingleChildScrollView(
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Text(L10n.of(context).typeFieldLabel(f.type.localizedLabel(context)), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-        ]),
-        const SizedBox(height: 12),
-        _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
-        if (f.type.isGrouped) ...[
-          _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
-          _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
-          Row(children: [
-            Expanded(
-              child: Text(
-                  L10n.of(context).groupBadgeAndCount(
-                      widget.groupLetter(f.group), widget.optionsInGroup(f.group)),
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
-            ),
-            TextButton.icon(
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(L10n.of(context).addOptionToGroup),
-              onPressed: () {
-                Navigator.pop(context);
-                widget.onAddOption(f);
-              },
-            ),
-          ]),
-        ],
-        if (f.type.hasOptions)
-          _field(_options, L10n.of(context).optionsCommaSeparated,
-              (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
-        if (f.type.hasValue) _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
-        if (f.type.hasValue)
-          _field(_fontSize, L10n.of(context).fontSizeAuto, (v) => f.fontSize = double.tryParse(v) ?? 0,
-              keyboard: TextInputType.number),
-        _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
-        if (f.type.isToggle)
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(f.type == FieldType.radio ? L10n.of(context).selectedByDefault : L10n.of(context).checkedByDefault),
-            value: f.checked,
-            onChanged: (v) => setState(() => f.checked = v),
-          ),
-        const SizedBox(height: 4),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(L10n.of(context).required),
-          value: f.required,
-          onChanged: (v) => setState(() => f.required = v),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(L10n.of(context).fieldReadOnly),
-          value: f.readOnly,
-          onChanged: (v) => setState(() => f.readOnly = v),
-        ),
-        if (f.type == FieldType.listbox)
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(L10n.of(context).fieldMultiSelect),
-            value: f.multiSelect,
-            onChanged: (v) => setState(() => f.multiSelect = v),
-          ),
-
-        // ── Appearance ────────────────────────────────────────────────────────────
-        if (f.type.hasValue) ...[
-          _sectionTitle(theme, L10n.of(context).sectionAppearance),
-          _field(_maxLength, L10n.of(context).fieldMaxLength,
-              (v) => f.maxLength = int.tryParse(v) ?? 0, keyboard: TextInputType.number),
-          // Comb needs a character cap and a single line — offering it otherwise would let the
-          // user set a flag the PDF spec makes the backend drop.
-          if (f.maxLength > 0 && f.type != FieldType.multiline)
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(L10n.of(context).fieldComb),
-              value: f.comb,
-              onChanged: (v) => setState(() => f.comb = v),
-            ),
-          const SizedBox(height: 4),
-          Text(L10n.of(context).fieldAlignment, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 4),
-          SegmentedButton<engine.TextAlignment>(
-            segments: [
-              ButtonSegment(value: engine.TextAlignment.left, label: Text(L10n.of(context).alignLeft)),
-              ButtonSegment(value: engine.TextAlignment.center, label: Text(L10n.of(context).alignCenter)),
-              ButtonSegment(value: engine.TextAlignment.right, label: Text(L10n.of(context).alignRight)),
-            ],
-            selected: {f.alignment},
-            onSelectionChanged: (sel) => setState(() => f.alignment = sel.first),
-          ),
-          _sectionTitle(theme, L10n.of(context).sectionRules),
-          _field(_pattern, L10n.of(context).fieldPattern, (v) => f.validationPattern = v),
-        ],
-
-        // ── Logic ─────────────────────────────────────────────────────────────────
-        _sectionTitle(theme, L10n.of(context).sectionLogic),
-        Text(L10n.of(context).conditionShowWhen, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 4),
-        _field(_condField, L10n.of(context).conditionFieldName, (v) {
-          f.conditionField = v;
-          final name = v.trim();
-          f.conditionRef = name.isEmpty ? null : widget.resolve(name);
-        }),
-        DropdownButtonFormField<engine.ConditionOperator>(
-          initialValue: f.conditionOperator,
-          isExpanded: true,
-          decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
-          items: engine.ConditionOperator.values
-              .map((o) => DropdownMenuItem(value: o, child: Text(_operatorLabel(context, o))))
-              .toList(),
-          onChanged: (v) => setState(() => f.conditionOperator = v ?? engine.ConditionOperator.equals),
-        ),
-        const SizedBox(height: 8),
-        _field(_condValue, L10n.of(context).conditionValue, (v) => f.conditionValue = v),
-
-        if (f.type.hasValue) ...[
-          const SizedBox(height: 8),
-          Text(L10n.of(context).calcTitle, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 4),
-          DropdownButtonFormField<engine.CalculationFunction>(
-            initialValue: f.calcFunction,
-            isExpanded: true,
-            decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
-            items: engine.CalculationFunction.values
-                .map((c) => DropdownMenuItem(value: c, child: Text(_calcLabel(context, c))))
-                .toList(),
-            onChanged: (v) => setState(() => f.calcFunction = v ?? engine.CalculationFunction.sum),
-          ),
-          const SizedBox(height: 8),
-          _field(_calcFields, L10n.of(context).calcFieldsHint, (v) {
-            f.calcFields = v;
-            f.calcRefs = v
-                .split(',')
-                .map((e) => e.trim())
-                .where((e) => e.isNotEmpty)
-                .map(widget.resolve)
-                .toList();
-          }),
-        ],
-
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done)),
-        ),
-      ]),
-      ),
-    );
-  }
-
-  Widget _sectionTitle(ThemeData theme, String text) => Padding(
-        padding: const EdgeInsets.only(top: 14, bottom: 6),
-        child: Text(text,
-            style: theme.textTheme.labelLarge
-                ?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.w700)),
-      );
-
-  String _operatorLabel(BuildContext context, engine.ConditionOperator o) => switch (o) {
-        engine.ConditionOperator.equals => L10n.of(context).opEquals,
-        engine.ConditionOperator.notEquals => L10n.of(context).opNotEquals,
-        engine.ConditionOperator.contains => L10n.of(context).opContains,
-        engine.ConditionOperator.isEmpty => L10n.of(context).opIsEmpty,
-        engine.ConditionOperator.isNotEmpty => L10n.of(context).opIsNotEmpty,
-        engine.ConditionOperator.greaterThan => L10n.of(context).opGreaterThan,
-        engine.ConditionOperator.lessThan => L10n.of(context).opLessThan,
-      };
-
-  String _calcLabel(BuildContext context, engine.CalculationFunction c) => switch (c) {
-        engine.CalculationFunction.sum => L10n.of(context).calcSum,
-        engine.CalculationFunction.average => L10n.of(context).calcAverage,
-        engine.CalculationFunction.product => L10n.of(context).calcProduct,
-        engine.CalculationFunction.min => L10n.of(context).calcMin,
-        engine.CalculationFunction.max => L10n.of(context).calcMax,
-      };
-
-  Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged, {TextInputType? keyboard}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        controller: c,
-        keyboardType: keyboard,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          isDense: true,
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        onChanged: onChanged,
-      ),
-    );
   }
 }
