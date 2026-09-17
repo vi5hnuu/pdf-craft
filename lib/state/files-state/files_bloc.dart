@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:pdf_craft/utils/utility.dart';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -167,12 +168,12 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             yield* searchFiles(entity.path, userInput);
           }
         } on FileSystemException catch (e) {
-          LoggerSingleton().logger.w("Failed to access ${entity.path}: $e");
+          LoggerSingleton().logger.w("Failed to access ${Redact.path(entity.path)}: $e");
           return;
         }
       }
     } else {
-      LoggerSingleton().logger.w("Directory does not exist: $directoryPath");
+      LoggerSingleton().logger.w("Directory does not exist: ${Redact.path(directoryPath)}");
     }
   }
 
