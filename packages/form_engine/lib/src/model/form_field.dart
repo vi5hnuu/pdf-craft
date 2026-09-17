@@ -60,6 +60,9 @@ class FormFieldModel {
   /// Point size for [label]. 0 takes the backend's default.
   double labelSize;
 
+  /// Which side of the field the caption sits on.
+  LabelPosition labelPosition;
+
   /// Help text shown on hover/long-press and written to the PDF as `/TU`.
   String tooltip;
 
@@ -121,6 +124,7 @@ class FormFieldModel {
     this.recipientId,
     this.label = '',
     this.labelSize = 0,
+    this.labelPosition = LabelPosition.right,
     this.tooltip = '',
     this.readOnly = false,
     this.maxLength,
@@ -151,6 +155,7 @@ class FormFieldModel {
     String? recipientId,
     String? label,
     double? labelSize,
+    LabelPosition? labelPosition,
     String? tooltip,
     bool? readOnly,
     int? maxLength,
@@ -179,6 +184,7 @@ class FormFieldModel {
         recipientId: recipientId ?? this.recipientId,
         label: label ?? this.label,
         labelSize: labelSize ?? this.labelSize,
+        labelPosition: labelPosition ?? this.labelPosition,
         tooltip: tooltip ?? this.tooltip,
         readOnly: readOnly ?? this.readOnly,
         maxLength: maxLength ?? this.maxLength,

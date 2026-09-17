@@ -49,6 +49,9 @@ class EditorField {
   /// Point size for [label]. 0 lets the backend choose.
   double labelSize = 0;
 
+  /// Which side of the field the caption sits on.
+  engine.LabelPosition labelPosition = engine.LabelPosition.right;
+
   String tooltip = '';
   bool readOnly = false;
   int maxLength = 0; // 0 = no cap

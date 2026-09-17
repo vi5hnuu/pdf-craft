@@ -182,10 +182,46 @@ class _FieldInspectorState extends State<FieldInspector> {
         // "Savings" and which is "Current".
         _field(_label, L10n.of(context).fieldLabel, (v) => setState(() => f.label = v),
             hint: L10n.of(context).fieldLabelHint),
-        if (f.label.isNotEmpty)
+        // Position and size only matter once there is something to draw, so they appear with
+        // the text rather than sitting empty above it.
+        if (f.label.isNotEmpty) ...[
+          Text(L10n.of(context).fieldLabelPosition, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          SegmentedButton<engine.LabelPosition>(
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                  value: engine.LabelPosition.right, label: Text(L10n.of(context).labelRight)),
+              ButtonSegment(
+                  value: engine.LabelPosition.left, label: Text(L10n.of(context).labelLeft)),
+              ButtonSegment(
+                  value: engine.LabelPosition.above, label: Text(L10n.of(context).labelAbove)),
+              ButtonSegment(
+                  value: engine.LabelPosition.below, label: Text(L10n.of(context).labelBelow)),
+            ],
+            selected: {f.labelPosition},
+            onSelectionChanged: (sel) => setState(() => f.labelPosition = sel.first),
+          ),
+          const SizedBox(height: 10),
+          // Presets for the sizes a form actually uses, with the box for anything else — the
+          // same pattern as font size, so a bare number field is never the only way in.
+          Wrap(spacing: 6, children: [
+            for (final size in <double>[7, 8, 9, 10, 12])
+              ChoiceChip(
+                label: Text(size.toStringAsFixed(0)),
+                selected: (f.labelSize == 0 ? 9 : f.labelSize) == size,
+                onSelected: (_) => setState(() {
+                  f.labelSize = size;
+                  _labelSize.text = size.toStringAsFixed(0);
+                }),
+              ),
+          ]),
+          const SizedBox(height: 8),
           _field(_labelSize, L10n.of(context).fieldLabelSize,
-              (v) => f.labelSize = double.tryParse(v) ?? 0,
+              (v) => setState(() => f.labelSize = double.tryParse(v) ?? 0),
               keyboard: TextInputType.number),
+        ],
         _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
         if (f.type.isToggle)
           SwitchListTile(

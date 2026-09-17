@@ -48,6 +48,8 @@ class SchemaCodec {
         if (f.recipientId != null) 'recipient_id': f.recipientId,
         if (f.label.isNotEmpty) 'label': f.label,
         if (f.labelSize > 0) 'label_size': f.labelSize,
+        if (f.label.isNotEmpty && f.labelPosition != LabelPosition.right)
+          'label_position': f.labelPosition.name,
         if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
         if (f.readOnly) 'read_only': true,
         if (f.maxLength != null) 'max_length': f.maxLength,
@@ -105,7 +107,7 @@ class SchemaCodec {
     const known = {
       'id', 'type', 'page', 'rect', 'name', 'value', 'options', 'group',
       'export_value', 'font_size', 'required', 'checked', 'recipient_id',
-      'label', 'label_size',
+      'label', 'label_size', 'label_position',
       'tooltip', 'read_only', 'max_length', 'comb', 'alignment', 'multi_select',
       'format', 'date_format', 'validation', 'condition', 'calculation',
     };
@@ -125,6 +127,7 @@ class SchemaCodec {
       recipientId: json['recipient_id'] as String?,
       label: json['label'] as String? ?? '',
       labelSize: (json['label_size'] as num?)?.toDouble() ?? 0,
+      labelPosition: LabelPosition.fromWire(json['label_position'] as String?),
       tooltip: json['tooltip'] as String? ?? '',
       readOnly: json['read_only'] as bool? ?? false,
       maxLength: (json['max_length'] as num?)?.toInt(),

@@ -156,6 +156,7 @@ class _FormEditorViewState extends State<FormEditorView>
                 ..checked = f.checked
                 ..label = f.label
                 ..labelSize = f.labelSize
+                ..labelPosition = f.labelPosition
                 ..tooltip = f.tooltip
                 ..readOnly = f.readOnly
                 ..maxLength = f.maxLength ?? 0
@@ -395,6 +396,7 @@ class _FormEditorViewState extends State<FormEditorView>
       ..checked = source.checked
       ..label = source.label
       ..labelSize = source.labelSize
+      ..labelPosition = source.labelPosition
       ..tooltip = source.tooltip
       ..readOnly = source.readOnly
       ..maxLength = source.maxLength
@@ -485,6 +487,7 @@ class _FormEditorViewState extends State<FormEditorView>
       // A new option starts unlabelled rather than inheriting the sibling's caption, which
       // would put "Savings" beside every circle in the group.
       ..labelSize = source.labelSize
+      ..labelPosition = source.labelPosition
       ..required = source.required
       ..tooltip = source.tooltip;
     setState(() {
@@ -1109,9 +1112,7 @@ class _FormEditorViewState extends State<FormEditorView>
 
   /// The field's caption, positioned the way the backend positions it.
   ///
-  /// A toggle's label sits to its right on the same baseline, because that is how every printed
-  /// form does it; everything else gets its label above the box. Drawn with `Positioned` outside
-  /// the field's own bounds, so a long caption is not clipped to a 12pt square.
+  /// The side is the author's choice; the geometry on each side matches the backend exactly.
   Widget _labelVisual(EditorField f, Rect r, double pxPerPoint, ThemeData theme) {
     final sizePt = f.labelSize > 0 ? f.labelSize : _defaultLabelPoints;
     final fontPx = sizePt * pxPerPoint;
@@ -1129,17 +1130,18 @@ class _FormEditorViewState extends State<FormEditorView>
       ),
     );
 
-    return f.type.isToggle
-        ? Positioned(
-            left: r.width + gap,
-            top: (r.height - fontPx) / 2,
-            child: ExcludeSemantics(child: text),
-          )
-        : Positioned(
-            left: 0,
-            top: -(fontPx + gap),
-            child: ExcludeSemantics(child: text),
-          );
+    final child = ExcludeSemantics(child: text);
+    // Positioned outside the field's own bounds — a 12pt square cannot contain a caption — and
+    // laid out exactly as the backend lays it out, so the preview does not lie about where the
+    // text will end up.
+    return switch (f.labelPosition) {
+      engine.LabelPosition.right =>
+        Positioned(left: r.width + gap, top: (r.height - fontPx) / 2, child: child),
+      engine.LabelPosition.left =>
+        Positioned(right: r.width + gap, top: (r.height - fontPx) / 2, child: child),
+      engine.LabelPosition.above => Positioned(left: 0, top: -(fontPx + gap), child: child),
+      engine.LabelPosition.below => Positioned(left: 0, top: r.height + gap, child: child),
+    };
   }
 
   Widget _buildHandles(EditorField f, double dispW, double dispH, ThemeData theme) {
@@ -1380,6 +1382,7 @@ class _FormEditorViewState extends State<FormEditorView>
           checked: f.checked,
           label: f.label,
           labelSize: f.labelSize,
+          labelPosition: f.labelPosition,
           tooltip: f.tooltip,
           readOnly: f.readOnly,
           maxLength: f.maxLength > 0 ? f.maxLength : null,

@@ -44,12 +44,13 @@ void main() {
 
   test('toggles are sized in points, not as a fraction of the page', () {
     // A fraction gave 0.05 x 0.032 of A4 = 29.8 x 26.9pt: too big to sit on a printed form's
-    // box, and not square, so the tick was drawn in an oval.
+    // box, and not square, so the tick was drawn in an oval. The exact default is a judgement
+    // call (it is adjustable per field); that it is square and in points is not.
     for (final id in [FieldTypes.checkbox, FieldTypes.radio]) {
       final points = registry[id].defaultPointSize;
       expect(points, isNotNull, reason: '$id must have an absolute size');
       expect(points!.width, points.height, reason: '$id must be square');
-      expect(points.width, 12);
+      expect(points.width, 18);
       expect(registry[id].lockAspect, isTrue, reason: '$id must stay square when resized');
     }
   });

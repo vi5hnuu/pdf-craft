@@ -74,6 +74,7 @@ class AcroFormSpecMapper {
       // circles with nothing to tell them apart in the output.
       if (f.label.isNotEmpty) 'label': f.label,
       if (f.label.isNotEmpty && f.labelSize > 0) 'label_size': f.labelSize,
+      if (f.label.isNotEmpty) 'label_position': f.labelPosition.name,
       if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
       if (f.readOnly) 'read_only': true,
       if (f.maxLength != null && f.maxLength! > 0) 'max_length': f.maxLength,
