@@ -648,6 +648,8 @@
   "dayMode": "Day mode",
   "nightMode": "Night mode",
   "uploadToDrive": "Upload to Drive",
+  "formPreviewOutput": "Preview the output",
+  "formShowEditingAids": "Show editing aids",
   "fitToScreen": "Fit to screen",
   "useInAnotherTool": "Use in another tool",
   "saveCopyToDownloads": "Save a copy to Downloads",

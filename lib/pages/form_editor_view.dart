@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:pdf_craft/pages/form-editor/editor_field.dart';
 import 'package:pdf_craft/pages/form-editor/field_inspector.dart';
 import 'package:pdf_craft/pages/form-editor/field_list_sheet.dart';
+import 'package:pdf_craft/pages/form-editor/field_appearance_painter.dart';
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
 
 import 'package:dio/dio.dart';
@@ -60,6 +61,13 @@ class _FormEditorViewState extends State<FormEditorView>
 
   final TransformationController _tc = TransformationController();
   FormDraftStore? _drafts;
+
+  /// Hides all editing chrome so the canvas shows only what the produced PDF will contain.
+  ///
+  /// The chrome (type badge, group letter, name label, selection wash) is what makes a layout
+  /// workable, but it also obscures the thing being placed. A toggle is the honest answer: edit
+  /// with the aids on, check the result with them off, without leaving the screen.
+  bool _previewMode = false;
 
   @override
   void initState() {
@@ -422,6 +430,14 @@ class _FormEditorViewState extends State<FormEditorView>
             tooltip: L10n.of(context).a11yOpenFieldList,
             onPressed: _showFieldList,
           ),
+          IconButton(
+            icon: Icon(_previewMode ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+            tooltip: _previewMode
+                ? L10n.of(context).formShowEditingAids
+                : L10n.of(context).formPreviewOutput,
+            isSelected: _previewMode,
+            onPressed: () => setState(() => _previewMode = !_previewMode),
+          ),
           // Duplicate and fit-to-screen moved into an overflow menu: with five actions plus the
           // Create button the title had no room left and truncated to "For…".
           PopupMenuButton<String>(
@@ -680,6 +696,11 @@ class _FormEditorViewState extends State<FormEditorView>
         selected.type.isGrouped &&
         selected.group == f.group;
 
+    // Display pixels per PDF point for this page — the scale the painter needs so a 1pt
+    // border is one point wide on screen rather than one logical pixel.
+    final points = _pagePoints[_currentPage];
+    final pxPerPoint = points == null ? 1.0 : dispW / points.width;
+
     return Positioned(
       left: r.left,
       top: r.top,
@@ -692,74 +713,97 @@ class _FormEditorViewState extends State<FormEditorView>
                   f.type.localizedLabel(context), f.name, _groupLetter(f.group))
               : L10n.of(context).a11yField(f.type.localizedLabel(context), f.name),
           selected: isSel,
-          child: Container(
-          decoration: BoxDecoration(
-            color: primary.withValues(alpha: isSel ? 0.12 : (isSibling ? 0.10 : 0.06)),
-            border: Border.all(
-              color: isSel || isSibling ? primary : primary.withValues(alpha: 0.45),
-              width: isSel ? 1.8 : (isSibling ? 1.6 : 1),
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.surface),
-          ),
-          // Type badge, plus the field's own name once the box is big enough to hold it.
-          // A form of any size is unreadable from icons alone — every text field looks
-          // identical, so finding "account_number" meant opening each one in turn.
           child: Stack(children: [
-            Align(
-              alignment: Alignment.topLeft,
-              child: Container(
-                padding: const EdgeInsets.all(1.5),
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: isSel ? 0.9 : 0.5),
-                  borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(AppRadius.surface),
-                      bottomRight: Radius.circular(AppRadius.surface)),
+            // 1. The field as the PDF will actually draw it. Nothing decorative here — this
+            //    layer is what the author is really placing.
+            Positioned.fill(
+              child: CustomPaint(
+                painter: FieldAppearancePainter(
+                  type: f.type,
+                  checked: f.checked,
+                  pxPerPoint: pxPerPoint,
                 ),
-                child: Icon(f.type.icon, size: 10, color: Colors.white),
               ),
             ),
-            // The group's letter, in the opposite corner to the type badge. This is the cue
-            // that works where the name label cannot: a radio is about 50x25px on screen, far
-            // too narrow for text, so without this its group was invisible on the canvas.
-            if (grouped)
-              Align(
-                alignment: Alignment.topRight,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 0.5),
+            // 2. Editing chrome on top. It exists to make the layout workable — which field is
+            //    this, what group is it in — and is hidden by the Preview toggle so the author
+            //    can see the unadorned output at any moment.
+            if (!_previewMode) ...[
+              Positioned.fill(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: primary.withValues(alpha: isSel || isSibling ? 1 : 0.7),
-                    borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(AppRadius.surface),
-                        bottomLeft: Radius.circular(AppRadius.surface)),
+                    // A wash rather than an opaque fill, so the true appearance underneath
+                    // stays readable through it.
+                    color: primary.withValues(alpha: isSel ? 0.12 : (isSibling ? 0.10 : 0.05)),
+                    border: Border.all(
+                      color: isSel || isSibling ? primary : primary.withValues(alpha: 0.35),
+                      width: isSel ? 1.8 : (isSibling ? 1.6 : 0.8),
+                    ),
                   ),
+                ),
+              ),
+              // Type badge, plus the field's own name once the box is big enough to hold it.
+              // A form of any size is unreadable from icons alone — every text field looks
+              // identical, so finding "account_number" meant opening each one in turn.
+              // Suppressed on a toggle, which is far too small to carry a badge without
+              // burying the very glyph the author is trying to line up.
+              if (!f.type.isToggle)
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    padding: const EdgeInsets.all(1.5),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: isSel ? 0.9 : 0.5),
+                      borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(AppRadius.surface),
+                          bottomRight: Radius.circular(AppRadius.surface)),
+                    ),
+                    child: Icon(f.type.icon, size: 10, color: Colors.white),
+                  ),
+                ),
+              // The group's letter, in the opposite corner to the type badge. This is the cue
+              // that works where the name label cannot: a radio is about 50x25px on screen, far
+              // too narrow for text, so without this its group was invisible on the canvas.
+              if (grouped)
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 0.5),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: isSel || isSibling ? 1 : 0.7),
+                      borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(AppRadius.surface),
+                          bottomLeft: Radius.circular(AppRadius.surface)),
+                    ),
+                    child: Text(
+                      _groupLetter(f.group),
+                      style: const TextStyle(
+                          fontSize: 8.5,
+                          height: 1.2,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              // Small fields (a 12pt checkbox) have no room for a label, and a radio's useful
+              // identity is its group rather than its own name.
+              if (r.width > 70 && r.height > 18)
+                Padding(
+                  padding: EdgeInsets.only(
+                      left: f.type.isToggle ? 3 : 16, right: grouped ? 16 : 3, top: 1),
                   child: Text(
-                    _groupLetter(f.group),
-                    style: const TextStyle(
-                        fontSize: 8.5,
-                        height: 1.2,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800),
+                    f.type.isGrouped && f.group.isNotEmpty ? f.group : f.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 9,
+                        height: 1.1,
+                        color: primary.withValues(alpha: isSel ? 1 : 0.75),
+                        fontWeight: isSel ? FontWeight.w700 : FontWeight.w500),
                   ),
                 ),
-              ),
-            // Small fields (a checkbox is ~30x25pt) have no room for a label, and a radio's
-            // useful identity is its group rather than its own name.
-            if (r.width > 70 && r.height > 18)
-              Padding(
-                padding: EdgeInsets.only(left: 16, right: grouped ? 16 : 3, top: 1),
-                child: Text(
-                  f.type.isGrouped && f.group.isNotEmpty ? f.group : f.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: 9,
-                      height: 1.1,
-                      color: primary.withValues(alpha: isSel ? 1 : 0.75),
-                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w500),
-                ),
-              ),
+            ],
           ]),
-        ),
         ),
       ),
     );

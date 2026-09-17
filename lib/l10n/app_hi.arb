@@ -333,6 +333,8 @@
   "dayMode": "डे मोड",
   "nightMode": "नाइट मोड",
   "uploadToDrive": "Drive पर अपलोड करें",
+  "formPreviewOutput": "आउटपुट का पूर्वावलोकन करें",
+  "formShowEditingAids": "संपादन सहायक दिखाएँ",
   "fitToScreen": "स्क्रीन पर फ़िट करें",
   "useInAnotherTool": "दूसरे टूल में इस्तेमाल करें",
   "saveCopyToDownloads": "डाउनलोड में एक कॉपी सेव करें",
