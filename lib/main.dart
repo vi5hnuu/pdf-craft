@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/singletons/app_bloc_observer.dart';
 import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,6 +45,10 @@ Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Before anything else, so a failure during start-up is itself reported.
   await CrashReporter().init();
+  // AppBlocObserver was written to route bloc failures into Crashlytics but never installed,
+  // so every error inside a bloc — which is where all the tool work happens — was reported
+  // nowhere. Setting it is the whole of its wiring.
+  Bloc.observer = AppBlocObserver();
   await ThemeManager().init();
   await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame

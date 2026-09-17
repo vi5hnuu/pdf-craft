@@ -788,19 +788,6 @@ final GoRouter appRouter = GoRouter(
           return MainScreen(navigationShell: navigationShell);
         },
         branches: <StatefulShellBranch>[
-          // StatefulShellBranch(
-          //   navigatorKey: _homeNavigatorKey,
-          //   routes: <RouteBase>[
-          //     GoRoute(
-          //       // The screen to display as the root in the first tab of the
-          //       // bottom navigation bar.
-          //       path: AppRoutes.homeRoute.path,
-          //       name: AppRoutes.homeRoute.name,
-          //       builder: (BuildContext context, GoRouterState state) =>
-          //           const HomeScreen(),
-          //     ),
-          //   ],
-          // ),
           StatefulShellBranch(
             navigatorKey: filesNavigatorKey,
             initialLocation: AppRoutes.filesRoute.path,
