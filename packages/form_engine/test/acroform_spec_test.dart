@@ -14,6 +14,46 @@ void main() {
         pageSizes: {1: const PageSizePoints(595, 842)},
       );
 
+  test('a visible label is sent separately from the tooltip', () {
+    // /TU never reaches paper, so a radio group's options were three identical circles in the
+    // output with nothing to say which was which.
+    final specs = mapper.toSpecs(schemaWith([
+      FormFieldModel(
+        id: 'r1',
+        typeId: FieldTypes.radio,
+        page: 1,
+        rect: const FractionalRect(0.1, 0.1, 0.02, 0.014),
+        name: 'account_type_1',
+        group: 'account_type',
+        exportValue: 'savings',
+        label: 'Savings',
+        labelSize: 9,
+        tooltip: 'Pick one',
+      ),
+    ]));
+
+    expect(specs.single['label'], 'Savings');
+    expect(specs.single['label_size'], 9);
+    expect(specs.single['tooltip'], 'Pick one');
+    // The PDF field is still named for the group, not the option.
+    expect(specs.single['name'], 'account_type');
+    expect(specs.single['export_value'], 'savings');
+  });
+
+  test('no label means the key is absent, so older backends are unaffected', () {
+    final specs = mapper.toSpecs(schemaWith([
+      FormFieldModel(
+        id: 'a',
+        typeId: FieldTypes.text,
+        page: 1,
+        rect: const FractionalRect(0.1, 0.1, 0.2, 0.05),
+        name: 'plain',
+      ),
+    ]));
+    expect(specs.single.containsKey('label'), isFalse);
+    expect(specs.single.containsKey('label_size'), isFalse);
+  });
+
   test('a field on a page with no recorded size is dropped, not guessed at', () {
     // This is the contract the editor has to respect: a fractional rect cannot become points
     // without a page size, so the mapper refuses rather than inventing A4. The editor records

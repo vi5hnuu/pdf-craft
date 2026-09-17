@@ -38,6 +38,17 @@ class EditorField {
   bool checked = false; // checkbox/radio prefill (on by default)
 
   // ── Rich properties, carried straight through to the engine schema ──────────────
+
+  /// Caption drawn on the page next to the field, in the editor and in the produced PDF.
+  ///
+  /// The thing a radio group needs most: three circles that all look the same are useless
+  /// without "Savings", "Current", "Salary" beside them. Left empty when the document already
+  /// prints its own labels, which is the bank-form case.
+  String label = '';
+
+  /// Point size for [label]. 0 lets the backend choose.
+  double labelSize = 0;
+
   String tooltip = '';
   bool readOnly = false;
   int maxLength = 0; // 0 = no cap

@@ -64,6 +64,10 @@ class _FormEditorViewState extends State<FormEditorView>
   /// phone, so the old 5x ceiling left the author aiming at something they could not see.
   static const double _maxZoom = 12;
 
+  /// Caption defaults, matched to the backend so the preview and the output agree.
+  static const double _defaultLabelPoints = 9;
+  static const double _labelGapPoints = 4;
+
   final TransformationController _tc = TransformationController();
   FormDraftStore? _drafts;
 
@@ -150,6 +154,8 @@ class _FormEditorViewState extends State<FormEditorView>
                 ..fontSize = f.fontSize
                 ..required = f.required
                 ..checked = f.checked
+                ..label = f.label
+                ..labelSize = f.labelSize
                 ..tooltip = f.tooltip
                 ..readOnly = f.readOnly
                 ..maxLength = f.maxLength ?? 0
@@ -387,6 +393,8 @@ class _FormEditorViewState extends State<FormEditorView>
       ..fontSize = source.fontSize
       ..required = source.required
       ..checked = source.checked
+      ..label = source.label
+      ..labelSize = source.labelSize
       ..tooltip = source.tooltip
       ..readOnly = source.readOnly
       ..maxLength = source.maxLength
@@ -474,6 +482,9 @@ class _FormEditorViewState extends State<FormEditorView>
     )
       ..group = source.group
       ..exportValue = 'option_${existing + 1}'
+      // A new option starts unlabelled rather than inheriting the sibling's caption, which
+      // would put "Savings" beside every circle in the group.
+      ..labelSize = source.labelSize
       ..required = source.required
       ..tooltip = source.tooltip;
     setState(() {
@@ -495,6 +506,8 @@ class _FormEditorViewState extends State<FormEditorView>
         if (type.isGrouped) {
           f.group = groupName;
           f.exportValue = labels[i];
+          // What the author typed is the caption too — that is what they meant by it.
+          f.label = labels[i];
         }
         _fields.add(f);
         if (i == labels.length - 1) _selectedId = f.id;
@@ -937,7 +950,9 @@ class _FormEditorViewState extends State<FormEditorView>
                   f.type.localizedLabel(context), f.name, _groupLetter(f.group))
               : L10n.of(context).a11yField(f.type.localizedLabel(context), f.name),
           selected: isSel,
-          child: Stack(children: [
+          // Clip.none so a caption drawn beside or above the field is not cut off at the
+          // field's own bounds — on a 12pt checkbox that would clip it away entirely.
+          child: Stack(clipBehavior: Clip.none, children: [
             // 1. The field as the PDF will actually draw it. Nothing decorative here — this
             //    layer is what the author is really placing.
             Positioned.fill(
@@ -949,6 +964,10 @@ class _FormEditorViewState extends State<FormEditorView>
                 ),
               ),
             ),
+            // 1b. The caption, drawn where the backend draws it: to the right of a toggle,
+            //     vertically centred on it; above anything else. Part of the output, so it
+            //     stays visible in Preview mode.
+            if (f.label.isNotEmpty) _labelVisual(f, r, pxPerPoint, theme),
             // 2. Editing chrome on top. It exists to make the layout workable — which field is
             //    this, what group is it in — and is hidden by the Preview toggle so the author
             //    can see the unadorned output at any moment.
@@ -1031,6 +1050,41 @@ class _FormEditorViewState extends State<FormEditorView>
         ),
       ),
     );
+  }
+
+  /// The field's caption, positioned the way the backend positions it.
+  ///
+  /// A toggle's label sits to its right on the same baseline, because that is how every printed
+  /// form does it; everything else gets its label above the box. Drawn with `Positioned` outside
+  /// the field's own bounds, so a long caption is not clipped to a 12pt square.
+  Widget _labelVisual(EditorField f, Rect r, double pxPerPoint, ThemeData theme) {
+    final sizePt = f.labelSize > 0 ? f.labelSize : _defaultLabelPoints;
+    final fontPx = sizePt * pxPerPoint;
+    final gap = _labelGapPoints * pxPerPoint;
+    final text = Text(
+      f.label,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.visible,
+      style: TextStyle(
+        fontSize: fontPx,
+        height: 1.0,
+        color: Colors.black,
+        fontWeight: FontWeight.w400,
+      ),
+    );
+
+    return f.type.isToggle
+        ? Positioned(
+            left: r.width + gap,
+            top: (r.height - fontPx) / 2,
+            child: ExcludeSemantics(child: text),
+          )
+        : Positioned(
+            left: 0,
+            top: -(fontPx + gap),
+            child: ExcludeSemantics(child: text),
+          );
   }
 
   Widget _buildHandles(EditorField f, double dispW, double dispH, ThemeData theme) {
@@ -1116,10 +1170,20 @@ class _FormEditorViewState extends State<FormEditorView>
       );
     }
 
-    // The three 26px handles sit on the corners, which is fine on a text box but hides a
-    // checkbox entirely — the field it is meant to be editing disappears under its own
-    // controls. On a small field they move fully outside the bounds instead.
-    final outward = (w < 90 || h < 64) ? 14.0 : 0.0;
+    // Handles are centred on the field's corners. `circle` is a 48dp touch target with a 26px
+    // dot in the middle of it, so half of 48 is what centres the dot — not half of 26. Using 13
+    // shifted every handle 11px right and down, which is why a radio sat in the top-left corner
+    // of the square the four handles made instead of in the middle of it.
+    const handleBox = 48.0;
+    const handleDot = 26.0;
+    const half = handleBox / 2;
+
+    // On a text box the handles can sit on the corners. On a 12pt checkbox four 26px dots would
+    // bury the thing being edited and overlap each other, so they are pushed out per axis until
+    // they clear the field and leave a gap between neighbours.
+    const clearance = 8.0;
+    final outwardX = math.max(0.0, (handleDot + clearance - w) / 2);
+    final outwardY = math.max(0.0, (handleDot + clearance - h) / 2);
 
     return Stack(clipBehavior: Clip.none, children: [
       // Move body.
@@ -1139,14 +1203,14 @@ class _FormEditorViewState extends State<FormEditorView>
       ),
       // Edit (top-left).
       Positioned(
-          left: screenTL.dx - 13 - outward,
-          top: screenTL.dy - 13 - outward,
+          left: screenTL.dx - half - outwardX,
+          top: screenTL.dy - half - outwardY,
           child: circle(Icons.edit, primary, () => _showProperties(f),
               semanticLabel: L10n.of(context).a11yEditField)),
       // Delete (top-right).
       Positioned(
-        left: screenTL.dx + w - 13 + outward,
-        top: screenTL.dy - 13 - outward,
+        left: screenTL.dx + w - half + outwardX,
+        top: screenTL.dy - half - outwardY,
         child: circle(Icons.close, Colors.red, semanticLabel: L10n.of(context).a11yDeleteField, () {
           _pushUndo();
           setState(() {
@@ -1163,15 +1227,15 @@ class _FormEditorViewState extends State<FormEditorView>
       // the new option appears linked but free and is dragged into place.
       if (f.type.isGrouped && f.group.isNotEmpty)
         Positioned(
-          left: screenTL.dx - 13 - outward,
-          top: screenTL.dy + h - 13 + outward,
+          left: screenTL.dx - half - outwardX,
+          top: screenTL.dy + h - half + outwardY,
           child: circle(Icons.add, _groupColor(f.group), () => _addOptionToGroup(f),
               semanticLabel: L10n.of(context).a11yAddOption),
         ),
       // Resize (bottom-right).
       Positioned(
-          left: screenTL.dx + w - 13 + outward,
-          top: screenTL.dy + h - 13 + outward,
+          left: screenTL.dx + w - half + outwardX,
+          top: screenTL.dy + h - half + outwardY,
           child: circle(Icons.open_in_full, primary, null,
               onDrag: resize, semanticLabel: L10n.of(context).a11yResizeField)),
       // Live size/position readout. Sits above the field, or below it when the field is near
@@ -1255,6 +1319,8 @@ class _FormEditorViewState extends State<FormEditorView>
           fontSize: f.fontSize,
           required: f.required,
           checked: f.checked,
+          label: f.label,
+          labelSize: f.labelSize,
           tooltip: f.tooltip,
           readOnly: f.readOnly,
           maxLength: f.maxLength > 0 ? f.maxLength : null,

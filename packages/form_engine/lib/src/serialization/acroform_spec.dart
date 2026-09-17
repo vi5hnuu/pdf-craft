@@ -69,6 +69,11 @@ class AcroFormSpecMapper {
       if (type.acceptsValue && f.fontSize > 0) 'font_size': f.fontSize,
       if (f.required) 'required': true,
       if (type.isToggle) 'checked': f.checked,
+      // A visible caption drawn beside the widget. `tooltip` below is /TU — hover help that
+      // never reaches paper — so without this a radio group's options are three identical
+      // circles with nothing to tell them apart in the output.
+      if (f.label.isNotEmpty) 'label': f.label,
+      if (f.label.isNotEmpty && f.labelSize > 0) 'label_size': f.labelSize,
       if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
       if (f.readOnly) 'read_only': true,
       if (f.maxLength != null && f.maxLength! > 0) 'max_length': f.maxLength,

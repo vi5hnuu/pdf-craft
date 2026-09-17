@@ -61,6 +61,9 @@ class _FieldInspectorState extends State<FieldInspector> {
   late final _export = TextEditingController(text: widget.field.exportValue);
   late final _value = TextEditingController(text: widget.field.value);
   late final _fontSize = TextEditingController(text: widget.field.fontSize > 0 ? widget.field.fontSize.toStringAsFixed(0) : '');
+  late final _label = TextEditingController(text: widget.field.label);
+  late final _labelSize = TextEditingController(
+      text: widget.field.labelSize > 0 ? widget.field.labelSize.toStringAsFixed(0) : '');
   late final _tooltip = TextEditingController(text: widget.field.tooltip);
   late final _maxLength = TextEditingController(text: widget.field.maxLength > 0 ? '${widget.field.maxLength}' : '');
   late final _pattern = TextEditingController(text: widget.field.validationPattern);
@@ -78,6 +81,8 @@ class _FieldInspectorState extends State<FieldInspector> {
     _export.dispose();
     _value.dispose();
     _fontSize.dispose();
+    _label.dispose();
+    _labelSize.dispose();
     _tooltip.dispose();
     _maxLength.dispose();
     _pattern.dispose();
@@ -171,6 +176,16 @@ class _FieldInspectorState extends State<FieldInspector> {
               onChanged: (v) => setState(() => f.dateFormat = v ?? 'dd/mm/yyyy'),
             ),
           ),
+        // A caption drawn on the page, unlike the tooltip below it, which is /TU: hover help
+        // that never reaches paper and that most mobile readers do not show at all. A radio
+        // group is the case that needs it — three identical circles say nothing about which is
+        // "Savings" and which is "Current".
+        _field(_label, L10n.of(context).fieldLabel, (v) => setState(() => f.label = v),
+            hint: L10n.of(context).fieldLabelHint),
+        if (f.label.isNotEmpty)
+          _field(_labelSize, L10n.of(context).fieldLabelSize,
+              (v) => f.labelSize = double.tryParse(v) ?? 0,
+              keyboard: TextInputType.number),
         _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
         if (f.type.isToggle)
           SwitchListTile(
@@ -355,7 +370,8 @@ class _FieldInspectorState extends State<FieldInspector> {
         engine.CalculationFunction.max => L10n.of(context).calcMax,
       };
 
-  Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged, {TextInputType? keyboard}) {
+  Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged,
+      {TextInputType? keyboard, String? hint}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextField(
@@ -365,6 +381,8 @@ class _FieldInspectorState extends State<FieldInspector> {
         decoration: InputDecoration(
           isDense: true,
           labelText: label,
+          helperText: hint,
+          helperMaxLines: 2,
           border: const OutlineInputBorder(),
         ),
         onChanged: onChanged,
