@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:pdf_craft/l10n/L10n.dart';
-import 'package:pdf_craft/models/enums/compression-level.dart';
-import 'package:pdf_craft/models/enums/mirror-direction.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/models/enums/compression_level.dart';
+import 'package:pdf_craft/models/enums/mirror_direction.dart';
 import 'package:pdf_craft/models/enums/position.dart';
 
 /// Localized labels for the model enums.

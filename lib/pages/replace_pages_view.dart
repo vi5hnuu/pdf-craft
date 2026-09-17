@@ -1,0 +1,171 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/models/request/replace_pages.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdfx/pdfx.dart';
+
+/// Replace Pages: swaps a page range in the base document for all pages of a
+/// second PDF. Receives two files; either can be the base (swap).
+class ReplacePagesView extends StatefulWidget {
+  final List<File> files;
+  const ReplacePagesView({super.key, required this.files});
+
+  @override
+  State<ReplacePagesView> createState() => _ReplacePagesViewState();
+}
+
+class _ReplacePagesViewState extends State<ReplacePagesView>
+    with ToolResultHandler, ToolViewMixin {
+  late File _base = widget.files[0];
+  late File _replacement = widget.files[1];
+  int _basePages = 0;
+  int _from = 1;
+  int _to = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    resetToolState([HttpStates.replacePages]);
+    _loadBaseCount();
+  }
+
+  Future<void> _loadBaseCount() async {
+    try {
+      final doc = await PdfDocument.openFile(_base.path);
+      if (mounted) {
+        setState(() {
+          _basePages = doc.pagesCount;
+          _from = 1;
+          _to = _basePages == 0 ? 1 : 1;
+        });
+      }
+      await doc.close();
+    } catch (_) {
+      if (mounted) setState(() => _basePages = 0);
+    }
+  }
+
+  void _swap() {
+    setState(() {
+      final t = _base;
+      _base = _replacement;
+      _replacement = t;
+      _basePages = 0;
+    });
+    _loadBaseCount();
+  }
+
+  String _name(File f) => f.path.split('/').last;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'replace-pages'))),
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) => p.httpStates[HttpStates.replacePages] != c.httpStates[HttpStates.replacePages],
+        listenWhen: (p, c) => p.httpStates[HttpStates.replacePages] != c.httpStates[HttpStates.replacePages],
+        listener: (context, state) =>
+            handleToolState(state.httpStates[HttpStates.replacePages], successMessage: L10n.of(context).pagesReplaced),
+        builder: (context, state) {
+          final loading = state.httpStates[HttpStates.replacePages]?.loading == true;
+          return Stack(children: [
+            Column(children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    _fileCard(theme, L10n.of(context).baseDocument, _base, Icons.picture_as_pdf),
+                    Center(
+                      child: IconButton(
+                        icon: const Icon(Icons.swap_vert),
+                        tooltip: L10n.of(context).swapBaseReplacement,
+                        onPressed: _swap,
+                      ),
+                    ),
+                    _fileCard(theme, L10n.of(context).replaceWith, _replacement, Icons.find_replace),
+                    const SizedBox(height: 20),
+                    Text(L10n.of(context).rangeToReplace, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    if (_basePages > 0) ...[
+                      Text(L10n.of(context).replaceSummary(_basePages, _from, _to),
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                      const SizedBox(height: 8),
+                      RangeSlider(
+                        values: RangeValues(_from.toDouble(), _to.toDouble()),
+                        min: 1,
+                        max: _basePages.toDouble(),
+                        divisions: _basePages > 1 ? _basePages - 1 : null,
+                        labels: RangeLabels('$_from', '$_to'),
+                        onChanged: (v) => setState(() {
+                          _from = v.start.round();
+                          _to = v.end.round();
+                        }),
+                      ),
+                    ] else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(L10n.of(context).readingBaseDoc),
+                      ),
+                  ]),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  border: Border(top: BorderSide(color: theme.dividerColor)),
+                ),
+                child: FilledButton.icon(
+                  onPressed: (loading || _basePages == 0) ? null : _onReplace,
+                  icon: const Icon(Icons.find_replace),
+                  label: Text(L10n.of(context).replaceAndSave),
+                ),
+              ),
+            ]),
+            processingOverlay(state.httpStates[HttpStates.replacePages], label: L10n.of(context).procWorking),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _fileCard(ThemeData theme, String role, File f, IconData icon) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        leading: Icon(icon, color: theme.colorScheme.primary),
+        title: Text(_name(f), maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(role),
+      ),
+    );
+  }
+
+  Future<void> _onReplace() async {
+    final base = await MultipartFile.fromFile(_base.path);
+    final repl = await MultipartFile.fromFile(_replacement.path);
+    if (!mounted) return;
+    runTool((cancelToken) => ReplacePagesEvent(
+          replacePages: ReplacePages(
+            outFileName: 'replaced_pages',
+            from: _from,
+            to: _to,
+            file: base,
+            replacement: repl,
+          ),
+          cancelToken: cancelToken,
+        ));
+  }
+}

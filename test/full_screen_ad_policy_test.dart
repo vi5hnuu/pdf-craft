@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
+import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
 
 /// Full-screen ads interrupt the user, so the rules deciding when they may appear must hold:
 /// a cooldown between ads, never right after a paid run, never for Pro, and app-open ads only

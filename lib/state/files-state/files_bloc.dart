@@ -4,14 +4,14 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
-import 'package:pdf_craft/l10n/L10n.dart';
-import 'package:pdf_craft/extensions/map-entensions.dart';
-import 'package:pdf_craft/models/WithHttpState.dart';
-import 'package:pdf_craft/singletons/LoggerSingleton.dart';
-import 'package:pdf_craft/utils/Constants.dart';
-import 'package:pdf_craft/utils/StoragePermissions.dart';
-import 'package:pdf_craft/utils/httpStates.dart';
-import '../../models/HttpState.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/extensions/map_entensions.dart';
+import 'package:pdf_craft/models/with_http_state.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
+import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/utils/storage_permissions.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import '../../models/http_state.dart';
 
 part 'files_event.dart';
 
@@ -27,7 +27,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   FilesBloc() : super(FilesState.initial()) {
     on<LoadDirectoryFilesEvent>((event, emit) async {
       emit(state.copyWith(httpStates: state.httpStates.clone()
-        ..put(HttpStates.LOAD_DIRECTORY_FILES, const HttpState.loading())));
+        ..put(HttpStates.loadDirectoryFiles, const HttpState.loading())));
       // await Future.delayed(Duration(seconds: 5));
       try {
         final files = await _loadDirectoryFiles(event.path);
@@ -50,10 +50,10 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         });
         // await Future.delayed(Duration(seconds: 10));
         emit(state.copyWith(files: files, httpStates: state.httpStates.clone()
-          ..put(HttpStates.LOAD_DIRECTORY_FILES,const HttpState.done())));
+          ..put(HttpStates.loadDirectoryFiles,const HttpState.done())));
       } catch (e) {
         emit(state.copyWith(httpStates: state.httpStates.clone()
-          ..put(HttpStates.LOAD_DIRECTORY_FILES,
+          ..put(HttpStates.loadDirectoryFiles,
               // Raw exception text ("Exception: Failed to…") used to reach the user.
               HttpState.error(error: _logged(e, L10n.current.errLoadFolder)))));
       }
@@ -95,22 +95,22 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     });
 
     on<MoveFileToEvent>((event, emit) async {
-      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, const HttpState.loading())));
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.moveFileTo, const HttpState.loading())));
       try{
         await _moveFile(file:event.file,toDirectoryPath:event.to);
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, const HttpState.done())));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.moveFileTo, const HttpState.done())));
       }catch(e){
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.MOVE_FILE_TO, HttpState.error(error: _logged(e, L10n.current.errMoveFile)))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.moveFileTo, HttpState.error(error: _logged(e, L10n.current.errMoveFile)))));
       }
     });
 
     on<DeleteFileEvent>((event, emit) async {
-      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, const HttpState.loading())));
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.deleteFile, const HttpState.loading())));
       try{
         await _deleteFile(file:event.file);
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, const HttpState.done())));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.deleteFile, const HttpState.done())));
       }catch(e){
-        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.DELETE_FILE, HttpState.error(error: _logged(e, L10n.current.errDeleteFile)))));
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.deleteFile, HttpState.error(error: _logged(e, L10n.current.errDeleteFile)))));
       }
     });
   }

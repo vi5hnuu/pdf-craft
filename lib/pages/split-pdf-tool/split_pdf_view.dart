@@ -1,0 +1,124 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:open_file/open_file.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/models/enums/split_type.dart';
+import 'package:pdf_craft/models/request/split_pdf.dart';
+import 'package:pdf_craft/pages/split-pdf-tool/split_config.dart';
+import 'package:pdf_craft/pages/split-pdf-tool/split_range.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/loading_overlay.dart';
+
+class SplitPdfView extends StatefulWidget {
+  final File file;
+  final String? outFileName;
+
+  const SplitPdfView({super.key, required this.file,this.outFileName});
+
+  @override
+  State<SplitPdfView> createState() => _SplitPdfViewState();
+}
+
+class _SplitPdfViewState extends State<SplitPdfView> {
+  late GoRouter router=GoRouter.of(context);
+  late PdfBloc bloc=BlocProvider.of(context);
+  SplitType? type=SplitType.EXTRACT_ALL_PAGES;
+  int? fixed;
+  List<RangeModel> ranges=[];
+  final TextEditingController outFileNameC=TextEditingController();
+
+  @override
+  void initState() {
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    outFileNameC.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final router=GoRouter.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(ToolStrings.name(context, 'split')),
+        elevation: 5,
+      ),
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if(type!=null) {
+            setState(()=>type=null);
+          } else {
+            router.pop();
+          }
+        },
+        child: BlocConsumer<PdfBloc,PdfState>(
+          buildWhen: (previous, current) => previous.httpStates[HttpStates.splitPdf]!=current.httpStates[HttpStates.splitPdf],
+          listenWhen: (previous, current) => previous.httpStates[HttpStates.splitPdf]!=current.httpStates[HttpStates.splitPdf],
+            listener: (context, state) {
+              final httpState=state.httpStates[HttpStates.splitPdf];
+              if(httpState?.done==true){
+                final file=httpState?.extras?['savedFile'];
+                NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
+                if(file is File) OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]);
+              }else if(httpState?.error!=null){
+                NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
+              }
+            },
+          builder: (context, state) {
+            return Stack(
+              children: [
+                Flex(direction: Axis.vertical,children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(keyboardType: TextInputType.text,
+                        decoration: InputDecoration(labelText: L10n.of(context).outputFileName ,border: const OutlineInputBorder()),
+                        controller: outFileNameC),
+                  ),
+                  if(type==null || type==SplitType.EXTRACT_ALL_PAGES || type==SplitType.SPLIT_BY_BOOKMARK)
+                    SplitConfig(type: type,onSplitSelect: (splitType) => setState(()=>type=splitType))
+                  else SplitPdfRange(file: widget.file, type: type!,onRangeChange:(rgs)=>setState(()=>ranges=rgs)),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16.0),
+                    child: FilledButton(
+                      onPressed: type==null || (![SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK].contains(type) && ranges.isEmpty) ? null : _onExtractAllPages,
+                      child: Text(ToolStrings.name(context, 'split')),
+                    ),
+                  )
+                ],),
+                LoadingOverlay(httpState: state.httpStates[HttpStates.splitPdf], label: L10n.of(context).procWorking),
+              ],
+            );
+          },
+            ),
+      ));
+  }
+
+  _onExtractAllPages() async {
+    final noRangesTypes = [SplitType.FIXED_RANGE, SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK];
+    bloc.add(SplitPdfEvent(splitPdf: SplitPdf(
+      outFileName: outFileNameC.text.isEmpty ? 'splitted_file' : outFileNameC.text,
+      type: type!,
+      fixed: type == SplitType.FIXED_RANGE ? ranges.first.from : null,
+      ranges: noRangesTypes.contains(type) ? null : ranges,
+      file: await MultipartFile.fromFile(widget.file.path),
+    )));
+  }
+}
+

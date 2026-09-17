@@ -1,0 +1,1447 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/models/request/create_form.dart';
+import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/loading_overlay.dart';
+import 'dart:async';
+
+import 'package:form_engine/form_engine.dart' as engine;
+import 'package:pdf_craft/services/forms/form_draft_store.dart';
+import 'package:pdfx/pdfx.dart';
+import 'package:pdf_craft/theme/app_radius.dart';
+
+enum FieldType { text, multiline, number, email, phone, checkbox, radio, dropdown, listbox, date, signature }
+
+extension FieldTypeX on FieldType {
+  String get label => switch (this) {
+        FieldType.text => 'Text',
+        FieldType.multiline => 'Paragraph',
+        FieldType.number => 'Number',
+        FieldType.email => 'Email',
+        FieldType.phone => 'Phone',
+        FieldType.listbox => 'List',
+        FieldType.checkbox => 'Checkbox',
+        FieldType.radio => 'Radio',
+        FieldType.dropdown => 'Dropdown',
+        FieldType.date => 'Date',
+        FieldType.signature => 'Signature',
+      };
+  /// Localized label for the UI; `label` above stays English for logs and wire use.
+  String localizedLabel(BuildContext context) => switch (this) {
+        FieldType.text => L10n.of(context).fieldText,
+        FieldType.multiline => L10n.of(context).fieldParagraph,
+        FieldType.number => L10n.of(context).fieldNumber,
+        FieldType.email => L10n.of(context).fieldEmail,
+        FieldType.phone => L10n.of(context).fieldPhone,
+        FieldType.listbox => L10n.of(context).fieldList,
+        FieldType.checkbox => L10n.of(context).fieldCheckbox,
+        FieldType.radio => L10n.of(context).fieldRadio,
+        FieldType.dropdown => L10n.of(context).fieldDropdown,
+        FieldType.date => L10n.of(context).fieldDate,
+        FieldType.signature => L10n.of(context).fieldSignature,
+      };
+  IconData get icon => switch (this) {
+        FieldType.text => Icons.text_fields,
+        FieldType.multiline => Icons.notes,
+        FieldType.number => Icons.pin_outlined,
+        FieldType.email => Icons.alternate_email,
+        FieldType.phone => Icons.phone_outlined,
+        FieldType.listbox => Icons.list_alt_outlined,
+        FieldType.checkbox => Icons.check_box_outlined,
+        FieldType.radio => Icons.radio_button_checked,
+        FieldType.dropdown => Icons.arrow_drop_down_circle_outlined,
+        FieldType.date => Icons.calendar_today_outlined,
+        FieldType.signature => Icons.draw_outlined,
+      };
+  String get wire => switch (this) {
+        FieldType.text => 'text',
+        FieldType.multiline => 'multiline',
+        FieldType.number => 'number',
+        FieldType.email => 'email',
+        FieldType.phone => 'phone',
+        FieldType.listbox => 'listbox',
+        FieldType.checkbox => 'checkbox',
+        FieldType.radio => 'radio',
+        FieldType.dropdown => 'dropdown',
+        FieldType.date => 'date',
+        FieldType.signature => 'signature',
+      };
+
+  // ── Per-type behaviour comes from the engine's registry ──────────────────────
+  // The enum stays as the UI's handle, but every behavioural question is answered
+  // by the registered descriptor, so a type's rules live in exactly one place and
+  // are unit-tested in `packages/form_engine` without a device.
+  engine.FieldTypeDescriptor get _descriptor => formFieldTypes[wire];
+
+  Size get defaultSize => Size(_descriptor.defaultSize.width, _descriptor.defaultSize.height);
+  bool get isToggle => _descriptor.isToggle;
+  bool get hasOptions => _descriptor.acceptsOptions;
+  bool get hasValue => _descriptor.acceptsValue;
+  bool get isGrouped => _descriptor.isGrouped;
+}
+
+/// The field types this app offers. Built once; the engine's registry owns the
+/// per-type rules and this is simply the app's handle to it.
+final engine.FieldTypeRegistry formFieldTypes =
+    engine.FieldTypeRegistry(engine.builtinFieldTypes);
+
+/// A placed form field. [rect] is stored in **fractional** page coordinates
+/// (0..1), which makes it independent of zoom and per-page pixel size.
+class _Field {
+  final String id;
+  FieldType type;
+  Rect rect;
+  String name;
+  String value = '';
+  List<String> options = ['Option 1', 'Option 2'];
+  /// Radio group this option belongs to. Every option sharing a group behaves as one
+  /// PDF field, so only one of them can be on at a time.
+  ///
+  /// Assigned per placement rather than defaulting to a shared constant: a bank form has
+  /// several independent questions ("Account type", "Marital status"), and a shared default
+  /// silently merged them into one group where choosing Savings cleared Married.
+  String group = '';
+  String exportValue = '';
+  double fontSize = 0;
+  bool required = false;
+  bool checked = false; // checkbox/radio prefill (on by default)
+
+  // ── Rich properties, carried straight through to the engine schema ──────────────
+  String tooltip = '';
+  bool readOnly = false;
+  int maxLength = 0; // 0 = no cap
+  bool comb = false;
+  engine.TextAlignment alignment = engine.TextAlignment.left;
+  bool multiSelect = false;
+  String validationPattern = '';
+  /// What the author typed in the inspector, shown back to them verbatim.
+  ///
+  /// The authoritative link is [conditionRef] / [calcRefs]: those hold the resolved **id**,
+  /// captured the moment the name is entered. Resolving at save time instead meant that
+  /// renaming the target first left the lookup with nothing to find, and the rule silently
+  /// degraded to a dangling reference.
+  String conditionField = '';
+  engine.ConditionOperator conditionOperator = engine.ConditionOperator.equals;
+  String conditionValue = '';
+  engine.CalculationFunction calcFunction = engine.CalculationFunction.sum;
+  /// Comma-separated field names feeding the calculation, as typed.
+  String calcFields = '';
+
+  /// Resolved reference for [conditionField], captured when it was entered.
+  engine.FieldRef? conditionRef;
+
+  /// Resolved references for [calcFields], captured when they were entered.
+  List<engine.FieldRef> calcRefs = const [];
+
+  _Field({required this.type, required this.rect, required this.name}) : id = UniqueKey().toString();
+}
+
+/// Full PDF form builder: place text / paragraph / checkbox / radio / dropdown /
+/// date / signature fields on any page, drag, resize & edit them, zoom in for
+/// precision, then export a **real fillable** PDF.
+class FormEditorView extends StatefulWidget {
+  final File file;
+  const FormEditorView({super.key, required this.file});
+
+  @override
+  State<FormEditorView> createState() => _FormEditorViewState();
+}
+
+class _FormEditorViewState extends State<FormEditorView> {
+  PdfDocument? _doc;
+  int _currentPage = 1;
+  int _totalPages = 0;
+  PdfPageImage? _pageImage;
+  bool _loadingPage = true;
+
+  final Map<int, List<_Field>> _pageFields = {};
+  final Map<int, Size> _pagePoints = {};
+  List<_Field> get _fields => _pageFields[_currentPage] ??= [];
+
+  String? _selectedId;
+  int _autoName = 1;
+
+  /// Snapshots of the whole layout, newest last.
+  ///
+  /// Placing and dragging fields is fiddly on a phone and a mistaken delete used to mean
+  /// re-placing the field by hand. Encoded schemas are cheap and avoid any risk of the
+  /// snapshot sharing mutable state with the live fields.
+  final List<Map<String, Object?>> _undoStack = [];
+  static const _maxUndo = 30;
+
+  final TransformationController _tc = TransformationController();
+  CancelToken? _cancelToken;
+  FormDraftStore? _drafts;
+
+  @override
+  void initState() {
+    super.initState();
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    _open();
+  }
+
+  /// Restores a layout left behind on a previous visit to this document.
+  ///
+  /// Placing fields is slow, deliberate work, so it is not thrown away when the
+  /// editor closes. The draft is offered rather than applied silently: the user
+  /// may well have come back to start over.
+  Future<void> _restoreDraft() async {
+    final store = _drafts = await FormDraftStore.forApp();
+    final draft = await store.load(widget.file.path);
+    if (draft == null || draft.fields.isEmpty || !mounted) return;
+
+    final restore = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx).formDraftFoundTitle),
+        content: Text(L10n.of(ctx).formDraftFoundBody(draft.fields.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.of(ctx).formDraftStartFresh),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.of(ctx).formDraftRestore),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (restore == true) {
+      _applySchema(draft);
+    } else {
+      await store.delete(widget.file.path);
+    }
+  }
+
+  /// Rebuilds the editor's fields from a stored schema.
+  void _applySchema(engine.FormSchema schema) {
+    setState(() {
+      _pageFields.clear();
+      for (final f in schema.fields) {
+        final type = FieldType.values.firstWhere(
+          (t) => t.wire == f.typeId,
+          // A type this build does not know about (an older app opening a newer
+          // draft) is skipped rather than crashing the editor.
+          orElse: () => FieldType.text,
+        );
+        if (type.wire != f.typeId) continue;
+        _pageFields.putIfAbsent(f.page, () => []).add(
+              _Field(type: type, rect: Rect.fromLTWH(f.rect.left, f.rect.top, f.rect.width, f.rect.height), name: f.name)
+                ..value = f.value
+                ..options = List<String>.from(f.options)
+                ..group = f.group
+                ..exportValue = f.exportValue
+                ..fontSize = f.fontSize
+                ..required = f.required
+                ..checked = f.checked
+                ..tooltip = f.tooltip
+                ..readOnly = f.readOnly
+                ..maxLength = f.maxLength ?? 0
+                ..comb = f.comb
+                ..alignment = f.alignment
+                ..multiSelect = f.multiSelect
+                ..validationPattern = f.validation.pattern ?? ''
+                ..conditionRef = f.condition?.parent
+                ..conditionField = f.condition == null
+                    ? ''
+                    : _nameForId(schema, f.condition!.parent)
+                ..conditionOperator = f.condition?.operator ?? engine.ConditionOperator.equals
+                ..conditionValue = f.condition?.value ?? ''
+                ..calcFunction = f.calculation?.function ?? engine.CalculationFunction.sum
+                ..calcRefs = List<engine.FieldRef>.from(
+                    f.calculation?.fields ?? const <engine.FieldRef>[])
+                ..calcFields = (f.calculation?.fields ?? const <engine.FieldRef>[])
+                    .map((r) => _nameForId(schema, r))
+                    .join(', '),
+            );
+      }
+    });
+  }
+
+  Future<void> _open() async {
+    try {
+      _doc = await PdfDocument.openFile(widget.file.path);
+      _totalPages = _doc!.pagesCount;
+      await _loadPage(1);
+      // Only after the first page is measured: restoring needs the page size to
+      // be known so fractional rects land in the right place.
+      await _restoreDraft();
+    } catch (_) {
+      if (mounted) setState(() => _loadingPage = false);
+    }
+  }
+
+  Future<void> _loadPage(int pageNo) async {
+    if (_doc == null) return;
+    setState(() => _loadingPage = true);
+    try {
+      final page = await _doc!.getPage(pageNo);
+      _pagePoints[pageNo] = Size(page.width, page.height);
+      final img = await page.render(
+        width: page.width * 2,
+        height: page.height * 2,
+        format: PdfPageImageFormat.jpeg,
+      );
+      await page.close();
+      if (!mounted) return;
+      setState(() {
+        _pageImage = img;
+        _currentPage = pageNo;
+        _selectedId = null;
+        _loadingPage = false;
+        _tc.value = Matrix4.identity();
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingPage = false);
+    }
+  }
+
+  _Field? get _selected {
+    for (final f in _fields) {
+      if (f.id == _selectedId) return f;
+    }
+    return null;
+  }
+
+  int get _totalFields => _pageFields.values.fold(0, (a, b) => a + b.length);
+
+  /// Adds a field of [type] near the page centre, cascaded so successive fields
+  /// don't stack exactly on top of one another, then selects it.
+  /// Resolves a field name typed in the inspector to that field's id.
+  ///
+  /// Falls back to the name itself when nothing matches, so a rule typed before its target
+  /// exists is preserved and reported as dangling rather than silently discarded.
+  String _idForName(String name) {
+    for (final pageFields in _pageFields.values) {
+      for (final field in pageFields) {
+        if (field.name == name) return field.id;
+      }
+    }
+    return name;
+  }
+
+  /// The display name for a stored reference, for showing in the inspector.
+  String _nameForId(engine.FormSchema schema, engine.FieldRef ref) {
+    for (final field in schema.fields) {
+      if (field.id == ref.id) return field.name;
+    }
+    return ref.name ?? ref.id; // deleted target: show what it used to be
+  }
+
+  /// Records the current layout so the next change can be undone.
+  void _pushUndo() {
+    _undoStack.add(const engine.SchemaCodec().encode(_toSchema()));
+    if (_undoStack.length > _maxUndo) _undoStack.removeAt(0);
+  }
+
+  void _undo() {
+    if (_undoStack.isEmpty) return;
+    final previous = _undoStack.removeLast();
+    _applySchema(const engine.SchemaCodec().decode(previous));
+    setState(() => _selectedId = null);
+  }
+
+  /// Copies the selected field, offset slightly so the copy is visibly separate.
+  void _duplicate(_Field source) {
+    _pushUndo();
+    final copy = _Field(
+      type: source.type,
+      rect: Rect.fromLTWH(
+        (source.rect.left + 0.02).clamp(0.0, 1 - source.rect.width),
+        (source.rect.top + 0.02).clamp(0.0, 1 - source.rect.height),
+        source.rect.width,
+        source.rect.height,
+      ),
+      name: '${source.type.wire}_${_autoName++}',
+    )
+      ..value = source.value
+      ..options = List<String>.from(source.options)
+      ..group = source.group
+      ..fontSize = source.fontSize
+      ..required = source.required
+      ..checked = source.checked
+      ..tooltip = source.tooltip
+      ..readOnly = source.readOnly
+      ..maxLength = source.maxLength
+      ..comb = source.comb
+      ..alignment = source.alignment
+      ..multiSelect = source.multiSelect
+      ..validationPattern = source.validationPattern
+      ..conditionField = source.conditionField
+      ..conditionOperator = source.conditionOperator
+      ..conditionValue = source.conditionValue
+      ..calcFunction = source.calcFunction
+      ..calcFields = source.calcFields;
+    setState(() {
+      _fields.add(copy);
+      _selectedId = copy.id;
+    });
+  }
+
+  void _addField(FieldType type) {
+    final size = type.defaultSize;
+    // Stack each new field under the previous one instead of nudging it by a fixed step.
+    // The old step was 0.05 of the page while a Paragraph field is 0.12 tall, so placing a
+    // few in a row buried them in each other and every one had to be dragged apart first.
+    const gap = 0.012;
+    double left = 0.12;
+    double top = 0.18;
+    if (_fields.isNotEmpty) {
+      final last = _fields.last.rect;
+      left = last.left;
+      top = last.bottom + gap;
+      if (top + size.height > 1.0) {
+        // Off the bottom of the page — start a fresh column rather than stacking into the margin.
+        top = 0.18;
+        left = last.left + last.width + gap;
+        if (left + size.width > 1.0) left = 0.12;
+      }
+    }
+    _pushUndo();
+    left = left.clamp(0.0, 1 - size.width);
+    top = top.clamp(0.0, 1 - size.height);
+    final n = _autoName++;
+    final field = _Field(
+        type: type,
+        rect: Rect.fromLTWH(left, top, size.width, size.height),
+        name: '${type.wire}_$n');
+    if (type.isGrouped) {
+      // Its own group, and its own export value, so a second radio placed later is a
+      // separate question until the author explicitly adds it to this group.
+      field.group = '${type.wire}_group_$n';
+      field.exportValue = 'option_1';
+    }
+    setState(() {
+      _fields.add(field);
+      _selectedId = field.id;
+    });
+  }
+
+  /// Adds another option to [source]'s group, placed just below it.
+  ///
+  /// This is what makes a grouped question workable on a real document: the options of one
+  /// question rarely sit in a neat column — on a bank form each sits beside its own printed
+  /// label — so a new option is created linked but free, and the author drags it into place.
+  void _addOptionToGroup(_Field source) {
+    _pushUndo();
+    final existing = _fields.where((f) => f.group == source.group).length;
+    final copy = _Field(
+      type: source.type,
+      rect: Rect.fromLTWH(
+        source.rect.left,
+        (source.rect.bottom + 0.012).clamp(0.0, 1 - source.rect.height),
+        source.rect.width,
+        source.rect.height,
+      ),
+      name: '${source.group}_${existing + 1}',
+    )
+      ..group = source.group
+      ..exportValue = 'option_${existing + 1}'
+      ..required = source.required
+      ..tooltip = source.tooltip;
+    setState(() {
+      _fields.add(copy);
+      _selectedId = copy.id;
+    });
+  }
+
+  /// Adds a group of linked [type] (radio or checkbox) options in a neat column
+  /// from a list of labels. Radios share one group name; checkboxes share a base.
+  void _addGroup(FieldType type, List<String> labels) {
+    final size = type.defaultSize;
+    final groupName = '${type.wire}_group_${_autoName++}';
+    setState(() {
+      for (int i = 0; i < labels.length; i++) {
+        final top = (0.2 + i * (size.height + 0.03)).clamp(0.0, 1 - size.height);
+        final f = _Field(type: type, rect: Rect.fromLTWH(0.12, top, size.width, size.height), name: '${groupName}_${i + 1}');
+        if (type.isGrouped) {
+          f.group = groupName;
+          f.exportValue = labels[i];
+        }
+        _fields.add(f);
+        if (i == labels.length - 1) _selectedId = f.id;
+      }
+    });
+  }
+
+  Future<void> _promptGroup(FieldType type) async {
+    final controller = TextEditingController(text: 'Option 1, Option 2, Option 3');
+    final labels = await showDialog<List<String>>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx).formGroupTitle(type.localizedLabel(ctx))),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(L10n.of(context).optionLabelsHint, style: const TextStyle(fontSize: 13)),
+          const SizedBox(height: 12),
+          TextField(controller: controller, autofocus: true, decoration: const InputDecoration(border: OutlineInputBorder())),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
+            child: Text(L10n.of(context).add),
+          ),
+        ],
+      ),
+    );
+    if (labels != null && labels.isNotEmpty) _addGroup(type, labels);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(ToolStrings.name(context, 'fill-form')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.undo),
+            tooltip: L10n.of(context).undoAction,
+            onPressed: _undoStack.isEmpty ? null : _undo,
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy_all_outlined),
+            tooltip: L10n.of(context).duplicateField,
+            onPressed: () {
+              final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
+              if (selected != null) _duplicate(selected);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.fit_screen_outlined),
+            tooltip: L10n.of(context).fitToScreen,
+            onPressed: () => setState(() => _tc.value = Matrix4.identity()),
+          ),
+          // Primary action — enabled once there's at least one field and no
+          // submit in flight.
+          BlocBuilder<PdfBloc, PdfState>(
+            buildWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
+            builder: (context, state) {
+              final busy = state.httpStates[HttpStates.createForm]?.loading == true;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: FilledButton(
+                  onPressed: (_totalFields > 0 && !busy) ? _onSave : null,
+                  child: Text(L10n.of(context).create),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
+        listenWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
+        listener: (context, state) {
+          final s = state.httpStates[HttpStates.createForm];
+          if (s?.done == true) {
+            AdsSingleton().dispatch(ShowInterstitialAd());
+            NotificationService.showSnackbar(text: L10n.current.formCreated, color: Colors.green);
+            if (s?.extras?['savedFile'] is File) {
+              GoRouter.of(context).pushNamed(
+                AppRoutes.pdfFilePreviewRoute.name,
+                pathParameters: {'pdfFilePath': (s!.extras!['savedFile'] as File).path},
+              );
+            }
+          } else if (s?.error != null) {
+            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
+          }
+        },
+        builder: (context, state) {
+          return Stack(children: [
+            Column(children: [
+              Expanded(
+                child: _loadingPage
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildCanvasArea(theme),
+              ),
+              _buildPalette(theme),
+            ]),
+            LoadingOverlay(
+              httpState: state.httpStates[HttpStates.createForm],
+              label: L10n.of(context).creatingForm,
+              onCancel: () => _cancelToken?.cancel('cancelled-by-user'),
+            ),
+          ]);
+        },
+      ),
+    );
+  }
+
+  // ── Canvas ──────────────────────────────────────────────────────────────────
+
+  Widget _buildCanvasArea(ThemeData theme) {
+    return Stack(children: [
+      Positioned.fill(child: _buildCanvas(theme)),
+      // Floating page navigator (only when multi-page).
+      if (_totalPages > 1)
+        Positioned(
+          top: 10,
+          left: 0,
+          right: 0,
+          child: Center(child: _pagePill(theme)),
+        ),
+      // Empty-state hint for the current page.
+      if (_fields.isEmpty)
+        Positioned(
+          bottom: 12,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(AppRadius.surface),
+              ),
+              child: Text(L10n.of(context).tapFieldToPlace,
+                  style: TextStyle(fontSize: 12.5, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ),
+    ]);
+  }
+
+  Widget _pagePill(ThemeData theme) {
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(AppRadius.surface),
+      color: theme.colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_left, size: 20),
+            onPressed: _currentPage > 1 ? () => _loadPage(_currentPage - 1) : null,
+          ),
+          Text('$_currentPage / $_totalPages', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_right, size: 20),
+            onPressed: _currentPage < _totalPages ? () => _loadPage(_currentPage + 1) : null,
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildCanvas(ThemeData theme) {
+    return LayoutBuilder(builder: (ctx, constraints) {
+      final pageSize = _pagePoints[_currentPage] ?? const Size(595, 842);
+      final pageAspect = pageSize.width / pageSize.height;
+      final areaAspect = constraints.maxWidth / constraints.maxHeight;
+      double dispW, dispH;
+      if (pageAspect > areaAspect) {
+        dispW = constraints.maxWidth;
+        dispH = dispW / pageAspect;
+      } else {
+        dispH = constraints.maxHeight;
+        dispW = dispH * pageAspect;
+      }
+
+      return Center(
+        child: SizedBox(
+          width: dispW,
+          height: dispH,
+          // Clip.none so edge handles of a selected field aren't cut off.
+          child: Stack(clipBehavior: Clip.none, children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 10)],
+                ),
+                child: InteractiveViewer(
+                  transformationController: _tc,
+                  minScale: 1,
+                  maxScale: 5,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapUp: (d) => _selectAt(d.localPosition, dispW, dispH),
+                    child: Stack(clipBehavior: Clip.none, children: [
+                      if (_pageImage != null)
+                        Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill)),
+                      ..._fields.map((f) => _fieldVisual(f, dispW, dispH, theme)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+            AnimatedBuilder(
+              animation: _tc,
+              builder: (context, _) {
+                final f = _selected;
+                if (f == null) return const SizedBox.shrink();
+                return _buildHandles(f, dispW, dispH, theme);
+              },
+            ),
+          ]),
+        ),
+      );
+    });
+  }
+
+  void _selectAt(Offset local, double dispW, double dispH) {
+    final p = Offset(local.dx / dispW, local.dy / dispH);
+    for (final f in _fields.reversed) {
+      if (f.rect.contains(p)) {
+        setState(() => _selectedId = f.id);
+        return;
+      }
+    }
+    setState(() => _selectedId = null);
+  }
+
+  /// Distinct colours for grouped fields.
+  ///
+  /// Chosen to stay legible over a white page and to remain distinguishable for the common
+  /// forms of colour blindness (blue/orange/purple/teal carry different lightness as well as
+  /// hue). Colour alone is never the only cue — every grouped field also carries the group's
+  /// letter, so the grouping survives a greyscale print or a colour-blind reader.
+  static const List<Color> _groupPalette = [
+    Color(0xFF1565C0), // blue
+    Color(0xFFEF6C00), // orange
+    Color(0xFF6A1B9A), // purple
+    Color(0xFF00838F), // teal
+    Color(0xFFC62828), // red
+    Color(0xFF2E7D32), // green
+    Color(0xFF4E342E), // brown
+    Color(0xFFAD1457), // pink
+  ];
+
+  /// Groups on the current page, in the order they first appear, so a group's colour and
+  /// letter stay put while the author works rather than shuffling on every edit.
+  List<String> get _groupOrder {
+    final seen = <String>[];
+    for (final f in _fields) {
+      if (f.type.isGrouped && f.group.isNotEmpty && !seen.contains(f.group)) {
+        seen.add(f.group);
+      }
+    }
+    return seen;
+  }
+
+  Color _groupColor(String group) {
+    final index = _groupOrder.indexOf(group);
+    return index < 0 ? Colors.grey : _groupPalette[index % _groupPalette.length];
+  }
+
+  /// A, B, C… for the group. Wraps to A1, B1… beyond 26 groups, which no real form reaches
+  /// but which keeps the label unambiguous if one does.
+  String _groupLetter(String group) {
+    final index = _groupOrder.indexOf(group);
+    if (index < 0) return '?';
+    final letter = String.fromCharCode(65 + (index % 26));
+    final cycle = index ~/ 26;
+    return cycle == 0 ? letter : '$letter$cycle';
+  }
+
+  Widget _fieldVisual(_Field f, double dispW, double dispH, ThemeData theme) {
+    final r = Rect.fromLTWH(f.rect.left * dispW, f.rect.top * dispH, f.rect.width * dispW, f.rect.height * dispH);
+    final isSel = f.id == _selectedId;
+    final grouped = f.type.isGrouped && f.group.isNotEmpty;
+
+    // Grouped fields take their group's colour so membership is visible at a glance; a radio
+    // is far too small to carry a readable name, which is why the group used to be invisible
+    // unless you opened each field in turn.
+    final primary = grouped ? _groupColor(f.group) : theme.colorScheme.primary;
+
+    // Selecting one option lights up the rest of its group, which answers "what else is in
+    // here?" without the author hunting for matching colours.
+    final selected = _fields.where((x) => x.id == _selectedId).firstOrNull;
+    final isSibling = !isSel &&
+        grouped &&
+        selected != null &&
+        selected.type.isGrouped &&
+        selected.group == f.group;
+
+    return Positioned(
+      left: r.left,
+      top: r.top,
+      width: r.width,
+      height: r.height,
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: isSel ? 0.12 : (isSibling ? 0.10 : 0.06)),
+            border: Border.all(
+              color: isSel || isSibling ? primary : primary.withValues(alpha: 0.45),
+              width: isSel ? 1.8 : (isSibling ? 1.6 : 1),
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
+          ),
+          // Type badge, plus the field's own name once the box is big enough to hold it.
+          // A form of any size is unreadable from icons alone — every text field looks
+          // identical, so finding "account_number" meant opening each one in turn.
+          child: Stack(children: [
+            Align(
+              alignment: Alignment.topLeft,
+              child: Container(
+                padding: const EdgeInsets.all(1.5),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: isSel ? 0.9 : 0.5),
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.surface),
+                      bottomRight: Radius.circular(AppRadius.surface)),
+                ),
+                child: Icon(f.type.icon, size: 10, color: Colors.white),
+              ),
+            ),
+            // The group's letter, in the opposite corner to the type badge. This is the cue
+            // that works where the name label cannot: a radio is about 50x25px on screen, far
+            // too narrow for text, so without this its group was invisible on the canvas.
+            if (grouped)
+              Align(
+                alignment: Alignment.topRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 0.5),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: isSel || isSibling ? 1 : 0.7),
+                    borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(AppRadius.surface),
+                        bottomLeft: Radius.circular(AppRadius.surface)),
+                  ),
+                  child: Text(
+                    _groupLetter(f.group),
+                    style: const TextStyle(
+                        fontSize: 8.5,
+                        height: 1.2,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            // Small fields (a checkbox is ~30x25pt) have no room for a label, and a radio's
+            // useful identity is its group rather than its own name.
+            if (r.width > 70 && r.height > 18)
+              Padding(
+                padding: EdgeInsets.only(left: 16, right: grouped ? 16 : 3, top: 1),
+                child: Text(
+                  f.type.isGrouped && f.group.isNotEmpty ? f.group : f.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 9,
+                      height: 1.1,
+                      color: primary.withValues(alpha: isSel ? 1 : 0.75),
+                      fontWeight: isSel ? FontWeight.w700 : FontWeight.w500),
+                ),
+              ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHandles(_Field f, double dispW, double dispH, ThemeData theme) {
+    final scale = _tc.value.getMaxScaleOnAxis();
+    final sceneTL = Offset(f.rect.left * dispW, f.rect.top * dispH);
+    final screenTL = MatrixUtils.transformPoint(_tc.value, sceneTL);
+    final w = f.rect.width * dispW * scale;
+    final h = f.rect.height * dispH * scale;
+    final primary = theme.colorScheme.primary;
+
+    void move(Offset screenDelta) {
+      final dxFrac = (screenDelta.dx / scale) / dispW;
+      final dyFrac = (screenDelta.dy / scale) / dispH;
+      setState(() {
+        final nl = (f.rect.left + dxFrac).clamp(0.0, 1 - f.rect.width);
+        final nt = (f.rect.top + dyFrac).clamp(0.0, 1 - f.rect.height);
+        f.rect = Rect.fromLTWH(nl, nt, f.rect.width, f.rect.height);
+      });
+    }
+
+    void resize(Offset screenDelta) {
+      final dwFrac = (screenDelta.dx / scale) / dispW;
+      final dhFrac = (screenDelta.dy / scale) / dispH;
+      setState(() {
+        final nw = (f.rect.width + dwFrac).clamp(0.02, 1 - f.rect.left);
+        final nh = (f.rect.height + dhFrac).clamp(0.02, 1 - f.rect.top);
+        f.rect = Rect.fromLTWH(f.rect.left, f.rect.top, nw, nh);
+      });
+    }
+
+    Widget circle(IconData icon, Color color, VoidCallback? onTap, {void Function(Offset)? onDrag}) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        onPanUpdate: onDrag == null ? null : (d) => onDrag(d.delta),
+        child: Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+          child: Icon(icon, color: Colors.white, size: 14),
+        ),
+      );
+    }
+
+    // The three 26px handles sit on the corners, which is fine on a text box but hides a
+    // checkbox entirely — the field it is meant to be editing disappears under its own
+    // controls. On a small field they move fully outside the bounds instead.
+    final outward = (w < 90 || h < 64) ? 14.0 : 0.0;
+
+    return Stack(clipBehavior: Clip.none, children: [
+      // Move body.
+      Positioned(
+        left: screenTL.dx,
+        top: screenTL.dy,
+        width: w,
+        height: h,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanUpdate: (d) => move(d.delta),
+          onTap: () => _showProperties(f),
+          child: const SizedBox.expand(),
+        ),
+      ),
+      // Edit (top-left).
+      Positioned(
+          left: screenTL.dx - 13 - outward,
+          top: screenTL.dy - 13 - outward,
+          child: circle(Icons.edit, primary, () => _showProperties(f))),
+      // Delete (top-right).
+      Positioned(
+        left: screenTL.dx + w - 13 + outward,
+        top: screenTL.dy - 13 - outward,
+        child: circle(Icons.close, Colors.red, () {
+          _pushUndo();
+          setState(() {
+            _fields.remove(f);
+            _selectedId = null;
+          });
+        }),
+      ),
+      // Resize (bottom-right).
+      Positioned(
+          left: screenTL.dx + w - 13 + outward,
+          top: screenTL.dy + h - 13 + outward,
+          child: circle(Icons.open_in_full, primary, null, onDrag: resize)),
+    ]);
+  }
+
+  // ── Properties (modal sheet, rebuilt per open) ───────────────────────────────
+
+  void _showProperties(_Field f) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
+      builder: (_) => _FieldPropertiesSheet(
+        field: f,
+        resolve: (name) => engine.FieldRef(_idForName(name), name),
+        onAddOption: _addOptionToGroup,
+        optionsInGroup: (g) =>
+            _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
+        groupLetter: _groupLetter,
+      ),
+    ).whenComplete(() {
+      if (mounted) setState(() {}); // refresh badges/state after edits
+    });
+  }
+
+  /// The placed layout as an engine schema.
+  ///
+  /// This is the editor's output and the thing worth persisting: page-relative
+  /// coordinates, so the same layout survives any zoom or render size, and no
+  /// knowledge of the backend's wire format.
+  engine.FormSchema _toSchema() {
+    final fields = <engine.FormFieldModel>[];
+    _pageFields.forEach((page, pageFields) {
+      for (final f in pageFields) {
+        fields.add(engine.FormFieldModel(
+          id: f.id,
+          typeId: f.type.wire,
+          page: page,
+          rect: engine.FractionalRect(f.rect.left, f.rect.top, f.rect.width, f.rect.height),
+          name: f.name,
+          value: f.value,
+          options: List<String>.from(f.options),
+          group: f.group,
+          exportValue: f.exportValue,
+          fontSize: f.fontSize,
+          required: f.required,
+          checked: f.checked,
+          tooltip: f.tooltip,
+          readOnly: f.readOnly,
+          maxLength: f.maxLength > 0 ? f.maxLength : null,
+          comb: f.comb,
+          alignment: f.alignment,
+          multiSelect: f.multiSelect,
+          format: formFieldTypes.lookup(f.type.wire)?.defaultFormat ??
+              engine.TextFormat.none,
+          validation: engine.FieldValidation(
+              pattern: f.validationPattern.isEmpty ? null : f.validationPattern),
+          // The inspector takes field *names* because that is what the author sees on the
+          // canvas, but rules are stored by id so a later rename cannot silently rewire them.
+          // An unresolved name is kept verbatim and surfaces as a dangling reference rather
+          // than being dropped.
+          // References were resolved to ids when they were typed; a rename since then
+          // changes the display name only, never the link.
+          condition: f.conditionRef == null
+              ? null
+              : engine.VisibilityCondition(
+                  parent: f.conditionRef!,
+                  operator: f.conditionOperator,
+                  value: f.conditionValue),
+          calculation: f.calcRefs.isEmpty
+              ? null
+              : engine.Calculation(function: f.calcFunction, fields: f.calcRefs),
+        ));
+      }
+    });
+    return engine.FormSchema(
+      fields: fields,
+      pageSizes: {
+        for (final e in _pagePoints.entries)
+          e.key: engine.PageSizePoints(e.value.width, e.value.height),
+      },
+    );
+  }
+
+  /// Shows anything structurally wrong with the form before it is built.
+  ///
+  /// The engine has detected these all along; nothing surfaced them, so a form with two
+  /// fields sharing a name silently produced a PDF where one value overwrote the other.
+  /// Reported rather than blocked: the author may be mid-edit and know better.
+  Future<bool> _confirmIssues() async {
+    final issues = engine.FormRuntime(_toSchema()).integrityIssues();
+    if (issues.isEmpty) return true;
+
+    final names = {for (final f in _pageFields.values.expand((l) => l)) f.id: f.name};
+    String describe(engine.SchemaIssue i) {
+      final field = names[i.fieldId] ?? i.fieldId;
+      return switch (i.problem) {
+        engine.SchemaProblem.duplicateName => L10n.current.issueDuplicateName(i.target),
+        engine.SchemaProblem.selfReference => L10n.current.issueSelfReference(field),
+        engine.SchemaProblem.danglingCondition ||
+        engine.SchemaProblem.danglingCalculation =>
+          L10n.current.issueDangling(field),
+      };
+    }
+
+    // The same problem on several fields reads as one problem to the author.
+    final lines = issues.map(describe).toSet().toList();
+    if (!mounted) return false;
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.of(ctx).formIssuesTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('• '),
+                  Expanded(child: Text(line)),
+                ]),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(L10n.of(ctx).goBackAndFix)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(L10n.of(ctx).createAnyway)),
+        ],
+      ),
+    );
+    return proceed == true;
+  }
+
+  Future<void> _onSave() async {
+    if (!await _confirmIssues()) return;
+    if (!mounted) return;
+    // The mapping to the backend's request lives in the engine, where a golden
+    // test pins the exact JSON the running server parses.
+    final specs = engine.AcroFormSpecMapper(formFieldTypes).toSpecs(_toSchema());
+
+    _cancelToken = CancelToken();
+    final file = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    BlocProvider.of<PdfBloc>(context).add(CreateFormEvent(
+      createForm: CreateForm(
+        outFileName: 'fillable_${widget.file.path.split('/').last.replaceAll('.pdf', '')}',
+        fields: specs,
+        file: file,
+      ),
+      cancelToken: _cancelToken,
+    ));
+  }
+
+  // ── Bottom palette ───────────────────────────────────────────────────────────
+
+  Widget _buildPalette(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, -2))],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 78,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            children: [
+              for (final t in FieldType.values) _paletteItem(theme, t),
+              _paletteGroupItem(theme, FieldType.radio, L10n.of(context).radioGroup, Icons.radio_button_checked),
+              _paletteGroupItem(theme, FieldType.checkbox, L10n.of(context).checkGroup, Icons.checklist),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paletteGroupItem(ThemeData theme, FieldType t, String label, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.surface),
+        onTap: () => _promptGroup(t),
+        child: Container(
+          width: 66,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
+            border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 22, color: theme.colorScheme.secondary),
+              const SizedBox(height: 4),
+              Text(label, style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paletteItem(ThemeData theme, FieldType t) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.surface),
+        onTap: () => _addField(t),
+        child: Container(
+          width: 66,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(AppRadius.surface),
+            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.18)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(t.icon, size: 22, color: theme.colorScheme.primary),
+              const SizedBox(height: 4),
+              Text(t.localizedLabel(context), style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    // Keep the layout for next time. Fire-and-forget: dispose cannot await, and
+    // a failed draft write must never hold up closing the screen.
+    final store = _drafts;
+    if (store != null) unawaited(store.save(widget.file.path, _toSchema()));
+    _tc.dispose();
+    _doc?.close();
+    super.dispose();
+  }
+}
+
+/// Properties editor for a single field, opened as a modal sheet. Owns its own
+/// controllers (created from the field) so switching fields always shows the
+/// correct values, and writes edits straight back to the [field].
+class _FieldPropertiesSheet extends StatefulWidget {
+  final _Field field;
+
+  /// Adds a sibling option to the selected field's group. The new option is linked but
+  /// positioned freely, so it can be dragged next to whatever the document prints there.
+  final void Function(_Field source) onAddOption;
+
+  /// How many options already share a group, so the sheet can say so.
+  final int Function(String group) optionsInGroup;
+
+  /// The group's letter as shown on the canvas badge, so the author can connect the two.
+  final String Function(String group) groupLetter;
+
+  /// Turns a field name typed by the author into a stable reference, resolved against the
+  /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
+  /// later rename harmless.
+  final engine.FieldRef Function(String name) resolve;
+
+  const _FieldPropertiesSheet({
+    required this.field,
+    required this.resolve,
+    required this.onAddOption,
+    required this.optionsInGroup,
+    required this.groupLetter,
+  });
+
+  @override
+  State<_FieldPropertiesSheet> createState() => _FieldPropertiesSheetState();
+}
+
+class _FieldPropertiesSheetState extends State<_FieldPropertiesSheet> {
+  late final _name = TextEditingController(text: widget.field.name);
+  late final _group = TextEditingController(text: widget.field.group);
+  late final _export = TextEditingController(text: widget.field.exportValue);
+  late final _options = TextEditingController(text: widget.field.options.join(', '));
+  late final _value = TextEditingController(text: widget.field.value);
+  late final _fontSize = TextEditingController(text: widget.field.fontSize > 0 ? widget.field.fontSize.toStringAsFixed(0) : '');
+  late final _tooltip = TextEditingController(text: widget.field.tooltip);
+  late final _maxLength = TextEditingController(text: widget.field.maxLength > 0 ? '${widget.field.maxLength}' : '');
+  late final _pattern = TextEditingController(text: widget.field.validationPattern);
+  late final _condField = TextEditingController(text: widget.field.conditionField);
+  late final _condValue = TextEditingController(text: widget.field.conditionValue);
+  late final _calcFields = TextEditingController(text: widget.field.calcFields);
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _group.dispose();
+    _export.dispose();
+    _options.dispose();
+    _value.dispose();
+    _fontSize.dispose();
+    _tooltip.dispose();
+    _maxLength.dispose();
+    _pattern.dispose();
+    _condField.dispose();
+    _condValue.dispose();
+    _calcFields.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final f = widget.field;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+      // The sheet grew well past a phone screen once rules and logic moved in, so it scrolls
+      // rather than overflowing.
+      child: SingleChildScrollView(
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(L10n.of(context).typeFieldLabel(f.type.localizedLabel(context)), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+        ]),
+        const SizedBox(height: 12),
+        _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
+        if (f.type.isGrouped) ...[
+          _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
+          _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
+          Row(children: [
+            Expanded(
+              child: Text(
+                  L10n.of(context).groupBadgeAndCount(
+                      widget.groupLetter(f.group), widget.optionsInGroup(f.group)),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(L10n.of(context).addOptionToGroup),
+              onPressed: () {
+                Navigator.pop(context);
+                widget.onAddOption(f);
+              },
+            ),
+          ]),
+        ],
+        if (f.type.hasOptions)
+          _field(_options, L10n.of(context).optionsCommaSeparated,
+              (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
+        if (f.type.hasValue) _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
+        if (f.type.hasValue)
+          _field(_fontSize, L10n.of(context).fontSizeAuto, (v) => f.fontSize = double.tryParse(v) ?? 0,
+              keyboard: TextInputType.number),
+        _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
+        if (f.type.isToggle)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(f.type == FieldType.radio ? L10n.of(context).selectedByDefault : L10n.of(context).checkedByDefault),
+            value: f.checked,
+            onChanged: (v) => setState(() => f.checked = v),
+          ),
+        const SizedBox(height: 4),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(L10n.of(context).required),
+          value: f.required,
+          onChanged: (v) => setState(() => f.required = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(L10n.of(context).fieldReadOnly),
+          value: f.readOnly,
+          onChanged: (v) => setState(() => f.readOnly = v),
+        ),
+        if (f.type == FieldType.listbox)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(L10n.of(context).fieldMultiSelect),
+            value: f.multiSelect,
+            onChanged: (v) => setState(() => f.multiSelect = v),
+          ),
+
+        // ── Appearance ────────────────────────────────────────────────────────────
+        if (f.type.hasValue) ...[
+          _sectionTitle(theme, L10n.of(context).sectionAppearance),
+          _field(_maxLength, L10n.of(context).fieldMaxLength,
+              (v) => f.maxLength = int.tryParse(v) ?? 0, keyboard: TextInputType.number),
+          // Comb needs a character cap and a single line — offering it otherwise would let the
+          // user set a flag the PDF spec makes the backend drop.
+          if (f.maxLength > 0 && f.type != FieldType.multiline)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(L10n.of(context).fieldComb),
+              value: f.comb,
+              onChanged: (v) => setState(() => f.comb = v),
+            ),
+          const SizedBox(height: 4),
+          Text(L10n.of(context).fieldAlignment, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          SegmentedButton<engine.TextAlignment>(
+            segments: [
+              ButtonSegment(value: engine.TextAlignment.left, label: Text(L10n.of(context).alignLeft)),
+              ButtonSegment(value: engine.TextAlignment.center, label: Text(L10n.of(context).alignCenter)),
+              ButtonSegment(value: engine.TextAlignment.right, label: Text(L10n.of(context).alignRight)),
+            ],
+            selected: {f.alignment},
+            onSelectionChanged: (sel) => setState(() => f.alignment = sel.first),
+          ),
+          _sectionTitle(theme, L10n.of(context).sectionRules),
+          _field(_pattern, L10n.of(context).fieldPattern, (v) => f.validationPattern = v),
+        ],
+
+        // ── Logic ─────────────────────────────────────────────────────────────────
+        _sectionTitle(theme, L10n.of(context).sectionLogic),
+        Text(L10n.of(context).conditionShowWhen, style: theme.textTheme.bodySmall),
+        const SizedBox(height: 4),
+        _field(_condField, L10n.of(context).conditionFieldName, (v) {
+          f.conditionField = v;
+          final name = v.trim();
+          f.conditionRef = name.isEmpty ? null : widget.resolve(name);
+        }),
+        DropdownButtonFormField<engine.ConditionOperator>(
+          initialValue: f.conditionOperator,
+          isExpanded: true,
+          decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+          items: engine.ConditionOperator.values
+              .map((o) => DropdownMenuItem(value: o, child: Text(_operatorLabel(context, o))))
+              .toList(),
+          onChanged: (v) => setState(() => f.conditionOperator = v ?? engine.ConditionOperator.equals),
+        ),
+        const SizedBox(height: 8),
+        _field(_condValue, L10n.of(context).conditionValue, (v) => f.conditionValue = v),
+
+        if (f.type.hasValue) ...[
+          const SizedBox(height: 8),
+          Text(L10n.of(context).calcTitle, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<engine.CalculationFunction>(
+            initialValue: f.calcFunction,
+            isExpanded: true,
+            decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+            items: engine.CalculationFunction.values
+                .map((c) => DropdownMenuItem(value: c, child: Text(_calcLabel(context, c))))
+                .toList(),
+            onChanged: (v) => setState(() => f.calcFunction = v ?? engine.CalculationFunction.sum),
+          ),
+          const SizedBox(height: 8),
+          _field(_calcFields, L10n.of(context).calcFieldsHint, (v) {
+            f.calcFields = v;
+            f.calcRefs = v
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .map(widget.resolve)
+                .toList();
+          }),
+        ],
+
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done)),
+        ),
+      ]),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(ThemeData theme, String text) => Padding(
+        padding: const EdgeInsets.only(top: 14, bottom: 6),
+        child: Text(text,
+            style: theme.textTheme.labelLarge
+                ?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.w700)),
+      );
+
+  String _operatorLabel(BuildContext context, engine.ConditionOperator o) => switch (o) {
+        engine.ConditionOperator.equals => L10n.of(context).opEquals,
+        engine.ConditionOperator.notEquals => L10n.of(context).opNotEquals,
+        engine.ConditionOperator.contains => L10n.of(context).opContains,
+        engine.ConditionOperator.isEmpty => L10n.of(context).opIsEmpty,
+        engine.ConditionOperator.isNotEmpty => L10n.of(context).opIsNotEmpty,
+        engine.ConditionOperator.greaterThan => L10n.of(context).opGreaterThan,
+        engine.ConditionOperator.lessThan => L10n.of(context).opLessThan,
+      };
+
+  String _calcLabel(BuildContext context, engine.CalculationFunction c) => switch (c) {
+        engine.CalculationFunction.sum => L10n.of(context).calcSum,
+        engine.CalculationFunction.average => L10n.of(context).calcAverage,
+        engine.CalculationFunction.product => L10n.of(context).calcProduct,
+        engine.CalculationFunction.min => L10n.of(context).calcMin,
+        engine.CalculationFunction.max => L10n.of(context).calcMax,
+      };
+
+  Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged, {TextInputType? keyboard}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: c,
+        keyboardType: keyboard,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          isDense: true,
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}

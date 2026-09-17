@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:pdfx/pdfx.dart';
-import 'package:pdf_craft/l10n/L10n.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 class DocumentScannerView extends StatefulWidget {
+  const DocumentScannerView({super.key});
+
   @override
   State<DocumentScannerView> createState() => _DocumentScannerViewState();
 }
@@ -38,11 +40,11 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.document_scanner_outlined,
                   size: 50,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor:
@@ -54,15 +56,15 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                     ),
                   ),
                   onPressed: () => startScan(DocumentFormat.pdf),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: const Text(
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
                       'Scan PDF',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor:
@@ -74,9 +76,9 @@ class _DocumentScannerViewState extends State<DocumentScannerView> {
                     ),
                   ),
                   onPressed: () => startScan(DocumentFormat.jpeg),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: const Text(
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
                       'Scan JPEG',
                       style: TextStyle(color: Colors.white),
                     ),

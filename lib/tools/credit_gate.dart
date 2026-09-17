@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
-import 'package:pdf_craft/l10n/L10n.dart';
-import 'package:pdf_craft/singletons/CreditService.dart' as credits_service;
-import 'package:pdf_craft/singletons/NotificationService.dart';
-import 'package:pdf_craft/singletons/RewardedInterstitialAdManager.dart';
-import 'package:pdf_craft/singletons/CreditService.dart';
-import 'package:pdf_craft/utils/UploadLimits.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/singletons/credit_service.dart' as credits_service;
+import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/singletons/rewarded_interstitial_ad_manager.dart';
+import 'package:pdf_craft/singletons/credit_service.dart';
+import 'package:pdf_craft/utils/upload_limits.dart';
 
 /// Confirm-spend gate for paid tools.
 ///

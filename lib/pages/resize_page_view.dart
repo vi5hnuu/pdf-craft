@@ -1,0 +1,125 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/models/enums/page_size_preset.dart';
+import 'package:pdf_craft/models/request/resize_page.dart';
+import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/utils/tool_result_handler.dart';
+import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/page_range_selector.dart';
+
+/// Resize Page Size: reflows every page onto a standard size (A4 / Letter /
+/// Legal), scaling the content to fit and centering it.
+class ResizePageView extends StatefulWidget {
+  final File file;
+  const ResizePageView({super.key, required this.file});
+
+  @override
+  State<ResizePageView> createState() => _ResizePageViewState();
+}
+
+class _ResizePageViewState extends State<ResizePageView>
+    with ToolResultHandler, ToolViewMixin {
+  PageSizePreset _size = PageSizePreset.a4;
+  /// 0-indexed pages the tool applies to. Empty means the whole document.
+  final Set<int> _pages = <int>{};
+
+
+  @override
+  void initState() {
+    super.initState();
+    AdsSingleton().dispatch(LoadInterstitialAd());
+    resetToolState([HttpStates.resizePage]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'resize-page'))),
+      body: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) => p.httpStates[HttpStates.resizePage] != c.httpStates[HttpStates.resizePage],
+        listenWhen: (p, c) => p.httpStates[HttpStates.resizePage] != c.httpStates[HttpStates.resizePage],
+        listener: (context, state) =>
+            handleToolState(state.httpStates[HttpStates.resizePage], successMessage: L10n.of(context).pagesResized),
+        builder: (context, state) {
+          final loading = state.httpStates[HttpStates.resizePage]?.loading == true;
+          return Stack(children: [
+            Column(children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  // Scrollable because the page selector expands to a thumbnail grid, which
+                  // overflows a fixed column on a short screen.
+                  child: SingleChildScrollView(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(L10n.of(context).targetSize, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    // RadioGroup supplies the selection to the tiles below it. Besides
+                    // replacing the deprecated per-tile groupValue/onChanged, it gives the set
+                    // arrow-key navigation, which loose radios never had.
+                    RadioGroup<PageSizePreset>(
+                      groupValue: _size,
+                      onChanged: (v) => setState(() => _size = v ?? _size),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final s in PageSizePreset.values)
+                            RadioListTile<PageSizePreset>(
+                              value: s,
+                              title: Text(s.label),
+                              subtitle: Text(s.dimensions),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    PageRangeSelector(
+                      file: widget.file,
+                      selected: _pages,
+                      onChanged: (pages) => setState(() {
+                        _pages
+                          ..clear()
+                          ..addAll(pages);
+                      }),
+                    ),
+                    ]),
+                  ),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  border: Border(top: BorderSide(color: theme.dividerColor)),
+                ),
+                child: FilledButton.icon(
+                  onPressed: loading ? null : _onResize,
+                  icon: const Icon(Icons.aspect_ratio),
+                  label: Text(L10n.of(context).resizeTo(_size.label)),
+                ),
+              ),
+            ]),
+            processingOverlay(state.httpStates[HttpStates.resizePage], label: L10n.of(context).procWorking),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Future<void> _onResize() async {
+    final file = await MultipartFile.fromFile(widget.file.path);
+    if (!mounted) return;
+    runTool((cancelToken) => ResizePageEvent(
+          resizePage: ResizePage(size: _size, pages: _pages.toList()..sort(), file: file),
+          cancelToken: cancelToken,
+        ));
+  }
+}

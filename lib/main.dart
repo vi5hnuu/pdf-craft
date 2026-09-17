@@ -1,107 +1,106 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:pdf_craft/l10n/L10n.dart';
-import 'package:pdf_craft/l10n/LocaleManager.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/l10n/locale_manager.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdf_craft/models/file-selection-config.dart';
+import 'package:pdf_craft/models/file_selection_config.dart';
 import 'package:pdf_craft/theme/app_theme.dart';
 import 'package:pdf_craft/theme/theme_manager.dart';
-import 'package:pdf_craft/pages/AddBlankPagesView.dart';
-import 'package:pdf_craft/pages/EditMetadataView.dart';
-import 'package:pdf_craft/pages/ErrorPage.dart';
-import 'package:pdf_craft/pages/FlattenPdfView.dart';
-import 'package:pdf_craft/pages/CompressPdfView.dart';
-import 'package:pdf_craft/pages/CropPdfView.dart';
-import 'package:pdf_craft/pages/ExtractTextView.dart';
-import 'package:pdf_craft/pages/GrayscalePdfView.dart';
-import 'package:pdf_craft/pages/HeaderFooterView.dart';
-import 'package:pdf_craft/pages/ImageToPdfView.dart';
-import 'package:pdf_craft/pages/MainScreen.dart';
-import 'package:pdf_craft/pages/MergePdfView.dart';
-import 'package:pdf_craft/pages/PageNumbersPdfView.dart';
-import 'package:pdf_craft/pages/PdfInfoView.dart';
-import 'package:pdf_craft/pages/PdfToJpgView.dart';
-import 'package:pdf_craft/pages/ProtectPdfView.dart';
-import 'package:pdf_craft/pages/RepairPdfView.dart';
-import 'package:pdf_craft/pages/ReorderPdfView.dart';
-import 'package:pdf_craft/pages/RotatePdfView.dart';
-import 'package:pdf_craft/pages/SearchScreen.dart';
-import 'package:pdf_craft/pages/RecentsScreen.dart';
-import 'package:pdf_craft/pages/CreditsScreen.dart';
-import 'package:pdf_craft/pages/AuthScreen.dart';
-import 'package:pdf_craft/pages/AccountScreen.dart';
-import 'package:pdf_craft/pages/ResultsScreen.dart';
-import 'package:pdf_craft/pages/OrganizePagesView.dart';
-import 'package:pdf_craft/pages/ExtractPagesView.dart';
-import 'package:pdf_craft/pages/DeletePagesView.dart';
-import 'package:pdf_craft/pages/RemoveMetadataView.dart';
-import 'package:pdf_craft/pages/ExtractImagesView.dart';
-import 'package:pdf_craft/pages/SanitizePdfView.dart';
-import 'package:pdf_craft/pages/SplitBySizeView.dart';
-import 'package:pdf_craft/pages/ReversePagesView.dart';
-import 'package:pdf_craft/pages/MirrorPagesView.dart';
-import 'package:pdf_craft/pages/ResizePageView.dart';
-import 'package:pdf_craft/pages/ScalePdfView.dart';
-import 'package:pdf_craft/pages/InsertPdfView.dart';
-import 'package:pdf_craft/pages/ExtractEmbeddedFilesView.dart';
-import 'package:pdf_craft/pages/AnalyzePdfView.dart';
-import 'package:pdf_craft/pages/ReplacePagesView.dart';
-import 'package:pdf_craft/pages/ExtractFontsView.dart';
-import 'package:pdf_craft/pages/RotateImageView.dart';
-import 'package:pdf_craft/pages/FlipImageView.dart';
-import 'package:pdf_craft/pages/AddBorderView.dart';
-import 'package:pdf_craft/pages/IncomingFilesScreen.dart';
-import 'package:pdf_craft/services/IncomingFilesChannel.dart';
-import 'package:pdf_craft/singletons/LoggerSingleton.dart';
-import 'package:pdf_craft/pages/BatchProcessView.dart';
-import 'package:pdf_craft/pages/OnboardingScreen.dart';
-import 'package:pdf_craft/pages/SplashScreen.dart';
-import 'package:pdf_craft/pages/StampPdfView.dart';
-import 'package:pdf_craft/pages/QrStampPdfView.dart';
-import 'package:pdf_craft/pages/AnnotatePdfView.dart';
-import 'package:pdf_craft/pages/FormEditorView.dart';
-import 'package:pdf_craft/pages/PlaceImageView.dart';
-import 'package:pdf_craft/pages/ImageStudioView.dart';
-import 'package:pdf_craft/pages/PdfToOfficeView.dart';
-import 'package:pdf_craft/pages/DriveScreen.dart';
-import 'package:pdf_craft/pages/RedactPdfView.dart';
-import 'package:pdf_craft/pages/DuplicatePagesView.dart';
-import 'package:pdf_craft/pages/BookmarksEditorView.dart';
-import 'package:pdf_craft/pages/PdfCompareView.dart';
-import 'package:pdf_craft/pages/SignPdfView.dart';
-import 'package:pdf_craft/pages/RemoveBlankPagesView.dart';
-import 'package:pdf_craft/pages/OptimizePdfView.dart';
-import 'package:pdf_craft/pages/NUpPdfView.dart';
-import 'package:pdf_craft/models/request/image-studio.dart' show ImageStudioOp;
-import 'package:pdf_craft/models/request/pdf-to-office.dart' show PdfOfficeFormat;
-import 'package:pdf_craft/pages/UnProtectPdfView.dart';
-import 'package:pdf_craft/pages/WatermarkPdfView.dart';
-import 'package:pdf_craft/pages/split-pdf-tool/SplitPdfView.dart';
-import 'package:pdf_craft/pages/tab-widgets/FilesScreen.dart';
-import 'package:pdf_craft/pages/tab-widgets/ScannerScreen.dart';
-import 'package:pdf_craft/pages/tab-widgets/SettingScreen.dart';
-import 'package:pdf_craft/pages/tab-widgets/ToolsScreen.dart';
+import 'package:pdf_craft/pages/add_blank_pages_view.dart';
+import 'package:pdf_craft/pages/edit_metadata_view.dart';
+import 'package:pdf_craft/pages/error_page.dart';
+import 'package:pdf_craft/pages/flatten_pdf_view.dart';
+import 'package:pdf_craft/pages/compress_pdf_view.dart';
+import 'package:pdf_craft/pages/crop_pdf_view.dart';
+import 'package:pdf_craft/pages/extract_text_view.dart';
+import 'package:pdf_craft/pages/grayscale_pdf_view.dart';
+import 'package:pdf_craft/pages/header_footer_view.dart';
+import 'package:pdf_craft/pages/image_to_pdf_view.dart';
+import 'package:pdf_craft/pages/main_screen.dart';
+import 'package:pdf_craft/pages/merge_pdf_view.dart';
+import 'package:pdf_craft/pages/page_numbers_pdf_view.dart';
+import 'package:pdf_craft/pages/pdf_info_view.dart';
+import 'package:pdf_craft/pages/pdf_to_jpg_view.dart';
+import 'package:pdf_craft/pages/protect_pdf_view.dart';
+import 'package:pdf_craft/pages/repair_pdf_view.dart';
+import 'package:pdf_craft/pages/reorder_pdf_view.dart';
+import 'package:pdf_craft/pages/rotate_pdf_view.dart';
+import 'package:pdf_craft/pages/search_screen.dart';
+import 'package:pdf_craft/pages/recents_screen.dart';
+import 'package:pdf_craft/pages/credits_screen.dart';
+import 'package:pdf_craft/pages/auth_screen.dart';
+import 'package:pdf_craft/pages/account_screen.dart';
+import 'package:pdf_craft/pages/results_screen.dart';
+import 'package:pdf_craft/pages/organize_pages_view.dart';
+import 'package:pdf_craft/pages/extract_pages_view.dart';
+import 'package:pdf_craft/pages/delete_pages_view.dart';
+import 'package:pdf_craft/pages/remove_metadata_view.dart';
+import 'package:pdf_craft/pages/extract_images_view.dart';
+import 'package:pdf_craft/pages/sanitize_pdf_view.dart';
+import 'package:pdf_craft/pages/split_by_size_view.dart';
+import 'package:pdf_craft/pages/reverse_pages_view.dart';
+import 'package:pdf_craft/pages/mirror_pages_view.dart';
+import 'package:pdf_craft/pages/resize_page_view.dart';
+import 'package:pdf_craft/pages/scale_pdf_view.dart';
+import 'package:pdf_craft/pages/insert_pdf_view.dart';
+import 'package:pdf_craft/pages/extract_embedded_files_view.dart';
+import 'package:pdf_craft/pages/analyze_pdf_view.dart';
+import 'package:pdf_craft/pages/replace_pages_view.dart';
+import 'package:pdf_craft/pages/extract_fonts_view.dart';
+import 'package:pdf_craft/pages/rotate_image_view.dart';
+import 'package:pdf_craft/pages/flip_image_view.dart';
+import 'package:pdf_craft/pages/add_border_view.dart';
+import 'package:pdf_craft/pages/incoming_files_screen.dart';
+import 'package:pdf_craft/services/incoming_files_channel.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
+import 'package:pdf_craft/pages/batch_process_view.dart';
+import 'package:pdf_craft/pages/onboarding_screen.dart';
+import 'package:pdf_craft/pages/splash_screen.dart';
+import 'package:pdf_craft/pages/stamp_pdf_view.dart';
+import 'package:pdf_craft/pages/qr_stamp_pdf_view.dart';
+import 'package:pdf_craft/pages/annotate_pdf_view.dart';
+import 'package:pdf_craft/pages/form_editor_view.dart';
+import 'package:pdf_craft/pages/place_image_view.dart';
+import 'package:pdf_craft/pages/image_studio_view.dart';
+import 'package:pdf_craft/pages/pdf_to_office_view.dart';
+import 'package:pdf_craft/pages/drive_screen.dart';
+import 'package:pdf_craft/pages/redact_pdf_view.dart';
+import 'package:pdf_craft/pages/duplicate_pages_view.dart';
+import 'package:pdf_craft/pages/bookmarks_editor_view.dart';
+import 'package:pdf_craft/pages/pdf_compare_view.dart';
+import 'package:pdf_craft/pages/sign_pdf_view.dart';
+import 'package:pdf_craft/pages/remove_blank_pages_view.dart';
+import 'package:pdf_craft/pages/optimize_pdf_view.dart';
+import 'package:pdf_craft/pages/n_up_pdf_view.dart';
+import 'package:pdf_craft/models/request/image_studio.dart' show ImageStudioOp;
+import 'package:pdf_craft/models/request/pdf_to_office.dart' show PdfOfficeFormat;
+import 'package:pdf_craft/pages/un_protect_pdf_view.dart';
+import 'package:pdf_craft/pages/watermark_pdf_view.dart';
+import 'package:pdf_craft/pages/split-pdf-tool/split_pdf_view.dart';
+import 'package:pdf_craft/pages/tab-widgets/files_screen.dart';
+import 'package:pdf_craft/pages/tab-widgets/scanner_screen.dart';
+import 'package:pdf_craft/pages/tab-widgets/setting_screen.dart';
+import 'package:pdf_craft/pages/tab-widgets/tools_screen.dart';
 import 'package:pdf_craft/routes.dart';
-import 'package:pdf_craft/services/apis/PdfService.dart';
-import 'package:pdf_craft/singletons/AppOpenAdManager.dart';
-import 'package:pdf_craft/singletons/FullScreenAdPolicy.dart';
-import 'package:pdf_craft/singletons/NotificationService.dart';
-import 'package:pdf_craft/singletons/ProService.dart';
-import 'package:pdf_craft/singletons/AuthService.dart';
-import 'package:pdf_craft/singletons/CreditService.dart';
-import 'package:pdf_craft/singletons/PurchaseService.dart';
+import 'package:pdf_craft/services/apis/pdf_service.dart';
+import 'package:pdf_craft/singletons/app_open_ad_manager.dart';
+import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
+import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/singletons/pro_service.dart';
+import 'package:pdf_craft/singletons/auth_service.dart';
+import 'package:pdf_craft/singletons/credit_service.dart';
+import 'package:pdf_craft/singletons/purchase_service.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
-import 'package:pdf_craft/utils/StoragePermissions.dart';
-import 'package:pdf_craft/widgets/FilesListing.dart';
-import 'package:pdf_craft/widgets/FilesManagement.dart';
-import 'package:pdf_craft/widgets/PdfPreview.dart';
+import 'package:pdf_craft/utils/storage_permissions.dart';
+import 'package:pdf_craft/widgets/files_listing.dart';
+import 'package:pdf_craft/widgets/files_management.dart';
+import 'package:pdf_craft/widgets/pdf_preview.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -270,7 +269,7 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.errorRoute.path,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: Errorpage(reason: state.extra is Map<String,Object> ? ((state.extra as Map)['reason'] ?? ErrorReason.STORAGE_PERMISSION_DENIED) : ErrorReason.STORAGE_PERMISSION_DENIED,),
+          child: Errorpage(reason: state.extra is Map<String,Object> ? ((state.extra as Map)['reason'] ?? ErrorReason.storagePermissionDenied) : ErrorReason.storagePermissionDenied,),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
@@ -281,7 +280,7 @@ class _NestedTabNavigationExampleAppState
         path: AppRoutes.searchRoute.path,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: SearchScreen(),
+          child: const SearchScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
@@ -954,7 +953,7 @@ class _NestedTabNavigationExampleAppState
                 GoRoute(
                   path: AppRoutes.scannerRoute.path,
                   name: AppRoutes.scannerRoute.name,
-                  builder: (BuildContext context, GoRouterState state) => ScannerScreen(),
+                  builder: (BuildContext context, GoRouterState state) => const ScannerScreen(),
                 ),
               ]),
           StatefulShellBranch(
