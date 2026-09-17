@@ -956,5 +956,10 @@
   "fieldListTitle": "इस पेज के फ़ील्ड",
   "fieldListEmpty": "अभी कोई फ़ील्ड नहीं लगाया",
   "fieldListCount": "{count} फ़ील्ड",
-  "a11yOpenFieldList": "फ़ील्ड सूची खोलें"
+  "a11yOpenFieldList": "फ़ील्ड सूची खोलें",
+  "optionsTitle": "विकल्प",
+  "addOption": "विकल्प जोड़ें",
+  "removeOption": "विकल्प हटाएँ",
+  "optionHint": "विकल्प {n}",
+  "dateFormatLabel": "तारीख़ का रूप"
 }

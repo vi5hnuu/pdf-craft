@@ -71,6 +71,9 @@ class FormFieldModel {
   /// What the field expects, which drives keyboard, validation and PDF format actions.
   TextFormat format;
 
+  /// Display format for a date field, e.g. `dd/mm/yyyy`. Empty for every other type.
+  String dateFormat;
+
   /// Input rules enforced by the app's own runtime.
   FieldValidation validation;
 
@@ -111,6 +114,7 @@ class FormFieldModel {
     this.alignment = TextAlignment.left,
     this.multiSelect = false,
     this.format = TextFormat.none,
+    this.dateFormat = '',
     this.validation = const FieldValidation(),
     this.condition,
     this.calculation,
@@ -138,6 +142,7 @@ class FormFieldModel {
     TextAlignment? alignment,
     bool? multiSelect,
     TextFormat? format,
+    String? dateFormat,
     FieldValidation? validation,
     VisibilityCondition? condition,
     Calculation? calculation,
@@ -163,6 +168,7 @@ class FormFieldModel {
         alignment: alignment ?? this.alignment,
         multiSelect: multiSelect ?? this.multiSelect,
         format: format ?? this.format,
+        dateFormat: dateFormat ?? this.dateFormat,
         validation: validation ?? this.validation,
         condition: condition ?? this.condition,
         calculation: calculation ?? this.calculation,

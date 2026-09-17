@@ -136,6 +136,7 @@ class _FormEditorViewState extends State<FormEditorView> {
                 ..minValue = f.validation.min?.toString() ?? ''
                 ..maxValue = f.validation.max?.toString() ?? ''
                 ..minLength = f.validation.minLength?.toString() ?? ''
+                ..dateFormat = f.dateFormat.isEmpty ? 'dd/mm/yyyy' : f.dateFormat
                 ..conditionRef = f.condition?.parent
                 ..conditionField = f.condition == null
                     ? ''
@@ -951,6 +952,7 @@ class _FormEditorViewState extends State<FormEditorView> {
           multiSelect: f.multiSelect,
           format: formFieldTypes.lookup(f.type.wire)?.defaultFormat ??
               engine.TextFormat.none,
+          dateFormat: f.type == FieldType.date ? f.dateFormat : '',
           validation: engine.FieldValidation(
             pattern: f.validationPattern.isEmpty ? null : f.validationPattern,
             // Bounds the runtime has always enforced; until now nothing in the UI could set them.

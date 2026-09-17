@@ -53,6 +53,7 @@ class SchemaCodec {
         if (f.alignment != TextAlignment.left) 'alignment': f.alignment.name,
         if (f.multiSelect) 'multi_select': true,
         if (f.format != TextFormat.none) 'format': f.format.name,
+        if (f.dateFormat.isNotEmpty) 'date_format': f.dateFormat,
         if (!f.validation.isEmpty) 'validation': f.validation.toJson(),
         if (f.condition != null) 'condition': f.condition!.toJson(),
         if (f.calculation != null && !f.calculation!.isEmpty)
@@ -103,7 +104,7 @@ class SchemaCodec {
       'id', 'type', 'page', 'rect', 'name', 'value', 'options', 'group',
       'export_value', 'font_size', 'required', 'checked', 'recipient_id',
       'tooltip', 'read_only', 'max_length', 'comb', 'alignment', 'multi_select',
-      'format', 'validation', 'condition', 'calculation',
+      'format', 'date_format', 'validation', 'condition', 'calculation',
     };
     return FormFieldModel(
       id: json['id'] as String,
@@ -126,6 +127,7 @@ class SchemaCodec {
       alignment: TextAlignment.fromWire(json['alignment'] as String?),
       multiSelect: json['multi_select'] as bool? ?? false,
       format: TextFormat.fromWire(json['format'] as String?),
+      dateFormat: json['date_format'] as String? ?? '',
       validation: json['validation'] == null
           ? const FieldValidation()
           : FieldValidation.fromJson((json['validation'] as Map).cast<String, Object?>()),

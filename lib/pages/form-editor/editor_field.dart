@@ -43,6 +43,10 @@ class EditorField {
   String minValue = '';
   String maxValue = '';
   String minLength = '';
+
+  /// Date display format, written into the PDF as the field's format action. Without one a date
+  /// field was just a text box and every filler typed a different shape of date.
+  String dateFormat = 'dd/mm/yyyy';
   /// What the author typed in the inspector, shown back to them verbatim.
   ///
   /// The authoritative link is [conditionRef] / [calcRefs]: those hold the resolved **id**,

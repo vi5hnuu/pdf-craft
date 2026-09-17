@@ -6,6 +6,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:form_engine/form_engine.dart' as engine;
 import 'package:pdf_craft/pages/form-editor/editor_field.dart';
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
+import 'package:pdf_craft/pages/form-editor/options_editor.dart';
 
 /// Properties editor for a single field, opened as a modal sheet. Owns its own
 /// controllers (created from the field) so switching fields always shows the
@@ -44,7 +45,6 @@ class _FieldInspectorState extends State<FieldInspector> {
   late final _name = TextEditingController(text: widget.field.name);
   late final _group = TextEditingController(text: widget.field.group);
   late final _export = TextEditingController(text: widget.field.exportValue);
-  late final _options = TextEditingController(text: widget.field.options.join(', '));
   late final _value = TextEditingController(text: widget.field.value);
   late final _fontSize = TextEditingController(text: widget.field.fontSize > 0 ? widget.field.fontSize.toStringAsFixed(0) : '');
   late final _tooltip = TextEditingController(text: widget.field.tooltip);
@@ -62,7 +62,6 @@ class _FieldInspectorState extends State<FieldInspector> {
     _name.dispose();
     _group.dispose();
     _export.dispose();
-    _options.dispose();
     _value.dispose();
     _fontSize.dispose();
     _tooltip.dispose();
@@ -116,12 +115,48 @@ class _FieldInspectorState extends State<FieldInspector> {
           ]),
         ],
         if (f.type.hasOptions)
-          _field(_options, L10n.of(context).optionsCommaSeparated,
-              (v) => f.options = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
+          OptionsEditor(
+            options: f.options,
+            onChanged: (v) => f.options = v,
+          ),
         if (f.type.hasValue) _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
-        if (f.type.hasValue)
+        if (f.type.hasValue) ...[
+          // Presets for the sizes a form actually uses; the box stays for anything else. A bare
+          // "0 = auto" number field gave no clue what a sensible value looked like.
+          Wrap(spacing: 6, children: [
+            for (final size in <double>[0, 8, 10, 12, 14])
+              ChoiceChip(
+                label: Text(size == 0
+                    ? L10n.of(context).fontSizeAutoPreset
+                    : size.toStringAsFixed(0)),
+                selected: f.fontSize == size,
+                onSelected: (_) => setState(() {
+                  f.fontSize = size;
+                  _fontSize.text = size > 0 ? size.toStringAsFixed(0) : '';
+                }),
+              ),
+          ]),
+          const SizedBox(height: 8),
           _field(_fontSize, L10n.of(context).fontSizeAuto, (v) => f.fontSize = double.tryParse(v) ?? 0,
               keyboard: TextInputType.number),
+        ],
+        if (f.type == FieldType.date)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: DropdownButtonFormField<String>(
+              initialValue: f.dateFormat,
+              decoration: InputDecoration(
+                  isDense: true,
+                  labelText: L10n.of(context).dateFormatLabel,
+                  border: const OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 'dd/mm/yyyy', child: Text('dd/mm/yyyy')),
+                DropdownMenuItem(value: 'mm/dd/yyyy', child: Text('mm/dd/yyyy')),
+                DropdownMenuItem(value: 'yyyy-mm-dd', child: Text('yyyy-mm-dd')),
+              ],
+              onChanged: (v) => setState(() => f.dateFormat = v ?? 'dd/mm/yyyy'),
+            ),
+          ),
         _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
         if (f.type.isToggle)
           SwitchListTile(

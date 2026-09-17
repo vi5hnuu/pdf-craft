@@ -78,6 +78,8 @@ class AcroFormSpecMapper {
       if (f.alignment != TextAlignment.left) 'alignment': f.alignment.quadding,
       if (type.allowsMultiSelect && f.multiSelect) 'multi_select': true,
       if (f.format != TextFormat.none) 'format': f.format.name,
+      // Only meaningful on a date field; the backend writes it as the field's format action.
+      if (f.dateFormat.isNotEmpty) 'date_format': f.dateFormat,
       if (f.validation.pattern != null && f.validation.pattern!.isNotEmpty)
         'validation_pattern': f.validation.pattern,
       // Rules travel as ids, but the PDF's own scripts address fields by NAME, so the

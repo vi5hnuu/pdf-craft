@@ -1608,5 +1608,17 @@
       }
     }
   },
-  "a11yOpenFieldList": "Open field list"
+  "a11yOpenFieldList": "Open field list",
+  "optionsTitle": "Options",
+  "addOption": "Add option",
+  "removeOption": "Remove option",
+  "optionHint": "Option {n}",
+  "@optionHint": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dateFormatLabel": "Date format"
 }
