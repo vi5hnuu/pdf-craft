@@ -546,7 +546,10 @@ class _FormEditorViewState extends State<FormEditorView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(ToolStrings.name(context, 'fill-form')),
+        // The title still read "Form Edit…" with a full-size Create button beside two icons.
+        // Reclaiming the default 16px gap and tightening the button is what makes it fit.
+        titleSpacing: 0,
+        title: Text(ToolStrings.name(context, 'fill-form'), overflow: TextOverflow.ellipsis),
         actions: [
           // Only two icons besides Create. Undo, the field list, duplicate and fit all moved
           // into the overflow: with them inline the title had no room and truncated to "For…",
@@ -617,8 +620,13 @@ class _FormEditorViewState extends State<FormEditorView>
             builder: (context, state) {
               final busy = state.httpStates[HttpStates.createForm]?.loading == true;
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(2, 8, 8, 8),
                 child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: (_totalFields > 0 && !busy) ? _onSave : null,
                   child: Text(L10n.of(context).create),
                 ),
@@ -972,19 +980,40 @@ class _FormEditorViewState extends State<FormEditorView>
             //    this, what group is it in — and is hidden by the Preview toggle so the author
             //    can see the unadorned output at any moment.
             if (!_previewMode) ...[
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    // A wash rather than an opaque fill, so the true appearance underneath
-                    // stays readable through it.
-                    color: primary.withValues(alpha: isSel ? 0.12 : (isSibling ? 0.10 : 0.05)),
-                    border: Border.all(
-                      color: isSel || isSibling ? primary : primary.withValues(alpha: 0.35),
-                      width: isSel ? 1.8 : (isSibling ? 1.6 : 0.8),
+              // On anything roomy, a wash plus a border — the true appearance stays readable
+              // through it. On a 12pt toggle the same treatment covered the field completely:
+              // a blue rectangle where a black circle should be, which is precisely what the
+              // WYSIWYG work exists to avoid. There the marker goes *outside* instead.
+              if (f.type.isToggle)
+                Positioned(
+                  left: -3,
+                  top: -3,
+                  right: -3,
+                  bottom: -3,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isSel || isSibling
+                            ? primary
+                            : primary.withValues(alpha: 0.5),
+                        width: isSel ? 1.6 : 1,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color:
+                          primary.withValues(alpha: isSel ? 0.12 : (isSibling ? 0.10 : 0.05)),
+                      border: Border.all(
+                        color: isSel || isSibling ? primary : primary.withValues(alpha: 0.35),
+                        width: isSel ? 1.8 : (isSibling ? 1.6 : 0.8),
+                      ),
                     ),
                   ),
                 ),
-              ),
               // Type badge, plus the field's own name once the box is big enough to hold it.
               // A form of any size is unreadable from icons alone — every text field looks
               // identical, so finding "account_number" meant opening each one in turn.
@@ -1004,10 +1033,19 @@ class _FormEditorViewState extends State<FormEditorView>
                     child: Icon(f.type.icon, size: 10, color: Colors.white),
                   ),
                 ),
-              // The group's letter, in the opposite corner to the type badge. This is the cue
-              // that works where the name label cannot: a radio is about 50x25px on screen, far
-              // too narrow for text, so without this its group was invisible on the canvas.
-              if (grouped)
+              // The group's letter. This is the cue that works where the name label cannot: a
+              // radio is far too narrow for text, so without it the grouping is invisible.
+              //
+              // On a toggle it is placed *outside* the field, to its left. A 12pt checkbox is
+              // about the size of the badge itself, so drawing it in the corner covered the very
+              // glyph the author is trying to line up on the page.
+              if (grouped && f.type.isToggle)
+                Positioned(
+                  right: r.width + 3,
+                  top: (r.height - 13) / 2,
+                  child: _groupBadge(f, primary, isSel || isSibling),
+                ),
+              if (grouped && !f.type.isToggle)
                 Align(
                   alignment: Alignment.topRight,
                   child: Container(
@@ -1051,6 +1089,23 @@ class _FormEditorViewState extends State<FormEditorView>
       ),
     );
   }
+
+  /// The group's letter on a coloured chip — A, B, C…
+  ///
+  /// Colour alone is never the only cue: the letter survives a greyscale print and a colour-blind
+  /// reader, which is why grouping is shown this way rather than by tint.
+  Widget _groupBadge(EditorField f, Color primary, bool bright) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 0.5),
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: bright ? 1 : 0.7),
+          borderRadius: BorderRadius.circular(AppRadius.surface),
+        ),
+        child: Text(
+          _groupLetter(f.group),
+          style: const TextStyle(
+              fontSize: 8.5, height: 1.2, color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+      );
 
   /// The field's caption, positioned the way the backend positions it.
   ///
@@ -1181,7 +1236,11 @@ class _FormEditorViewState extends State<FormEditorView>
     // On a text box the handles can sit on the corners. On a 12pt checkbox four 26px dots would
     // bury the thing being edited and overlap each other, so they are pushed out per axis until
     // they clear the field and leave a gap between neighbours.
-    const clearance = 8.0;
+    // 22, not 8: a 12pt toggle is about 22 logical pixels wide and a handle dot is 26, so the
+    // four handles are each larger than the field they surround. With a small gap they close
+    // into a solid cluster and the radio disappears underneath its own controls — which is
+    // exactly what it looked like on device.
+    const clearance = 22.0;
     final outwardX = math.max(0.0, (handleDot + clearance - w) / 2);
     final outwardY = math.max(0.0, (handleDot + clearance - h) / 2);
 
