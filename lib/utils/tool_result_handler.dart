@@ -14,14 +14,18 @@ mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
 
   /// Call on successful tool completion.
   ///
-  /// When the tool produced a file, the confirmation carries a way straight into the next tool.
-  /// Without it the result was a dead end: continuing meant leaving the screen, opening the file
-  /// browser and finding the output again by name.
-  void onToolSuccess(String message, {File? output}) {
+  /// [offerNextTool] adds a shortcut into the next tool. Pass it only when the user is staying
+  /// on this screen: when the tool navigates to the result preview, that screen already carries
+  /// a permanent "use in another tool" button, so the same action in a snackbar is a duplicate —
+  /// and a costly one. An action makes the snackbar long-lived, and the ScaffoldMessenger is
+  /// app-wide, so it re-parents to each screen the user opens next and restarts its timer there.
+  /// On device that read as a success toast that followed you around for minutes, covering the
+  /// bottom of every screen including the primary button beneath it.
+  void onToolSuccess(String message, {File? output, bool offerNextTool = false}) {
     NotificationService.showSnackbar(
       text: message,
       color: Colors.green,
-      action: output == null
+      action: (output == null || !offerNextTool)
           ? null
           : SnackBarAction(
               label: L10n.current.useInAnotherTool,
