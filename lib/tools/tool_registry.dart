@@ -125,14 +125,14 @@ class ToolDef {
 
   /// Opens the file-picker flow for this tool (used from the Tools screen).
   /// Heavy tools first pass through the opt-in rewarded-ad gate.
-  void openPicker(BuildContext context) {
-    CreditGate.run(
+  Future<bool> openPicker(BuildContext context) {
+    return CreditGate.run(
       context,
       creditToolId: creditToolId,
       toolName: localizedName(context),
-      proceed: () {
+      proceed: (routeContext) {
         RecentToolsService().record(id);
-        GoRouter.of(context).pushNamed(
+        GoRouter.of(routeContext).pushNamed(
           AppRoutes.fileManagement.name,
           extra: FileSelectionConfig(
             path: Constants.rootStoragePath,
@@ -151,22 +151,30 @@ class ToolDef {
   /// Opens the tool directly with an already-chosen [files] selection (used by
   /// the file→tool intellisense menu and the incoming-files chooser), skipping
   /// the picker. Heavy tools first pass through the opt-in rewarded-ad gate.
-  void openWithFiles(BuildContext context, List<File> files) async {
+  /// Returns true when the tool was actually opened.
+  ///
+  /// It used to return nothing and be `void … async`, which made every failure invisible: a
+  /// refused upload, a cancelled price dialog and a thrown error all looked identical to the
+  /// caller, and callers used that silence to decide it was safe to drop the selection. The
+  /// result is what lets the caller keep the selection when the user backs out.
+  Future<bool> openWithFiles(BuildContext context, List<File> files) async {
+    // A tool route with no files throws `Bad state: No element` inside the route builder, which
+    // is a red screen rather than the error page. Refuse here, where it can be handled.
+    if (files.isEmpty) return false;
     // Fail fast on files the server would reject for size — before quoting a price or
     // starting a long upload that can only end in an error.
-    if (uploads && !await UploadLimits.ensureWithinLimits(context, files)) return;
-    if (!context.mounted) return;
-    CreditGate.run(
+    if (uploads && !await UploadLimits.ensureWithinLimits(context, files)) return false;
+    if (!context.mounted) return false;
+    return CreditGate.run(
       context,
       creditToolId: creditToolId,
       toolName: localizedName(context),
       files: files, // known here, so the quote includes any size surcharge
-
-      proceed: () {
+      proceed: (routeContext) {
         RecentToolsService().record(id);
         // Pass a fresh, modifiable List<File> — selections come in as
         // unmodifiable lists and some tool views reorder/mutate the list.
-        GoRouter.of(context).pushNamed(
+        GoRouter.of(routeContext).pushNamed(
           route.name,
           extra: <String, dynamic>{'files': List<File>.from(files), ...?extra},
         );

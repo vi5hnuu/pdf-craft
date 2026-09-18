@@ -351,7 +351,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         creditToolId: ToolRegistry.byId('image-to-pdf')?.creditToolId,
         toolName: L10n.current.scanMergeToPdf,
         files: images,
-        proceed: () async {
+        proceed: (_) async {
           bloc.add(ImageToPdfEvent(
             imageToPdf: ImageToPdf(
               outFileName: fileName,

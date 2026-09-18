@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -253,7 +254,7 @@ class _DriveScreenState extends State<DriveScreen> {
                           title: Text(tool.localizedName(context)),
                           onTap: () {
                             Navigator.pop(context);
-                            tool.openWithFiles(context, [local]);
+                            unawaited(tool.openWithFiles(context, [local]));
                           },
                         ))
                     .toList(),

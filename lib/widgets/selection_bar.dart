@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/state/selection/selection_service.dart';
@@ -89,11 +90,21 @@ void showToolsForSelection(BuildContext context) {
                               leading:
                                   Icon(tool.icon, color: tool.category.color),
                               title: Text(tool.localizedName(context)),
-                              onTap: () {
+                              onTap: () async {
+                                // Snapshot before popping: `SelectionService().files` is an
+                                // unmodifiable view of live state, and the bar that owns this
+                                // sheet disappears the moment the selection is cleared.
+                                final selected =
+                                    List<File>.from(SelectionService().files);
                                 Navigator.pop(context);
-                                final selected = SelectionService().files;
-                                SelectionService().clear();
-                                tool.openWithFiles(context, selected);
+                                // The selection is dropped only once the tool has actually
+                                // opened. Clearing first meant backing out of the price dialog
+                                // destroyed a cross-folder selection with no way to get it back
+                                // — and it also unmounted the element this used to route from,
+                                // which is why every priced tool launched from here did nothing.
+                                if (await tool.openWithFiles(context, selected)) {
+                                  SelectionService().clear();
+                                }
                               },
                             ))
                         .toList(),

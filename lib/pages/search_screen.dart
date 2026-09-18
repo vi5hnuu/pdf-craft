@@ -82,7 +82,8 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     SelectionService().removeListener(_onSelectionChanged);
-    SelectionService().clear();
+    // The selection is cross-folder by design, so leaving Search must not wipe a selection
+    // that was made in the Files browser. It is cleared explicitly, or when a tool takes it.
     searchSubject.close();
     bloc.add(const ResetSearchEvent());
     super.dispose();

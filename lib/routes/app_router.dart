@@ -108,8 +108,25 @@ final GlobalKey<NavigatorState> cloudNavigatorKey =
 String? _requireFiles(BuildContext context, GoRouterState state) {
   final extra = state.extra;
   if (extra is! Map || extra['files'] is! List<File>) return AppRoutes.errorRoute.path;
+  // An *empty* list used to pass. Around forty-five route builders then call `.first` on it and
+  // throw `Bad state: No element`, which is a red screen rather than the error page this guard
+  // exists to reach.
+  if ((extra['files'] as List<File>).isEmpty) return AppRoutes.errorRoute.path;
   return null;
 }
+
+/// Place-image carries a single `file` rather than a `files` list, so it needs its own guard —
+/// it had none, and cast `state.extra as Map` straight into a builder that throws on a restored
+/// back stack instead of redirecting to the error page.
+String? _requireImagePlacement(BuildContext context, GoRouterState state) {
+  final extra = state.extra;
+  if (extra is! Map || extra['file'] is! File) return AppRoutes.errorRoute.path;
+  return null;
+}
+
+/// The directory listing casts `state.extra as FileSelectionConfig` unguarded.
+String? _requireSelectionConfig(BuildContext context, GoRouterState state) =>
+    state.extra is FileSelectionConfig ? null : AppRoutes.errorRoute.path;
 
 final GoRouter appRouter = GoRouter(
     debugLogDiagnostics: true,
@@ -447,6 +464,7 @@ final GoRouter appRouter = GoRouter(
         parentNavigatorKey: rootNavigatorKey,
         path: AppRoutes.placeImageRoute.path,
         name: AppRoutes.placeImageRoute.name,
+        redirect: _requireImagePlacement,
         builder: (context, state) {
           final extra = state.extra as Map;
           return PlaceImageView(
@@ -515,6 +533,7 @@ final GoRouter appRouter = GoRouter(
         parentNavigatorKey: rootNavigatorKey,
         path: AppRoutes.batchProcessRoute.path,
         name: AppRoutes.batchProcessRoute.name,
+        redirect: _requireFiles,
         builder: (context, state) {
           final files = (state.extra as Map)['files'] as List<File>;
           return BatchProcessView(files: files);
@@ -800,6 +819,7 @@ final GoRouter appRouter = GoRouter(
                   GoRoute(
                     path: AppRoutes.filesListingRoute.path,
                     name: AppRoutes.filesListingRoute.name,
+                    redirect: _requireSelectionConfig,
                     pageBuilder: (context, state){
                       final config=state.extra as FileSelectionConfig;
                       return CustomTransitionPage<void>(

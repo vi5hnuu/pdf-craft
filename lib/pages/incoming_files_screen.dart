@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -86,7 +87,7 @@ class IncomingFilesScreen extends StatelessWidget {
                     leading: Icon(tool.icon, color: tool.category.color),
                     title: Text(tool.localizedName(context)),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => tool.openWithFiles(context, files),
+                    onTap: () => unawaited(tool.openWithFiles(context, files)),
                   ),
                 )),
           ] else

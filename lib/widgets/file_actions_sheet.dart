@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -185,7 +186,7 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
                     title: Text(tool.localizedName(context)),
                     onTap: () {
                       Navigator.pop(context);
-                      tool.openWithFiles(context, [widget.file]);
+                      unawaited(tool.openWithFiles(context, [widget.file]));
                     },
                   )),
             ],

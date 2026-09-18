@@ -619,8 +619,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   void dispose() {
     if (_browseMode) {
       SelectionService().removeListener(_onSelectionChanged);
-      // Don't leak a cross-folder selection out of the browser.
-      SelectionService().clear();
+      // Deliberately NOT cleared here. The selection is cross-folder by design, and clearing it
+      // on dispose destroyed it the moment the user stepped into Search and back — Search is a
+      // root-level route, so the browser below it is disposed. Back still cancels a selection
+      // (see the PopScope above), and launching a tool consumes it.
     }
     _filterDebouncer.dispose();
     _searchController.dispose();

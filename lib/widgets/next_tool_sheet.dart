@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -80,7 +81,7 @@ class NextToolSheet extends StatelessWidget {
                     subtitle: Text(tool.category.localizedName(context)),
                     onTap: () {
                       Navigator.pop(context);
-                      tool.openWithFiles(context, [file]);
+                      unawaited(tool.openWithFiles(context, [file]));
                     },
                   );
                 },

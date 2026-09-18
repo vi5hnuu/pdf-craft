@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/routes/app_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/credit_service.dart' as credits_service;
 import 'package:pdf_craft/singletons/notification_service.dart';
@@ -20,19 +21,27 @@ import 'package:pdf_craft/utils/upload_limits.dart';
 class CreditGate {
   CreditGate._();
 
-  static Future<void> run(
+  /// Returns true when [proceed] ran, so the caller can tell "the user went ahead" from
+  /// "the user backed out" — previously indistinguishable, which is why callers dropped the
+  /// user's selection before finding out.
+  ///
+  /// [proceed] receives a context that is guaranteed to still be mounted. The caller's own
+  /// context frequently is not: the selection bar's sheet pops before this dialog opens, taking
+  /// the element the caller handed in with it, and routing from a defunct element silently did
+  /// nothing — which is what broke every priced tool launched from a file selection.
+  static Future<bool> run(
     BuildContext context, {
     required String? creditToolId,
     required String toolName,
-    required VoidCallback proceed,
+    required void Function(BuildContext routeContext) proceed,
     /// The files about to be processed, when they are already known. Supplying them lets
     /// the dialog quote the size surcharge the server will actually apply instead of the
     /// bare base price.
     List<File>? files,
   }) async {
     if (creditToolId == null) {
-      proceed();
-      return;
+      proceed(context);
+      return true;
     }
 
     final int sizeBytes = UploadLimits.totalBytes(files);
@@ -44,8 +53,8 @@ class CreditGate {
     final approximate = sizeBytes == 0 && CreditService().hasSizeSurcharge(creditToolId);
 
     if (cost <= 0) {
-      proceed();
-      return;
+      proceed(context);
+      return true;
     }
 
     final balance = CreditService().balance;
@@ -128,6 +137,17 @@ class CreditGate {
       ),
     );
 
-    if (confirmed == true) proceed();
+    if (confirmed != true) return false;
+    // Deliberately NOT the caller's context. The dialog was open for an unbounded time and the
+    // thing that opened it is frequently gone — the selection bar's sheet pops before this
+    // dialog even appears, so routing from the caller's element silently did nothing. Resolving
+    // the root navigator here, after the await, means there is no stale context to reason about.
+    final host = rootNavigatorKey.currentContext;
+    if (host == null) return false;
+    // The lint cannot see that `host` was resolved *after* the await rather than captured
+    // before it; a GlobalKey's currentContext is null when unmounted, and that is checked above.
+    // ignore: use_build_context_synchronously
+    proceed(host);
+    return true;
   }
 }
