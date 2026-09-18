@@ -176,6 +176,8 @@
   "authCreateAccount": "खाता बनाएँ",
   "authSignIn": "साइन इन",
   "authOr": "या",
+  "authContinueAs": "{email} के रूप में जारी रखें",
+  "authUseAnotherAccount": "दूसरा खाता इस्तेमाल करें",
   "authContinueGoogle": "Google से जारी रखें",
   "authHaveAccount": "पहले से खाता है? ",
   "authNoAccount": "खाता नहीं है? ",

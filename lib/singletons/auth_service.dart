@@ -5,7 +5,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:pdf_craft/utils/constants.dart';
+import 'package:pdf_craft/services/cloud/google_drive_service.dart';
+import 'package:pdf_craft/singletons/google_account.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/auth/auth_user.dart';
 import 'package:pdf_craft/services/auth/auth_api.dart';
@@ -149,35 +150,18 @@ class AuthService extends ChangeNotifier {
           email: email, password: password,
           firstName: firstName, lastName: lastName, username: username);
 
-  /// The plugin instance, built once so sign-in and sign-out act on the same session.
+  /// Signs in with Google.
   ///
-  /// serverClientId is what makes `authentication.idToken` non-null: without it the plugin
-  /// looks for a `default_web_client_id` resource that only exists when google-services.json
-  /// carries a type-3 oauth_client. It did not, so every attempt failed on a null token.
-  static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: const ['email'],
-    serverClientId: Constants.googleWebClientId,
-  );
-
-  Future<void> signInWithGoogle() async {
-    // `signIn()` returns the previously chosen account silently whenever one is cached, so
-    // after the first use the picker never appeared again: the account was chosen once and
-    // then reused for ever. Anyone with two Google accounts could not reach the second, and on
-    // a shared device the next person was signed straight into the first person's account.
-    //
-    // signOut() drops the cached account without revoking the grant, so the picker comes back
-    // while a returning user still avoids the full consent screen. disconnect() would also
-    // work but re-asks for consent every time, which is a worse trade for the same result.
-    try {
-      await _googleSignIn.signOut();
-    } catch (_) {
-      // Nothing cached, or Play services unavailable — signIn() below reports it properly.
-    }
-
+  /// [forcePicker] is for an explicit "use a different account": it clears the app's Google
+  /// session first, which is also how any connected Drive session gets dropped. That is
+  /// correct when somebody is deliberately switching account and wrong as a side effect of an
+  /// ordinary login, which is why it is a parameter and not the default — see [GoogleAccount].
+  Future<void> signInWithGoogle({bool forcePicker = false}) async {
     // The account picker is a separate activity; returning from it must not trigger an ad.
     final GoogleSignInAccount? account;
     try {
-      account = await FullScreenAdPolicy().runExternal(() => _googleSignIn.signIn());
+      account = await FullScreenAdPolicy()
+          .runExternal(() => GoogleAccount().signIn(forcePicker: forcePicker));
     } on PlatformException catch (e) {
       // Play services reports a misconfigured project as a bare status code. Untranslated, it
       // surfaced as "Google sign-in failed." and said nothing about the actual cause, which is
@@ -278,11 +262,10 @@ class AuthService extends ChangeNotifier {
     // Sign out of Google too, or the app's own sign-out is a half measure: the cached Google
     // account survives it, so "Continue with Google" immediately signs the same person back in
     // without asking — which on a shared device hands the next person the previous account.
-    try {
-      await _googleSignIn.signOut();
-    } catch (_) {
-      // Never block signing out of the app on Google being unavailable.
-    }
+    // This is app-wide and therefore drops any Drive session as well, which is what signing
+    // out should do.
+    await GoogleAccount().signOut();
+    await GoogleDriveService().forgetSession();
     await _resetToGuest();
   }
 

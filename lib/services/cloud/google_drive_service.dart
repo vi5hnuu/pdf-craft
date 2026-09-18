@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:pdf_craft/singletons/google_account.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:path_provider/path_provider.dart';
 
@@ -16,11 +17,19 @@ class GoogleDriveService {
   GoogleDriveService._();
   factory GoogleDriveService() => _instance;
 
-  // driveFileScope: create/upload files; driveReadonlyScope: list all existing files
-  final _signIn = GoogleSignIn(scopes: [
+  // driveFileScope: create/upload files; driveReadonlyScope: list all existing files.
+  //
+  // Requested incrementally rather than baked into a second GoogleSignIn instance. There is
+  // only one Google session per app — the Android plugin keeps a single client and reconfigures
+  // it on each `init` — so a second instance did not add a session, it silently redefined the
+  // shared one. With Drive's instance constructed last, sign-in lost its serverClientId and
+  // the ID token came back null; the other way round, Drive lost its scopes.
+  static const _driveScopes = [
     drive.DriveApi.driveFileScope,
     drive.DriveApi.driveReadonlyScope,
-  ]);
+  ];
+
+  GoogleSignIn get _signIn => GoogleAccount().client;
 
   GoogleSignInAccount? _currentUser;
   GoogleSignInAccount? get currentUser => _currentUser;
@@ -29,27 +38,42 @@ class GoogleDriveService {
   /// Restores a previous session **silently** — never shows the account picker. Use this when a
   /// screen merely opens (e.g. the Cloud tab); only an explicit user tap should call [signIn].
   Future<GoogleSignInAccount?> restoreSession() async {
-    _currentUser = await _signIn.signInSilently();
+    // Only counts as a restored Drive session if the scopes are already granted; otherwise the
+    // Cloud tab would show itself as connected and then fail on the first request.
+    final account = await GoogleAccount().restore();
+    _currentUser =
+        account != null && await _signIn.canAccessScopes(_driveScopes) ? account : null;
     return _currentUser;
   }
 
-  /// Signs in silently first (restores previous session), then interactively if needed.
-  /// Interactive — call only in response to the user asking to connect Drive.
+  /// Signs in silently first (restores previous session), then interactively if needed, and
+  /// asks for the Drive scopes. Interactive — call only when the user asked to connect Drive.
   Future<GoogleSignInAccount?> signIn() async {
-    _currentUser = await _signIn.signInSilently();
-    _currentUser ??= await _signIn.signIn();
-    return _currentUser;
+    final account = await GoogleAccount().signIn();
+    if (account == null) return _currentUser = null;
+    // Consent for Drive is asked for here, at the point the user opened Cloud — not bundled
+    // into logging in, where a Drive permission prompt is a good way to lose someone.
+    if (!await GoogleAccount().ensureScopes(_driveScopes)) return _currentUser = null;
+    return _currentUser = account;
   }
 
+  /// Signs the app out of Google. App-wide: it ends the account session, not just Drive's use
+  /// of it, so the caller should expect to be signed out everywhere Google is used.
   Future<void> signOut() async {
-    await _signIn.signOut();
+    await GoogleAccount().signOut();
+    _currentUser = null;
+  }
+
+  /// Drops the cached account without touching the Google session — for when something else
+  /// has already ended it and this service would otherwise keep reporting itself as connected.
+  Future<void> forgetSession() async {
     _currentUser = null;
   }
 
   /// Uploads [file] to Google Drive under the folder "PDF Craft" (created if not present).
   /// Returns the uploaded file's Drive ID, or null on failure.
   Future<String?> uploadFile(File file) async {
-    _currentUser ??= await _signIn.signInSilently();
+    _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) throw Exception('Not signed in to Google Drive');
 
     final authClient = await _signIn.authenticatedClient();
@@ -79,7 +103,7 @@ class GoogleDriveService {
 
   /// Returns storage quota info: `limit` and `usage` in bytes as strings.
   Future<drive.About> getStorageQuota() async {
-    _currentUser ??= await _signIn.signInSilently();
+    _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) throw Exception('Not signed in to Google Drive');
     final authClient = await _signIn.authenticatedClient();
     if (authClient == null) throw Exception('Failed to get authenticated Drive client');
@@ -91,7 +115,7 @@ class GoogleDriveService {
 
   /// Deletes a file from the user's Drive by its file ID.
   Future<void> deleteFile(String fileId) async {
-    _currentUser ??= await _signIn.signInSilently();
+    _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) throw Exception('Not signed in to Google Drive');
     final authClient = await _signIn.authenticatedClient();
     if (authClient == null) throw Exception('Failed to get authenticated Drive client');
@@ -103,7 +127,7 @@ class GoogleDriveService {
   /// Downloads a Drive file to the device's temp directory.
   /// [onProgress] is called with values 0.0–1.0 as bytes accumulate.
   Future<File> downloadFile(String fileId, String fileName, {void Function(double)? onProgress}) async {
-    _currentUser ??= await _signIn.signInSilently();
+    _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) throw Exception('Not signed in to Google Drive');
     final authClient = await _signIn.authenticatedClient();
     if (authClient == null) throw Exception('Failed to get authenticated Drive client');
@@ -142,7 +166,7 @@ class GoogleDriveService {
   /// fixed 100 at once. Only the fields the UI needs are requested.
   Future<({List<drive.File> files, String? nextPageToken})> listFiles(
       {String? pageToken}) async {
-    _currentUser ??= await _signIn.signInSilently();
+    _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) return (files: <drive.File>[], nextPageToken: null);
 
     final authClient = await _signIn.authenticatedClient();
