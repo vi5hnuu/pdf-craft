@@ -74,18 +74,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            // uses default Android debug keystore
+            // uses default Android debug keystore, whose SHA-1 is registered against
+            // com.vi5hnu.pdf_craft in the Google Cloud project — so Google Sign-In and Drive
+            // work in debug builds.
             //
-            // Distinct application id so a debug build installs *alongside* a Play release
-            // instead of being refused with INSTALL_FAILED_UPDATE_INCOMPATIBLE (different
-            // signing key). Testing then never means uninstalling the real app, which would
-            // take the user's session and preferences with it.
-            //
-            // Needs its own google-services.json at src/debug/. Google Sign-In and Drive only
-            // work in this variant once an OAuth client exists for the suffixed package name
-            // and the debug SHA-1; everything else runs normally.
-            applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
+            // No applicationIdSuffix: a suffixed id installs alongside a Play release, but it
+            // is a different package name, and Play Services matches (package, signing cert)
+            // against Google's records — so Google Sign-In fails on it with DEVELOPER_ERROR
+            // until a separate OAuth client exists for the suffixed name too. Sharing the real
+            // id keeps Google working; the cost is that a Play-signed build has to be removed
+            // before installing this one.
         }
     }
 }

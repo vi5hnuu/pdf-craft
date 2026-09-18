@@ -50,7 +50,3 @@ docs/audit/
 lib/l10n/generated/
 # Local scratch/sample files handed to the user, not part of the app
 test.json
-
-# Local-only: a debug-variant Firebase config for side-by-side installs. Not a registered
-# Firebase app, so it must not be committed as if it were.
-android/app/src/debug/google-services.json
