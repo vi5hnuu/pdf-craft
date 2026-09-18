@@ -21,6 +21,12 @@ import 'package:pdf_craft/utils/reorder_utils.dart';
 /// thumbnail list, then export. Commits via the existing reorder endpoint, whose
 /// `order` (0-indexed page list) naturally expresses both reorder and deletion
 /// (omitted pages are dropped).
+///
+/// This is the app's only page-arrangement tool. "Reorder Pages" used to sit beside it in the
+/// same category, posting the *same* request to the *same* endpoint with a list layout and no
+/// delete — a strict subset of this screen, differing only in offering an output filename. That
+/// field moved here and the duplicate tile retired; [ToolRegistry.resolveId] keeps anyone's
+/// saved `reorder` favourite or recent pointing at this tool.
 class OrganizePagesView extends StatefulWidget {
   final File file;
   const OrganizePagesView({super.key, required this.file});
@@ -38,6 +44,10 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
   /// entry; reordering permutes it. This list is exactly the reorder `order`.
   List<int> _order = [];
   int _totalPages = 0;
+
+  /// Output file name. Carried over from the retired Reorder tool — it was the one thing that
+  /// screen offered and this one did not, and the name was hardcoded to "organized_file".
+  final _outFileNameC = TextEditingController();
 
   @override
   void initState() {
@@ -76,7 +86,9 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
           reorderPdf: ReorderPdf(
-            outFileName: 'organized_file',
+            outFileName: _outFileNameC.text.trim().isEmpty
+                ? 'organized_file'
+                : _outFileNameC.text.trim(),
             order: List<int>.from(_order),
             file: file,
           ),
@@ -86,6 +98,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
 
   @override
   void dispose() {
+    _outFileNameC.dispose();
     final doc = _doc;
     if (doc != null) {
       PdfPageThumbnail.evictDocument(doc);
@@ -212,11 +225,28 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
-      child: FilledButton.icon(
-        onPressed: loading ? null : _onSave,
-        icon: const Icon(Icons.save_alt),
-        label: Text(L10n.of(context).exportPdf),
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Beside the export button rather than above the grid: the grid is the whole point of
+        // this screen and a text field at the top pushed the first row of thumbnails off.
+        TextField(
+          controller: _outFileNameC,
+          keyboardType: TextInputType.text,
+          decoration: InputDecoration(
+            isDense: true,
+            labelText: L10n.of(context).outputFileName,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: loading ? null : _onSave,
+            icon: const Icon(Icons.save_alt),
+            label: Text(L10n.of(context).exportPdf),
+          ),
+        ),
+      ]),
     );
   }
 }

@@ -827,8 +827,6 @@
   "toolDescMerge": "Combine several PDFs into one file, in the order you choose.",
   "toolNameSplit": "Split PDF",
   "toolDescSplit": "Split a PDF into parts by page ranges, fixed size, or bookmarks.",
-  "toolNameReorder": "Reorder Pages",
-  "toolDescReorder": "Rearrange the pages of a PDF by dragging them.",
   "toolNameOrganize": "Organize Pages",
   "toolDescOrganize": "Visually reorder and delete pages on a thumbnail grid.",
   "toolNameExtractPages": "Extract Pages",

@@ -191,7 +191,6 @@ class ToolRegistry {
     // ---- PDF Tools ----
     ToolDef(id: 'merge', name: 'Merge PDF', icon: Icons.merge, category: ToolCategories.pdf, route: AppRoutes.mergePdfRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: null),
     ToolDef(id: 'split', name: 'Split PDF', icon: Icons.call_split, category: ToolCategories.pdf, route: AppRoutes.splitPdfRoute, extensions: _pdf),
-    ToolDef(id: 'reorder', name: 'Reorder Pages', icon: Icons.swap_vert, category: ToolCategories.pdf, route: AppRoutes.reorderPdfPagesRoute, extensions: _pdf),
     ToolDef(id: 'organize', name: 'Organize Pages', icon: Icons.dashboard_customize_outlined, category: ToolCategories.pdf, route: AppRoutes.organizePagesRoute, extensions: _pdf),
     ToolDef(id: 'extract-pages', name: 'Extract Pages', icon: Icons.content_cut, category: ToolCategories.pdf, route: AppRoutes.extractPagesRoute, extensions: _pdf),
     ToolDef(id: 'delete-pages', name: 'Delete Pages', icon: Icons.delete_outline, category: ToolCategories.pdf, route: AppRoutes.deletePagesRoute, extensions: _pdf),
@@ -326,8 +325,7 @@ class ToolRegistry {
   static const Map<String, String> descriptions = {
     'merge': 'Combine several PDFs into one file, in the order you choose.',
     'split': 'Split a PDF into parts by page ranges, fixed size, or bookmarks.',
-    'reorder': 'Rearrange the pages of a PDF by dragging them.',
-    'organize': 'Visually reorder and delete pages on a thumbnail grid.',
+    'organize': 'Reorder and delete pages on a thumbnail grid, then export.',
     'extract-pages': 'Pick pages to keep and export them as a new PDF.',
     'delete-pages': 'Remove selected pages and keep the rest.',
     'reverse-pages': 'Flip the page order so the last page comes first.',
@@ -393,10 +391,27 @@ class ToolRegistry {
     'img-border': 'Add a coloured border around an image.',
   };
 
-  /// Lookup by stable id (for recents). Returns null if not found.
+  /// Ids of retired tools, mapped to the tool that replaced them.
+  ///
+  /// Tool ids are persisted — favourites and recents are stored as bare id strings — so simply
+  /// deleting a `ToolDef` silently drops whatever the user had pinned. Retiring one means
+  /// forwarding its id instead.
+  ///
+  /// `reorder` merged into `organize`: both posted the same request to the same endpoint, and
+  /// Organize does everything Reorder did plus deleting pages.
+  static const Map<String, String> _retiredIds = {'reorder': 'organize'};
+
+  /// The live id for [id], following any retirement. Unknown ids pass through unchanged.
+  static String resolveId(String id) => _retiredIds[id] ?? id;
+
+  /// Lookup by stable id (for recents and favourites). Returns null if not found.
+  ///
+  /// Resolves retired ids, so a favourite saved against a tool that has since been merged still
+  /// opens the tool that replaced it rather than quietly disappearing from the row.
   static ToolDef? byId(String id) {
+    final live = resolveId(id);
     for (final t in tools) {
-      if (t.id == id) return t;
+      if (t.id == live) return t;
     }
     return null;
   }

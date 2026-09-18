@@ -16,7 +16,6 @@ class AppRoutes{
   static AppRoute fileManagement=AppRoute(name: 'file-management', path: '/file-management');
 
   static AppRoute mergePdfRoute=AppRoute(name: 'merge-pdf-tool', path: '/merge-pdf-tool');
-  static AppRoute reorderPdfPagesRoute=AppRoute(name: 'reorder-pages-pdf-tool', path: '/reorder-pages-pdf-tool');
   static AppRoute organizePagesRoute=AppRoute(name: 'organize-pages-tool', path: '/organize-pages-tool');
   static AppRoute extractPagesRoute=AppRoute(name: 'extract-pages-tool', path: '/extract-pages-tool');
   static AppRoute deletePagesRoute=AppRoute(name: 'delete-pages-tool', path: '/delete-pages-tool');

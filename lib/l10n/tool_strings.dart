@@ -34,7 +34,6 @@ class ToolStrings {
   static String _name(AppLocalizations l, String id) => switch (id) {
         'merge' => l.toolNameMerge,
         'split' => l.toolNameSplit,
-        'reorder' => l.toolNameReorder,
         'organize' => l.toolNameOrganize,
         'extract-pages' => l.toolNameExtractPages,
         'delete-pages' => l.toolNameDeletePages,
@@ -105,7 +104,6 @@ class ToolStrings {
   static String _description(AppLocalizations l, String id) => switch (id) {
         'merge' => l.toolDescMerge,
         'split' => l.toolDescSplit,
-        'reorder' => l.toolDescReorder,
         'organize' => l.toolDescOrganize,
         'extract-pages' => l.toolDescExtractPages,
         'delete-pages' => l.toolDescDeletePages,
@@ -176,7 +174,6 @@ class ToolStrings {
   static const Map<String, String> _english = {
     'merge': 'Merge PDF',
     'split': 'Split PDF',
-    'reorder': 'Reorder Pages',
     'organize': 'Organize Pages',
     'extract-pages': 'Extract Pages',
     'delete-pages': 'Delete Pages',

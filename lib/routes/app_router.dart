@@ -28,7 +28,6 @@ import 'package:pdf_craft/pages/pdf_info_view.dart';
 import 'package:pdf_craft/pages/pdf_to_jpg_view.dart';
 import 'package:pdf_craft/pages/protect_pdf_view.dart';
 import 'package:pdf_craft/pages/repair_pdf_view.dart';
-import 'package:pdf_craft/pages/reorder_pdf_view.dart';
 import 'package:pdf_craft/pages/rotate_pdf_view.dart';
 import 'package:pdf_craft/pages/search_screen.dart';
 import 'package:pdf_craft/pages/recents_screen.dart';
@@ -299,13 +298,6 @@ final GoRouter appRouter = GoRouter(
         name: AppRoutes.mergePdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => MergePdfView(files: (state.extra as Map)['files'] as List<File>),
-      ),
-      GoRoute(
-        redirect: _requireFiles,
-        parentNavigatorKey: rootNavigatorKey,
-        path: AppRoutes.reorderPdfPagesRoute.path,
-        name: AppRoutes.reorderPdfPagesRoute.name,
-        builder: (BuildContext context, GoRouterState state) => ReorderPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         redirect: _requireFiles,

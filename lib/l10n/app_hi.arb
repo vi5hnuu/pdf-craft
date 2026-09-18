@@ -573,8 +573,6 @@
   "toolDescMerge": "कई PDF को अपनी पसंद के क्रम में एक फ़ाइल में जोड़ें।",
   "toolNameSplit": "PDF स्प्लिट करें",
   "toolDescSplit": "PDF को पेज रेंज, तय साइज़ या बुकमार्क के हिसाब से हिस्सों में बाँटें।",
-  "toolNameReorder": "पेज क्रम बदलें",
-  "toolDescReorder": "पेजों को खींचकर PDF का क्रम बदलें।",
   "toolNameOrganize": "पेज व्यवस्थित करें",
   "toolDescOrganize": "थंबनेल ग्रिड पर पेजों का क्रम बदलें और हटाएँ।",
   "toolNameExtractPages": "पेज निकालें",
