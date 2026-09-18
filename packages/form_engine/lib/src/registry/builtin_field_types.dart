@@ -45,6 +45,8 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     defaultPointSize: PointSize(18, 18),
     lockAspect: true,
     isToggle: true,
+    // Grouped in the editor only — see FieldTypeDescriptor.groupable.
+    groupable: true,
   ),
   FieldTypeDescriptor(
     id: FieldTypes.radio,
@@ -53,6 +55,7 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     lockAspect: true,
     isToggle: true,
     isGrouped: true,
+    groupable: true,
   ),
   FieldTypeDescriptor(
     id: FieldTypes.dropdown,

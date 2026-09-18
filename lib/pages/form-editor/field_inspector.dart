@@ -6,6 +6,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:form_engine/form_engine.dart' as engine;
 import 'package:pdf_craft/pages/form-editor/editor_field.dart';
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
+import 'package:pdf_craft/pages/form-editor/field_type_change.dart';
 import 'package:pdf_craft/pages/form-editor/geometry_editor.dart';
 import 'package:pdf_craft/pages/form-editor/options_editor.dart';
 
@@ -35,6 +36,15 @@ class FieldInspector extends StatefulWidget {
   /// The group's letter as shown on the canvas badge, so the author can connect the two.
   final String Function(String group) groupLetter;
 
+  /// The current page's size in points, needed to re-square a field that becomes a toggle.
+  final Size? pagePoints;
+
+  /// The other fields sharing a group, so a radio group's captions can seed a dropdown's options.
+  final Iterable<EditorField> Function(String group) groupSiblings;
+
+  /// Told after a type change so the host can rebuild the canvas and its group colours.
+  final VoidCallback onTypeChanged;
+
   /// Turns a field name typed by the author into a stable reference, resolved against the
   /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
   /// later rename harmless.
@@ -49,6 +59,9 @@ class FieldInspector extends StatefulWidget {
     required this.onAddOption,
     required this.optionsInGroup,
     required this.groupLetter,
+    required this.pagePoints,
+    required this.groupSiblings,
+    required this.onTypeChanged,
   });
 
   @override
@@ -105,16 +118,45 @@ class _FieldInspectorState extends State<FieldInspector> {
       // rather than overflowing.
       child: SingleChildScrollView(
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // The type was read-only text, so "I meant a checkbox, not a radio" meant deleting the
+        // field and placing a new one — losing its name, geometry, label and rules with it.
         Row(children: [
           Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Text(L10n.of(context).typeFieldLabel(f.type.localizedLabel(context)), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Expanded(
+            child: DropdownButtonFormField<FieldType>(
+              initialValue: f.type,
+              isExpanded: true,
+              decoration: InputDecoration(
+                isDense: true,
+                labelText: L10n.of(context).fieldChangeType,
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                for (final group in typeChangeGroups)
+                  for (final t in group)
+                    DropdownMenuItem(
+                      value: t,
+                      child: Row(children: [
+                        Icon(t.icon, size: 16),
+                        const SizedBox(width: 8),
+                        Text(t.localizedLabel(context)),
+                      ]),
+                    ),
+              ],
+              onChanged: (t) => t == null ? null : _changeType(t),
+            ),
+          ),
         ]),
         const SizedBox(height: 12),
         _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
-        if (f.type.isGrouped) ...[
+        if (f.type.groupable) ...[
           _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
-          _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
+          // Only a radio has a meaningful export value — it is the widget's on-state, and one
+          // of them becomes the field's value. A checkbox's is fixed at "Yes" by the backend,
+          // so offering a box for it would be another control that does nothing.
+          if (f.type.isGrouped)
+            _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
           Row(children: [
             Expanded(
               child: Text(
@@ -379,6 +421,41 @@ class _FieldInspectorState extends State<FieldInspector> {
       ]),
       ),
     );
+  }
+
+  /// Converts the field, confirming first when something would be discarded.
+  Future<void> _changeType(FieldType to) async {
+    final f = widget.field;
+    if (f.type == to) return;
+
+    final lost = lossOfChangingType(context, f, to);
+    if (lost.isNotEmpty) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(L10n.of(ctx).fieldChangeType),
+          content: Text(L10n.of(ctx)
+              .fieldChangeTypeWarn(to.localizedLabel(ctx), lost.join(', '))),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(L10n.of(ctx).cancel)),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(L10n.of(ctx).changeAnyway)),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+
+    // A radio group's captions are the obvious source for a choice field's options, so they
+    // survive the conversion rather than having to be retyped.
+    if (f.type.isGrouped && to.hasOptions) {
+      seedOptionsFromGroup(f, widget.groupSiblings(f.group));
+    }
+    setState(() => applyTypeChange(f, to, widget.pagePoints));
+    widget.onTypeChanged();
   }
 
   Widget _sectionTitle(ThemeData theme, String text) => Padding(

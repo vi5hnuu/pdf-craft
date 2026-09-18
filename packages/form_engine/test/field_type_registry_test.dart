@@ -74,6 +74,21 @@ void main() {
     }
   });
 
+  test('checkboxes group in the editor but never in the PDF', () {
+    // A checkbox group is a group to the person filling the form, but the options must stay
+    // independent PDF fields: widgets under one button field share a single /V and would tick
+    // and untick together. Radios are the opposite — the group *is* the field.
+    expect(registry[FieldTypes.checkbox].groupable, isTrue);
+    expect(registry[FieldTypes.checkbox].isGrouped, isFalse,
+        reason: 'a checkbox group must not collapse into one PDF field');
+    expect(registry[FieldTypes.radio].groupable, isTrue);
+    expect(registry[FieldTypes.radio].isGrouped, isTrue);
+    // Nothing else groups.
+    for (final id in [FieldTypes.text, FieldTypes.dropdown, FieldTypes.signature]) {
+      expect(registry[id].groupable, isFalse);
+    }
+  });
+
   test('an unknown type fails loudly instead of dropping the field', () {
     expect(() => registry['barcode'], throwsArgumentError);
     expect(registry.lookup('barcode'), isNull);

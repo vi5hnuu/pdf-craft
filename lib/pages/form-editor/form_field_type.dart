@@ -89,7 +89,11 @@ extension FieldTypeX on FieldType {
   bool get isToggle => _descriptor.isToggle;
   bool get hasOptions => _descriptor.acceptsOptions;
   bool get hasValue => _descriptor.acceptsValue;
+  /// The group name is the PDF field name (radio only).
   bool get isGrouped => _descriptor.isGrouped;
+
+  /// Can be gathered into a named group in the editor (radio and checkbox).
+  bool get groupable => _descriptor.groupable;
 }
 
 /// The field types this app offers. Built once; the engine's registry owns the

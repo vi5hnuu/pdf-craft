@@ -41,8 +41,18 @@ class FieldTypeDescriptor {
   /// Can hold a text value the filler types or that is prefilled.
   final bool acceptsValue;
 
-  /// Part of a radio group, where the group name is the real PDF field name.
+  /// Part of a radio group, where the group name **is** the PDF field name and the options are
+  /// widgets of one field, so only one can be on at a time.
   final bool isGrouped;
+
+  /// Can be gathered into a named group in the editor — shared colour, letter badge and an
+  /// "add another option" affordance.
+  ///
+  /// Broader than [isGrouped] on purpose. A checkbox group is a group to the person filling the
+  /// form ("Diet: veg / vegan / halal") but must stay N independent PDF fields, because widgets
+  /// sharing one button field also share one `/V` and would tick and untick together. So
+  /// checkboxes group here and nowhere else; radios group here *and* in the PDF.
+  final bool groupable;
 
   /// Accepts more than one selected option (a list box rather than a dropdown).
   final bool allowsMultiSelect;
@@ -65,6 +75,7 @@ class FieldTypeDescriptor {
     this.acceptsOptions = false,
     this.acceptsValue = false,
     this.isGrouped = false,
+    this.groupable = false,
     this.isSignature = false,
     this.allowsMultiSelect = false,
     this.defaultFormat = TextFormat.none,

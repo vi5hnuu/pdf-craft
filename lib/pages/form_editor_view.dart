@@ -71,6 +71,9 @@ class _FormEditorViewState extends State<FormEditorView>
   final TransformationController _tc = TransformationController();
   FormDraftStore? _drafts;
 
+  /// The rendered page's size on screen, cached from the canvas's LayoutBuilder.
+  Size? _canvasSize;
+
   /// Live "W x H pt" shown beside the field while it is being dragged or resized.
   ///
   /// Placement was entirely by eye: nothing in the editor ever said how big a field was, so
@@ -425,6 +428,25 @@ class _FormEditorViewState extends State<FormEditorView>
     });
   }
 
+  /// The part of the page currently on screen, in page fractions.
+  ///
+  /// `InteractiveViewer` is constrained, so the scene is exactly the canvas size and the matrix
+  /// is a translate-and-scale of it. Inverting that matrix gives the visible scene rect; dividing
+  /// by the canvas size turns it into the fractions everything else in the editor speaks.
+  /// Null before the canvas has laid out, or when nothing is zoomed.
+  Rect? get _visibleFraction {
+    final canvas = _canvasSize;
+    if (canvas == null || canvas.isEmpty) return null;
+    final visible = MatrixUtils.inverseTransformRect(
+        _tc.value, Offset.zero & canvas);
+    return Rect.fromLTRB(
+      (visible.left / canvas.width).clamp(0.0, 1.0),
+      (visible.top / canvas.height).clamp(0.0, 1.0),
+      (visible.right / canvas.width).clamp(0.0, 1.0),
+      (visible.bottom / canvas.height).clamp(0.0, 1.0),
+    );
+  }
+
   void _addField(FieldType type) {
     final size = type.defaultSizeOn(_pagePoints[_currentPage]);
     // Stack each new field under the previous one instead of nudging it by a fixed step.
@@ -444,6 +466,18 @@ class _FormEditorViewState extends State<FormEditorView>
         if (left + size.width > 1.0) left = 0.12;
       }
     }
+    // Zoomed in, the cascade above can land far outside what the author is looking at — the
+    // field was created and selected but simply never appeared, and the nudge pad then moved
+    // something invisible. Place it in the middle of the visible page instead, unless the
+    // cascade already puts it somewhere on screen.
+    final visible = _visibleFraction;
+    if (visible != null &&
+        !visible.contains(Offset(left + size.width / 2, top + size.height / 2))) {
+      left = visible.center.dx - size.width / 2;
+      top = visible.center.dy - size.height / 2;
+      left = left.clamp(visible.left, math.max(visible.left, visible.right - size.width));
+      top = top.clamp(visible.top, math.max(visible.top, visible.bottom - size.height));
+    }
     _pushUndo();
     left = left.clamp(0.0, 1 - size.width);
     top = top.clamp(0.0, 1 - size.height);
@@ -452,11 +486,12 @@ class _FormEditorViewState extends State<FormEditorView>
         type: type,
         rect: Rect.fromLTWH(left, top, size.width, size.height),
         name: '${type.wire}_$n');
-    if (type.isGrouped) {
-      // Its own group, and its own export value, so a second radio placed later is a
-      // separate question until the author explicitly adds it to this group.
+    if (type.groupable) {
+      // Its own group, so a second toggle placed later is a separate question until the author
+      // explicitly adds it to this one. The export value is the PDF's on-state and only means
+      // anything for a radio; a checkbox's is fixed at "Yes" by the backend.
       field.group = '${type.wire}_group_$n';
-      field.exportValue = 'option_1';
+      if (type.isGrouped) field.exportValue = 'option_1';
     }
     setState(() {
       _fields.add(field);
@@ -501,16 +536,27 @@ class _FormEditorViewState extends State<FormEditorView>
   void _addGroup(FieldType type, List<String> labels) {
     _pushUndo();
     final size = type.defaultSizeOn(_pagePoints[_currentPage]);
+    // Anchored to what the author is looking at, for the same reason _addField is: a group
+    // dropped at a fixed (0.12, 0.2) while zoomed in simply never appeared.
+    final visible = _visibleFraction;
+    final originLeft = visible == null ? 0.12 : visible.left + 0.02;
+    final originTop = visible == null ? 0.2 : visible.top + 0.02;
     final groupName = '${type.wire}_group_${_autoName++}';
     setState(() {
       for (int i = 0; i < labels.length; i++) {
-        final top = (0.2 + i * (size.height + 0.03)).clamp(0.0, 1 - size.height);
-        final f = EditorField(type: type, rect: Rect.fromLTWH(0.12, top, size.width, size.height), name: '${groupName}_${i + 1}');
-        if (type.isGrouped) {
+        final top = (originTop + i * (size.height + 0.03)).clamp(0.0, 1 - size.height);
+        final f = EditorField(
+            type: type,
+            rect: Rect.fromLTWH(originLeft.clamp(0.0, 1 - size.width), top, size.width, size.height),
+            name: '${groupName}_${i + 1}');
+        // Gated on `groupable`, not `isGrouped`. With the narrower gate this whole block was
+        // skipped for checkboxes, so "Check group" silently threw away every label the author
+        // typed into the dialog and produced unnamed, ungrouped boxes.
+        if (type.groupable) {
           f.group = groupName;
-          f.exportValue = labels[i];
           // What the author typed is the caption too — that is what they meant by it.
           f.label = labels[i];
+          if (type.isGrouped) f.exportValue = labels[i];
         }
         _fields.add(f);
         if (i == labels.length - 1) _selectedId = f.id;
@@ -776,8 +822,24 @@ class _FormEditorViewState extends State<FormEditorView>
         final scale = _tc.value.getMaxScaleOnAxis();
         void zoomTo(double target) {
           final clamped = target.clamp(1.0, _maxZoom);
-          setState(() =>
-              _tc.value = Matrix4.identity()..scaleByDouble(clamped, clamped, 1, 1));
+          final canvas = _canvasSize;
+          if (canvas == null || canvas.isEmpty) {
+            setState(() =>
+                _tc.value = Matrix4.identity()..scaleByDouble(clamped, clamped, 1, 1));
+            return;
+          }
+          // Zoom about the centre of what is on screen. Resetting to a pure scale snapped the
+          // page back to its top-left corner on every tap, throwing away wherever the author
+          // had panned to.
+          final focus = MatrixUtils.inverseTransformRect(
+                  _tc.value, Offset.zero & canvas)
+              .center;
+          setState(() {
+            _tc.value = Matrix4.identity()
+              ..translateByDouble(canvas.width / 2, canvas.height / 2, 0, 1)
+              ..scaleByDouble(clamped, clamped, 1, 1)
+              ..translateByDouble(-focus.dx, -focus.dy, 0, 1);
+          });
         }
 
         return Container(
@@ -826,6 +888,10 @@ class _FormEditorViewState extends State<FormEditorView>
         dispH = constraints.maxHeight;
         dispW = dispH * pageAspect;
       }
+      // Cached so field placement can reach it. These are the only numbers that relate scene
+      // coordinates to the page, and _addField had no way to see them — which is why a field
+      // placed while zoomed in landed outside the viewport.
+      _canvasSize = Size(dispW, dispH);
 
       return Center(
         child: SizedBox(
@@ -903,7 +969,7 @@ class _FormEditorViewState extends State<FormEditorView>
   List<String> get _groupOrder {
     final seen = <String>[];
     for (final f in _fields) {
-      if (f.type.isGrouped && f.group.isNotEmpty && !seen.contains(f.group)) {
+      if (f.type.groupable && f.group.isNotEmpty && !seen.contains(f.group)) {
         seen.add(f.group);
       }
     }
@@ -928,7 +994,7 @@ class _FormEditorViewState extends State<FormEditorView>
   Widget _fieldVisual(EditorField f, double dispW, double dispH, ThemeData theme) {
     final r = Rect.fromLTWH(f.rect.left * dispW, f.rect.top * dispH, f.rect.width * dispW, f.rect.height * dispH);
     final isSel = f.id == _selectedId;
-    final grouped = f.type.isGrouped && f.group.isNotEmpty;
+    final grouped = f.type.groupable && f.group.isNotEmpty;
 
     // Grouped fields take their group's colour so membership is visible at a glance; a radio
     // is far too small to carry a readable name, which is why the group used to be invisible
@@ -941,7 +1007,7 @@ class _FormEditorViewState extends State<FormEditorView>
     final isSibling = !isSel &&
         grouped &&
         selected != null &&
-        selected.type.isGrouped &&
+        selected.type.groupable &&
         selected.group == f.group;
 
     // Display pixels per PDF point for this page — the scale the painter needs so a 1pt
@@ -1076,7 +1142,7 @@ class _FormEditorViewState extends State<FormEditorView>
                   padding: EdgeInsets.only(
                       left: f.type.isToggle ? 3 : 16, right: grouped ? 16 : 3, top: 1),
                   child: Text(
-                    f.type.isGrouped && f.group.isNotEmpty ? f.group : f.name,
+                    f.type.groupable && f.group.isNotEmpty ? f.group : f.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -1286,7 +1352,7 @@ class _FormEditorViewState extends State<FormEditorView>
       // Appearance and Rules to find the button — three steps for the single most common thing
       // you do with a radio. On a bank form each option sits beside its own printed label, so
       // the new option appears linked but free and is dragged into place.
-      if (f.type.isGrouped && f.group.isNotEmpty)
+      if (f.type.groupable && f.group.isNotEmpty)
         Positioned(
           left: screenTL.dx - half - outwardX,
           top: screenTL.dy + h - half + outwardY,
@@ -1351,6 +1417,16 @@ class _FormEditorViewState extends State<FormEditorView>
           optionsInGroup: (g) =>
               _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
           groupLetter: _groupLetter,
+          pagePoints: _pagePoints[_currentPage],
+          groupSiblings: (g) => g.isEmpty
+              ? const <EditorField>[]
+              : _fields.where((x) => x.group == g),
+          // A type change alters grouping, colours and the canvas painter, none of which the
+          // sheet owns — so the host rebuilds too, not just the sheet.
+          onTypeChanged: () {
+            setSheetState(() {});
+            setState(() {});
+          },
         ),
       ),
     ).whenComplete(() {
