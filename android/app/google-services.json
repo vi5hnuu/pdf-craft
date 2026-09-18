@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "380531483609-767k5bamdj0s6g1aeqvkn253f7roctau.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vi5hnu.pdf_craft",
+            "certificate_hash": "7de11a6e95ece4e506a8fdb90279c7841396c718"
+          }
+        },
+        {
           "client_id": "380531483609-bbbgli551e1ntnllrhjbklqbrl7ustel.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.vi5hnu.pdf_craft",
             "certificate_hash": "a098a33bfa2b70cc054b139d1ea0222367ab2b14"
+          }
+        },
+        {
+          "client_id": "380531483609-f2m6fep9rlctg2bsfbb1ap6g9ae0lf75.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vi5hnu.pdf_craft",
+            "certificate_hash": "16d8754087677c16782e39ad942f8bc6443867ef"
           }
         },
         {
