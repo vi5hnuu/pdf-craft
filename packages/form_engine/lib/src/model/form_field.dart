@@ -60,6 +60,15 @@ class FormFieldModel {
   /// Point size for [label]. 0 takes the backend's default.
   double labelSize;
 
+  /// Decimal places for a number field. Null takes the backend's default of none.
+  ///
+  /// The backend used to hardcode two decimals with a thousands separator for every number
+  /// field, so a PIN or an account number came out as "123,456.00" and nothing could stop it.
+  int? decimalPlaces;
+
+  /// Group a number's digits with a thousands separator.
+  bool groupDigits;
+
   /// Which side of the field the caption sits on.
   LabelPosition labelPosition;
 
@@ -124,6 +133,8 @@ class FormFieldModel {
     this.recipientId,
     this.label = '',
     this.labelSize = 0,
+    this.decimalPlaces,
+    this.groupDigits = false,
     this.labelPosition = LabelPosition.right,
     this.tooltip = '',
     this.readOnly = false,
@@ -155,6 +166,8 @@ class FormFieldModel {
     String? recipientId,
     String? label,
     double? labelSize,
+    int? decimalPlaces,
+    bool? groupDigits,
     LabelPosition? labelPosition,
     String? tooltip,
     bool? readOnly,
@@ -184,6 +197,8 @@ class FormFieldModel {
         recipientId: recipientId ?? this.recipientId,
         label: label ?? this.label,
         labelSize: labelSize ?? this.labelSize,
+        decimalPlaces: decimalPlaces ?? this.decimalPlaces,
+        groupDigits: groupDigits ?? this.groupDigits,
         labelPosition: labelPosition ?? this.labelPosition,
         tooltip: tooltip ?? this.tooltip,
         readOnly: readOnly ?? this.readOnly,

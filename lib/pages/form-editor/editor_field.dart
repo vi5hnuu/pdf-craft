@@ -49,6 +49,12 @@ class EditorField {
   /// Point size for [label]. 0 lets the backend choose.
   double labelSize = 0;
 
+  /// Decimal places for a number field; null means none.
+  int? decimalPlaces;
+
+  /// Thousands separator for a number field.
+  bool groupDigits = false;
+
   /// Which side of the field the caption sits on.
   engine.LabelPosition labelPosition = engine.LabelPosition.right;
 

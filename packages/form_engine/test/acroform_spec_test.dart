@@ -14,6 +14,44 @@ void main() {
         pageSizes: {1: const PageSizePoints(595, 842)},
       );
 
+  test('numeric bounds and number presentation reach the wire', () {
+    // All four were editor-only: min/max were stored in the draft and enforced only by the
+    // in-app runtime, and the backend formatted every number field to two decimals with a
+    // thousands separator, so a PIN came out as "123,456.00".
+    final specs = mapper.toSpecs(schemaWith([
+      FormFieldModel(
+        id: 'n',
+        typeId: FieldTypes.number,
+        page: 1,
+        rect: const FractionalRect(0.1, 0.1, 0.2, 0.05),
+        name: 'pin',
+        validation: const FieldValidation(min: 1000, max: 9999),
+        decimalPlaces: 0,
+      ),
+    ]));
+
+    expect(specs.single['min'], 1000);
+    expect(specs.single['max'], 9999);
+    expect(specs.single['decimal_places'], 0);
+    expect(specs.single.containsKey('group_digits'), isFalse);
+  });
+
+  test('number presentation is not sent for non-number fields', () {
+    final specs = mapper.toSpecs(schemaWith([
+      FormFieldModel(
+        id: 't',
+        typeId: FieldTypes.text,
+        page: 1,
+        rect: const FractionalRect(0.1, 0.1, 0.2, 0.05),
+        name: 'plain',
+        decimalPlaces: 2,
+        groupDigits: true,
+      ),
+    ]));
+    expect(specs.single.containsKey('decimal_places'), isFalse);
+    expect(specs.single.containsKey('group_digits'), isFalse);
+  });
+
   test('a visible label is sent separately from the tooltip', () {
     // /TU never reaches paper, so a radio group's options were three identical circles in the
     // output with nothing to say which was which.

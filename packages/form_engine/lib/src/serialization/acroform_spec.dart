@@ -86,6 +86,14 @@ class AcroFormSpecMapper {
       if (f.format != TextFormat.none) 'format': f.format.name,
       // Only meaningful on a date field; the backend writes it as the field's format action.
       if (f.dateFormat.isNotEmpty) 'date_format': f.dateFormat,
+      // Numeric bounds and number presentation. Both were editor-only: min/max were stored in
+      // the draft and enforced by the in-app runtime but never sent, and the backend formatted
+      // every number to two decimals regardless.
+      if (f.validation.min != null) 'min': f.validation.min,
+      if (f.validation.max != null) 'max': f.validation.max,
+      if (f.typeId == FieldTypes.number && f.decimalPlaces != null)
+        'decimal_places': f.decimalPlaces,
+      if (f.typeId == FieldTypes.number && f.groupDigits) 'group_digits': true,
       if (f.validation.pattern != null && f.validation.pattern!.isNotEmpty)
         'validation_pattern': f.validation.pattern,
       // Rules travel as ids, but the PDF's own scripts address fields by NAME, so the

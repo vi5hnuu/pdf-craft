@@ -180,7 +180,30 @@ class _FieldInspectorState extends State<FieldInspector> {
             options: f.options,
             onChanged: (v) => f.options = v,
           ),
-        if (f.type.hasValue) _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
+        // A choice field's default has to be one of its own options. As a free-text box a typo
+        // failed silently inside the backend's `catch (Exception ignore)`, so the form simply
+        // opened with nothing selected and no explanation.
+        if (f.type.hasOptions)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: f.options.contains(f.value) ? f.value : null,
+              decoration: InputDecoration(
+                isDense: true,
+                labelText: L10n.of(context).defaultValue,
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                DropdownMenuItem(value: '', child: Text(L10n.of(context).none)),
+                for (final o in f.options)
+                  DropdownMenuItem(value: o, child: Text(o, overflow: TextOverflow.ellipsis)),
+              ],
+              onChanged: (v) => setState(() => f.value = v ?? ''),
+            ),
+          )
+        else if (f.type.hasValue)
+          _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
         if (f.type.hasValue) ...[
           // Presets for the sizes a form actually uses; the box stays for anything else. A bare
           // "0 = auto" number field gave no clue what a sensible value looked like.
@@ -306,7 +329,11 @@ class _FieldInspectorState extends State<FieldInspector> {
         ),
 
         // ── Appearance ────────────────────────────────────────────────────────────
-        if (f.type.hasValue) ...[
+        // Text fields only. A list box has `acceptsValue` too, but the backend's choice-field
+        // branch applies none of these — max length, comb, alignment, pattern, min length and
+        // the calculation were six controls an author could set on a list box that did nothing
+        // whatsoever to the produced PDF.
+        if (f.type.hasValue && !f.type.hasOptions) ...[
           _sectionTitle(theme, L10n.of(context).sectionAppearance),
           _field(_maxLength, L10n.of(context).fieldMaxLength,
               (v) => f.maxLength = int.tryParse(v) ?? 0, keyboard: TextInputType.number),
@@ -335,6 +362,35 @@ class _FieldInspectorState extends State<FieldInspector> {
           // A number field could not be bounded from the UI at all, even though the runtime has
           // always enforced min/max. Shown only for numbers, where a bound means something.
           if (f.type == FieldType.number) ...[
+            // The backend formatted every number to two decimals with a thousands separator, so
+            // a PIN or an account number rendered as "123,456.00" and nothing could stop it.
+            Row(children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  isExpanded: true,
+                  initialValue: f.decimalPlaces ?? 0,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: L10n.of(context).fieldDecimals,
+                    helperText: L10n.of(context).fieldDecimalsHint,
+                    helperMaxLines: 2,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    for (final d in [0, 1, 2, 3, 4])
+                      DropdownMenuItem(value: d, child: Text('$d')),
+                  ],
+                  onChanged: (v) => setState(() => f.decimalPlaces = v ?? 0),
+                ),
+              ),
+            ]),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(L10n.of(context).fieldGroupDigits),
+              value: f.groupDigits,
+              onChanged: (v) => setState(() => f.groupDigits = v),
+            ),
+            const SizedBox(height: 8),
             Row(children: [
               Expanded(
                   child: _field(_minValue, L10n.of(context).fieldMinValue,

@@ -159,6 +159,8 @@ class _FormEditorViewState extends State<FormEditorView>
                 ..checked = f.checked
                 ..label = f.label
                 ..labelSize = f.labelSize
+                ..decimalPlaces = f.decimalPlaces
+                ..groupDigits = f.groupDigits
                 ..labelPosition = f.labelPosition
                 ..tooltip = f.tooltip
                 ..readOnly = f.readOnly
@@ -400,6 +402,8 @@ class _FormEditorViewState extends State<FormEditorView>
       ..label = source.label
       ..labelSize = source.labelSize
       ..labelPosition = source.labelPosition
+      ..decimalPlaces = source.decimalPlaces
+      ..groupDigits = source.groupDigits
       ..tooltip = source.tooltip
       ..readOnly = source.readOnly
       ..maxLength = source.maxLength
@@ -523,6 +527,8 @@ class _FormEditorViewState extends State<FormEditorView>
       // would put "Savings" beside every circle in the group.
       ..labelSize = source.labelSize
       ..labelPosition = source.labelPosition
+      ..decimalPlaces = source.decimalPlaces
+      ..groupDigits = source.groupDigits
       ..required = source.required
       ..tooltip = source.tooltip;
     setState(() {
@@ -1458,6 +1464,8 @@ class _FormEditorViewState extends State<FormEditorView>
           checked: f.checked,
           label: f.label,
           labelSize: f.labelSize,
+          decimalPlaces: f.decimalPlaces,
+          groupDigits: f.groupDigits,
           labelPosition: f.labelPosition,
           tooltip: f.tooltip,
           readOnly: f.readOnly,

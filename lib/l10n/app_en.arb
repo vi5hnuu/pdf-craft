@@ -1706,10 +1706,13 @@
   "restorePurchasesTitle": "Restore purchases",
   "restorePurchasesSub": "Recover credits from a previous purchase",
   "restorePurchasesDone": "Checked for previous purchases.",
+  "fieldDecimals": "Decimal places",
+  "fieldGroupDigits": "Group digits (1,234)",
+  "fieldDecimalsHint": "0 keeps a PIN or account number exactly as typed",
   "fieldMinValue": "Minimum value",
   "fieldMaxValue": "Maximum value",
   "fieldMinLength": "Minimum characters",
-  "fieldFormatBadge": "Validated as {format}",
+  "fieldFormatBadge": "Checked as {format} when filled in this app",
   "@fieldFormatBadge": {
     "placeholders": {
       "format": {
