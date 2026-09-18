@@ -1270,12 +1270,7 @@
   "undoLastRegion": "Undo last region",
   "clearPage": "Clear page",
   "sanitizeIntro": "Remove active and unsafe content before sharing.",
-  "sanitizeWillStrip": "This will strip:",
   "sanitizeUnchanged": "The visible page content is unchanged.",
-  "sanJavascript": "JavaScript",
-  "sanEmbeddedFiles": "Embedded / attached files",
-  "sanActions": "Open & event actions",
-  "sanMetadata": "Document metadata",
   "scalePercent": "Scale: {percent}%",
   "@scalePercent": {
     "placeholders": {
@@ -1300,6 +1295,137 @@
   "addRange": "Add Range",
   "retry": "Retry",
   "noAnalysisAvailable": "No analysis available",
+  "toolNamePermissionInspector": "Permission Inspector",
+  "toolDescPermissionInspector": "See what the document allows: printing, copying, editing and form filling.",
+  "toolNameSecurityScanner": "Security Scanner",
+  "toolDescSecurityScanner": "Find scripts, attachments, outbound links and signatures before you open or forward it.",
+  "toolNameFormInspector": "Form Inspector",
+  "toolDescFormInspector": "List every AcroForm field with its type, value and options.",
+  "toolNameStructureInspector": "Structure Inspector",
+  "toolDescStructureInspector": "Inspect the document skeleton: pages, fonts, resources and catalog flags.",
+  "toolNameObjectExplorer": "Object Explorer",
+  "toolDescObjectExplorer": "Browse the file\u2019s raw PDF objects.",
+  "toolNamePdfToJson": "PDF to JSON",
+  "toolDescPdfToJson": "Export the whole document \u2014 metadata, pages, text and fields \u2014 as JSON.",
+  "inspPermTitle": "Permissions",
+  "inspPermUnencryptedNote": "This PDF is not encrypted, so nothing is enforcing these — every viewer can do all of them.",
+  "inspPermEncryptedNote": "These are enforced by the document's security handler.",
+  "inspPermOwnerAccess": "Opened with owner access",
+  "inspPermPrint": "Printing",
+  "inspPermPrintFaithful": "High-quality printing",
+  "inspPermModify": "Changing the document",
+  "inspPermModifyAnnotations": "Adding or editing comments",
+  "inspPermFillForm": "Filling in forms",
+  "inspPermExtract": "Copying text and images",
+  "inspPermExtractAccessibility": "Copying for accessibility tools",
+  "inspPermAssemble": "Inserting, rotating or deleting pages",
+  "inspEncryption": "Encryption",
+  "inspFilter": "Handler",
+  "inspVersion": "Version",
+  "inspRevision": "Revision",
+  "inspKeyLength": "Key length",
+  "inspEncrypted": "Encrypted",
+  "inspRiskClean": "Nothing notable found",
+  "inspRiskLow": "Minor findings",
+  "inspRiskMedium": "Worth a look",
+  "inspRiskHigh": "Contains active content",
+  "inspFindings": "Findings",
+  "inspExternalLinks": "Outbound links",
+  "inspEmbeddedFiles": "Embedded files",
+  "inspFindingJavascript": "Document JavaScript",
+  "inspFindingOpenAction": "Runs on open",
+  "inspFindingAdditionalActions": "Event actions",
+  "inspFindingEmbeddedFiles": "Attachments",
+  "inspFindingExternalLinks": "Outbound links",
+  "inspFindingAcroForm": "Interactive form",
+  "inspFindingXfa": "Dynamic XFA form",
+  "inspFindingSignatures": "Digital signatures",
+  "inspFindingEncrypted": "Encrypted",
+  "inspFindingAnnotations": "Annotations",
+  "inspDocument": "Document",
+  "inspPdfVersion": "PDF version",
+  "inspPages": "Pages",
+  "inspHasOutline": "Has bookmarks",
+  "inspHasAcroForm": "Has a form",
+  "inspHasStructureTree": "Tagged for accessibility",
+  "inspHasXmp": "Has XMP metadata",
+  "inspPageLayout": "Page layout",
+  "inspPageMode": "Page mode",
+  "inspLanguage": "Language",
+  "inspPageN": "Page {n}",
+  "@inspPageN": {
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
+  "inspSize": "Size",
+  "inspRotation": "Rotation",
+  "inspAnnotations": "Annotations",
+  "inspImages": "Images",
+  "inspFormXObjects": "Form XObjects",
+  "inspFonts": "Fonts",
+  "inspObjectsTotal": "{count} objects",
+  "@inspObjectsTotal": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "inspObjectN": "Object {num} {gen}",
+  "@inspObjectN": {
+    "placeholders": {
+      "num": {
+        "type": "Object"
+      },
+      "gen": {
+        "type": "Object"
+      }
+    }
+  },
+  "inspLoadMore": "Load more",
+  "inspIncludeText": "Include page text",
+  "inspIncludeTextHint": "Extracting text is most of the work on a large document.",
+  "inspFormNoFields": "This PDF has no form fields",
+  "inspFormFieldCount": "{count} fields",
+  "@inspFormFieldCount": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "inspFieldType": "Type",
+  "inspFieldValue": "Value",
+  "inspFieldRequired": "Required",
+  "inspFieldReadOnly": "Read-only",
+  "inspFieldOptions": "Options",
+  "inspFieldPage": "Page",
+  "inspMetadata": "Metadata",
+  "inspTitle": "Title",
+  "inspAuthor": "Author",
+  "inspSubject": "Subject",
+  "inspKeywords": "Keywords",
+  "inspCreator": "Creator",
+  "inspProducer": "Producer",
+  "sanitizeWhatToRemove": "What to remove",
+  "sanitizeJavaScript": "JavaScript",
+  "sanitizeJavaScriptSub": "Scripts that run inside the document",
+  "sanitizeEmbeddedFiles": "Attachments",
+  "sanitizeEmbeddedFilesSub": "Files carried inside the PDF",
+  "sanitizeActions": "Automatic actions",
+  "sanitizeActionsSub": "Anything that runs on open or on an event",
+  "sanitizeMetadata": "Metadata",
+  "sanitizeMetadataSub": "Title, author, producer and XMP",
+  "sanitizeAnnotations": "Annotations",
+  "sanitizeAnnotationsSub": "Comments, highlights and links — this changes how the document looks",
+  "sanitizeExternalLinks": "Outbound links",
+  "sanitizeExternalLinksSub": "Makes web links unclickable",
+  "sanitizeForms": "Form fields",
+  "sanitizeFormsSub": "Removes the interactive form entirely",
+  "sanitizeNothingSelected": "Choose at least one thing to remove",
   "selectPagesToRemove": "Select the pages to remove.",
   "selectPagesToKeep": "Select the pages to keep.",
   "documentProperties": "Document Properties",

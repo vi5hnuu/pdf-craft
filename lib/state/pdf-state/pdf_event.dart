@@ -252,6 +252,22 @@ class AnalyzePdfEvent extends PdfEvent {
   const AnalyzePdfEvent({required this.analyzePdf, super.cancelToken});
 }
 
+/// Runs one of the read-only inspectors.
+///
+/// Parameterised by [url] and [stateKey] rather than split into six near-identical events: the
+/// bloc's handling is the same for all of them — post, store the JSON, report the error.
+class InspectPdfEvent extends PdfEvent {
+  final InspectPdf inspect;
+  final String url;
+  final String stateKey;
+  const InspectPdfEvent({
+    required this.inspect,
+    required this.url,
+    required this.stateKey,
+    super.cancelToken,
+  });
+}
+
 class ReplacePagesEvent extends PdfEvent {
   final ReplacePages replacePages;
   const ReplacePagesEvent({required this.replacePages, super.cancelToken});

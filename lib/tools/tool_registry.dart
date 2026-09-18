@@ -248,6 +248,16 @@ class ToolRegistry {
     ToolDef(id: 'remove-metadata', name: 'Remove Metadata', icon: Icons.cleaning_services_outlined, category: ToolCategories.security, route: AppRoutes.removeMetadataRoute, extensions: _pdf),
     ToolDef(id: 'sanitize', name: 'Sanitize PDF', icon: Icons.security_outlined, category: ToolCategories.security, route: AppRoutes.sanitizePdfRoute, extensions: _pdf, isHeavy: true),
 
+    // ---- Inspectors (read-only: they report on a PDF, they never write one) ----
+    // No credits: they produce no document, and someone checking whether a file is safe to open
+    // should not have to pay to find out.
+    ToolDef(id: 'permission-inspector', name: 'Permission Inspector', icon: Icons.verified_user_outlined, category: ToolCategories.security, route: AppRoutes.permissionInspectorRoute, extensions: _pdf),
+    ToolDef(id: 'security-scanner', name: 'Security Scanner', icon: Icons.policy_outlined, category: ToolCategories.security, route: AppRoutes.securityScannerRoute, extensions: _pdf),
+    ToolDef(id: 'form-inspector', name: 'Form Inspector', icon: Icons.ballot_outlined, category: ToolCategories.security, route: AppRoutes.formInspectorRoute, extensions: _pdf),
+    ToolDef(id: 'structure-inspector', name: 'Structure Inspector', icon: Icons.account_tree_outlined, category: ToolCategories.security, route: AppRoutes.structureInspectorRoute, extensions: _pdf),
+    ToolDef(id: 'object-explorer', name: 'Object Explorer', icon: Icons.data_object, category: ToolCategories.security, route: AppRoutes.objectExplorerRoute, extensions: _pdf),
+    ToolDef(id: 'pdf-to-json', name: 'PDF to JSON', icon: Icons.code, category: ToolCategories.security, route: AppRoutes.pdfToJsonRoute, extensions: _pdf, isHeavy: true),
+
     // ---- Batch ----
     ToolDef(id: 'batch', name: 'Batch Process', icon: Icons.layers, category: ToolCategories.batch, route: AppRoutes.batchProcessRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: null, isHeavy: true),
 
@@ -366,6 +376,12 @@ class ToolRegistry {
     'flatten': 'Fill existing form fields, then flatten them into the page.',
     'remove-metadata': 'Strip identifying metadata from the PDF.',
     'sanitize': 'Remove JavaScript, attachments and actions from the PDF.',
+    'permission-inspector': 'See what the document allows: printing, copying, editing and form filling.',
+    'security-scanner': 'Find scripts, attachments, outbound links and signatures before you open or forward it.',
+    'form-inspector': 'List every AcroForm field with its type, value and options.',
+    'structure-inspector': 'Inspect the document skeleton: pages, fonts, resources and catalog flags.',
+    'object-explorer': "Browse the file's raw PDF objects.",
+    'pdf-to-json': 'Export the whole document — metadata, pages, text and fields — as JSON.',
     'batch': 'Apply one tool to many PDFs at once.',
     'img-compress': 'Compress an image to a smaller JPEG.',
     'img-to-jpg': 'Convert an image to JPEG.',

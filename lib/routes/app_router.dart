@@ -42,6 +42,12 @@ import 'package:pdf_craft/pages/delete_pages_view.dart';
 import 'package:pdf_craft/pages/remove_metadata_view.dart';
 import 'package:pdf_craft/pages/extract_images_view.dart';
 import 'package:pdf_craft/pages/sanitize_pdf_view.dart';
+import 'package:pdf_craft/pages/inspector/permission_inspector_view.dart';
+import 'package:pdf_craft/pages/inspector/security_scanner_view.dart';
+import 'package:pdf_craft/pages/inspector/form_inspector_view.dart';
+import 'package:pdf_craft/pages/inspector/structure_inspector_view.dart';
+import 'package:pdf_craft/pages/inspector/object_explorer_view.dart';
+import 'package:pdf_craft/pages/inspector/pdf_to_json_view.dart';
 import 'package:pdf_craft/pages/split_by_size_view.dart';
 import 'package:pdf_craft/pages/reverse_pages_view.dart';
 import 'package:pdf_craft/pages/mirror_pages_view.dart';
@@ -710,6 +716,50 @@ final GoRouter appRouter = GoRouter(
         path: AppRoutes.analyzePdfRoute.path,
         name: AppRoutes.analyzePdfRoute.name,
         builder: (context, state) => AnalyzePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+
+      // Read-only inspectors — single PDF in, JSON report out. No file is produced.
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.permissionInspectorRoute.path,
+        name: AppRoutes.permissionInspectorRoute.name,
+        builder: (context, state) => PermissionInspectorView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.securityScannerRoute.path,
+        name: AppRoutes.securityScannerRoute.name,
+        builder: (context, state) => SecurityScannerView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.formInspectorRoute.path,
+        name: AppRoutes.formInspectorRoute.name,
+        builder: (context, state) => FormInspectorView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.structureInspectorRoute.path,
+        name: AppRoutes.structureInspectorRoute.name,
+        builder: (context, state) => StructureInspectorView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.objectExplorerRoute.path,
+        name: AppRoutes.objectExplorerRoute.name,
+        builder: (context, state) => ObjectExplorerView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.pdfToJsonRoute.path,
+        name: AppRoutes.pdfToJsonRoute.name,
+        builder: (context, state) => PdfToJsonView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       // Replace Pages — two files
       GoRoute(

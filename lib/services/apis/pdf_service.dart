@@ -40,6 +40,7 @@ import 'package:pdf_craft/models/request/scale_pdf.dart';
 import 'package:pdf_craft/models/request/insert_pdf.dart';
 import 'package:pdf_craft/models/request/extract_embedded_files.dart';
 import 'package:pdf_craft/models/request/analyze_pdf.dart';
+import 'package:pdf_craft/models/request/inspect_pdf.dart';
 import 'package:pdf_craft/models/request/replace_pages.dart';
 import 'package:pdf_craft/models/request/extract_fonts.dart';
 import 'package:pdf_craft/models/request/rotate_image.dart';
@@ -74,6 +75,13 @@ class PdfService {
   static String get _insertPdf => "${Constants.baseUrl}/pdf-studio/insert-pdf";
   static String get _extractEmbedded => "${Constants.baseUrl}/pdf-studio/extract-embedded-files";
   static String get _analyzePdf => "${Constants.baseUrl}/pdf-studio/analyze-pdf";
+
+  // Read-only inspectors: JSON in, JSON out, no download.
+  static String get inspectPermissions => "${Constants.baseUrl}/pdf-studio/inspect-permissions";
+  static String get scanSecurity => "${Constants.baseUrl}/pdf-studio/scan-security";
+  static String get inspectStructure => "${Constants.baseUrl}/pdf-studio/inspect-structure";
+  static String get exploreObjects => "${Constants.baseUrl}/pdf-studio/explore-objects";
+  static String get pdfToJson => "${Constants.baseUrl}/pdf-studio/pdf-to-json";
   static String get _replacePages => "${Constants.baseUrl}/pdf-studio/replace-pages";
   static String get _extractFonts => "${Constants.baseUrl}/pdf-studio/extract-fonts";
   static String get _editBookmarks => "${Constants.baseUrl}/pdf-studio/edit-bookmarks";
@@ -312,6 +320,18 @@ class PdfService {
 
   Future<Response<Uint8List>> extractEmbeddedFiles({required ExtractEmbeddedFiles req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_extractEmbedded, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  /// Posts a PDF to one of the read-only inspectors and returns its JSON report.
+  ///
+  /// [url] is one of the inspector getters above. One method rather than six identical ones: the
+  /// endpoints take the same multipart body and differ only in the URL and the query.
+  Future<Response<dynamic>> inspectPdf({required String url, required InspectPdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(url,
+        data: FormData.fromMap(req.toJson()),
+        queryParameters: req.query.isEmpty ? null : req.query,
+        cancelToken: cancelToken,
+        onSendProgress: onSendProgress);
   }
 
   /// Returns a JSON analysis report — not a file download.

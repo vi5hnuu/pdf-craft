@@ -47,6 +47,14 @@ class HttpStates{
   static const String flipImage="FLIP_IMAGE";
   static const String borderImage="BORDER_IMAGE";
   static const String getFormFields="GET_FORM_FIELDS";
+
+  // Read-only inspectors. Each keeps its own state key so two of them open at once do not
+  // overwrite each other's report.
+  static const String inspectPermissions="INSPECT_PERMISSIONS";
+  static const String scanSecurity="SCAN_SECURITY";
+  static const String inspectStructure="INSPECT_STRUCTURE";
+  static const String exploreObjects="EXPLORE_OBJECTS";
+  static const String pdfToJson="PDF_TO_JSON";
   static const String fillFlatten="FILL_FLATTEN";
   static const String getBookmarks="GET_BOOKMARKS";
   static const String editBookmarks="EDIT_BOOKMARKS";

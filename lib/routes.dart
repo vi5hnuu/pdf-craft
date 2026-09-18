@@ -31,6 +31,14 @@ class AppRoutes{
   static AppRoute insertPdfRoute=AppRoute(name: 'insert-pdf-tool', path: '/insert-pdf-tool');
   static AppRoute extractEmbeddedRoute=AppRoute(name: 'extract-embedded-tool', path: '/extract-embedded-tool');
   static AppRoute analyzePdfRoute=AppRoute(name: 'analyze-pdf-tool', path: '/analyze-pdf-tool');
+
+  // Read-only inspectors — they report on a PDF rather than producing one.
+  static AppRoute permissionInspectorRoute=AppRoute(name: 'permission-inspector-tool', path: '/permission-inspector-tool');
+  static AppRoute securityScannerRoute=AppRoute(name: 'security-scanner-tool', path: '/security-scanner-tool');
+  static AppRoute formInspectorRoute=AppRoute(name: 'form-inspector-tool', path: '/form-inspector-tool');
+  static AppRoute structureInspectorRoute=AppRoute(name: 'structure-inspector-tool', path: '/structure-inspector-tool');
+  static AppRoute objectExplorerRoute=AppRoute(name: 'object-explorer-tool', path: '/object-explorer-tool');
+  static AppRoute pdfToJsonRoute=AppRoute(name: 'pdf-to-json-tool', path: '/pdf-to-json-tool');
   static AppRoute replacePagesRoute=AppRoute(name: 'replace-pages-tool', path: '/replace-pages-tool');
   static AppRoute extractFontsRoute=AppRoute(name: 'extract-fonts-tool', path: '/extract-fonts-tool');
   static AppRoute rotateImageRoute=AppRoute(name: 'rotate-image-tool', path: '/rotate-image-tool');
