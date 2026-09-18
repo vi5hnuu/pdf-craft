@@ -180,6 +180,37 @@
       }
     }
   },
+  "driveMyDrive": "My Drive",
+  "driveSearchHint": "Search your Drive",
+  "driveNewFolder": "New folder",
+  "driveFolderName": "Folder name",
+  "driveFolderCreated": "Folder created",
+  "driveDeleted": "Moved to Drive trash",
+  "driveDeleteFailed": "Could not delete: {error}",
+  "@driveDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveNoResults": "No files match \"{query}\"",
+  "@driveNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "driveEmptyFolder": "This folder is empty",
+  "driveExportsAs": "Will be downloaded as {format}",
+  "@driveExportsAs": {
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
   "driveNoFiles": "No files in your Drive",
   "driveNoFilesOfType": "No {type} found",
   "@driveNoFilesOfType": {

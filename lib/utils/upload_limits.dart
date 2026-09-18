@@ -72,7 +72,14 @@ class UploadLimits {
     ]);
     if (violation == null) return true;
     if (!context.mounted) return false;
+    await explain(context, violation);
+    return false;
+  }
 
+  /// Shows [violation] to the user. Public so a caller that knows a file's size *before* it has
+  /// the file — the Drive screen, which is told the size by the API — can refuse it without
+  /// spending the download first.
+  static Future<void> explain(BuildContext context, UploadViolation violation) async {
     final size = Utility.bytesToSize(violation.bytes);
     final limit = Utility.bytesToSize(violation.limit);
     await showDialog<void>(
@@ -88,6 +95,5 @@ class UploadLimits {
         ],
       ),
     );
-    return false;
   }
 }

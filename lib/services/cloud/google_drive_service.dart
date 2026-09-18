@@ -72,7 +72,9 @@ class GoogleDriveService {
 
   /// Uploads [file] to Google Drive under the folder "PDF Craft" (created if not present).
   /// Returns the uploaded file's Drive ID, or null on failure.
-  Future<String?> uploadFile(File file) async {
+  /// Uploads [file]. With [parentId] it lands in that folder; without one it goes to the app's
+  /// own "PDF Craft" folder, which is where every upload used to go with no way to choose.
+  Future<String?> uploadFile(File file, {String? parentId}) async {
     _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) throw Exception('Not signed in to Google Drive');
 
@@ -81,8 +83,7 @@ class GoogleDriveService {
 
     final api = drive.DriveApi(authClient);
 
-    // Find or create "PDF Craft" folder in Drive root
-    final folderId = await _ensureFolder(api, 'PDF Craft');
+    final folderId = parentId ?? await _ensureFolder(api, 'PDF Craft');
 
     final fileName = file.path.split('/').last;
 
@@ -113,76 +114,190 @@ class GoogleDriveService {
     return about;
   }
 
-  /// Deletes a file from the user's Drive by its file ID.
+  /// Moves a Drive file to the trash.
+  ///
+  /// Deliberately a trash, not `files.delete`: `delete` is irreversible and this app is not the
+  /// owner of the user's Drive. Trashed files are restorable from Drive itself for 30 days, which
+  /// is what someone tapping Delete in a PDF toolbox expects. (This method had no call sites at
+  /// all before now, so nothing depended on the destructive behaviour.)
   Future<void> deleteFile(String fileId) async {
     _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) throw Exception('Not signed in to Google Drive');
     final authClient = await _signIn.authenticatedClient();
     if (authClient == null) throw Exception('Failed to get authenticated Drive client');
-    final api = drive.DriveApi(authClient);
-    await api.files.delete(fileId);
-    authClient.close();
+    try {
+      await drive.DriveApi(authClient)
+          .files
+          .update(drive.File()..trashed = true, fileId);
+    } finally {
+      authClient.close();
+    }
   }
 
   /// Downloads a Drive file to the device's temp directory.
   /// [onProgress] is called with values 0.0–1.0 as bytes accumulate.
-  Future<File> downloadFile(String fileId, String fileName, {void Function(double)? onProgress}) async {
+  Future<File> downloadFile(String fileId, String fileName,
+      {void Function(double)? onProgress, String? exportMime}) async {
     _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) throw Exception('Not signed in to Google Drive');
     final authClient = await _signIn.authenticatedClient();
     if (authClient == null) throw Exception('Failed to get authenticated Drive client');
 
     final api = drive.DriveApi(authClient);
-    final media = await api.files.get(
-      fileId,
-      downloadOptions: drive.DownloadOptions.fullMedia,
-    ) as drive.Media;
+
+    // Google-native documents have no binary content, so `fullMedia` 403s on them. They are
+    // exported instead — previously they were listed (and surfaced by the "docs" filter) while
+    // every attempt to open one failed with an unexplained error.
+    final drive.Media media;
+    var name = fileName;
+    if (exportMime != null) {
+      media = await api.files.export(fileId, exportMime,
+          downloadOptions: drive.DownloadOptions.fullMedia) as drive.Media;
+      if (exportMime == 'application/pdf' && !name.toLowerCase().endsWith('.pdf')) {
+        name = '$name.pdf';
+      }
+    } else {
+      media = await api.files.get(
+        fileId,
+        downloadOptions: drive.DownloadOptions.fullMedia,
+      ) as drive.Media;
+    }
 
     final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/$fileName');
+    final file = File('${dir.path}/$name');
     final sink = file.openWrite();
 
-    final chunks = <int>[];
+    // Bytes are counted, not accumulated. The old version kept every chunk in a `chunks` list
+    // purely to compute progress while *also* streaming to the sink, so a large PDF was held
+    // twice in memory for no benefit.
+    var received = 0;
     final total = media.length ?? 0;
 
-    await for (final chunk in media.stream) {
-      chunks.addAll(chunk);
-      sink.add(chunk);
-      if (onProgress != null && total > 0) {
-        onProgress(chunks.length / total);
+    try {
+      await for (final chunk in media.stream) {
+        received += chunk.length;
+        sink.add(chunk);
+        if (onProgress != null && total > 0) onProgress(received / total);
       }
+      await sink.flush();
+    } finally {
+      await sink.close();
+      authClient.close();
     }
-    await sink.flush();
-    await sink.close();
-    authClient.close();
     return file;
   }
 
-  /// Lists a page of files in the user's Drive (not trashed), newest first.
+  /// Renames a Drive file. There was no rename anywhere, despite files.update being available.
+  Future<void> renameFile(String fileId, String newName) async {
+    final authClient = await _signIn.authenticatedClient();
+    if (authClient == null) throw Exception('Failed to get authenticated Drive client');
+    try {
+      await drive.DriveApi(authClient)
+          .files
+          .update(drive.File()..name = newName, fileId);
+    } finally {
+      authClient.close();
+    }
+  }
+
+  /// Lists a page of the user's Drive.
   ///
-  /// Returns the page's files plus a [nextPageToken] (null when there are no
-  /// more pages). Pass the token back in [pageToken] to fetch the next page —
-  /// this lets the UI lazily page through large Drives instead of fetching a
-  /// fixed 100 at once. Only the fields the UI needs are requested.
-  Future<({List<drive.File> files, String? nextPageToken})> listFiles(
-      {String? pageToken}) async {
+  /// [folderId] scopes the listing to one folder ('root' for the top level); null lists
+  /// everything, newest first, which is the "all files" view. [query] is a name search, run
+  /// server-side rather than by filtering the current page — the old client-side chips could
+  /// only ever match what had already been paged in.
+  ///
+  /// Folders are included when a [folderId] is given, so the listing can be browsed. They used
+  /// to be excluded unconditionally by the query, which is why the screen was a single flat
+  /// list with no way into a folder.
+  Future<({List<drive.File> files, String? nextPageToken})> listFiles({
+    String? pageToken,
+    String? folderId,
+    String? query,
+  }) async {
     _currentUser ??= await GoogleAccount().restore();
     if (_currentUser == null) return (files: <drive.File>[], nextPageToken: null);
 
     final authClient = await _signIn.authenticatedClient();
     if (authClient == null) return (files: <drive.File>[], nextPageToken: null);
 
+    final searching = query != null && query.trim().isNotEmpty;
+    final clauses = <String>['trashed = false'];
+    if (folderId != null) {
+      clauses.add("'${_escape(folderId)}' in parents");
+    } else if (!searching) {
+      // The flat "recent" view stays file-only: folders have no modified-time ordering that
+      // means anything to the user there. A *search*, though, should be able to turn up a
+      // folder by name.
+      clauses.add("mimeType != 'application/vnd.google-apps.folder'");
+    }
+    if (searching) {
+      clauses.add("name contains '${_escape(query.trim())}'");
+    }
+
     final api = drive.DriveApi(authClient);
     final result = await api.files.list(
-      q: "trashed = false and mimeType != 'application/vnd.google-apps.folder'",
-      $fields: 'nextPageToken, files(id, name, size, modifiedTime, mimeType)',
-      orderBy: 'modifiedTime desc',
+      q: clauses.join(' and '),
+      // thumbnailLink was not requested at all, which is why every card fell back to a generic
+      // MIME icon. iconLink is Drive's own per-type icon and a good fallback.
+      $fields: 'nextPageToken, files(id, name, size, modifiedTime, mimeType, '
+          'thumbnailLink, iconLink, starred)',
+      // Folders first inside a folder, so browsing reads like a file manager.
+      orderBy: folderId == null ? 'modifiedTime desc' : 'folder,name',
       pageSize: 50,
       pageToken: pageToken,
     );
 
     authClient.close();
     return (files: result.files ?? <drive.File>[], nextPageToken: result.nextPageToken);
+  }
+
+  /// Escapes a value for a Drive `q` string literal.
+  ///
+  /// Drive's query language delimits literals with single quotes and escapes them with a
+  /// backslash. Without this a folder or a search for `John's` produces a malformed query and
+  /// the call fails with a 400 — which the screen would have reported as "failed to load".
+  static String _escape(String v) =>
+      v.replaceAll('\\', r'\\').replaceAll("'", "\\'");
+
+  /// True when [f] is a Drive folder.
+  static bool isFolder(drive.File f) =>
+      f.mimeType == 'application/vnd.google-apps.folder';
+
+  /// True when [f] is a Google-native document, which cannot be downloaded with `fullMedia`.
+  ///
+  /// These were listed — and actively surfaced by the "docs" filter chip — while every attempt
+  /// to open one failed with a 403, because Docs/Sheets/Slides have no binary content to fetch.
+  /// They have to be exported to a concrete format instead.
+  static bool isGoogleNative(drive.File f) =>
+      (f.mimeType ?? '').startsWith('application/vnd.google-apps.') && !isFolder(f);
+
+  /// The export MIME type to use for a Google-native file, or null if it is not exportable.
+  static String? exportMimeFor(drive.File f) => switch (f.mimeType) {
+        'application/vnd.google-apps.document' => 'application/pdf',
+        'application/vnd.google-apps.spreadsheet' => 'application/pdf',
+        'application/vnd.google-apps.presentation' => 'application/pdf',
+        'application/vnd.google-apps.drawing' => 'application/pdf',
+        _ => null,
+      };
+
+  /// Creates a folder, optionally inside [parentId]. Returns the new folder's id.
+  ///
+  /// Uploads have always been able to create the app's own folder via [_ensureFolder]; the
+  /// screen had no way to make one, because it could not show folders at all.
+  Future<String> createFolder(String name, {String? parentId}) async {
+    final authClient = await _signIn.authenticatedClient();
+    if (authClient == null) throw Exception('Failed to get authenticated Drive client');
+    try {
+      final folder = drive.File()
+        ..name = name
+        ..mimeType = 'application/vnd.google-apps.folder'
+        ..parents = parentId != null ? [parentId] : null;
+      final created = await drive.DriveApi(authClient).files.create(folder);
+      return created.id!;
+    } finally {
+      authClient.close();
+    }
   }
 
   /// Ensures the named folder exists in Drive root. Returns its folder ID.
