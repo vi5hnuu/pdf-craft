@@ -440,6 +440,8 @@
       }
     }
   },
+  "creditsAdLoading": "Loading an ad — try again in a moment",
+  "creditsRewardUnconfirmed": "Couldn't confirm your reward. Check your connection and try again.",
   "creditsAlreadyClaimed": "Already claimed today. Come back tomorrow.",
   "creditsEarned": "Earned +{count} credits!",
   "@creditsEarned": {

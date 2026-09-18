@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
@@ -26,6 +27,9 @@ class ResultsScreen extends StatefulWidget {
 }
 
 class _ResultsScreenState extends State<ResultsScreen> {
+  /// Row index the inline ad occupies. Far enough down that the first screenful is all results.
+  static const _adAfterRow = 4;
+
   List<File>? _files; // null while loading
 
   @override
@@ -139,10 +143,20 @@ class _ResultsScreenState extends State<ResultsScreen> {
               ? _buildEmpty(theme)
               : RefreshIndicator(
                   onRefresh: _load,
+                  // One inline unit after the first handful of rows, so it reads as a row in
+                  // a list the user is already scrolling rather than an interruption. Placed
+                  // only once, and only when the list is long enough for it not to dominate.
                   child: ListView.builder(
-                    itemCount: files.length,
+                    itemCount: files.length + (files.length >= _adAfterRow ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final file = files[index];
+                      if (files.length >= _adAfterRow && index == _adAfterRow) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: BannerAdd(),
+                        );
+                      }
+                      final file = files[
+                          files.length >= _adAfterRow && index > _adAfterRow ? index - 1 : index];
                       return FileTile(
                         file: file,
                         onPress: () => _open(file),

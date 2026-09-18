@@ -250,6 +250,8 @@
   "creditsOneTime": "एक बार की खरीदारी",
   "creditsAvailableSoon": "जल्द उपलब्ध",
   "creditsClaimed": "+{count} क्रेडिट मिल गए!",
+  "creditsAdLoading": "विज्ञापन लोड हो रहा है — थोड़ी देर बाद फिर कोशिश करें",
+  "creditsRewardUnconfirmed": "आपका इनाम पुष्ट नहीं हो सका. कनेक्शन जाँचें और फिर कोशिश करें.",
   "creditsAlreadyClaimed": "आज के क्रेडिट ले चुके हैं। कल फिर आएँ।",
   "creditsEarned": "+{count} क्रेडिट कमाए!",
   "creditsThanksWatching": "देखने के लिए धन्यवाद — आपके क्रेडिट जल्द ही दिखेंगे।",

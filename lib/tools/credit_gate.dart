@@ -107,12 +107,18 @@ class CreditGate {
               onPressed: () {
                 Navigator.of(ctx).pop(false);
                 RewardedInterstitialAdManager().show(
-                  onRewardEarned: () {
-                    // The credit itself is granted server-side from AdMob's
-                    // verification callback, so refresh rather than adding locally.
-                    credits_service.CreditService().refreshBalance();
+                  onRewardEarned: () async {
+                    // The credit is granted server-side from AdMob's verification callback, so
+                    // this waits for the balance to move rather than asserting it has. It used
+                    // to announce the reward immediately and unconditionally, which was simply
+                    // untrue whenever the callback did not arrive.
+                    final granted =
+                        await credits_service.CreditService().awaitRewardedCredits();
                     NotificationService.showSnackbar(
-                        text: L10n.current.gateAdReward, color: Colors.green);
+                        text: granted > 0
+                            ? L10n.current.gateAdReward
+                            : L10n.current.creditsRewardUnconfirmed,
+                        color: granted > 0 ? Colors.green : Colors.orange);
                   },
                   onUnavailable: () => NotificationService.showSnackbar(
                       text: L10n.current.gateAdUnavailable, color: Colors.orange),
