@@ -75,6 +75,17 @@ android {
         }
         debug {
             // uses default Android debug keystore
+            //
+            // Distinct application id so a debug build installs *alongside* a Play release
+            // instead of being refused with INSTALL_FAILED_UPDATE_INCOMPATIBLE (different
+            // signing key). Testing then never means uninstalling the real app, which would
+            // take the user's session and preferences with it.
+            //
+            // Needs its own google-services.json at src/debug/. Google Sign-In and Drive only
+            // work in this variant once an OAuth client exists for the suffixed package name
+            // and the debug SHA-1; everything else runs normally.
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
         }
     }
 }

@@ -269,6 +269,11 @@ class _AuthScreenState extends State<AuthScreen> {
           side: BorderSide(color: theme.dividerColor),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
+          // Neutral, not the theme's primary. An OutlinedButton tints its label with the
+          // primary colour by default, which made "Continue with Google" the same red as the
+          // Sign in button below it — two things competing to look like the main action, and
+          // against Google's own guidance that the label stay neutral.
+          foregroundColor: cs.onSurface,
         ),
         onPressed: _busy ? null : () => _google(),
         // Without a busy state this button looked idle while the account picker was opening,
