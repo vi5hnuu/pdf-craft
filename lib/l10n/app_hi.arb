@@ -17,6 +17,7 @@
   "seeMore": "और देखें",
   "favorites": "पसंदीदा",
   "recent": "हाल की",
+  "toolsAvailable": "{count} टूल उपलब्ध",
   "applyATool": "टूल इस्तेमाल करें",
   "outputFileName": "आउटपुट फ़ाइल का नाम",
   "actionOpen": "खोलें",

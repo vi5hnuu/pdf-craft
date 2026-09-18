@@ -17,6 +17,8 @@
   "seeMore": "See more",
   "favorites": "Favorites",
   "recent": "Recent",
+  "toolsAvailable": "{count} tools available",
+  "@toolsAvailable": {"placeholders": {"count": {"type": "int"}}},
   "applyATool": "Apply a tool",
   "outputFileName": "Output File Name",
   "actionOpen": "Open",

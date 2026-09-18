@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/widgets/tool_picker_sheet.dart';
 
 /// Offers the tools that can be applied to a file the user is already looking at.
 ///
@@ -11,85 +11,20 @@ import 'package:pdf_craft/tools/tool_registry.dart';
 /// meant leaving the screen, opening the file browser and finding the output again by name. The
 /// registry already knows which tools accept which file types, and [ToolDef.openWithFiles] already
 /// launches one with a file in hand — this just puts that within reach of the result itself.
-class NextToolSheet extends StatelessWidget {
-  final File file;
+class NextToolSheet {
+  NextToolSheet._();
 
-  const NextToolSheet({super.key, required this.file});
-
-  /// Presents the sheet. Does nothing if no tool accepts this file.
+  /// Presents the shared tool picker for [file].
+  ///
+  /// This used to be its own flat, unsearchable list — one of four such implementations. The
+  /// picker it now delegates to has search, category grouping and favourites/recents, which
+  /// matters because a single PDF matches 47 of the 61 tools.
   static Future<void> show(BuildContext context, File file) {
-    return showModalBottomSheet<void>(
-      context: context,
-      // Without this the sheet runs under the status bar and the display cutout —
-      // on a punch-hole phone the top of a tall sheet sits behind the camera.
-      useSafeArea: true,
-      isScrollControlled: true,
-      builder: (_) => NextToolSheet(file: file),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final tools = ToolRegistry.toolsForSelection([file]);
-
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(L10n.of(context).nextToolTitle,
-                          style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 2),
-                      Text(
-                        file.path.split('/').last,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          if (tools.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(L10n.of(context).nextToolNone,
-                  style: theme.textTheme.bodyMedium),
-            )
-          else
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: tools.length,
-                itemBuilder: (context, index) {
-                  final tool = tools[index];
-                  return ListTile(
-                    leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.localizedName(context)),
-                    subtitle: Text(tool.category.localizedName(context)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      unawaited(tool.openWithFiles(context, [file]));
-                    },
-                  );
-                },
-              ),
-            ),
-          const SizedBox(height: 8),
-        ],
-      ),
+    return ToolPickerSheet.show(
+      context,
+      files: [file],
+      subtitle: file.path.split('/').last,
+      onSelected: (tool) => unawaited(tool.openWithFiles(context, [file])),
     );
   }
 }

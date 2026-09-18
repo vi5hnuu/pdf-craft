@@ -10,6 +10,7 @@ import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/widgets/tool_picker_sheet.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/utility.dart';
@@ -226,43 +227,11 @@ class _DriveScreenState extends State<DriveScreen> {
       NotificationService.showSnackbar(text: L10n.current.driveNoToolsForType, color: Colors.orange);
       return;
     }
-    showModalBottomSheet(
-      context: context,
-      // Without this the sheet runs under the status bar and the display cutout —
-      // on a punch-hole phone the top of a tall sheet sits behind the camera.
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(L10n.of(context).applyATool,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: tools
-                    .map((tool) => ListTile(
-                          leading: Icon(tool.icon, color: tool.category.color),
-                          title: Text(tool.localizedName(context)),
-                          onTap: () {
-                            Navigator.pop(context);
-                            unawaited(tool.openWithFiles(context, [local]));
-                          },
-                        ))
-                    .toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
+    ToolPickerSheet.show(
+      context,
+      files: [local],
+      subtitle: local.path.split('/').last,
+      onSelected: (tool) => unawaited(tool.openWithFiles(context, [local])),
     );
   }
 

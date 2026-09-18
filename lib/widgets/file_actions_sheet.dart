@@ -9,6 +9,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/favorites_service.dart';
 import 'package:pdf_craft/state/selection/selection_service.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/widgets/tool_picker_sheet.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:share_plus/share_plus.dart';
@@ -170,25 +171,26 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
                   _openExternally();
                 },
               ),
+            // One row into the shared picker rather than 47 tiles inlined here. This sheet also
+            // carries rename, share and the rest, so the tool list used to bury them.
             if (tools.isNotEmpty) ...[
               const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text(L10n.of(context).applyATool,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome_motion_outlined),
+                title: Text(L10n.of(context).applyATool),
+                subtitle: Text(L10n.of(context).toolsAvailable(tools.length)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.pop(context);
+                  ToolPickerSheet.show(
+                    context,
+                    files: [widget.file],
+                    subtitle: widget.file.path.split('/').last,
+                    onSelected: (tool) =>
+                        unawaited(tool.openWithFiles(context, [widget.file])),
+                  );
+                },
               ),
-              ...tools.map((tool) => ListTile(
-                    leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.localizedName(context)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      unawaited(tool.openWithFiles(context, [widget.file]));
-                    },
-                  )),
             ],
             const SizedBox(height: 8),
           ],
