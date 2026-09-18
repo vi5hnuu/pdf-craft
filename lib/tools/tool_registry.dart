@@ -7,6 +7,7 @@ import 'package:pdf_craft/models/file_selection_config.dart';
 import 'package:pdf_craft/models/request/image_studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/recent_tools_service.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/tools/credit_gate.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
@@ -164,7 +165,15 @@ class ToolDef {
     // Fail fast on files the server would reject for size — before quoting a price or
     // starting a long upload that can only end in an error.
     if (uploads && !await UploadLimits.ensureWithinLimits(context, files)) return false;
-    if (!context.mounted) return false;
+    if (!context.mounted) {
+      // A caller routing from an element that has already left the tree — typically a bottom
+      // sheet that popped itself before launching. It looks exactly like "the tool tile does
+      // nothing", and used to fail here in total silence. Say so.
+      LoggerSingleton().logger.w(
+          'openWithFiles($id): the caller\'s context is no longer mounted, so the tool cannot '
+          'be routed to. Launch it from a context that outlives the sheet.');
+      return false;
+    }
     return CreditGate.run(
       context,
       creditToolId: creditToolId,

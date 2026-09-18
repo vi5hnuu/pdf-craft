@@ -39,8 +39,14 @@ class FileActionsSheet {
       useSafeArea: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
+      // `context` is the screen that opened this sheet, and it is handed down deliberately: a
+      // tool has to be launched from an element that is still in the tree when the launch
+      // happens. See [_FileActionsBody.hostContext].
       builder: (_) => _FileActionsBody(
-          file: file, onChanged: onChanged, allowSelect: allowSelect),
+          hostContext: context,
+          file: file,
+          onChanged: onChanged,
+          allowSelect: allowSelect),
     );
   }
 }
@@ -49,12 +55,25 @@ class _FileActionsBody extends StatefulWidget {
   final File file;
   final VoidCallback? onChanged;
 
+  /// The context of the screen that opened this sheet.
+  ///
+  /// Needed because launching a tool is asynchronous and outlives this sheet. "Apply a tool"
+  /// pops this sheet, opens the picker, and only routes once the user has chosen — by which
+  /// point this sheet's own element is long gone. Routing from a defunct element makes
+  /// [ToolDef.openWithFiles] return false at its `context.mounted` check, so the sheet closed
+  /// and nothing else happened, with no error anywhere. The host screen is still mounted, so it
+  /// is what the tool is launched from.
+  final BuildContext hostContext;
+
   /// Show a "Select for tools" entry (only where a selection bar exists to act
   /// on it, e.g. Search). Off on surfaces without a selection bar.
   final bool allowSelect;
 
   const _FileActionsBody(
-      {required this.file, this.onChanged, this.allowSelect = false});
+      {required this.hostContext,
+      required this.file,
+      this.onChanged,
+      this.allowSelect = false});
 
   @override
   State<_FileActionsBody> createState() => _FileActionsBodyState();
@@ -181,13 +200,14 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
                 subtitle: Text(L10n.of(context).toolsAvailable(tools.length)),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
+                  final host = widget.hostContext;
                   Navigator.pop(context);
                   ToolPickerSheet.show(
-                    context,
+                    host,
                     files: [widget.file],
                     subtitle: widget.file.path.split('/').last,
                     onSelected: (tool) =>
-                        unawaited(tool.openWithFiles(context, [widget.file])),
+                        unawaited(tool.openWithFiles(host, [widget.file])),
                   );
                 },
               ),
