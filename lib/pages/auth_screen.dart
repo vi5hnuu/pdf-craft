@@ -243,7 +243,12 @@ class _AuthScreenState extends State<AuthScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
         ),
         onPressed: _busy ? null : _google,
-        icon: const FaIcon(FontAwesomeIcons.google, size: 18),
+        // Without a busy state this button looked idle while the account picker was opening,
+        // which on a slow device reads as "nothing happened" and invites a second tap.
+        icon: _busy
+            ? const SizedBox(
+                height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
+            : const FaIcon(FontAwesomeIcons.google, size: 18),
         label: Text(L10n.of(context).authContinueGoogle,
             style: const TextStyle(fontWeight: FontWeight.w600)),
       );
@@ -339,6 +344,15 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _google() async {
     FocusScope.of(context).unfocus();
+    // Same warning the password path already gave. Google sign-in switches to the Google
+    // account exactly as signing in does, so a guest's credits are left behind either way —
+    // but this path asked nothing and simply took them, which is the worse version of the two
+    // because it is also the faster one to tap.
+    if (AuthService().isGuest && CreditService().balance > 0) {
+      final go = await _confirmSwitch(CreditService().balance);
+      if (go != true) return;
+    }
+    if (!mounted) return;
     setState(() => _busy = true);
     try {
       await AuthService().signInWithGoogle();

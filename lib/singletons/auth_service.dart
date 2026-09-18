@@ -149,18 +149,35 @@ class AuthService extends ChangeNotifier {
           email: email, password: password,
           firstName: firstName, lastName: lastName, username: username);
 
+  /// The plugin instance, built once so sign-in and sign-out act on the same session.
+  ///
+  /// serverClientId is what makes `authentication.idToken` non-null: without it the plugin
+  /// looks for a `default_web_client_id` resource that only exists when google-services.json
+  /// carries a type-3 oauth_client. It did not, so every attempt failed on a null token.
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: const ['email'],
+    serverClientId: Constants.googleWebClientId,
+  );
+
   Future<void> signInWithGoogle() async {
-    // serverClientId is what makes `authentication.idToken` non-null: without it the plugin
-    // looks for a `default_web_client_id` resource that only exists when google-services.json
-    // carries a type-3 oauth_client. It did not, so every attempt failed on a null token.
-    final googleSignIn = GoogleSignIn(
-      scopes: const ['email'],
-      serverClientId: Constants.googleWebClientId,
-    );
+    // `signIn()` returns the previously chosen account silently whenever one is cached, so
+    // after the first use the picker never appeared again: the account was chosen once and
+    // then reused for ever. Anyone with two Google accounts could not reach the second, and on
+    // a shared device the next person was signed straight into the first person's account.
+    //
+    // signOut() drops the cached account without revoking the grant, so the picker comes back
+    // while a returning user still avoids the full consent screen. disconnect() would also
+    // work but re-asks for consent every time, which is a worse trade for the same result.
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Nothing cached, or Play services unavailable — signIn() below reports it properly.
+    }
+
     // The account picker is a separate activity; returning from it must not trigger an ad.
     final GoogleSignInAccount? account;
     try {
-      account = await FullScreenAdPolicy().runExternal(() => googleSignIn.signIn());
+      account = await FullScreenAdPolicy().runExternal(() => _googleSignIn.signIn());
     } on PlatformException catch (e) {
       // Play services reports a misconfigured project as a bare status code. Untranslated, it
       // surfaced as "Google sign-in failed." and said nothing about the actual cause, which is
@@ -258,6 +275,14 @@ class AuthService extends ChangeNotifier {
   Future<void> logout() async {
     final refresh = await _storage.refreshToken;
     if (refresh != null) await _api.logout(refresh);
+    // Sign out of Google too, or the app's own sign-out is a half measure: the cached Google
+    // account survives it, so "Continue with Google" immediately signs the same person back in
+    // without asking — which on a shared device hands the next person the previous account.
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Never block signing out of the app on Google being unavailable.
+    }
     await _resetToGuest();
   }
 
