@@ -36,7 +36,8 @@ class PermissionInspectorView extends StatelessWidget {
 
   Widget _build(BuildContext context, ThemeData theme, dynamic raw) {
     final l = L10n.of(context);
-    final r = (raw as Map).cast<String, dynamic>();
+    final r = asReport(raw);
+    if (r == null) return Center(child: Text(L10n.of(context).noAnalysisAvailable));
     final encrypted = r['encrypted'] == true;
     final allowed = (r['allowed'] as Map?)?.cast<String, dynamic>() ?? const {};
     final enc = (r['encryption'] as Map?)?.cast<String, dynamic>();

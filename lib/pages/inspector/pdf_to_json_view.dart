@@ -46,7 +46,8 @@ class _PdfToJsonViewState extends State<PdfToJsonView> {
   }
 
   Widget _build(BuildContext context, ThemeData theme, dynamic raw, AppLocalizations l) {
-    final r = (raw as Map).cast<String, dynamic>();
+    final r = asReport(raw);
+    if (r == null) return Center(child: Text(L10n.of(context).noAnalysisAvailable));
     final meta = (r['metadata'] as Map?)?.cast<String, dynamic>() ?? const {};
     final pages = (r['pages'] as List? ?? const [])
         .whereType<Map>()

@@ -44,7 +44,22 @@ class _SignPdfViewState extends State<SignPdfView> {
   bool get _hasStrokes => !_pad.isEmpty;
 
   @override
+  void initState() {
+    super.initState();
+    // The screen's own controls depend on what has been drawn — Undo, Clear, the "Sign here"
+    // placeholder and the Place button all read the pad. The pad repaints itself, but nothing
+    // told *this* widget, so those four stayed frozen in their initial state: the signature
+    // appeared and Place on PDF remained greyed out.
+    _pad.addListener(_onPadChanged);
+  }
+
+  void _onPadChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _pad.removeListener(_onPadChanged);
     _pad.dispose();
     super.dispose();
   }

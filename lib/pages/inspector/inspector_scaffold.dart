@@ -174,6 +174,14 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
   }
 }
 
+/// The report as a map, or null when the server sent something else.
+///
+/// The payload is server JSON, which is the one input a report screen does not control. A bare
+/// `as Map` inside `build` turns any surprise — an error envelope, a future shape change — into
+/// a red screen rather than the "no report" state that is already there for exactly this.
+Map<String, dynamic>? asReport(dynamic raw) =>
+    raw is Map ? raw.cast<String, dynamic>() : null;
+
 // ── Presentation pieces shared by the six reports ──────────────────────────────
 
 /// A titled group of rows.

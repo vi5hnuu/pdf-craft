@@ -33,7 +33,8 @@ class StructureInspectorView extends StatelessWidget {
 
   Widget _build(BuildContext context, ThemeData theme, dynamic raw) {
     final l = L10n.of(context);
-    final r = (raw as Map).cast<String, dynamic>();
+    final r = asReport(raw);
+    if (r == null) return Center(child: Text(L10n.of(context).noAnalysisAvailable));
     final info = (r['info'] as Map?)?.cast<String, dynamic>() ?? const {};
     final pages = (r['pages'] as List? ?? const [])
         .whereType<Map>()
