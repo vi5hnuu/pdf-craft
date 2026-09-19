@@ -132,6 +132,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   void dispose() {
     _tc.dispose();
     _doc?.close();
+    // A ui.Image holds native memory that the garbage collector does not account for, so a
+    // page render and every inserted image have to be handed back explicitly. A long document
+    // paged through end to end would otherwise leak one full-page bitmap per page visited.
+    _pageDecoded?.dispose();
+    for (final image in _images.values) {
+      image.dispose();
+    }
     super.dispose();
   }
 
@@ -162,7 +169,11 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
           width: page.width * 2, height: page.height * 2, format: PdfPageImageFormat.jpeg);
       await page.close();
       final decoded = img == null ? null : await decodeImageFromList(img.bytes);
-      if (!mounted) return;
+      if (!mounted) {
+        decoded?.dispose();
+        return;
+      }
+      final previous = _pageDecoded;
       setState(() {
         _pageDecoded = decoded;
         _currentPage = pageNo;
@@ -170,6 +181,11 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
         // Each page starts unzoomed; a zoom level from the previous page means nothing here.
         _tc.value = Matrix4.identity();
       });
+      // After the frame that paints the new page, so the outgoing image is not disposed while
+      // it is still on screen.
+      if (previous != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => previous.dispose());
+      }
     } catch (_) {
       if (mounted) setState(() => _loadingPage = false);
     }
@@ -246,6 +262,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
     final p = _toFrac(d.localPosition);
     final stroke = _activeStroke;
     if (stroke != null) {
+      // Thinned as it is drawn. A pan reports a point per frame, so a two-second drag is well
+      // over a hundred points — and a highlighter turns every segment into a QuadPoints quad,
+      // so an unthinned scribble means a bloated file and a viewer that struggles to draw it.
+      // At this spacing (about a point on A4) the difference is invisible.
+      const minSpacing = 0.002;
+      final last = stroke.points.last;
+      if ((p - last).distance < minSpacing) return;
       setState(() => stroke.points.add(p));
       return;
     }
@@ -342,7 +365,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
       ),
     );
     controller.dispose();
-    if (text == null || text.isEmpty) return;
+    if (text == null || text.isEmpty || !mounted) return;
 
     _pushUndo();
     setState(() {
@@ -391,7 +414,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
       ),
     );
     controller.dispose();
-    if (text == null || text.isEmpty) return;
+    if (text == null || text.isEmpty || !mounted) return;
 
     _pushUndo();
     setState(() {
@@ -919,9 +942,18 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
         sel is LineAnnotation ||
         (sel == null && _tool != _Tool.text && _tool != _Tool.sticky);
 
+    /// A discrete edit: one undo step.
     void mutate(void Function() change) {
       if (sel != null) _pushUndo();
       setState(change);
+    }
+
+    /// A slider edit. The undo step is pushed when the drag *starts*, not on every tick —
+    /// otherwise one drag of the opacity slider buried the user's actual work under fifty
+    /// identical undo entries.
+    void slide(void Function() change) => setState(change);
+    void slideStart() {
+      if (sel != null) _pushUndo();
     }
 
     return Container(
@@ -982,7 +1014,9 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
                 _pushUndo();
                 setState(() {
                   _annotations.removeWhere((a) => a.id == sel.id);
-                  _images.remove(sel.id);
+                  // The decoded image deliberately stays in the cache. Undo restores the
+                  // annotation, and the cache is keyed by its id — evicting here meant an
+                  // undone deletion came back as an empty placeholder box.
                   _selectedId = null;
                 });
               },
@@ -996,7 +1030,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
               value: opacity,
               min: 0.1,
               max: 1.0,
-              onChanged: (v) => mutate(() {
+              onChangeStart: (_) => slideStart(),
+              onChanged: (v) => slide(() {
                 if (sel != null) {
                   sel.opacity = v;
                 } else {
@@ -1012,7 +1047,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
                 value: _strokeOf(sel),
                 min: 0.001,
                 max: 0.02,
-                onChanged: (v) => mutate(() => _setStroke(sel, v)),
+                onChangeStart: (_) => slideStart(),
+                onChanged: (v) => slide(() => _setStroke(sel, v)),
               ),
             ),
           ],
@@ -1023,7 +1059,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
                 value: sel is TextAnnotation ? sel.fontSize : _fontFrac,
                 min: 0.008,
                 max: 0.08,
-                onChanged: (v) => mutate(() {
+                onChangeStart: (_) => slideStart(),
+                onChanged: (v) => slide(() {
                   if (sel is TextAnnotation) {
                     sel.fontSize = v;
                   } else {
