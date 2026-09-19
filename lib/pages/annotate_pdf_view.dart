@@ -105,6 +105,11 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   final Map<String, ui.Image> _images = {};
   bool _saving = false;
 
+  /// See [AnnotatePdf.flatten]. Off by default, but surfaced right next to Export because the
+  /// consequence is immediate and visible: leave it off and the marks will not show in this app's
+  /// own preview, or in any other viewer that ignores annotations.
+  bool _flatten = false;
+
   List<Annotation> get _pageMarks =>
       _annotations.where((a) => a.page == _currentPage - 1).toList();
 
@@ -467,6 +472,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
             file: upload,
             outFileName: baseName,
             annotations: _annotations,
+            flatten: _flatten,
           ),
           cancelToken: cancelToken,
         ));
@@ -1058,11 +1064,35 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
-      child: FilledButton.icon(
-        onPressed: busy ? null : _onSave,
-        icon: const Icon(Icons.save_alt),
-        label: Text(L10n.of(context).exportPdf),
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        InkWell(
+          onTap: busy ? null : () => setState(() => _flatten = !_flatten),
+          child: Row(children: [
+            Checkbox(
+              value: _flatten,
+              onChanged: busy ? null : (v) => setState(() => _flatten = v ?? false),
+            ),
+            Expanded(
+              child: Text(
+                _flatten
+                    ? L10n.of(context).annotateFlattenOn
+                    : L10n.of(context).annotateFlattenOff,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: busy ? null : _onSave,
+            icon: const Icon(Icons.save_alt),
+            label: Text(L10n.of(context).exportPdf),
+          ),
+        ),
+      ]),
     );
   }
 }

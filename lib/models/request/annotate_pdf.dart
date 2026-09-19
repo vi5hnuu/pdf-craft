@@ -12,16 +12,26 @@ class AnnotatePdf {
   final String outFileName;
   final List<Annotation> annotations;
 
+  /// Bakes the marks into the page instead of leaving them as annotation objects.
+  ///
+  /// Off by default: a real annotation is the better artefact. But the app's own preview uses
+  /// Pdfium, which does not draw annotations at all, so someone who wants the marks visible
+  /// everywhere — or permanent — needs this. It rides along in the same request, so it costs
+  /// neither an extra round trip nor an extra credit.
+  final bool flatten;
+
   AnnotatePdf({
     required this.file,
     required this.outFileName,
     required this.annotations,
+    this.flatten = false,
   });
 
   Map<String, dynamic> toJson() => {
         'annotate-pdf-info': MultipartFile.fromString(
           jsonEncode({
             'out_file_name': outFileName,
+            'flatten': flatten,
             // Images are not PDF annotations — they go through the stamp endpoint afterwards.
             'annotations': [
               for (final a in annotations)

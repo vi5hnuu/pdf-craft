@@ -762,6 +762,8 @@
   "annotateTextHint": "Tap the page to place text",
   "annotateSelectHint": "Drag to move, corners to resize",
   "annotateStyle": "Style",
+  "annotateFlattenOn": "Marks will be burnt into the page — visible everywhere, but permanent",
+  "annotateFlattenOff": "Keep marks editable (some viewers, including this preview, won't show them)",
   "annotatePen": "Pen",
   "annotateHighlight": "Highlight",
   "annotateEraser": "Eraser",

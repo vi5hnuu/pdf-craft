@@ -516,6 +516,8 @@
   "annotateTextHint": "टेक्स्ट रखने के लिए पेज पर टैप करें",
   "annotateSelectHint": "खींचकर सरकाएँ, कोनों से आकार बदलें",
   "annotateStyle": "शैली",
+  "annotateFlattenOn": "निशान पेज में स्थायी रूप से जोड़ दिए जाएँगे — हर जगह दिखेंगे, पर हटाए नहीं जा सकेंगे",
+  "annotateFlattenOff": "निशान संपादन योग्य रखें (कुछ व्यूअर, इस प्रीव्यू सहित, इन्हें नहीं दिखाएँगे)",
   "annotatePen": "पेन",
   "annotateHighlight": "हाइलाइट",
   "annotateEraser": "रबर",
