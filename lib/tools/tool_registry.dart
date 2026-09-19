@@ -219,7 +219,7 @@ class ToolRegistry {
     ToolDef(id: 'pdf-info', name: 'PDF Info', icon: Icons.info_outline, category: ToolCategories.pdf, route: AppRoutes.pdfInfoRoute, extensions: _pdf),
     ToolDef(id: 'analyze', name: 'Analyze PDF', icon: Icons.analytics_outlined, category: ToolCategories.pdf, route: AppRoutes.analyzePdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'replace-pages', name: 'Replace Pages', icon: Icons.find_replace, category: ToolCategories.pdf, route: AppRoutes.replacePagesRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: 2, isHeavy: true),
-    ToolDef(id: 'sign', name: 'Sign PDF', icon: Icons.draw, category: ToolCategories.pdf, route: AppRoutes.signPdfRoute, extensions: _pdf),
+    ToolDef(id: 'sign', name: 'Sign PDF', icon: Icons.history_edu, category: ToolCategories.pdf, route: AppRoutes.signPdfRoute, extensions: _pdf),
     ToolDef(id: 'redact', name: 'Redact PDF', icon: Icons.hide_source, category: ToolCategories.pdf, route: AppRoutes.redactPdfRoute, extensions: _pdf),
     ToolDef(id: 'duplicate-pages', name: 'Duplicate Pages', icon: Icons.copy_all, category: ToolCategories.pdf, route: AppRoutes.duplicatePagesRoute, extensions: _pdf),
     ToolDef(id: 'bookmarks', name: 'Bookmarks', icon: Icons.bookmark_outline, category: ToolCategories.pdf, route: AppRoutes.bookmarksEditorRoute, extensions: _pdf),
@@ -227,19 +227,19 @@ class ToolRegistry {
 
     // ---- Enhance ----
     ToolDef(id: 'compress', name: 'Compress PDF', icon: Icons.compress, category: ToolCategories.enhance, route: AppRoutes.compressPdfRoute, extensions: _pdf, isHeavy: true),
-    ToolDef(id: 'optimize', name: 'Optimize PDF', icon: Icons.auto_fix_high, category: ToolCategories.enhance, route: AppRoutes.optimizePdfRoute, extensions: _pdf, isHeavy: true),
+    ToolDef(id: 'optimize', name: 'Optimize PDF', icon: Icons.tune, category: ToolCategories.enhance, route: AppRoutes.optimizePdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'remove-blanks', name: 'Remove Blanks', icon: Icons.delete_sweep_outlined, category: ToolCategories.enhance, route: AppRoutes.removeBlankPagesRoute, extensions: _pdf),
     ToolDef(id: 'n-up', name: 'N-Up Layout', icon: Icons.view_module_outlined, category: ToolCategories.enhance, route: AppRoutes.nUpPdfRoute, extensions: _pdf),
     ToolDef(id: 'resize-page', name: 'Resize Page Size', icon: Icons.aspect_ratio, category: ToolCategories.enhance, route: AppRoutes.resizePageRoute, extensions: _pdf, isHeavy: true),
-    ToolDef(id: 'scale-pdf', name: 'Scale PDF', icon: Icons.photo_size_select_large, category: ToolCategories.enhance, route: AppRoutes.scalePdfRoute, extensions: _pdf, isHeavy: true),
+    ToolDef(id: 'scale-pdf', name: 'Scale PDF', icon: Icons.zoom_out_map, category: ToolCategories.enhance, route: AppRoutes.scalePdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'watermark', name: 'Watermark', icon: Icons.branding_watermark, category: ToolCategories.enhance, route: AppRoutes.watermarkPdfRoute, extensions: _pdf),
-    ToolDef(id: 'grayscale', name: 'Grayscale', icon: Icons.invert_colors, category: ToolCategories.enhance, route: AppRoutes.grayscalePdfRoute, extensions: _pdf),
+    ToolDef(id: 'grayscale', name: 'Grayscale', icon: Icons.filter_b_and_w, category: ToolCategories.enhance, route: AppRoutes.grayscalePdfRoute, extensions: _pdf),
     ToolDef(id: 'extract-text', name: 'Extract Text', icon: Icons.text_snippet, category: ToolCategories.enhance, route: AppRoutes.extractTextRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'header-footer', name: 'Header/Footer', icon: Icons.view_headline, category: ToolCategories.enhance, route: AppRoutes.headerFooterRoute, extensions: _pdf),
     ToolDef(id: 'edit-metadata', name: 'Edit Metadata', icon: Icons.edit_note, category: ToolCategories.enhance, route: AppRoutes.editMetadataRoute, extensions: _pdf),
 
     // ---- Convert (all server-side / heavy) ----
-    ToolDef(id: 'pdf-to-jpg', name: 'PDF to JPG', icon: Icons.image, category: ToolCategories.convert, route: AppRoutes.pdfToJpgRoute, extensions: _pdf, isHeavy: true),
+    ToolDef(id: 'pdf-to-jpg', name: 'PDF to JPG', icon: Icons.photo_library_outlined, category: ToolCategories.convert, route: AppRoutes.pdfToJpgRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'extract-images', name: 'Extract Images', icon: Icons.collections_outlined, category: ToolCategories.convert, route: AppRoutes.extractImagesRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'extract-embedded', name: 'Extract Attachments', icon: Icons.attachment_outlined, category: ToolCategories.convert, route: AppRoutes.extractEmbeddedRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'extract-fonts', name: 'Extract Fonts', icon: Icons.font_download_outlined, category: ToolCategories.convert, route: AppRoutes.extractFontsRoute, extensions: _pdf, isHeavy: true),
@@ -261,7 +261,7 @@ class ToolRegistry {
     // should not have to pay to find out.
     ToolDef(id: 'permission-inspector', name: 'Permission Inspector', icon: Icons.verified_user_outlined, category: ToolCategories.security, route: AppRoutes.permissionInspectorRoute, extensions: _pdf),
     ToolDef(id: 'security-scanner', name: 'Security Scanner', icon: Icons.policy_outlined, category: ToolCategories.security, route: AppRoutes.securityScannerRoute, extensions: _pdf),
-    ToolDef(id: 'form-inspector', name: 'Form Inspector', icon: Icons.ballot_outlined, category: ToolCategories.security, route: AppRoutes.formInspectorRoute, extensions: _pdf),
+    ToolDef(id: 'form-inspector', name: 'Form Inspector', icon: Icons.fact_check_outlined, category: ToolCategories.security, route: AppRoutes.formInspectorRoute, extensions: _pdf),
     ToolDef(id: 'structure-inspector', name: 'Structure Inspector', icon: Icons.account_tree_outlined, category: ToolCategories.security, route: AppRoutes.structureInspectorRoute, extensions: _pdf),
     ToolDef(id: 'object-explorer', name: 'Object Explorer', icon: Icons.data_object, category: ToolCategories.security, route: AppRoutes.objectExplorerRoute, extensions: _pdf),
     ToolDef(id: 'pdf-to-json', name: 'PDF to JSON', icon: Icons.code, category: ToolCategories.security, route: AppRoutes.pdfToJsonRoute, extensions: _pdf, isHeavy: true),
