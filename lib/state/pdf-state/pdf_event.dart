@@ -247,6 +247,11 @@ class ExtractEmbeddedFilesEvent extends PdfEvent {
   const ExtractEmbeddedFilesEvent({required this.extractEmbeddedFiles, super.cancelToken});
 }
 
+class AnnotatePdfEvent extends PdfEvent {
+  final AnnotatePdf annotatePdf;
+  const AnnotatePdfEvent({required this.annotatePdf, super.cancelToken});
+}
+
 class AnalyzePdfEvent extends PdfEvent {
   final AnalyzePdf analyzePdf;
   const AnalyzePdfEvent({required this.analyzePdf, super.cancelToken});

@@ -309,7 +309,7 @@ class ToolRegistry {
     // form), both priced; it was showing as free.
     'flatten': 'flatten-pdf',
     // AnnotatePdfView applies the annotation layer through the stamp endpoint.
-    'annotate': 'stamp-pdf',
+    'annotate': 'annotate-pdf', // its own endpoint now; priced the same as the stamp it used to use
     // Convert
     'pdf-to-jpg': 'pdf-to-jpg',
     'image-to-pdf': 'image-to-pdf',
@@ -348,7 +348,7 @@ class ToolRegistry {
     'stamp': 'Stamp text or an image onto pages.',
     'qr-stamp': 'Generate a QR code and stamp it onto the PDF.',
     'image-overlay': 'Place and size an image anywhere on a page.',
-    'annotate': 'Draw, highlight and add notes on the PDF.',
+    'annotate': 'Draw, highlight, add notes and sign — saved as real PDF annotations.',
     'fill-form': 'Build a fillable form — add text, checkbox, radio and more.',
     'pdf-info': 'View the PDF\'s metadata (title, author, dates).',
     'analyze': 'Report page/word counts and blank, duplicate & landscape pages.',

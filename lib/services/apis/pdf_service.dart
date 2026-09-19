@@ -40,6 +40,7 @@ import 'package:pdf_craft/models/request/scale_pdf.dart';
 import 'package:pdf_craft/models/request/insert_pdf.dart';
 import 'package:pdf_craft/models/request/extract_embedded_files.dart';
 import 'package:pdf_craft/models/request/analyze_pdf.dart';
+import 'package:pdf_craft/models/request/annotate_pdf.dart';
 import 'package:pdf_craft/models/request/inspect_pdf.dart';
 import 'package:pdf_craft/models/request/replace_pages.dart';
 import 'package:pdf_craft/models/request/extract_fonts.dart';
@@ -77,6 +78,8 @@ class PdfService {
   static String get _analyzePdf => "${Constants.baseUrl}/pdf-studio/analyze-pdf";
 
   // Read-only inspectors: JSON in, JSON out, no download.
+  static String get _annotatePdf => "${Constants.baseUrl}/pdf-studio/annotate-pdf";
+
   static String get inspectPermissions => "${Constants.baseUrl}/pdf-studio/inspect-permissions";
   static String get scanSecurity => "${Constants.baseUrl}/pdf-studio/scan-security";
   static String get inspectStructure => "${Constants.baseUrl}/pdf-studio/inspect-structure";
@@ -320,6 +323,15 @@ class PdfService {
 
   Future<Response<Uint8List>> extractEmbeddedFiles({required ExtractEmbeddedFiles req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
     return await DioSingleton().dio.post(_extractEmbedded, data: FormData.fromMap(req.toJson()), options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken, onSendProgress: onSendProgress);
+  }
+
+  /// Adds every mark in the document as real PDF annotations, in a single request.
+  Future<Response<Uint8List>> annotatePdf({required AnnotatePdf req, CancelToken? cancelToken, ProgressCallback? onSendProgress}) async {
+    return await DioSingleton().dio.post(_annotatePdf,
+        data: FormData.fromMap(req.toJson()),
+        options: Options(responseType: ResponseType.bytes),
+        cancelToken: cancelToken,
+        onSendProgress: onSendProgress);
   }
 
   /// Posts a PDF to one of the read-only inspectors and returns its JSON report.

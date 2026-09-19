@@ -50,6 +50,8 @@ class HttpStates{
 
   // Read-only inspectors. Each keeps its own state key so two of them open at once do not
   // overwrite each other's report.
+  static const String annotatePdf="ANNOTATE_PDF";
+
   static const String inspectPermissions="INSPECT_PERMISSIONS";
   static const String scanSecurity="SCAN_SECURITY";
   static const String inspectStructure="INSPECT_STRUCTURE";

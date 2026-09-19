@@ -47,6 +47,7 @@ import 'package:pdf_craft/models/request/scale_pdf.dart';
 import 'package:pdf_craft/models/request/insert_pdf.dart';
 import 'package:pdf_craft/models/request/extract_embedded_files.dart';
 import 'package:pdf_craft/models/request/analyze_pdf.dart';
+import 'package:pdf_craft/models/request/annotate_pdf.dart';
 import 'package:pdf_craft/models/request/inspect_pdf.dart';
 import 'package:pdf_craft/models/request/replace_pages.dart';
 import 'package:pdf_craft/models/request/extract_fonts.dart';
@@ -202,6 +203,12 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<StampPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.stampPdf,
       call: (p) => _pdfService.stampPdf(stampPdf: e.stampPdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: L10n.current.errToolFailed,
+    ));
+
+    on<AnnotatePdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.annotatePdf,
+      call: (p) => _pdfService.annotatePdf(req: e.annotatePdf, cancelToken: e.cancelToken, onSendProgress: p),
       error: L10n.current.errToolFailed,
     ));
 
