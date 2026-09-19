@@ -55,17 +55,22 @@ class _MainScreenState extends State<MainScreen> {
           // The glyph alone — a bare "हि" or "EN" — was the whole control, sitting between two
           // icon buttons. It had no affordance: nothing said it was a language switch rather
           // than a stray character, and to a reader who does not know Devanagari "हि" is not
-          // even legible as a word. The translate icon carries the meaning; the target language
-          // stays alongside it so the tap's outcome is still visible.
+          // even legible as a word.
+          //
+          // A globe rather than the translate glyph: this is a PDF tool, and a translate icon
+          // in its app bar reads as an offer to translate the *document*. The globe is the
+          // conventional mark for the app's own locale. The target language stays beside it so
+          // the tap's outcome is still visible, spelled "हिं" — "हि" on its own is half a
+          // syllable, which is why it looked like a broken character.
           ListenableBuilder(
             listenable: LocaleManager(),
             builder: (context, _) => Tooltip(
               message: L10n.of(context).switchLanguageTooltip,
               child: TextButton.icon(
                 onPressed: () => LocaleManager().toggleEnglishHindi(),
-                icon: const Icon(Icons.translate, size: 20),
+                icon: const Icon(Icons.language, size: 20),
                 label: Text(
-                  LocaleManager().isHindi ? 'EN' : 'हि',
+                  LocaleManager().isHindi ? 'EN' : 'हिं',
                   style: theme.textTheme.labelLarge
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
