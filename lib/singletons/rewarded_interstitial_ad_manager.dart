@@ -14,7 +14,9 @@ import 'package:pdf_craft/utils/ad_units.dart';
 /// enough time to take it. Apps that skip it get their ads restricted, so
 /// [show] is deliberately not callable without having offered that choice
 /// first: see `RewardedIntroDialog`, which is the only intended caller.
-class RewardedInterstitialAdManager {
+/// A [ChangeNotifier] for the same reason as [RewardedAdManager]: [isReady] flips on its own
+/// when a load finishes, and anything that gates an offer on it has to be told.
+class RewardedInterstitialAdManager extends ChangeNotifier {
   static String? get _adUnitId => AdUnits.rewardedInterstitial;
 
   RewardedInterstitialAd? _cachedAd;
@@ -23,6 +25,10 @@ class RewardedInterstitialAdManager {
   static final RewardedInterstitialAdManager _instance = RewardedInterstitialAdManager._();
   RewardedInterstitialAdManager._();
   factory RewardedInterstitialAdManager() => _instance;
+
+  // No dispose override: this is a process-lifetime singleton, so nothing ever disposes it —
+  // and a dispose that called super would tear down the listener list the singleton exists to
+  // keep.
 
   bool get isReady => _cachedAd != null;
 
@@ -44,6 +50,7 @@ class RewardedInterstitialAdManager {
       rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _cachedAd = ad;
+          notifyListeners();
           _isLoading = false;
         },
         onAdFailedToLoad: (error) {
@@ -74,6 +81,7 @@ class RewardedInterstitialAdManager {
       return;
     }
     _cachedAd = null;
+    notifyListeners();
 
     final userId = AuthService().user?.id;
     if (userId != null && userId.isNotEmpty) {

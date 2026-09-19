@@ -84,14 +84,20 @@ class _CreditsScreenState extends State<CreditsScreen> {
               // said nothing about whether an ad is actually loaded. With none cached the tile
               // looked ready and a tap fell straight through to a "no ad" snackbar.
               if (AdUnits.rewardedAvailable)
-                _earnTile(
-                  icon: Icons.smart_display_outlined,
-                  title: L10n.of(context).creditsWatchAd,
-                  subtitle: L10n.of(context).creditsWatchAdSub,
-                  onTap: _watchAd,
-                  unavailableReason: RewardedAdManager().isReady
-                      ? null
-                      : L10n.of(context).creditsAdLoading,
+                // Rebuilds when an ad finishes loading. Reading isReady once left the tile
+                // saying "ad loading" for as long as the screen stayed open, even after one
+                // had arrived.
+                ListenableBuilder(
+                  listenable: RewardedAdManager(),
+                  builder: (context, _) => _earnTile(
+                    icon: Icons.smart_display_outlined,
+                    title: L10n.of(context).creditsWatchAd,
+                    subtitle: L10n.of(context).creditsWatchAdSub,
+                    onTap: _watchAd,
+                    unavailableReason: RewardedAdManager().isReady
+                        ? null
+                        : L10n.of(context).creditsAdLoading,
+                  ),
                 ),
               const SizedBox(height: 24),
               Text(L10n.of(context).creditsBuy, style: theme.textTheme.titleMedium),

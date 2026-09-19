@@ -34,6 +34,7 @@ class CreditGate {
     required String? creditToolId,
     required String toolName,
     required void Function(BuildContext routeContext) proceed,
+
     /// The files about to be processed, when they are already known. Supplying them lets
     /// the dialog quote the size surcharge the server will actually apply instead of the
     /// bare base price.
@@ -80,8 +81,7 @@ class CreditGate {
             ),
             if (approximate) ...[
               const SizedBox(height: 4),
-              Text(L10n.of(ctx).gateLargerFiles,
-                  style: Theme.of(ctx).textTheme.bodySmall),
+              Text(L10n.of(ctx).gateLargerFiles, style: Theme.of(ctx).textTheme.bodySmall),
             ],
             const SizedBox(height: 8),
             Text(L10n.of(ctx).gateBalance(balance)),
@@ -102,29 +102,37 @@ class CreditGate {
           // states the reward and leaves Cancel plainly available, so the ad is never
           // forced on anyone. Shown only when an ad is actually cached, so the offer
           // is never a dead end.
-          if (!enough && RewardedInterstitialAdManager().isReady)
-            TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop(false);
-                RewardedInterstitialAdManager().show(
-                  onRewardEarned: () async {
-                    // The credit is granted server-side from AdMob's verification callback, so
-                    // this waits for the balance to move rather than asserting it has. It used
-                    // to announce the reward immediately and unconditionally, which was simply
-                    // untrue whenever the callback did not arrive.
-                    final granted =
-                        await credits_service.CreditService().awaitRewardedCredits();
-                    NotificationService.showSnackbar(
-                        text: granted > 0
-                            ? L10n.current.gateAdReward
-                            : L10n.current.creditsRewardUnconfirmed,
-                        color: granted > 0 ? Colors.green : Colors.orange);
-                  },
-                  onUnavailable: () => NotificationService.showSnackbar(
-                      text: L10n.current.gateAdUnavailable, color: Colors.orange),
-                );
-              },
-              child: Text(L10n.of(ctx).gateWatchAd),
+          // Wrapped so the offer appears if an ad finishes loading while the dialog is open.
+          // Reading isReady once meant a dialog opened a moment too early never showed the
+          // option at all, even though an ad arrived seconds later.
+          if (!enough)
+            ListenableBuilder(
+              listenable: RewardedInterstitialAdManager(),
+              builder: (context, _) => !RewardedInterstitialAdManager().isReady
+                  ? const SizedBox.shrink()
+                  : TextButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop(false);
+                        RewardedInterstitialAdManager().show(
+                          onRewardEarned: () async {
+                            // The credit is granted server-side from AdMob's verification callback, so
+                            // this waits for the balance to move rather than asserting it has. It used
+                            // to announce the reward immediately and unconditionally, which was simply
+                            // untrue whenever the callback did not arrive.
+                            final granted =
+                                await credits_service.CreditService().awaitRewardedCredits();
+                            NotificationService.showSnackbar(
+                                text: granted > 0
+                                    ? L10n.current.gateAdReward
+                                    : L10n.current.creditsRewardUnconfirmed,
+                                color: granted > 0 ? Colors.green : Colors.orange);
+                          },
+                          onUnavailable: () => NotificationService.showSnackbar(
+                              text: L10n.current.gateAdUnavailable, color: Colors.orange),
+                        );
+                      },
+                      child: Text(L10n.of(ctx).gateWatchAd),
+                    ),
             ),
           if (!enough)
             FilledButton(
