@@ -86,8 +86,8 @@ class PermissionInspectorView extends StatelessWidget {
           title: l.inspDocument,
           icon: Icons.description_outlined,
           children: [
-            InspectorFlag(l.inspEncrypted, encrypted, trueIsGood: false),
-            InspectorFlag(l.inspPermOwnerAccess, r['ownerAccess'] == true),
+            InspectorFact(l.inspEncrypted, encrypted),
+            InspectorFact(l.inspPermOwnerAccess, r['ownerAccess'] == true),
           ],
         ),
         if (enc != null)

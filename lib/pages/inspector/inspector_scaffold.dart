@@ -245,20 +245,20 @@ class InspectorRow extends StatelessWidget {
   }
 }
 
-/// A yes/no line where the colour carries the meaning — green for the safe answer.
+/// Whether something is **allowed**: green tick for yes, red cross for no.
+///
+/// Only for permissions and constraints, where yes and no genuinely are good and bad news. A
+/// plain fact about the file — "is it encrypted?", "does it have a form?" — goes through
+/// [InspectorFact] instead, which passes no judgement.
 class InspectorFlag extends StatelessWidget {
   final String label;
   final bool value;
-
-  /// Whether `true` is the reassuring answer. "Printing allowed" is good news; "Contains
-  /// JavaScript" is not, and colouring both green would be actively misleading.
-  final bool trueIsGood;
-  const InspectorFlag(this.label, this.value, {super.key, this.trueIsGood = true});
+  const InspectorFlag(this.label, this.value, {super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final good = value == trueIsGood;
+    final good = value;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(children: [
@@ -266,6 +266,35 @@ class InspectorFlag extends StatelessWidget {
             size: 18, color: good ? Colors.green : Colors.red.shade400),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+      ]),
+    );
+  }
+}
+
+/// A statement of fact: yes or no, with no judgement attached.
+///
+/// Distinct from [InspectorFlag], which says whether something is *allowed* — there, a tick is
+/// good news and a cross is bad. A fact is neither. Rendering "Encrypted: no" as a green cross,
+/// or "Has a form: no" as a red one, invited the reader to see a verdict that was not being
+/// made.
+class InspectorFact extends StatelessWidget {
+  final String label;
+  final bool value;
+  const InspectorFact(this.label, this.value, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(children: [
+        Icon(value ? Icons.check : Icons.remove,
+            size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+        Text(value ? L10n.of(context).yes : L10n.of(context).no,
+            style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600, color: theme.colorScheme.onSurfaceVariant)),
       ]),
     );
   }
