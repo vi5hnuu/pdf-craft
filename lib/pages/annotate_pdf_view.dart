@@ -1081,12 +1081,23 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
               onChanged: busy ? null : (v) => setState(() => _flatten = v ?? false),
             ),
             Expanded(
-              child: Text(
-                _flatten
-                    ? L10n.of(context).annotateFlattenOn
-                    : L10n.of(context).annotateFlattenOff,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              // The label says what ticking *does*, and the consequence sits underneath it.
+              // Swapping the label to describe the current state meant an unticked box read
+              // "Keep marks editable" — already true — so the tick appeared to mean nothing.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(L10n.of(context).annotateFlattenLabel,
+                      style: theme.textTheme.bodyMedium),
+                  Text(
+                    _flatten
+                        ? L10n.of(context).annotateFlattenOn
+                        : L10n.of(context).annotateFlattenOff,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
               ),
             ),
           ]),
