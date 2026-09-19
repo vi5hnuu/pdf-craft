@@ -36,7 +36,30 @@ class _CreditsScreenState extends State<CreditsScreen> {
     _Pack('pdfcraft_credits_60', 60, '₹229'),
   ];
 
-  bool _busy = false;
+  /// Which action is running, or null. Not a bare `bool`: one shared flag made *every* earn
+  /// tile show a spinner whenever any one of them was working, so watching an ad appeared to
+  /// also be claiming the daily credit and restoring purchases at the same time. A spinner has
+  /// to say which thing is happening.
+  String? _running;
+
+  bool get _busy => _running != null;
+  bool _isRunning(String action) => _running == action;
+
+  /// Runs [action] with its own spinner, guaranteeing the tile is released afterwards.
+  Future<void> _run(String action, Future<void> Function() body) async {
+    if (_busy) return;
+    setState(() => _running = action);
+    try {
+      await body();
+    } finally {
+      if (mounted) setState(() => _running = null);
+    }
+  }
+
+  static const _actionDaily = 'daily';
+  static const _actionAd = 'ad';
+  static const _actionRestore = 'restore';
+  static const _actionBuy = 'buy';
 
   @override
   void initState() {
@@ -76,6 +99,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                 icon: Icons.calendar_today_outlined,
                 title: L10n.of(context).creditsClaimDaily,
                 subtitle: L10n.of(context).creditsClaimDailySub,
+                action: _actionDaily,
                 onTap: _claimDaily,
               ),
               // Hidden when no rewarded unit is configured, rather than offering a way to
@@ -93,6 +117,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                     icon: Icons.smart_display_outlined,
                     title: L10n.of(context).creditsWatchAd,
                     subtitle: L10n.of(context).creditsWatchAdSub,
+                    action: _actionAd,
                     onTap: _watchAd,
                     unavailableReason: RewardedAdManager().isReady
                         ? null
@@ -118,19 +143,15 @@ class _CreditsScreenState extends State<CreditsScreen> {
                 icon: Icons.restore,
                 title: L10n.of(context).restorePurchasesTitle,
                 subtitle: L10n.of(context).restorePurchasesSub,
-                onTap: () async {
-                  // No busy guard at all before this: the tile stayed tappable for the whole
-                  // round trip and showed nothing, so it read as broken and invited repeat taps.
-                  setState(() => _busy = true);
-                  try {
-                    await PurchaseService().restore();
-                    await CreditService().refreshBalance();
-                    NotificationService.showSnackbar(
-                        text: L10n.current.restorePurchasesDone, color: Colors.green);
-                  } finally {
-                    if (mounted) setState(() => _busy = false);
-                  }
-                },
+                action: _actionRestore,
+                // No busy guard at all before this: the tile stayed tappable for the whole
+                // round trip and showed nothing, so it read as broken and invited repeat taps.
+                onTap: () => _run(_actionRestore, () async {
+                  await PurchaseService().restore();
+                  await CreditService().refreshBalance();
+                  NotificationService.showSnackbar(
+                      text: L10n.current.restorePurchasesDone, color: Colors.green);
+                }),
               ),
             ],
           ),
@@ -172,9 +193,14 @@ class _CreditsScreenState extends State<CreditsScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    /// Identifies this tile's action, so only the tile the user actually tapped spins.
+    required String action,
     /// Why the tile cannot be used right now, shown in place of the subtitle. Null means usable.
     String? unavailableReason,
   }) {
+    final running = _isRunning(action);
+    // Other tiles are disabled while one runs — two of these at once would race over the same
+    // balance — but they are not made to look busy, because they are not.
     final disabled = _busy || unavailableReason != null;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -183,7 +209,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
         // rendered at full opacity and simply swallowed taps — for up to twelve seconds while
         // the balance was polled — which is exactly "the button looks active but does nothing".
         enabled: !disabled,
-        leading: _busy
+        leading: running
             ? const SizedBox(
                 width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.2))
             : Icon(icon),
@@ -218,8 +244,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
     );
   }
 
-  Future<void> _claimDaily() async {
-    setState(() => _busy = true);
+  Future<void> _claimDaily() => _run(_actionDaily, () async {
     try {
       final granted = await CreditService().claimDaily();
       NotificationService.showSnackbar(text: L10n.current.creditsClaimed(granted), color: Colors.green);
@@ -238,13 +263,14 @@ class _CreditsScreenState extends State<CreditsScreen> {
     } catch (_) {
       NotificationService.showSnackbar(
           text: L10n.current.errSomethingWrong, color: Colors.orange);
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
-  }
+  });
 
   void _watchAd() {
-    setState(() => _busy = true);
+    if (_busy) return;
+    // Not through _run: the ad hands control to Google and reports back through callbacks, so
+    // there is no future to await here. Each callback clears the marker.
+    setState(() => _running = _actionAd);
     RewardedAdManager().show(
       // The reward is granted by Google's verification callback to the API, not by us,
       // so this waits for the balance to move rather than asking for credits.
@@ -269,25 +295,20 @@ class _CreditsScreenState extends State<CreditsScreen> {
               text: L10n.current.creditsCouldNotConfirm,
               color: Colors.orange);
         } finally {
-          if (mounted) setState(() => _busy = false);
+          if (mounted) setState(() => _running = null);
         }
       },
       onUnavailable: () {
-        if (mounted) setState(() => _busy = false);
+        if (mounted) setState(() => _running = null);
         NotificationService.showSnackbar(
             text: L10n.current.creditsNoAd, color: Colors.orange);
       },
     );
   }
 
-  Future<void> _buy(String productId) async {
-    setState(() => _busy = true);
-    try {
-      // The result (credit grant) is handled globally by PurchaseService via the purchase
-      // stream, so it completes even if the user leaves this screen.
-      await PurchaseService().buy(productId);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
+  Future<void> _buy(String productId) => _run(_actionBuy, () async {
+    // The result (credit grant) is handled globally by PurchaseService via the purchase
+    // stream, so it completes even if the user leaves this screen.
+    await PurchaseService().buy(productId);
+  });
 }
