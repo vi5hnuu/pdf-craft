@@ -101,7 +101,16 @@ class _ToolPickerSheetState extends State<ToolPickerSheet> {
   List<ToolDef> _pick(List<ToolDef> from, List<String> ids) {
     if (_query.trim().isNotEmpty) return const [];
     final byId = {for (final t in from) t.id: t};
-    return [for (final id in ids) if (byId[id] != null) byId[id]!];
+    // Stored ids are resolved through the registry first, so a favourite or recent saved against
+    // a tool that has since been merged into another still matches. Without this, a saved
+    // `reorder` favourite showed in the Tools grid (which resolves) but silently vanished from
+    // this sheet (which did not).
+    final seen = <String>{};
+    return [
+      for (final id in ids)
+        if (byId[ToolRegistry.resolveId(id)] != null && seen.add(ToolRegistry.resolveId(id)))
+          byId[ToolRegistry.resolveId(id)]!
+    ];
   }
 
   @override

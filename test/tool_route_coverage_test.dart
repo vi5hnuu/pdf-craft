@@ -54,6 +54,14 @@ void main() {
     expect(ToolRegistry.byId('not-a-tool'), isNull);
   });
 
+  test('a retired id resolves to exactly one live tool, so it cannot be listed twice', () {
+    // Favourites and recents are stored as bare ids. If both the retired id and its replacement
+    // are stored — easy, since using the replacement records it — a list that resolves ids has
+    // to de-duplicate or the tool appears twice.
+    final resolved = ['reorder', 'organize'].map(ToolRegistry.resolveId).toSet();
+    expect(resolved, {'organize'});
+  });
+
   test('no two tools share an id', () {
     final ids = ToolRegistry.tools.map((t) => t.id).toList();
     expect(ids.length, ids.toSet().length,
