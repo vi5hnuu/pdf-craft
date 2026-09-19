@@ -205,14 +205,30 @@ class _ToolPickerSheetState extends State<ToolPickerSheet> {
                 color: theme.colorScheme.primary, fontWeight: FontWeight.w700)),
       );
 
-  Widget _tile(ThemeData theme, ToolDef tool) => ListTile(
-        leading: Icon(tool.icon, color: tool.category.color),
-        title: Text(tool.localizedName(context)),
-        subtitle: Text(tool.localizedDescription(context),
-            maxLines: 1, overflow: TextOverflow.ellipsis),
-        onTap: () {
-          Navigator.pop(context);
-          widget.onSelected(tool);
+  Widget _tile(ThemeData theme, ToolDef tool) {
+    final isFav = FavoriteToolsService().isFavorite(tool.id);
+    return ListTile(
+      leading: Icon(tool.icon, color: tool.category.color),
+      title: Text(tool.localizedName(context)),
+      subtitle: Text(tool.localizedDescription(context),
+          maxLines: 1, overflow: TextOverflow.ellipsis),
+      // This sheet groups favourites at the top but offered no way to make one, so the grouping
+      // only meant anything to someone who had already found the star on the Tools grid.
+      trailing: IconButton(
+        icon: Icon(isFav ? Icons.star : Icons.star_border,
+            size: 20,
+            color:
+                isFav ? Colors.amber : theme.colorScheme.onSurface.withValues(alpha: 0.35)),
+        tooltip: isFav ? L10n.of(context).favRemove : L10n.of(context).favAdd,
+        onPressed: () async {
+          await FavoriteToolsService().toggle(tool.id);
+          if (mounted) setState(() {});
         },
-      );
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        widget.onSelected(tool);
+      },
+    );
+  }
 }

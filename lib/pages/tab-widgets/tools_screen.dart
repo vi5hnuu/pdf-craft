@@ -377,7 +377,8 @@ class ToolCard extends StatelessWidget {
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () => tool.openPicker(context),
-        // Long-press to pin/unpin from favourites.
+        // Kept as a shortcut for anyone who already knows it, but no longer the only way in:
+        // the star below is the discoverable one.
         onLongPress: () => _toggleFavorite(context),
         child: Container(
         decoration: BoxDecoration(
@@ -390,6 +391,8 @@ class ToolCard extends StatelessWidget {
           // Center the icon+label block; the star badge is separately positioned.
           alignment: Alignment.center,
           fit: StackFit.expand,
+          // The star overhangs the padding so it sits in the corner rather than inset.
+          clipBehavior: Clip.none,
           children: [
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -462,12 +465,36 @@ class ToolCard extends StatelessWidget {
                 },
               ),
             ),
-            if (isFav)
-              const Positioned(
-                bottom: 0,
-                right: 0,
-                child: Icon(Icons.star, size: 14, color: Colors.amber),
+            // Always shown, filled when favourited and a hollow outline when not.
+            //
+            // It used to appear only once a tool *was* a favourite, and the only way to make one
+            // was a long-press — so the feature was invisible to anyone who had not already
+            // found it. An outline star advertises both that favourites exist and how to set one.
+            Positioned(
+              bottom: -6,
+              right: -6,
+              child: Semantics(
+                button: true,
+                label: isFav ? L10n.of(context).favRemove : L10n.of(context).favAdd,
+                child: InkResponse(
+                  onTap: () => _toggleFavorite(context),
+                  radius: 20,
+                  // A 36px target inside a ~110px grid cell: comfortably tappable without
+                  // crowding the icon and label it shares the card with.
+                  child: SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: Icon(
+                      isFav ? Icons.star : Icons.star_border,
+                      size: 16,
+                      color: isFav
+                          ? Colors.amber
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
               ),
+            ),
             ],
           ),
         ),
