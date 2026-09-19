@@ -13,11 +13,21 @@ import 'package:pdf_craft/pages/annotate/annotation.dart';
 
 class AnnotationPainter extends CustomPainter {
   AnnotationPainter({
+    required this.page,
     required this.annotations,
     required this.selectedId,
     this.preview,
     this.imageCache = const {},
   });
+
+  /// The rendered page, drawn by this painter rather than sitting behind it as a sibling widget.
+  ///
+  /// That is not a tidy-up: a highlighter multiplies, and a blend mode only sees what is already
+  /// in *its own* layer. With the page in a separate widget underneath, the overlay's backdrop was
+  /// transparent, so multiplying against it produced nothing at all — the stroke was recorded and
+  /// invisible. Painting the page into the same canvas is what gives the blend something to
+  /// multiply with, and it is also what makes the preview match the /Highlight in the saved file.
+  final ui.Image? page;
 
   final List<Annotation> annotations;
   final String? selectedId;
@@ -31,6 +41,16 @@ class AnnotationPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final bg = page;
+    if (bg != null) {
+      paintImage(
+        canvas: canvas,
+        rect: Offset.zero & size,
+        image: bg,
+        fit: BoxFit.fill,
+        filterQuality: FilterQuality.medium,
+      );
+    }
     for (final a in annotations) {
       _paint(canvas, size, a);
     }
@@ -75,31 +95,46 @@ class AnnotationPainter extends CustomPainter {
     switch (a) {
       case InkAnnotation ink:
         if (ink.points.isEmpty) return;
+
+        // A highlighter multiplies onto the page, so the text underneath stays readable and two
+        // overlapping strokes do not compound into a darker band — which is exactly what the
+        // /Highlight annotation in the saved file does, so the preview matches the output.
+        //
+        // The multiply has to be the *layer's* blend mode, not the paint's. Setting it on the
+        // paint composites against whatever is already in the current layer, and on Impeller that
+        // produced nothing visible at all: the stroke was recorded, the page showed no mark. A
+        // saveLayer gives the blend an explicit backdrop — the page, drawn just above — to
+        // multiply against.
+        if (ink.highlighter) {
+          canvas.saveLayer(
+              Offset.zero & size,
+              Paint()
+                ..blendMode = BlendMode.multiply
+                ..color = Color.fromARGB((opacity * 255).round(), 0, 0, 0));
+        }
+
         final paint = Paint()
-          ..color = ink.color.withValues(alpha: opacity * (ink.highlighter ? 0.45 : 1.0))
+          ..color = ink.highlighter ? ink.color : ink.color.withValues(alpha: opacity)
           ..strokeWidth = _strokePx(ink.strokeWidth, size)
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round
-          ..style = PaintingStyle.stroke
-          // A highlighter multiplies: the text underneath stays readable and two overlapping
-          // strokes do not compound into a darker band. On the produced PDF this is a real
-          // /Highlight annotation, which behaves the same way — so what the author sees here is
-          // what the file does.
-          ..blendMode = ink.highlighter ? BlendMode.multiply : BlendMode.srcOver;
+          ..style = PaintingStyle.stroke;
 
         if (ink.points.length == 1) {
-          canvas.drawCircle(_ptPx(ink.points.first, size),
-              paint.strokeWidth / 2, paint..style = PaintingStyle.fill);
-          return;
+          canvas.drawCircle(_ptPx(ink.points.first, size), paint.strokeWidth / 2,
+              Paint()..color = paint.color);
+        } else {
+          final path = Path();
+          final first = _ptPx(ink.points.first, size);
+          path.moveTo(first.dx, first.dy);
+          for (var i = 1; i < ink.points.length; i++) {
+            final p = _ptPx(ink.points[i], size);
+            path.lineTo(p.dx, p.dy);
+          }
+          canvas.drawPath(path, paint);
         }
-        final path = Path();
-        final first = _ptPx(ink.points.first, size);
-        path.moveTo(first.dx, first.dy);
-        for (var i = 1; i < ink.points.length; i++) {
-          final p = _ptPx(ink.points[i], size);
-          path.lineTo(p.dx, p.dy);
-        }
-        canvas.drawPath(path, paint);
+
+        if (ink.highlighter) canvas.restore();
 
       case ShapeAnnotation s:
         final rect = _toPx(s.bounds, size);
@@ -206,7 +241,8 @@ class AnnotationPainter extends CustomPainter {
   @override
   bool shouldRepaint(AnnotationPainter old) =>
       // The old painter returned true unconditionally, repainting the whole overlay every frame
-      // of every animation on the screen. These four are the only things it draws from.
+      // of every animation on the screen. These are the only things it draws from.
+      old.page != page ||
       old.annotations != annotations ||
       old.annotations.length != annotations.length ||
       old.selectedId != selectedId ||

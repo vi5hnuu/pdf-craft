@@ -63,7 +63,9 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   PdfDocument? _doc;
   int _currentPage = 1;
   int _totalPages = 0;
-  PdfPageImage? _pageImage;
+  /// The rendered page, decoded. The painter draws it, so a highlighter has something to
+  /// multiply against — see [AnnotationPainter.page].
+  ui.Image? _pageDecoded;
   double _pageWidthPt = 595;
   double _pageHeightPt = 842;
   bool _loadingPage = true;
@@ -154,9 +156,10 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
       final img = await page.render(
           width: page.width * 2, height: page.height * 2, format: PdfPageImageFormat.jpeg);
       await page.close();
+      final decoded = img == null ? null : await decodeImageFromList(img.bytes);
       if (!mounted) return;
       setState(() {
-        _pageImage = img;
+        _pageDecoded = decoded;
         _currentPage = pageNo;
         _loadingPage = false;
         // Each page starts unzoomed; a zoom level from the previous page means nothing here.
@@ -634,8 +637,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
             width: w,
             height: h,
             child: Stack(clipBehavior: Clip.none, children: [
-              if (_pageImage != null)
-                Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill)),
+              // The page is drawn by the painter, not as a widget underneath it, so blend modes
+              // have the page in their own layer to work against.
               Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -645,6 +648,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
                   onTapUp: _onTapUp,
                   child: CustomPaint(
                     painter: AnnotationPainter(
+                      page: _pageDecoded,
                       annotations: marks,
                       selectedId: _selectedId,
                       preview: _preview,
