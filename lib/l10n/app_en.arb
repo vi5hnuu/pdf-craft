@@ -730,6 +730,7 @@
   "analyzeEncrypted": "Encrypted",
   "yes": "Yes",
   "no": "No",
+  "annotateAddNote": "Add a note",
   "annotateAddSignature": "Add a signature",
   "annotateUseSavedSignature": "Use saved signature",
   "annotateUseSignature": "Use this signature",

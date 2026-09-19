@@ -491,6 +491,7 @@
   "analyzeEncrypted": "एन्क्रिप्टेड",
   "yes": "हाँ",
   "no": "नहीं",
+  "annotateAddNote": "नोट जोड़ें",
   "annotateAddSignature": "हस्ताक्षर जोड़ें",
   "annotateUseSavedSignature": "सहेजा हुआ हस्ताक्षर उपयोग करें",
   "annotateUseSignature": "यह हस्ताक्षर उपयोग करें",

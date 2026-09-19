@@ -16,6 +16,7 @@ import 'package:pdf_craft/singletons/ads_singleton.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/widgets/text_prompt.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'dart:async';
 
@@ -573,27 +574,23 @@ class _FormEditorViewState extends State<FormEditorView>
   Future<void> _promptGroup(FieldType type) async {
     // Localized: these are used verbatim as the group's export values, so leaving them English
     // put English option values inside a Hindi author's PDF.
-    final controller = TextEditingController(
-        text: [1, 2, 3].map(L10n.current.optionLabelDefault).join(', '));
-    final labels = await showDialog<List<String>>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).formGroupTitle(type.localizedLabel(ctx))),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(L10n.of(context).optionLabelsHint, style: const TextStyle(fontSize: 13)),
-          const SizedBox(height: 12),
-          TextField(controller: controller, autofocus: true, decoration: const InputDecoration(border: OutlineInputBorder())),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(context).cancel)),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()),
-            child: Text(L10n.of(context).add),
-          ),
-        ],
-      ),
+    //
+    // Through the shared prompt, which owns its controller. The version here created one in this
+    // method and never released it — a leak per prompt — and the obvious fix, disposing after
+    // the dialog returns, is the bug that crashed the sticky-note dialog: the route is still
+    // animating out and its TextField is still listening. See [promptForText].
+    final entered = await promptForText(
+      context,
+      title: L10n.of(context).formGroupTitle(type.localizedLabel(context)),
+      initial: [1, 2, 3].map(L10n.current.optionLabelDefault).join(', '),
+      helperText: L10n.of(context).optionLabelsHint,
+      confirmLabel: L10n.of(context).add,
     );
-    if (labels != null && labels.isNotEmpty) _addGroup(type, labels);
+    if (entered == null) return;
+
+    final labels =
+        entered.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (labels.isNotEmpty) _addGroup(type, labels);
   }
 
   @override

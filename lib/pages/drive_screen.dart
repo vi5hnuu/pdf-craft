@@ -10,6 +10,7 @@ import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/widgets/text_prompt.dart';
 import 'package:pdf_craft/widgets/tool_picker_sheet.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/singletons/file_store.dart';
@@ -346,28 +347,14 @@ class _DriveScreenState extends State<DriveScreen> {
   /// screen advertised itself as Drive management while offering neither.
   Future<void> _rename(drive.File f) async {
     if (f.id == null) return;
-    final controller = TextEditingController(text: f.name ?? '');
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(GoogleDriveService.isFolder(f)
-            ? L10n.of(ctx).renameFolder
-            : L10n.of(ctx).renameFile),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(ctx).cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: Text(L10n.of(ctx).rename)),
-        ],
-      ),
+    final newName = await promptForText(
+      context,
+      title: GoogleDriveService.isFolder(f)
+          ? L10n.of(context).renameFolder
+          : L10n.of(context).renameFile,
+      initial: f.name ?? '',
+      confirmLabel: L10n.of(context).rename,
     );
-    controller.dispose();
     if (newName == null || newName.isEmpty || newName == f.name) return;
     try {
       await _drive.renameFile(f.id!, newName);
@@ -422,28 +409,12 @@ class _DriveScreenState extends State<DriveScreen> {
 
   /// Creates a folder in the folder currently being browsed.
   Future<void> _createFolder() async {
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).driveNewFolder),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-              labelText: L10n.of(ctx).driveFolderName,
-              border: const OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(ctx).cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: Text(L10n.of(ctx).create)),
-        ],
-      ),
+    final name = await promptForText(
+      context,
+      title: L10n.of(context).driveNewFolder,
+      label: L10n.of(context).driveFolderName,
+      confirmLabel: L10n.of(context).create,
     );
-    controller.dispose();
     if (name == null || name.isEmpty) return;
     try {
       await _drive.createFolder(name,

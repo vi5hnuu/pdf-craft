@@ -36,6 +36,7 @@ import 'package:pdf_craft/pages/annotate/annotation.dart';
 import 'package:pdf_craft/pages/annotate/annotation_painter.dart';
 import 'package:pdf_craft/pages/annotate/signature_sheet.dart';
 import 'package:pdf_craft/widgets/ink/ink_painting.dart';
+import 'package:pdf_craft/widgets/text_prompt.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/pdf_service.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
@@ -346,27 +347,12 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   // ── Placing text / notes / images ─────────────────────────────────────────
 
   Future<void> _placeText(Offset at, {TextAnnotation? edit}) async {
-    final controller = TextEditingController(text: edit?.text ?? '');
-    final text = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).annotateAddText),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 4,
-          minLines: 1,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(ctx).cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: Text(L10n.of(ctx).ok)),
-        ],
-      ),
+    final text = await promptForText(
+      context,
+      title: L10n.of(context).annotateAddText,
+      initial: edit?.text ?? '',
+      maxLines: 4,
     );
-    controller.dispose();
     if (text == null || text.isEmpty || !mounted) return;
 
     _pushUndo();
@@ -390,32 +376,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   }
 
   Future<void> _placeSticky(Offset at, {StickyAnnotation? edit}) async {
-    final controller = TextEditingController(text: edit?.text ?? '');
-    final text = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).annotateSticky),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(
-            controller: controller,
-            autofocus: true,
-            maxLines: 5,
-            minLines: 2,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 8),
-          Text(L10n.of(ctx).annotateNoteHint,
-              style: Theme.of(ctx).textTheme.bodySmall),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L10n.of(ctx).cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: Text(L10n.of(ctx).ok)),
-        ],
-      ),
+    final text = await promptForText(
+      context,
+      title: L10n.of(context).annotateAddNote,
+      initial: edit?.text ?? '',
+      helperText: L10n.of(context).annotateNoteHint,
+      maxLines: 5,
     );
-    controller.dispose();
     if (text == null || text.isEmpty || !mounted) return;
 
     _pushUndo();
