@@ -434,9 +434,14 @@ class ToolCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // Credit-cost badge (top-right) — shown for paid tools once prices load.
+            // Credit-cost badge — shown for paid tools once prices load.
+            //
+            // Bottom-right, because top-right now belongs to the favourite star. Between a
+            // read-only badge and a control the user taps, the easier corner goes to the
+            // control; the star also sat next to the label down here, close enough to read as
+            // part of the tool's name.
             Positioned(
-              top: -2,
+              bottom: -2,
               right: -2,
               child: AnimatedBuilder(
                 animation: CreditService(),
@@ -471,7 +476,7 @@ class ToolCard extends StatelessWidget {
             // was a long-press — so the feature was invisible to anyone who had not already
             // found it. An outline star advertises both that favourites exist and how to set one.
             Positioned(
-              bottom: -6,
+              top: -6,
               right: -6,
               child: Semantics(
                 button: true,

@@ -38,11 +38,23 @@ class GoogleDriveService {
   /// Restores a previous session **silently** — never shows the account picker. Use this when a
   /// screen merely opens (e.g. the Cloud tab); only an explicit user tap should call [signIn].
   Future<GoogleSignInAccount?> restoreSession() async {
-    // Only counts as a restored Drive session if the scopes are already granted; otherwise the
-    // Cloud tab would show itself as connected and then fail on the first request.
     final account = await GoogleAccount().restore();
-    _currentUser =
-        account != null && await _signIn.canAccessScopes(_driveScopes) ? account : null;
+    if (account == null) return _currentUser = null;
+
+    // Ideally only a session that already holds the Drive scopes counts as restored, so the
+    // Cloud tab cannot show itself connected and then fail on the first request. But
+    // `canAccessScopes` is iOS/web only — on Android it throws UnimplementedError, and this
+    // threw straight out of `restoreSession`, where the caller's `catch` swallowed it. The
+    // result was that Android, the platform this ships on, reported *every* returning user as
+    // signed out and made them connect Drive again on each visit.
+    //
+    // Where the check exists it is still used. Where it does not, the account is accepted and a
+    // missing scope surfaces on the first Drive call, which the screen already reports.
+    try {
+      _currentUser = await _signIn.canAccessScopes(_driveScopes) ? account : null;
+    } on UnimplementedError {
+      _currentUser = account;
+    }
     return _currentUser;
   }
 

@@ -80,8 +80,20 @@ class GoogleAccount {
   /// into the login. Returns false when the user declines, so the caller can say so instead of
   /// failing later inside an API call.
   Future<bool> ensureScopes(List<String> scopes) async {
+    // `canAccessScopes` is a fast path that only iOS and web implement; `google_sign_in_android`
+    // does not, so on Android the base class throws UnimplementedError. Catching that alongside
+    // everything else and returning false meant Drive could never obtain its scopes on Android
+    // at all — the one platform this app ships on.
     try {
       if (await _client.canAccessScopes(scopes)) return true;
+    } on UnimplementedError {
+      // Expected on Android. requestScopes below is implemented everywhere and already returns
+      // true without prompting when the scopes are held, so it is a complete substitute.
+    } catch (e) {
+      LoggerSingleton().logger.w('Google scope check failed, asking instead: $e');
+    }
+
+    try {
       return await _client.requestScopes(scopes);
     } catch (e) {
       LoggerSingleton().logger.w('Google scope request failed: $e');
