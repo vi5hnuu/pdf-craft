@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/widgets/ink/drawing_pad.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
@@ -27,8 +27,10 @@ class SignPdfView extends StatefulWidget {
 }
 
 class _SignPdfViewState extends State<SignPdfView> {
-  // Each stroke is a list of offsets; null marks a pen-up between strokes.
-  final List<List<Offset?>> _strokes = [];
+  // Drawing lives in the shared pad, which is also what the signature sheet inside Annotate
+  // uses — so a fix to either reaches both. This screen's own copy joined points with straight
+  // lines, and its gesture area was not opaque, so on some layouts it captured nothing at all.
+  final DrawingPadController _pad = DrawingPadController();
   Color _inkColor = Colors.black;
   double _strokeWidth = 3.0;
   bool _busy = false;
@@ -39,7 +41,13 @@ class _SignPdfViewState extends State<SignPdfView> {
     Color(0xFFC62828), // red-ink
   ];
 
-  bool get _hasStrokes => _strokes.any((s) => s.any((p) => p != null));
+  bool get _hasStrokes => !_pad.isEmpty;
+
+  @override
+  void dispose() {
+    _pad.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +60,12 @@ class _SignPdfViewState extends State<SignPdfView> {
           IconButton(
             icon: const Icon(Icons.undo),
             tooltip: L10n.of(context).undo,
-            onPressed: _hasStrokes ? () => setState(() => _strokes.removeLast()) : null,
+            onPressed: _pad.canUndo ? _pad.undo : null,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: L10n.of(context).clear,
-            onPressed: _hasStrokes ? () => setState(_strokes.clear) : null,
+            onPressed: _hasStrokes ? _pad.clear : null,
           ),
         ],
       ),
@@ -102,14 +110,11 @@ class _SignPdfViewState extends State<SignPdfView> {
                         child: Text(L10n.of(context).signHere,
                             style: TextStyle(color: Colors.grey.shade300, fontSize: 28, fontStyle: FontStyle.italic)),
                       ),
-                    GestureDetector(
-                      onPanStart: (d) => setState(() => _strokes.add([d.localPosition])),
-                      onPanUpdate: (d) => setState(() => _strokes.last.add(d.localPosition)),
-                      onPanEnd: (_) => setState(() => _strokes.last.add(null)),
-                      child: CustomPaint(
-                        painter: _SignaturePainter(_strokes, _inkColor, _strokeWidth),
-                        size: Size.infinite,
-                      ),
+                    DrawingPad(
+                      controller: _pad,
+                      color: _inkColor,
+                      width: _strokeWidth,
+                      background: Colors.transparent,
                     ),
                   ]),
                 ),
@@ -213,78 +218,8 @@ class _SignPdfViewState extends State<SignPdfView> {
 
   /// Renders only the drawn strokes, cropped to their bounding box with padding
   /// and a transparent background, at 3x for crisp stamping.
-  Future<Uint8List?> _exportCroppedSignature() async {
-    final pts = <Offset>[];
-    for (final stroke in _strokes) {
-      for (final p in stroke) {
-        if (p != null) pts.add(p);
-      }
-    }
-    if (pts.isEmpty) return null;
-
-    double minX = pts.first.dx, maxX = pts.first.dx, minY = pts.first.dy, maxY = pts.first.dy;
-    for (final p in pts) {
-      minX = p.dx < minX ? p.dx : minX;
-      maxX = p.dx > maxX ? p.dx : maxX;
-      minY = p.dy < minY ? p.dy : minY;
-      maxY = p.dy > maxY ? p.dy : maxY;
-    }
-    final pad = _strokeWidth * 2 + 12;
-    final rect = Rect.fromLTRB(minX - pad, minY - pad, maxX + pad, maxY + pad);
-    const scale = 3.0;
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    canvas.scale(scale);
-    canvas.translate(-rect.left, -rect.top);
-    _SignaturePainter(_strokes, _inkColor, _strokeWidth).paint(canvas, rect.size);
-    final picture = recorder.endRecording();
-
-    final img = await picture.toImage((rect.width * scale).ceil(), (rect.height * scale).ceil());
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    return byteData?.buffer.asUint8List();
-  }
+  /// Delegates to the shared pad, which crops to the ink bounds for the same reason this used
+  /// to: a signature drawn small in a big pad, exported whole, lands on the page tiny.
+  Future<Uint8List?> _exportCroppedSignature() => _pad.exportPng();
 }
 
-class _SignaturePainter extends CustomPainter {
-  final List<List<Offset?>> strokes;
-  final Color color;
-  final double strokeWidth;
-
-  _SignaturePainter(this.strokes, this.color, this.strokeWidth);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    for (final stroke in strokes) {
-      // Collect the non-null points for this stroke.
-      final points = stroke.whereType<Offset>().toList();
-      if (points.isEmpty) continue;
-      if (points.length < 3) {
-        // Too short to smooth — draw a dot / short line.
-        canvas.drawPoints(ui.PointMode.polygon, points, paint);
-        continue;
-      }
-      final path = Path()..moveTo(points.first.dx, points.first.dy);
-      // Quadratic beziers through midpoints for a smooth, natural line.
-      for (int i = 1; i < points.length - 1; i++) {
-        final mid = Offset(
-          (points[i].dx + points[i + 1].dx) / 2,
-          (points[i].dy + points[i + 1].dy) / 2,
-        );
-        path.quadraticBezierTo(points[i].dx, points[i].dy, mid.dx, mid.dy);
-      }
-      path.lineTo(points.last.dx, points.last.dy);
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_SignaturePainter old) => true;
-}

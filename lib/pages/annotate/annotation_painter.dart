@@ -10,6 +10,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/pages/annotate/annotation.dart';
+import 'package:pdf_craft/widgets/ink/ink_painting.dart';
 
 class AnnotationPainter extends CustomPainter {
   AnnotationPainter({
@@ -120,19 +121,10 @@ class AnnotationPainter extends CustomPainter {
           ..strokeJoin = StrokeJoin.round
           ..style = PaintingStyle.stroke;
 
-        if (ink.points.length == 1) {
-          canvas.drawCircle(_ptPx(ink.points.first, size), paint.strokeWidth / 2,
-              Paint()..color = paint.color);
-        } else {
-          final path = Path();
-          final first = _ptPx(ink.points.first, size);
-          path.moveTo(first.dx, first.dy);
-          for (var i = 1; i < ink.points.length; i++) {
-            final p = _ptPx(ink.points[i], size);
-            path.lineTo(p.dx, p.dy);
-          }
-          canvas.drawPath(path, paint);
-        }
+        // Through the shared ink path, so a pen stroke here curves exactly like one on the
+        // signature pad. Joining the samples with straight lines is what made drawing look
+        // angular no matter how carefully the author moved their finger.
+        paintInkStroke(canvas, [for (final p in ink.points) _ptPx(p, size)], paint);
 
         if (ink.highlighter) canvas.restore();
 

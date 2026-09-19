@@ -1,22 +1,22 @@
 /// Capture a signature without leaving the annotate screen.
 ///
 /// The Sign tool is a whole separate trip: pick the file again, draw, place, save. When the point
-/// is "sign this bit of the page I am already looking at", that is three screens too many. This is
-/// the same capture — drawn strokes exported cropped to their ink bounds on a transparent
-/// background, the way [SignPdfView] does it — offered as a sheet, with the last signature
-/// remembered so the common case is one tap.
+/// is "sign this bit of the page I am already looking at", that is three screens too many.
+///
+/// The drawing itself is [DrawingPad], shared with the Sign tool — including the two fixes that
+/// made it work at all: an opaque hit-test area, and a painter that repaints on a revision
+/// counter rather than on a list it mutates in place.
 library;
 
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/signature_store.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/ink/drawing_pad.dart';
 
 class SignatureSheet extends StatefulWidget {
   const SignatureSheet({super.key});
@@ -38,10 +38,13 @@ class SignatureSheet extends StatefulWidget {
 }
 
 class _SignatureSheetState extends State<SignatureSheet> {
-  final List<List<Offset>> _strokes = [];
+  final _pad = DrawingPadController();
   Color _ink = Colors.black;
   double _width = 3;
   bool _busy = false;
+
+  /// Ink colours worth offering: the three a signature is actually made in.
+  static const _inks = [Color(0xFF000000), Color(0xFF0D47A1), Color(0xFFB71C1C)];
 
   @override
   void initState() {
@@ -51,47 +54,15 @@ class _SignatureSheetState extends State<SignatureSheet> {
     });
   }
 
-  bool get _hasInk => _strokes.any((s) => s.isNotEmpty);
-
-  /// Exports cropped to the ink bounds on a transparent background.
-  ///
-  /// Not the whole canvas: a signature drawn small in the corner of a wide pad would otherwise be
-  /// placed as a mostly-empty image, so it lands on the page tiny and off-centre.
-  Future<Uint8List?> _export() async {
-    if (!_hasInk) return null;
-
-    var minX = double.infinity, minY = double.infinity;
-    var maxX = -double.infinity, maxY = -double.infinity;
-    for (final s in _strokes) {
-      for (final p in s) {
-        minX = math.min(minX, p.dx);
-        minY = math.min(minY, p.dy);
-        maxX = math.max(maxX, p.dx);
-        maxY = math.max(maxY, p.dy);
-      }
-    }
-    final pad = _width * 2;
-    final rect = Rect.fromLTRB(minX - pad, minY - pad, maxX + pad, maxY + pad);
-    if (rect.width <= 0 || rect.height <= 0) return null;
-
-    // 3x so the signature is not soft once it is scaled onto a page.
-    const scale = 3.0;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    canvas.scale(scale);
-    canvas.translate(-rect.left, -rect.top);
-    _SignaturePainter(_strokes, _ink, _width).paint(canvas, rect.size);
-
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(
-        (rect.width * scale).ceil(), (rect.height * scale).ceil());
-    final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    return data?.buffer.asUint8List();
+  @override
+  void dispose() {
+    _pad.dispose();
+    super.dispose();
   }
 
   Future<void> _useDrawn() async {
     setState(() => _busy = true);
-    final bytes = await _export();
+    final bytes = await _pad.exportPng();
     if (!mounted) return;
     setState(() => _busy = false);
     if (bytes == null) return;
@@ -129,6 +100,24 @@ class _SignatureSheetState extends State<SignatureSheet> {
                   child: Text(l.annotateAddSignature,
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w600))),
+              // Undo and redo, driven by the pad. A signature is drawn in a few strokes and the
+              // last one is the one that goes wrong; without undo the only recovery was Clear,
+              // which threw away the good strokes too.
+              ListenableBuilder(
+                listenable: _pad,
+                builder: (context, _) => Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(
+                    icon: const Icon(Icons.undo),
+                    tooltip: l.undo,
+                    onPressed: _pad.canUndo ? _pad.undo : null,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.redo),
+                    tooltip: l.redo,
+                    onPressed: _pad.canRedo ? _pad.redo : null,
+                  ),
+                ]),
+              ),
             ]),
           ),
 
@@ -158,35 +147,17 @@ class _SignatureSheetState extends State<SignatureSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
-              height: 180,
+              height: 190,
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(AppRadius.surface),
                 border: Border.all(color: theme.dividerColor),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.surface),
-                child: Stack(children: [
-                  // A guide line, like a signing pad.
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 44,
-                    child: Container(height: 1, color: Colors.black12),
-                  ),
-                  Positioned.fill(
-                    child: GestureDetector(
-                      onPanStart: (d) => setState(() => _strokes.add([d.localPosition])),
-                      onPanUpdate: (d) => setState(() {
-                        if (_strokes.isNotEmpty) _strokes.last.add(d.localPosition);
-                      }),
-                      child: CustomPaint(
-                        painter: _SignaturePainter(_strokes, _ink, _width),
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
-                  ),
-                ]),
+              clipBehavior: Clip.antiAlias,
+              child: DrawingPad(
+                controller: _pad,
+                color: _ink,
+                width: _width,
+                guideLine: true,
               ),
             ),
           ),
@@ -194,7 +165,7 @@ class _SignatureSheetState extends State<SignatureSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Row(children: [
-              for (final c in [Colors.black, Colors.blue.shade900, Colors.red.shade900])
+              for (final c in _inks)
                 GestureDetector(
                   onTap: () => setState(() => _ink = c),
                   child: Container(
@@ -205,7 +176,9 @@ class _SignatureSheetState extends State<SignatureSheet> {
                       color: c,
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: _ink == c ? theme.colorScheme.primary : Colors.transparent,
+                          color: _ink.toARGB32() == c.toARGB32()
+                              ? theme.colorScheme.primary
+                              : Colors.transparent,
                           width: 2),
                     ),
                   ),
@@ -218,9 +191,12 @@ class _SignatureSheetState extends State<SignatureSheet> {
                   onChanged: (v) => setState(() => _width = v),
                 ),
               ),
-              TextButton(
-                onPressed: _hasInk ? () => setState(_strokes.clear) : null,
-                child: Text(l.annotateClear),
+              ListenableBuilder(
+                listenable: _pad,
+                builder: (context, _) => TextButton(
+                  onPressed: _pad.isEmpty ? null : _pad.clear,
+                  child: Text(l.annotateClear),
+                ),
               ),
             ]),
           ),
@@ -237,9 +213,12 @@ class _SignatureSheetState extends State<SignatureSheet> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: FilledButton(
-                  onPressed: (_hasInk && !_busy) ? _useDrawn : null,
-                  child: Text(l.annotateUseSignature),
+                child: ListenableBuilder(
+                  listenable: _pad,
+                  builder: (context, _) => FilledButton(
+                    onPressed: (_pad.isEmpty || _busy) ? null : _useDrawn,
+                    child: Text(l.annotateUseSignature),
+                  ),
                 ),
               ),
             ]),
@@ -248,43 +227,4 @@ class _SignatureSheetState extends State<SignatureSheet> {
       ),
     );
   }
-}
-
-class _SignaturePainter extends CustomPainter {
-  _SignaturePainter(this.strokes, this.color, this.width);
-
-  final List<List<Offset>> strokes;
-  final Color color;
-  final double width;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = width
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    for (final s in strokes) {
-      if (s.isEmpty) continue;
-      if (s.length == 1) {
-        canvas.drawCircle(s.first, width / 2, Paint()..color = color);
-        continue;
-      }
-      final path = Path()..moveTo(s.first.dx, s.first.dy);
-      for (var i = 1; i < s.length; i++) {
-        path.lineTo(s[i].dx, s[i].dy);
-      }
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_SignaturePainter old) =>
-      old.strokes.length != strokes.length ||
-      old.color != color ||
-      old.width != width ||
-      (strokes.isNotEmpty && old.strokes.isNotEmpty &&
-          old.strokes.last.length != strokes.last.length);
 }

@@ -35,6 +35,7 @@ import 'package:pdf_craft/models/request/stamp_pdf.dart';
 import 'package:pdf_craft/pages/annotate/annotation.dart';
 import 'package:pdf_craft/pages/annotate/annotation_painter.dart';
 import 'package:pdf_craft/pages/annotate/signature_sheet.dart';
+import 'package:pdf_craft/widgets/ink/ink_painting.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/services/apis/pdf_service.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
@@ -262,13 +263,14 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
     final p = _toFrac(d.localPosition);
     final stroke = _activeStroke;
     if (stroke != null) {
-      // Thinned as it is drawn. A pan reports a point per frame, so a two-second drag is well
-      // over a hundred points — and a highlighter turns every segment into a QuadPoints quad,
-      // so an unthinned scribble means a bloated file and a viewer that struggles to draw it.
-      // At this spacing (about a point on A4) the difference is invisible.
-      const minSpacing = 0.002;
+      // Thinned as it is drawn, by the same rule the drawing pad uses — a pan reports a point
+      // per frame, and a highlighter turns every segment into a QuadPoints quad, so an unthinned
+      // scribble means a bloated file and a viewer that struggles to draw it. The threshold is
+      // in pixels, so it is converted through the current canvas size rather than guessed as a
+      // fraction.
       final last = stroke.points.last;
-      if ((p - last).distance < minSpacing) return;
+      final spacing = kInkMinSpacingPx / math.max(_canvasSize.shortestSide, 1);
+      if (!inkShouldAdd(last, p, minSpacing: spacing)) return;
       setState(() => stroke.points.add(p));
       return;
     }
