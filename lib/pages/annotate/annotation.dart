@@ -76,7 +76,16 @@ sealed class Annotation {
 
   Map<String, dynamic> toWire();
 
+  /// A value copy that keeps the same [id].
+  ///
+  /// Undo and redo snapshot every mark, and a snapshot is the *same* mark at an earlier moment —
+  /// so it has to keep its identity. Minting a fresh id here broke two things at once: the
+  /// current selection stopped matching after an undo, and an inserted image lost its entry in
+  /// the decoded-image cache, which is keyed by id, so it came back as an empty box.
   Annotation copy();
+
+  /// A copy that is a genuinely new mark. Only [duplicate] mints a new id.
+  Annotation duplicate();
 
   /// Shared wire fields.
   Map<String, dynamic> _base() => {
@@ -156,6 +165,17 @@ class InkAnnotation extends Annotation {
 
   @override
   InkAnnotation copy() => InkAnnotation(
+        id: id,
+        page: page,
+        color: color,
+        points: List<Offset>.from(points),
+        strokeWidth: strokeWidth,
+        highlighter: highlighter,
+        opacity: opacity,
+      );
+
+  @override
+  InkAnnotation duplicate() => InkAnnotation(
         page: page,
         color: color,
         points: List<Offset>.from(points),
@@ -202,6 +222,18 @@ class ShapeAnnotation extends Annotation {
 
   @override
   ShapeAnnotation copy() => ShapeAnnotation(
+        id: id,
+        page: page,
+        color: color,
+        bounds: _bounds,
+        strokeWidth: strokeWidth,
+        ellipse: ellipse,
+        fillColor: fillColor,
+        opacity: opacity,
+      );
+
+  @override
+  ShapeAnnotation duplicate() => ShapeAnnotation(
         page: page,
         color: color,
         bounds: _bounds,
@@ -260,6 +292,18 @@ class LineAnnotation extends Annotation {
 
   @override
   LineAnnotation copy() => LineAnnotation(
+        id: id,
+        page: page,
+        color: color,
+        from: from,
+        to: to,
+        strokeWidth: strokeWidth,
+        arrow: arrow,
+        opacity: opacity,
+      );
+
+  @override
+  LineAnnotation duplicate() => LineAnnotation(
         page: page,
         color: color,
         from: from,
@@ -310,6 +354,18 @@ class TextAnnotation extends Annotation {
 
   @override
   TextAnnotation copy() => TextAnnotation(
+        id: id,
+        page: page,
+        color: color,
+        bounds: _bounds,
+        text: text,
+        fontSize: fontSize,
+        bold: bold,
+        opacity: opacity,
+      );
+
+  @override
+  TextAnnotation duplicate() => TextAnnotation(
         page: page,
         color: color,
         bounds: _bounds,
@@ -353,6 +409,16 @@ class StickyAnnotation extends Annotation {
 
   @override
   StickyAnnotation copy() => StickyAnnotation(
+        id: id,
+        page: page,
+        color: color,
+        bounds: _bounds,
+        text: text,
+        opacity: opacity,
+      );
+
+  @override
+  StickyAnnotation duplicate() => StickyAnnotation(
         page: page,
         color: color,
         bounds: _bounds,
@@ -401,6 +467,16 @@ class ImageAnnotation extends Annotation {
 
   @override
   ImageAnnotation copy() => ImageAnnotation(
+        id: id,
+        page: page,
+        bounds: _bounds,
+        bytes: bytes,
+        isSignature: isSignature,
+        opacity: opacity,
+      );
+
+  @override
+  ImageAnnotation duplicate() => ImageAnnotation(
         page: page,
         bounds: _bounds,
         bytes: bytes,

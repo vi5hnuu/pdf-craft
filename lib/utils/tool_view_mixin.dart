@@ -60,6 +60,10 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
     bool navigateToPreview = true,
     void Function(File savedFile)? onDone,
     bool showInterstitial = true,
+    /// Set false when [onDone] navigates to the preview itself — the preview carries its own
+    /// "use in another tool" button, and offering the same thing in the snackbar makes it
+    /// long-lived enough to follow the user onto the next screen.
+    bool? offerNextTool,
   }) {
     if (s == null) return;
     if (s.done == true) {
@@ -70,7 +74,8 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
       // offer one when the user is not being taken there.
       final goingToPreview = saved is File && onDone == null && navigateToPreview;
       onToolSuccess(successMessage,
-          output: saved is File ? saved : null, offerNextTool: !goingToPreview);
+          output: saved is File ? saved : null,
+          offerNextTool: offerNextTool ?? !goingToPreview);
       if (saved is File) {
         if (onDone != null) {
           onDone(saved);

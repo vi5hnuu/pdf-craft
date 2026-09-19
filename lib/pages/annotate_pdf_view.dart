@@ -179,13 +179,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
 
   /// Snapshots every mark, deep-copied, so an in-place edit to a selected mark can be undone.
   void _pushUndo() {
-    _undo.add([for (final a in _annotations) a.copy()..page = a.page]);
+    _undo.add([for (final a in _annotations) a.copy()]);
     _redo.clear();
   }
 
   void _restore(List<List<Annotation>> from, List<List<Annotation>> to) {
     if (from.isEmpty) return;
-    to.add([for (final a in _annotations) a.copy()..page = a.page]);
+    to.add([for (final a in _annotations) a.copy()]);
     final snapshot = from.removeLast();
     setState(() {
       _annotations
@@ -564,8 +564,10 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
           handleToolState(
             s,
             successMessage: L10n.current.annotateSaved,
-            // The saved PDF still needs its image marks stamped on before it is shown.
+            // The saved PDF still needs its image marks stamped on before it is shown, so this
+            // screen does the navigation — which is why the snackbar must not also offer it.
             onDone: (saved) => unawaited(_finish(saved)),
+            offerNextTool: false,
           );
           resetToolState([HttpStates.annotatePdf]);
         },
@@ -966,7 +968,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
               onPressed: () {
                 _pushUndo();
                 setState(() {
-                  final copy = sel.copy()..bounds = sel.bounds.translate(0.02, 0.02);
+                  final copy = sel.duplicate()..bounds = sel.bounds.translate(0.02, 0.02);
                   if (sel is ImageAnnotation) _images[copy.id] = _images[sel.id]!;
                   _annotations.add(copy);
                   _selectedId = copy.id;
