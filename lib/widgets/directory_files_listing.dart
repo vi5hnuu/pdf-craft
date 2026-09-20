@@ -95,6 +95,52 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           mode: _sortMode,
           ascending: _ascending);
 
+  /// Shown when the filters hide everything in this folder.
+  ///
+  /// The bare "No matching files" was actively misleading: the name filter only ever sees the
+  /// folder it is in, so typing a filename from the root reported that the file did not exist
+  /// when it was sitting one folder down. This says what was searched, and — while browsing —
+  /// hands the query to the search screen, which does look everywhere.
+  Widget _buildNoMatches(ThemeData theme) {
+    final l = L10n.of(context);
+    final faded = theme.colorScheme.onSurface.withValues(alpha: 0.5);
+    final filtering = _nameFilter.trim().isNotEmpty;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off, size: 48, color: faded),
+            const SizedBox(height: 12),
+            Text(l.noMatchingFiles,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: faded, fontWeight: FontWeight.w600)),
+            if (filtering) ...[
+              const SizedBox(height: 6),
+              Text(l.filterFolderOnlyNote,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(color: faded)),
+              // Only while browsing. In a tool's picker this would walk the user out of the flow
+              // they are part-way through, and they would come back with nothing picked.
+              if (_browseMode) ...[
+                const SizedBox(height: 12),
+                FilledButton.tonalIcon(
+                  icon: const Icon(Icons.search, size: 18),
+                  label: Text(l.searchAllFiles),
+                  onPressed: () => GoRouter.of(context).pushNamed(
+                    AppRoutes.searchRoute.name,
+                    queryParameters: {'q': _nameFilter.trim()},
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final router = GoRouter.of(context);
@@ -146,14 +192,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                         Flexible(
                           fit: FlexFit.tight,
                           child: sortedFiles.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    L10n.of(context).noMatchingFiles,
-                                    style: TextStyle(
-                                        color: theme.colorScheme.onSurface
-                                            .withValues(alpha: 0.5)),
-                                  ),
-                                )
+                              ? _buildNoMatches(theme)
                               : ListView.builder(
                             itemCount: sortedFiles.length,
                             itemBuilder: (context, index) {

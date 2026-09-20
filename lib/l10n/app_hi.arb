@@ -208,6 +208,8 @@
   "searchFilesHint": "फ़ाइलें खोजें",
   "searching": "खोज रहे हैं…",
   "noMatchingFiles": "कोई मिलती-जुलती फ़ाइल नहीं",
+  "filterFolderOnlyNote": "केवल इस फ़ोल्डर में खोजा जाता है। हर जगह देखने के लिए सभी फ़ाइलें खोजें।",
+  "searchAllFiles": "सभी फ़ाइलें खोजें",
   "filesFound": "{count, plural, =1{1 फ़ाइल मिली} other{{count} फ़ाइलें मिलीं}}",
   "resultsTitle": "परिणाम",
   "resultsClearTitle": "परिणाम साफ़ करें",

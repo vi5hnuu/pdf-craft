@@ -190,7 +190,10 @@ final GoRouter appRouter = GoRouter(
         path: AppRoutes.searchRoute.path,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: const SearchScreen(),
+          // `?q=` lets a caller open search already looking for something — the file picker's
+          // folder-local filter uses it to hand its query over.
+          child: SearchScreen(
+              initialQuery: state.uri.queryParameters['q'] ?? ''),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

@@ -231,6 +231,8 @@
   "searchFilesHint": "Search files",
   "searching": "Searching…",
   "noMatchingFiles": "No matching files",
+  "filterFolderOnlyNote": "Only this folder is searched. Search all files to look everywhere.",
+  "searchAllFiles": "Search all files",
   "filesFound": "{count, plural, =1{1 file found} other{{count} files found}}",
   "@filesFound": {
     "placeholders": {

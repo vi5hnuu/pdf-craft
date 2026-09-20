@@ -26,11 +26,39 @@ class _ToolsScreenState extends State<ToolsScreen> {
   final _debouncer = Debouncer(milliseconds: 200);
   String _query = '';
 
+  /// Whether this tab was on screen at the last dependency change — see
+  /// [didChangeDependencies], which uses the edge to decide when to drop the query.
+  bool _wasVisible = true;
+
   @override
   void initState() {
     super.initState();
     // Warm the favourites cache so cards can render their star synchronously.
     FavoriteToolsService().load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // This tab lives in a GoRouter shell branch, so its state survives a tab switch. That left a
+    // stale query filtering the grid on the next visit — and since the box scrolls away with the
+    // rest of the content, the cause was usually off-screen: the tools tab simply looked as if
+    // most of the tools had gone missing.
+    //
+    // An inactive branch is wrapped in `TickerMode(enabled: false)` (go_router's
+    // `_buildRouteBranchContainer`), which is the only visibility signal available without adding
+    // a dependency or plumbing the index down from MainScreen.
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (_wasVisible && !visible) _clearSearch();
+    _wasVisible = visible;
+  }
+
+  /// Drops the query and everything that depends on it. Safe to call from
+  /// `didChangeDependencies`: a rebuild always follows it, so no setState is needed.
+  void _clearSearch() {
+    _searchController.clear();
+    _debouncer.cancel();
+    _query = '';
   }
 
   @override
@@ -105,11 +133,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                       ? IconButton(
                           icon: const Icon(Icons.close),
                           tooltip: L10n.of(context).clear,
-                          onPressed: () {
-                            _searchController.clear();
-                            _debouncer.cancel();
-                            setState(() => _query = '');
-                          },
+                          onPressed: () => setState(_clearSearch),
                         )
                       : null,
                   border: OutlineInputBorder(
