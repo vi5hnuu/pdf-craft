@@ -104,6 +104,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                   suffixIcon: searching
                       ? IconButton(
                           icon: const Icon(Icons.close),
+                          tooltip: L10n.of(context).clear,
                           onPressed: () {
                             _searchController.clear();
                             _debouncer.cancel();

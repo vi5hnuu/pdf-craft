@@ -312,6 +312,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                     ? null
                     : IconButton(
                         icon: const Icon(Icons.close, size: 16),
+                        tooltip: L10n.of(context).clear,
                         onPressed: () {
                           _searchController.clear();
                           _filterDebouncer.cancel();
@@ -778,6 +779,7 @@ class _FolderPickerDialogState extends State<_FolderPickerDialog> {
                 if (_currentPath != widget.startPath)
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
+                    tooltip: L10n.of(context).goBack,
                     onPressed: () {
                       final parent = Directory(_currentPath).parent.path;
                       setState(() => _currentPath = parent);
@@ -793,6 +795,7 @@ class _FolderPickerDialogState extends State<_FolderPickerDialog> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
+                  tooltip: L10n.of(context).close,
                   onPressed: () => Navigator.pop(context),
                 ),
               ],

@@ -554,6 +554,7 @@ class _DriveScreenState extends State<DriveScreen> {
               ? null
               : IconButton(
                   icon: const Icon(Icons.close, size: 18),
+                  tooltip: L10n.of(context).clear,
                   onPressed: () {
                     _searchController.clear();
                     _onSearchChanged('');

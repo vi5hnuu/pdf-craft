@@ -764,12 +764,14 @@ class _FormEditorViewState extends State<FormEditorView>
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.chevron_left, size: 20),
+            tooltip: L10n.of(context).previousPage,
             onPressed: _currentPage > 1 ? () => _loadPage(_currentPage - 1) : null,
           ),
           Text('$_currentPage / $_totalPages', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.chevron_right, size: 20),
+            tooltip: L10n.of(context).nextPage,
             onPressed: _currentPage < _totalPages ? () => _loadPage(_currentPage + 1) : null,
           ),
         ]),
@@ -788,6 +790,9 @@ class _FormEditorViewState extends State<FormEditorView>
             visualDensity: VisualDensity.compact,
             constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             icon: Icon(icon),
+            // Same string the Semantics label uses: the arrows are four identical
+            // glyphs in a cluster, so which one moves which way has to be sayable.
+            tooltip: label,
             onPressed: () => _nudge(deltaPoints),
           ),
         );

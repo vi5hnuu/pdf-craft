@@ -126,6 +126,7 @@ void showManageSelections(BuildContext context) {
                           overflow: TextOverflow.ellipsis),
                       trailing: IconButton(
                         icon: const Icon(Icons.remove_circle_outline),
+                        tooltip: L10n.of(context).removeFromSelection,
                         onPressed: () => SelectionService().removeByPath(f.path),
                       ),
                     );

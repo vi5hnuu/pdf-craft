@@ -806,6 +806,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
       child: Row(children: [
         IconButton(
           icon: const Icon(Icons.chevron_left),
+          tooltip: L10n.of(context).previousPage,
           onPressed: _currentPage > 1 ? () => _loadPage(_currentPage - 1) : null,
         ),
         // A strip of every page, marked ones dotted — so "which pages have I annotated?" is
@@ -856,6 +857,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right),
+          tooltip: L10n.of(context).nextPage,
           onPressed: _currentPage < _totalPages ? () => _loadPage(_currentPage + 1) : null,
         ),
       ]),

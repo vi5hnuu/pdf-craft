@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/split_pdf.dart';
 import 'package:pdf_craft/models/thumbnail.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -45,7 +46,7 @@ class SplitItem extends StatelessWidget {
           )
         ],
       ),
-      if(onDelete!=null) Positioned(top: 0,right: 30,child: IconButton(onPressed: onDelete, icon: const Icon(Icons.delete,color: Colors.red,),))
+      if(onDelete!=null) Positioned(top: 0,right: 30,child: IconButton(onPressed: onDelete, tooltip: L10n.of(context).delete, icon: const Icon(Icons.delete,color: Colors.red,),))
     ],);
   }
 }

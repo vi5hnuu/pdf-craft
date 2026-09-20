@@ -155,6 +155,7 @@ class _ToolPickerSheetState extends State<ToolPickerSheet> {
                   ? null
                   : IconButton(
                       icon: const Icon(Icons.close, size: 18),
+                      tooltip: l.clear,
                       onPressed: () {
                         _controller.clear();
                         setState(() => _query = '');
