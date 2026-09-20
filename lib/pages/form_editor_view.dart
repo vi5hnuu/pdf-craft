@@ -735,10 +735,13 @@ class _FormEditorViewState extends State<FormEditorView>
       Positioned(left: 8, bottom: 12, child: _zoomPad(theme)),
       // Empty-state hint for the current page.
       if (_fields.isEmpty)
+        // Above the zoom and nudge pads, not beside them. Centred on the same bottom line it
+        // only cleared them while the text stayed short: the Hindi hint is half again as long
+        // and ran straight under the zoom control.
         Positioned(
-          bottom: 12,
-          left: 0,
-          right: 0,
+          bottom: 74,
+          left: 16,
+          right: 16,
           child: Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -747,7 +750,11 @@ class _FormEditorViewState extends State<FormEditorView>
                 borderRadius: BorderRadius.circular(AppRadius.surface),
               ),
               child: Text(L10n.of(context).tapFieldToPlace,
-                  style: TextStyle(fontSize: 12.5, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600)),
             ),
           ),
         ),
