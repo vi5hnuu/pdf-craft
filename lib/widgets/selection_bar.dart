@@ -77,6 +77,7 @@ void showToolsForSelection(BuildContext context) {
 /// (or clear all).
 void showManageSelections(BuildContext context) {
   showModalBottomSheet(
+      showDragHandle: true,
     context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.

@@ -42,6 +42,7 @@ class ToolPickerSheet extends StatefulWidget {
     required void Function(ToolDef tool) onSelected,
   }) {
     return showModalBottomSheet<void>(
+      showDragHandle: true,
       context: context,
       // Both matter here: the list is long enough to want the whole screen, and without
       // useSafeArea its top runs under the status bar and the display cutout.

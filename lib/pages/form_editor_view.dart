@@ -345,6 +345,8 @@ class _FormEditorViewState extends State<FormEditorView>
   /// canvas, and reordered to set the tab order of the finished PDF.
   void _showFieldList() {
     showModalBottomSheet(
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.

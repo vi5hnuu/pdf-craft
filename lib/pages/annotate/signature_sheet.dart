@@ -24,6 +24,7 @@ class SignatureSheet extends StatefulWidget {
   /// Returns the signature as PNG bytes, or null if the user backed out.
   static Future<Uint8List?> show(BuildContext context) {
     return showModalBottomSheet<Uint8List>(
+      showDragHandle: true,
       context: context,
       isScrollControlled: true,
       useSafeArea: true,

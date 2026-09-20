@@ -33,6 +33,7 @@ class FileActionsSheet {
     bool allowSelect = false,
   }) {
     return showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
@@ -121,7 +122,6 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final tools = ToolRegistry.toolsForSelection([widget.file]);
 
     return SafeArea(
@@ -130,16 +130,6 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(AppRadius.surface)),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(_name,

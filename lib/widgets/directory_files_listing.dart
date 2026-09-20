@@ -403,6 +403,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   void _showContextMenu(FileSystemEntity file) {
     final isDir = file is Directory;
     showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
@@ -412,12 +413,6 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(AppRadius.surface)),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
@@ -491,6 +486,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     final l = L10n.of(context);
 
     showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
