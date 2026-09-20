@@ -745,8 +745,12 @@ class _FormEditorViewState extends State<FormEditorView>
           child: Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              // Opaque, not a 10% tint. The hint lands across the seam between the white page
+              // and the dark band below it, and a translucent fill took its colour from
+              // whichever half it covered — so the pill read as two mismatched halves.
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                color: theme.colorScheme.surface,
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.45)),
                 borderRadius: BorderRadius.circular(AppRadius.surface),
               ),
               child: Text(L10n.of(context).tapFieldToPlace,
