@@ -725,6 +725,8 @@ class _DriveScreenState extends State<DriveScreen> {
   /// Rename/delete, shared by folder rows and file cards.
   Widget _itemMenu(drive.File f) => PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert),
+        // Otherwise every row's menu announces itself as the framework's "Show menu".
+        tooltip: L10n.of(context).actionMore,
         onSelected: (v) => v == 'rename' ? _rename(f) : _delete(f),
         itemBuilder: (ctx) => [
           PopupMenuItem(

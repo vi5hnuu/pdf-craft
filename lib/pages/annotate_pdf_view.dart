@@ -1029,9 +1029,14 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
     return Row(children: [
       Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
       const SizedBox(width: 10),
-      SizedBox(
-        width: 84,
+      // Flexible rather than a fixed width: "Opacity" fits in 84px but "पारदर्शिता" and
+      // "फ़ॉन्ट साइज़" do not, and a fixed box would wrap them to two lines while the track
+      // beside them kept its full width whatever the label needed.
+      ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 84, maxWidth: 140),
         child: Text(label,
+            softWrap: false,
+            overflow: TextOverflow.fade,
             style:
                 theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
       ),

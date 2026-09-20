@@ -141,6 +141,7 @@ class _PdfPreviewState extends State<PdfPreview> {
           // Our in-app viewer is intentionally lightweight; offer a way out to
           // a full external PDF viewer at any time (not just on error).
           PopupMenuButton<String>(
+            tooltip: L10n.of(context).actionMore,
             onSelected: (value) {
               switch (value) {
                 case 'external':

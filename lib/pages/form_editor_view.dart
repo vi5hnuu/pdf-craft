@@ -617,6 +617,7 @@ class _FormEditorViewState extends State<FormEditorView>
             onPressed: () => setState(() => _previewMode = !_previewMode),
           ),
           PopupMenuButton<String>(
+            tooltip: L10n.of(context).actionMore,
             onSelected: (v) {
               switch (v) {
                 case 'undo':
