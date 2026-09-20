@@ -30,7 +30,13 @@ import 'package:pdf_craft/widgets/app_logo.dart';
 class SearchScreen extends StatefulWidget {
   const SearchScreen({
     Key? key,
+    this.initialQuery = '',
   }) : super(key: key ?? const ValueKey<String>('ScaffoldWithNavBar'));
+
+  /// Query to open with, already typed into the box and already searching. The file picker's
+  /// name filter hands its text over here, because that filter only sees the folder it is in —
+  /// this screen is the one that looks everywhere.
+  final String initialQuery;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -48,6 +54,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
   String _query = '';
   List<File>? _recents; // null while loading
+
+  /// Owned here rather than relying on `initialValue`, so a seeded query opens with the caret
+  /// after the text instead of in front of it.
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialQuery);
 
   static const _imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
   static const _docExts = ['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'];
@@ -68,6 +79,10 @@ class _SearchScreenState extends State<SearchScreen> {
     }, cancelOnError: false);
     SelectionService().addListener(_onSelectionChanged);
     _loadRecents();
+    if (widget.initialQuery.trim().isNotEmpty) {
+      _query = widget.initialQuery;
+      searchSubject.sink.add(widget.initialQuery);
+    }
   }
 
   void _onSelectionChanged() {
@@ -82,8 +97,10 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     SelectionService().removeListener(_onSelectionChanged);
-    SelectionService().clear();
+    // The selection is cross-folder by design, so leaving Search must not wipe a selection
+    // that was made in the Files browser. It is cleared explicitly, or when a tool takes it.
     searchSubject.close();
+    _controller.dispose();
     bloc.add(const ResetSearchEvent());
     super.dispose();
   }
@@ -135,6 +152,7 @@ class _SearchScreenState extends State<SearchScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
               child: TextFormField(
+                controller: _controller,
                 autofocus: true,
                 onChanged: (value) {
                   searchSubject.sink.add(value);
@@ -244,6 +262,8 @@ class _SearchScreenState extends State<SearchScreen> {
             itemBuilder: (context, index) {
               final file = files[index];
               return FileTile(
+                // Keyed by path so the element follows the file, not the row index.
+                key: ValueKey(file.path),
                 file: file,
                 selected: SelectionService().contains(file.path),
                 onPress: () {

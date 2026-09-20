@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/favorites_service.dart';
 import 'package:pdf_craft/state/selection/selection_service.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/widgets/tool_picker_sheet.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:share_plus/share_plus.dart';
@@ -31,14 +33,21 @@ class FileActionsSheet {
     bool allowSelect = false,
   }) {
     return showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
       useSafeArea: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
+      // `context` is the screen that opened this sheet, and it is handed down deliberately: a
+      // tool has to be launched from an element that is still in the tree when the launch
+      // happens. See [_FileActionsBody.hostContext].
       builder: (_) => _FileActionsBody(
-          file: file, onChanged: onChanged, allowSelect: allowSelect),
+          hostContext: context,
+          file: file,
+          onChanged: onChanged,
+          allowSelect: allowSelect),
     );
   }
 }
@@ -47,12 +56,25 @@ class _FileActionsBody extends StatefulWidget {
   final File file;
   final VoidCallback? onChanged;
 
+  /// The context of the screen that opened this sheet.
+  ///
+  /// Needed because launching a tool is asynchronous and outlives this sheet. "Apply a tool"
+  /// pops this sheet, opens the picker, and only routes once the user has chosen — by which
+  /// point this sheet's own element is long gone. Routing from a defunct element makes
+  /// [ToolDef.openWithFiles] return false at its `context.mounted` check, so the sheet closed
+  /// and nothing else happened, with no error anywhere. The host screen is still mounted, so it
+  /// is what the tool is launched from.
+  final BuildContext hostContext;
+
   /// Show a "Select for tools" entry (only where a selection bar exists to act
   /// on it, e.g. Search). Off on surfaces without a selection bar.
   final bool allowSelect;
 
   const _FileActionsBody(
-      {required this.file, this.onChanged, this.allowSelect = false});
+      {required this.hostContext,
+      required this.file,
+      this.onChanged,
+      this.allowSelect = false});
 
   @override
   State<_FileActionsBody> createState() => _FileActionsBodyState();
@@ -100,7 +122,6 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final tools = ToolRegistry.toolsForSelection([widget.file]);
 
     return SafeArea(
@@ -109,16 +130,6 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(AppRadius.surface)),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(_name,
@@ -169,25 +180,27 @@ class _FileActionsBodyState extends State<_FileActionsBody> {
                   _openExternally();
                 },
               ),
+            // One row into the shared picker rather than 47 tiles inlined here. This sheet also
+            // carries rename, share and the rest, so the tool list used to bury them.
             if (tools.isNotEmpty) ...[
               const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text(L10n.of(context).applyATool,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome_motion_outlined),
+                title: Text(L10n.of(context).applyATool),
+                subtitle: Text(L10n.of(context).toolsAvailable(tools.length)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  final host = widget.hostContext;
+                  Navigator.pop(context);
+                  ToolPickerSheet.show(
+                    host,
+                    files: [widget.file],
+                    subtitle: widget.file.path.split('/').last,
+                    onSelected: (tool) =>
+                        unawaited(tool.openWithFiles(host, [widget.file])),
+                  );
+                },
               ),
-              ...tools.map((tool) => ListTile(
-                    leading: Icon(tool.icon, color: tool.category.color),
-                    title: Text(tool.localizedName(context)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      tool.openWithFiles(context, [widget.file]);
-                    },
-                  )),
             ],
             const SizedBox(height: 8),
           ],

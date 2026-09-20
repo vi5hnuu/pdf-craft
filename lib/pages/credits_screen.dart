@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:pdf_craft/models/http_state.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
@@ -34,7 +36,30 @@ class _CreditsScreenState extends State<CreditsScreen> {
     _Pack('pdfcraft_credits_60', 60, '₹229'),
   ];
 
-  bool _busy = false;
+  /// Which action is running, or null. Not a bare `bool`: one shared flag made *every* earn
+  /// tile show a spinner whenever any one of them was working, so watching an ad appeared to
+  /// also be claiming the daily credit and restoring purchases at the same time. A spinner has
+  /// to say which thing is happening.
+  String? _running;
+
+  bool get _busy => _running != null;
+  bool _isRunning(String action) => _running == action;
+
+  /// Runs [action] with its own spinner, guaranteeing the tile is released afterwards.
+  Future<void> _run(String action, Future<void> Function() body) async {
+    if (_busy) return;
+    setState(() => _running = action);
+    try {
+      await body();
+    } finally {
+      if (mounted) setState(() => _running = null);
+    }
+  }
+
+  static const _actionDaily = 'daily';
+  static const _actionAd = 'ad';
+  static const _actionRestore = 'restore';
+  static const _actionBuy = 'buy';
 
   @override
   void initState() {
@@ -74,16 +99,30 @@ class _CreditsScreenState extends State<CreditsScreen> {
                 icon: Icons.calendar_today_outlined,
                 title: L10n.of(context).creditsClaimDaily,
                 subtitle: L10n.of(context).creditsClaimDailySub,
+                action: _actionDaily,
                 onTap: _claimDaily,
               ),
               // Hidden when no rewarded unit is configured, rather than offering a way to
               // earn credits that always fails.
+              // `rewardedAvailable` is a compile-time constant that is always true, so this
+              // said nothing about whether an ad is actually loaded. With none cached the tile
+              // looked ready and a tap fell straight through to a "no ad" snackbar.
               if (AdUnits.rewardedAvailable)
-                _earnTile(
-                  icon: Icons.smart_display_outlined,
-                  title: L10n.of(context).creditsWatchAd,
-                  subtitle: L10n.of(context).creditsWatchAdSub,
-                  onTap: _watchAd,
+                // Rebuilds when an ad finishes loading. Reading isReady once left the tile
+                // saying "ad loading" for as long as the screen stayed open, even after one
+                // had arrived.
+                ListenableBuilder(
+                  listenable: RewardedAdManager(),
+                  builder: (context, _) => _earnTile(
+                    icon: Icons.smart_display_outlined,
+                    title: L10n.of(context).creditsWatchAd,
+                    subtitle: L10n.of(context).creditsWatchAdSub,
+                    action: _actionAd,
+                    onTap: _watchAd,
+                    unavailableReason: RewardedAdManager().isReady
+                        ? null
+                        : L10n.of(context).creditsAdLoading,
+                  ),
                 ),
               const SizedBox(height: 24),
               Text(L10n.of(context).creditsBuy, style: theme.textTheme.titleMedium),
@@ -104,12 +143,15 @@ class _CreditsScreenState extends State<CreditsScreen> {
                 icon: Icons.restore,
                 title: L10n.of(context).restorePurchasesTitle,
                 subtitle: L10n.of(context).restorePurchasesSub,
-                onTap: () async {
+                action: _actionRestore,
+                // No busy guard at all before this: the tile stayed tappable for the whole
+                // round trip and showed nothing, so it read as broken and invited repeat taps.
+                onTap: () => _run(_actionRestore, () async {
                   await PurchaseService().restore();
                   await CreditService().refreshBalance();
                   NotificationService.showSnackbar(
                       text: L10n.current.restorePurchasesDone, color: Colors.green);
-                },
+                }),
               ),
             ],
           ),
@@ -151,15 +193,30 @@ class _CreditsScreenState extends State<CreditsScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    /// Identifies this tile's action, so only the tile the user actually tapped spins.
+    required String action,
+    /// Why the tile cannot be used right now, shown in place of the subtitle. Null means usable.
+    String? unavailableReason,
   }) {
+    final running = _isRunning(action);
+    // Other tiles are disabled while one runs — two of these at once would race over the same
+    // balance — but they are not made to look busy, because they are not.
+    final disabled = _busy || unavailableReason != null;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
-        leading: Icon(icon),
+        // `enabled` is what actually greys a ListTile out. With only `onTap: null` the tile
+        // rendered at full opacity and simply swallowed taps — for up to twelve seconds while
+        // the balance was polled — which is exactly "the button looks active but does nothing".
+        enabled: !disabled,
+        leading: running
+            ? const SizedBox(
+                width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.2))
+            : Icon(icon),
         title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: _busy ? null : onTap,
+        subtitle: Text(unavailableReason ?? subtitle),
+        trailing: disabled ? null : const Icon(Icons.chevron_right),
+        onTap: disabled ? null : onTap,
       ),
     );
   }
@@ -187,21 +244,33 @@ class _CreditsScreenState extends State<CreditsScreen> {
     );
   }
 
-  Future<void> _claimDaily() async {
-    setState(() => _busy = true);
+  Future<void> _claimDaily() => _run(_actionDaily, () async {
     try {
       final granted = await CreditService().claimDaily();
       NotificationService.showSnackbar(text: L10n.current.creditsClaimed(granted), color: Colors.green);
-    } catch (e) {
+    } on DioException catch (e) {
+      // Every exception used to become "Already claimed today". With the server unreachable a
+      // network failure therefore read as a successful-but-used-up claim, which is both wrong
+      // and the most confusing possible wording — it tells the user to come back tomorrow for a
+      // problem that a retry would fix.
+      final alreadyClaimed = e.response?.statusCode == 409;
       NotificationService.showSnackbar(
-          text: L10n.current.creditsAlreadyClaimed, color: Colors.orange);
-    } finally {
-      if (mounted) setState(() => _busy = false);
+        text: alreadyClaimed
+            ? L10n.current.creditsAlreadyClaimed
+            : HttpState.fromDio(e, L10n.current.errSomethingWrong).error!,
+        color: Colors.orange,
+      );
+    } catch (_) {
+      NotificationService.showSnackbar(
+          text: L10n.current.errSomethingWrong, color: Colors.orange);
     }
-  }
+  });
 
   void _watchAd() {
-    setState(() => _busy = true);
+    if (_busy) return;
+    // Not through _run: the ad hands control to Google and reports back through callbacks, so
+    // there is no future to await here. Each callback clears the marker.
+    setState(() => _running = _actionAd);
     RewardedAdManager().show(
       // The reward is granted by Google's verification callback to the API, not by us,
       // so this waits for the balance to move rather than asking for credits.
@@ -212,8 +281,13 @@ class _CreditsScreenState extends State<CreditsScreen> {
             NotificationService.showSnackbar(
                 text: L10n.current.creditsEarned(granted), color: Colors.green);
           } else {
+            // The poll gives the SSV callback twelve seconds to land. If nothing arrived, the
+            // credit is not "on its way" — the grant happens only when Google's callback
+            // reaches the API, so if it has not by now it almost certainly never will. Saying
+            // "your credits will appear shortly" left people waiting for something that was
+            // not coming.
             NotificationService.showSnackbar(
-                text: L10n.current.creditsThanksWatching,
+                text: L10n.current.creditsRewardUnconfirmed,
                 color: Colors.orange);
           }
         } catch (_) {
@@ -221,25 +295,20 @@ class _CreditsScreenState extends State<CreditsScreen> {
               text: L10n.current.creditsCouldNotConfirm,
               color: Colors.orange);
         } finally {
-          if (mounted) setState(() => _busy = false);
+          if (mounted) setState(() => _running = null);
         }
       },
       onUnavailable: () {
-        if (mounted) setState(() => _busy = false);
+        if (mounted) setState(() => _running = null);
         NotificationService.showSnackbar(
             text: L10n.current.creditsNoAd, color: Colors.orange);
       },
     );
   }
 
-  Future<void> _buy(String productId) async {
-    setState(() => _busy = true);
-    try {
-      // The result (credit grant) is handled globally by PurchaseService via the purchase
-      // stream, so it completes even if the user leaves this screen.
-      await PurchaseService().buy(productId);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
+  Future<void> _buy(String productId) => _run(_actionBuy, () async {
+    // The result (credit grant) is handled globally by PurchaseService via the purchase
+    // stream, so it completes even if the user leaves this screen.
+    await PurchaseService().buy(productId);
+  });
 }

@@ -10,6 +10,7 @@ import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/services/auth/auth_api.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
+import 'package:pdf_craft/singletons/google_account.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 
 /// Sign-in / create-account screen. The app is guest-first, so "Create account"
@@ -31,8 +32,36 @@ class _AuthScreenState extends State<AuthScreen> {
   final _name = TextEditingController();
 
   late bool _createMode = widget.initialCreateMode;
-  bool _busy = false;
+  /// Which action is in flight, or null. Not a bare `bool`: a shared flag put a spinner on
+  /// *both* the email Submit button and the Google button whenever either one ran, so signing in
+  /// with Google looked like it was also submitting the form. Everything still disables together
+  /// — two sign-ins at once would race — but only the button that was pressed spins.
+  String? _running;
+  bool get _busy => _running != null;
+  bool _isRunning(String action) => _running == action;
+
+  static const _actionSubmit = 'submit';
+  static const _actionGoogle = 'google';
   bool _obscure = true;
+
+  /// The Google account already signed in on this device, if any.
+  ///
+  /// Shown on the button so it is obvious *which* account tapping it will use. The complaint
+  /// this answers: `signIn()` silently reuses a cached account, so after the first use the
+  /// picker never appeared and there was no way to tell, let alone choose differently.
+  String? _cachedGoogleEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    _findCachedGoogleAccount();
+  }
+
+  /// Silent — never shows UI. Only tells us whether there is an account to name.
+  Future<void> _findCachedGoogleAccount() async {
+    final account = await GoogleAccount().restore();
+    if (mounted) setState(() => _cachedGoogleEmail = account?.email);
+  }
 
   @override
   void dispose() {
@@ -196,7 +225,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.surface)),
                 ),
                 onPressed: _busy ? null : _submit,
-                child: _busy
+                child: _isRunning(_actionSubmit)
                     ? const SizedBox(
                         height: 22,
                         width: 22,
@@ -235,23 +264,53 @@ class _AuthScreenState extends State<AuthScreen> {
 
   /// Google's button, given the same height and squared corners as the primary action so the
   /// two read as equal choices rather than a button and an afterthought.
-  Widget _googleButton(ThemeData theme, ColorScheme cs) => OutlinedButton.icon(
+  ///
+  /// When an account is already signed in on the device the button names it, with a separate
+  /// way past it. Forcing the picker on every login instead would work, but it signs the app
+  /// out of Google wholesale and takes any connected Drive session with it — too much for an
+  /// ordinary login, and fine for a deliberate switch.
+  Widget _googleButton(ThemeData theme, ColorScheme cs) {
+    final cached = _cachedGoogleEmail;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      OutlinedButton.icon(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           side: BorderSide(color: theme.dividerColor),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.surface)),
+          // Neutral, not the theme's primary. An OutlinedButton tints its label with the
+          // primary colour by default, which made "Continue with Google" the same red as the
+          // Sign in button below it — two things competing to look like the main action, and
+          // against Google's own guidance that the label stay neutral.
+          foregroundColor: cs.onSurface,
         ),
-        onPressed: _busy ? null : _google,
+        onPressed: _busy ? null : () => _google(),
         // Without a busy state this button looked idle while the account picker was opening,
         // which on a slow device reads as "nothing happened" and invites a second tap.
-        icon: _busy
+        icon: _isRunning(_actionGoogle)
             ? const SizedBox(
                 height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
             : const FaIcon(FontAwesomeIcons.google, size: 18),
-        label: Text(L10n.of(context).authContinueGoogle,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-      );
+        label: Text(
+          cached == null
+              ? L10n.of(context).authContinueGoogle
+              : L10n.of(context).authContinueAs(cached),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      if (cached != null)
+        Align(
+          alignment: Alignment.center,
+          child: TextButton(
+            onPressed: _busy ? null : () => _google(forcePicker: true),
+            child: Text(L10n.of(context).authUseAnotherAccount,
+                style: theme.textTheme.bodySmall?.copyWith(color: cs.primary)),
+          ),
+        ),
+    ]);
+  }
 
   Widget _benefit(ThemeData theme, ColorScheme cs, IconData icon, String text) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -268,7 +327,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    setState(() => _busy = true);
+    setState(() => _running = _actionSubmit);
     try {
       if (_createMode) {
         await AuthService().convertGuest(
@@ -302,7 +361,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       _fail(L10n.current.authSomethingWrong);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _running = null);
     }
   }
 
@@ -342,7 +401,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Future<void> _google() async {
+  Future<void> _google({bool forcePicker = false}) async {
     FocusScope.of(context).unfocus();
     // Same warning the password path already gave. Google sign-in switches to the Google
     // account exactly as signing in does, so a guest's credits are left behind either way —
@@ -353,9 +412,9 @@ class _AuthScreenState extends State<AuthScreen> {
       if (go != true) return;
     }
     if (!mounted) return;
-    setState(() => _busy = true);
+    setState(() => _running = _actionGoogle);
     try {
-      await AuthService().signInWithGoogle();
+      await AuthService().signInWithGoogle(forcePicker: forcePicker);
       await CreditService().load();
       _done(L10n.current.authSignedInGoogle);
     } on AuthException catch (e) {
@@ -363,7 +422,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       _fail(L10n.current.authGoogleFailed);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _running = null);
     }
   }
 

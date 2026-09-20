@@ -7,6 +7,7 @@ import 'package:pdf_craft/services/auth/auth_api.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 
 /// The user's account hub. Shows who they are, a **clear path to verify their e-mail**
 /// when it isn't confirmed yet (resend + recheck), their credits, and account actions
@@ -19,7 +20,37 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  bool _busy = false;
+  /// Which action is running, or null. Not a bare `bool`: this screen used one to *disable* all
+  /// six actions while any one of them worked, but never drew progress anywhere — so tapping
+  /// "Resend" greyed the row out silently for the whole round trip and read as a dead control.
+  /// Naming the action lets the spinner sit on the row the user actually tapped.
+  String? _running;
+
+  bool get _busy => _running != null;
+  bool _isRunning(String action) => _running == action;
+
+  static const _actionResend = 'resend';
+  static const _actionRecheck = 'recheck';
+  static const _actionProfile = 'profile';
+  static const _actionPassword = 'password';
+  static const _actionSignOut = 'signOut';
+  static const _actionDelete = 'delete';
+
+  /// Runs [body] under [action]'s spinner, releasing it however [body] ends.
+  Future<void> _run(String action, Future<void> Function() body) async {
+    if (_busy) return;
+    setState(() => _running = action);
+    try {
+      await body();
+    } finally {
+      if (mounted) setState(() => _running = null);
+    }
+  }
+
+  /// A row's leading slot: the spinner while this row is the one working, its icon otherwise.
+  Widget _leading(String action, Widget icon) => _isRunning(action)
+      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.2))
+      : icon;
 
   @override
   void initState() {
@@ -129,7 +160,10 @@ class _AccountScreenState extends State<AccountScreen> {
         Card(
           child: Column(children: [
             ListTile(
-              leading: const Icon(Icons.badge_outlined),
+              // `enabled` is what actually greys a ListTile out; `onTap: null` alone leaves it at
+              // full opacity, looking tappable while it swallows taps.
+              enabled: !_busy,
+              leading: _leading(_actionProfile, const Icon(Icons.badge_outlined)),
               title: Text(L10n.of(context).accountEditProfile),
               subtitle: Text(L10n.of(context).accountChangeName),
               onTap: _busy ? null : () => _editProfile(user),
@@ -137,19 +171,23 @@ class _AccountScreenState extends State<AccountScreen> {
             const Divider(height: 1, indent: 56),
             if (user.authProvider == 'LOCAL')
               ListTile(
-                leading: const Icon(Icons.password_outlined),
+                enabled: !_busy,
+                leading: _leading(_actionPassword, const Icon(Icons.password_outlined)),
                 title: Text(L10n.of(context).accountChangePassword),
                 onTap: _busy ? null : _changePassword,
               ),
             if (user.authProvider == 'LOCAL') const Divider(height: 1, indent: 56),
             ListTile(
-              leading: const Icon(Icons.logout),
+              enabled: !_busy,
+              leading: _leading(_actionSignOut, const Icon(Icons.logout)),
               title: Text(L10n.of(context).signOut),
               onTap: _busy ? null : _signOut,
             ),
             const Divider(height: 1, indent: 56),
             ListTile(
-              leading: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+              enabled: !_busy,
+              leading: _leading(_actionDelete,
+                  Icon(Icons.delete_outline, color: theme.colorScheme.error)),
               title: Text(L10n.of(context).accountDelete,
                   style: TextStyle(color: theme.colorScheme.error)),
               onTap: _busy ? null : _deleteAccount,
@@ -189,7 +227,12 @@ class _AccountScreenState extends State<AccountScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _busy ? null : () => _resend(user.email),
-                    icon: const Icon(Icons.refresh, size: 18),
+                    icon: _isRunning(_actionResend)
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.refresh, size: 18),
                     label: Text(L10n.of(context).accountResend),
                   ),
                 ),
@@ -197,7 +240,12 @@ class _AccountScreenState extends State<AccountScreen> {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: _busy ? null : _recheck,
-                    icon: const Icon(Icons.check, size: 18),
+                    icon: _isRunning(_actionRecheck)
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.check, size: 18),
                     label: Text(L10n.of(context).accountIveVerified),
                   ),
                 ),
@@ -264,179 +312,227 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _resend(String? email) async {
     if (email == null) return;
-    setState(() => _busy = true);
-    try {
-      await AuthService().reVerify(email);
-      NotificationService.showSnackbar(
-          text: L10n.current.accountVerificationSent(email), color: Colors.green);
-    } on AuthException catch (e) {
-      NotificationService.showSnackbar(text: e.message, color: Colors.red);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _recheck() async {
-    setState(() => _busy = true);
-    try {
-      final verified = await AuthService().refreshProfile();
-      NotificationService.showSnackbar(
-        text: verified
-            ? L10n.current.accountVerifiedAllSet
-            : L10n.current.accountNotVerifiedYet,
-        color: verified ? Colors.green : Colors.orange,
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _editProfile(AuthUser user) async {
-    final firstC = TextEditingController(text: user.firstName ?? '');
-    final lastC = TextEditingController(text: user.lastName ?? '');
-    try {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(L10n.of(ctx).accountEditProfile),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: firstC,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(labelText: L10n.of(ctx).firstName),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: lastC,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(labelText: L10n.of(ctx).lastName),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(L10n.of(ctx).actionSave)),
-          ],
-        ),
-      );
-      if (ok != true) return;
-      setState(() => _busy = true);
+    return _run(_actionResend, () async {
       try {
-        await AuthService().updateProfile(
-            firstName: firstC.text.trim(), lastName: lastC.text.trim());
-        NotificationService.showSnackbar(text: L10n.current.accountProfileUpdated, color: Colors.green);
+        await AuthService().reVerify(email);
+        NotificationService.showSnackbar(
+            text: L10n.current.accountVerificationSent(email), color: Colors.green);
       } on AuthException catch (e) {
         NotificationService.showSnackbar(text: e.message, color: Colors.red);
-      } finally {
-        if (mounted) setState(() => _busy = false);
       }
-    } finally {
-      firstC.dispose();
-      lastC.dispose();
-    }
+    });
+  }
+
+  Future<void> _recheck() => _run(_actionRecheck, () async {
+    final verified = await AuthService().refreshProfile();
+    NotificationService.showSnackbar(
+      text: verified
+          ? L10n.current.accountVerifiedAllSet
+          : L10n.current.accountNotVerifiedYet,
+      color: verified ? Colors.green : Colors.orange,
+    );
+  });
+
+  Future<void> _editProfile(AuthUser user) async {
+    // The dialog owns its controllers (see [_EditProfileDialog]): doing it here and disposing
+    // after `showDialog` returns releases them while the route is still animating out, which is
+    // the "TextEditingController was used after being disposed" crash.
+    final name = await showDialog<({String first, String last})>(
+      context: context,
+      builder: (ctx) => _EditProfileDialog(
+          firstName: user.firstName ?? '', lastName: user.lastName ?? ''),
+    );
+    if (name == null) return;
+    return _run(_actionProfile, () async {
+      try {
+        await AuthService()
+            .updateProfile(firstName: name.first, lastName: name.last);
+        NotificationService.showSnackbar(
+            text: L10n.current.accountProfileUpdated, color: Colors.green);
+      } on AuthException catch (e) {
+        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+      }
+    });
   }
 
   Future<void> _changePassword() async {
-    final oldC = TextEditingController();
-    final newC = TextEditingController();
-    try {
-      var obscure = true;
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => StatefulBuilder(
-          builder: (ctx, setInner) => AlertDialog(
-            title: Text(L10n.of(ctx).accountChangePassword),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: oldC,
-                  obscureText: obscure,
-                  decoration: InputDecoration(labelText: L10n.of(ctx).accountCurrentPassword),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: newC,
-                  obscureText: obscure,
-                  decoration: InputDecoration(
-                    labelText: L10n.of(ctx).accountNewPassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(obscure
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined),
-                      onPressed: () => setInner(() => obscure = !obscure),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(L10n.of(ctx).update)),
-            ],
-          ),
-        ),
-      );
-      if (ok != true) return;
-      if (newC.text.length < 8) {
-        NotificationService.showSnackbar(
-            text: L10n.current.accountPasswordTooShort, color: Colors.red);
-        return;
-      }
-      setState(() => _busy = true);
+    final pair = await showDialog<({String current, String next})>(
+      context: context,
+      builder: (ctx) => const _ChangePasswordDialog(),
+    );
+    if (pair == null) return;
+    return _run(_actionPassword, () async {
       try {
-        await AuthService().changePassword(oldC.text, newC.text);
-        NotificationService.showSnackbar(text: L10n.current.accountPasswordUpdated, color: Colors.green);
+        await AuthService().changePassword(pair.current, pair.next);
+        NotificationService.showSnackbar(
+            text: L10n.current.accountPasswordUpdated, color: Colors.green);
       } on AuthException catch (e) {
         NotificationService.showSnackbar(text: e.message, color: Colors.red);
-      } finally {
-        if (mounted) setState(() => _busy = false);
       }
-    } finally {
-      oldC.dispose();
-      newC.dispose();
-    }
+    });
   }
 
-  Future<void> _signOut() async {
-    setState(() => _busy = true);
-    try {
-      await AuthService().logout();
-      await CreditService().load();
-      NotificationService.showSnackbar(text: L10n.current.accountSignedOut, color: Colors.orange);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
+  Future<void> _signOut() => _run(_actionSignOut, () async {
+    await AuthService().logout();
+    await CreditService().load();
+    NotificationService.showSnackbar(text: L10n.current.accountSignedOut, color: Colors.orange);
+  });
 
   Future<void> _deleteAccount() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).accountDeleteTitle),
-        content: Text(L10n.of(ctx).accountDeleteBody),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(L10n.of(ctx).delete),
+    final ok = await ConfirmDialog.show(
+      context,
+      title: L10n.current.accountDeleteTitle,
+      message: L10n.current.accountDeleteBody,
+      confirmLabel: L10n.current.delete,
+      destructive: true,
+    );
+    if (!ok.confirmed) return;
+    return _run(_actionDelete, () async {
+      try {
+        await AuthService().deleteAccount();
+        await CreditService().load();
+        NotificationService.showSnackbar(text: L10n.current.accountDeleted, color: Colors.orange);
+      } on AuthException catch (e) {
+        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+      }
+    });
+  }
+}
+
+/// Asks for a first and last name. A widget rather than an inline `AlertDialog` so it can own its
+/// controllers and dispose them in its own `dispose`, once the route is genuinely gone.
+class _EditProfileDialog extends StatefulWidget {
+  const _EditProfileDialog({required this.firstName, required this.lastName});
+
+  final String firstName;
+  final String lastName;
+
+  @override
+  State<_EditProfileDialog> createState() => _EditProfileDialogState();
+}
+
+class _EditProfileDialogState extends State<_EditProfileDialog> {
+  late final _firstC = TextEditingController(text: widget.firstName);
+  late final _lastC = TextEditingController(text: widget.lastName);
+
+  @override
+  void dispose() {
+    _firstC.dispose();
+    _lastC.dispose();
+    super.dispose();
+  }
+
+  void _save() => Navigator.pop(
+      context, (first: _firstC.text.trim(), last: _lastC.text.trim()));
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L10n.of(context);
+    return AlertDialog(
+      title: Text(l.accountEditProfile),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _firstC,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(labelText: l.firstName),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _lastC,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _save(),
+            decoration: InputDecoration(labelText: l.lastName),
           ),
         ],
       ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(onPressed: _save, child: Text(l.actionSave)),
+      ],
     );
-    if (ok != true) return;
-    setState(() => _busy = true);
-    try {
-      await AuthService().deleteAccount();
-      await CreditService().load();
-      NotificationService.showSnackbar(text: L10n.current.accountDeleted, color: Colors.orange);
-    } on AuthException catch (e) {
-      NotificationService.showSnackbar(text: e.message, color: Colors.red);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+  }
+}
+
+/// Asks for the current and new password. Owns its controllers, and — unlike the version this
+/// replaced — validates the new password *before* closing: a too-short password used to dismiss
+/// the dialog and then complain in a snackbar, throwing away both typed passwords.
+class _ChangePasswordDialog extends StatefulWidget {
+  const _ChangePasswordDialog();
+
+  @override
+  State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentC = TextEditingController();
+  final _nextC = TextEditingController();
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _currentC.dispose();
+    _nextC.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.pop(context, (current: _currentC.text, next: _nextC.text));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L10n.of(context);
+    return AlertDialog(
+      title: Text(l.accountChangePassword),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _currentC,
+              obscureText: _obscure,
+              autofocus: true,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(labelText: l.accountCurrentPassword),
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? l.passwordRequired : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _nextC,
+              obscureText: _obscure,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                labelText: l.accountNewPassword,
+                // One toggle for both fields: they are always typed in the same sitting, and the
+                // point of revealing is to compare what was typed.
+                suffixIcon: IconButton(
+                  icon: Icon(_obscure
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined),
+                  tooltip: _obscure ? l.showPassword : l.hidePassword,
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                ),
+              ),
+              validator: (v) =>
+                  (v == null || v.length < 8) ? l.accountPasswordTooShort : null,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(onPressed: _submit, child: Text(l.update)),
+      ],
+    );
   }
 }

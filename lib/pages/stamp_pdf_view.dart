@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -144,6 +145,11 @@ class _StampPdfViewState extends State<StampPdfView>
                         ),
                       ),
                     ),
+                    // Above the action bar, never over the document: a banner here sits at the
+                    // end of a settings list the user is already scrolling, and cannot cover a
+                    // rendered page or a control mid-operation.
+                    const BannerAdd(),
+                    const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(

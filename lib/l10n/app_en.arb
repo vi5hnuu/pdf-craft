@@ -7,6 +7,7 @@
   "languageHindi": "हिन्दी",
   "switchLanguageTooltip": "Switch language",
   "cancel": "Cancel",
+  "removeFromSelection": "Remove from selection",
   "delete": "Delete",
   "gotIt": "Got it",
   "refresh": "Refresh",
@@ -17,6 +18,8 @@
   "seeMore": "See more",
   "favorites": "Favorites",
   "recent": "Recent",
+  "toolsAvailable": "{count} tools available",
+  "@toolsAvailable": {"placeholders": {"count": {"type": "int"}}},
   "applyATool": "Apply a tool",
   "outputFileName": "Output File Name",
   "actionOpen": "Open",
@@ -178,6 +181,37 @@
       }
     }
   },
+  "driveMyDrive": "My Drive",
+  "driveSearchHint": "Search your Drive",
+  "driveNewFolder": "New folder",
+  "driveFolderName": "Folder name",
+  "driveFolderCreated": "Folder created",
+  "driveDeleted": "Moved to Drive trash",
+  "driveDeleteFailed": "Could not delete: {error}",
+  "@driveDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "driveNoResults": "No files match \"{query}\"",
+  "@driveNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "driveEmptyFolder": "This folder is empty",
+  "driveExportsAs": "Will be downloaded as {format}",
+  "@driveExportsAs": {
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
   "driveNoFiles": "No files in your Drive",
   "driveNoFilesOfType": "No {type} found",
   "@driveNoFilesOfType": {
@@ -197,6 +231,8 @@
   "searchFilesHint": "Search files",
   "searching": "Searching…",
   "noMatchingFiles": "No matching files",
+  "filterFolderOnlyNote": "Only this folder is searched. Search all files to look everywhere.",
+  "searchAllFiles": "Search all files",
   "filesFound": "{count, plural, =1{1 file found} other{{count} files found}}",
   "@filesFound": {
     "placeholders": {
@@ -258,7 +294,7 @@
   "themeDark": "Dark",
   "settingsSectionStorage": "Storage",
   "settingsProcessedFolder": "Processed Files Folder",
-  "settingsProcessedSummary": "{count} files · {size} · tap to view",
+  "settingsProcessedSummary": "{count, plural, =1{1 file · {size} · tap to view} other{{count} files · {size} · tap to view}}",
   "@settingsProcessedSummary": {
     "placeholders": {
       "count": {
@@ -279,7 +315,7 @@
   "settingsAppIntroSub": "Replay the welcome walkthrough",
   "settingsVersion": "Version",
   "settingsClearProcessedTitle": "Clear Processed Files",
-  "settingsClearProcessedBody": "Delete all {count} files in the processed folder?",
+  "settingsClearProcessedBody": "{count, plural, =1{Delete the 1 file in the processed folder?} other{Delete all {count} files in the processed folder?}}",
   "@settingsClearProcessedBody": {
     "placeholders": {
       "count": {
@@ -308,6 +344,9 @@
   "authCreateAccount": "Create account",
   "authSignIn": "Sign in",
   "authOr": "or",
+  "authContinueAs": "Continue as {email}",
+  "@authContinueAs": {"placeholders": {"email": {"type": "String"}}},
+  "authUseAnotherAccount": "Use a different account",
   "authContinueGoogle": "Continue with Google",
   "authHaveAccount": "Already have an account? ",
   "authNoAccount": "Don't have an account? ",
@@ -427,7 +466,7 @@
   },
   "creditsOneTime": "One-time purchase",
   "creditsAvailableSoon": "Available soon",
-  "creditsClaimed": "Claimed +{count} credits!",
+  "creditsClaimed": "{count, plural, =1{Claimed +1 credit!} other{Claimed +{count} credits!}}",
   "@creditsClaimed": {
     "placeholders": {
       "count": {
@@ -435,8 +474,10 @@
       }
     }
   },
+  "creditsAdLoading": "Loading an ad — try again in a moment",
+  "creditsRewardUnconfirmed": "Couldn't confirm your reward. Check your connection and try again.",
   "creditsAlreadyClaimed": "Already claimed today. Come back tomorrow.",
-  "creditsEarned": "Earned +{count} credits!",
+  "creditsEarned": "{count, plural, =1{Earned +1 credit!} other{Earned +{count} credits!}}",
   "@creditsEarned": {
     "placeholders": {
       "count": {
@@ -574,7 +615,7 @@
   "done": "Done",
   "rangeReadError": "Could not read the pages of this file.",
   "rangeAllPages": "All pages",
-  "rangeSomePages": "{count} pages ({first}–{last})",
+  "rangeSomePages": "{count, plural, =1{1 page ({first}–{last})} other{{count} pages ({first}–{last})}}",
   "@rangeSomePages": {
     "placeholders": {
       "count": {
@@ -692,6 +733,45 @@
   "analyzeEncrypted": "Encrypted",
   "yes": "Yes",
   "no": "No",
+  "annotateAddNote": "Add a note",
+  "annotateAddSignature": "Add a signature",
+  "annotateUseSavedSignature": "Use saved signature",
+  "annotateUseSignature": "Use this signature",
+  "annotateImportSignature": "Import image",
+  "annotateClear": "Clear",
+  "annotateSelect": "Select",
+  "annotateImage": "Image",
+  "annotateInsert": "Insert",
+  "actionMore": "More options",
+  "annotateSignature": "Signature",
+  "annotateOpacity": "Opacity",
+  "annotateThickness": "Thickness",
+  "annotateFontSize": "Text size",
+  "annotateFill": "Fill",
+  "annotateNoSelection": "Tap a mark to select it",
+  "annotateEditText": "Edit text",
+  "annotateDeleteMark": "Delete",
+  "annotateDuplicate": "Duplicate",
+  "annotateBringToFront": "Bring to front",
+  "annotateNothingToSave": "Add a mark first",
+  "annotateMarksOnPages": "{count, plural, =1{1 page has marks} other{{count} pages have marks}}",
+  "@annotateMarksOnPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "annotateSaving": "Saving your marks…",
+  "annotateSaved": "Annotations saved",
+  "annotateNoteHint": "Notes open when tapped in a PDF reader",
+  "annotateTextHint": "Tap the page to place text",
+  "annotateSelectHint": "Drag to move, corners to resize",
+  "annotateStyleSelected": "Style of the selected mark",
+  "annotateStyle": "Style",
+  "annotateFlattenLabel": "Burn marks into the page",
+  "annotateFlattenOn": "Marks become part of the page: visible in every viewer, and permanent.",
+  "annotateFlattenOff": "Marks stay editable and removable, but some viewers — including this app's preview — will not show them.",
   "annotatePen": "Pen",
   "annotateHighlight": "Highlight",
   "annotateEraser": "Eraser",
@@ -789,8 +869,6 @@
   "toolDescMerge": "Combine several PDFs into one file, in the order you choose.",
   "toolNameSplit": "Split PDF",
   "toolDescSplit": "Split a PDF into parts by page ranges, fixed size, or bookmarks.",
-  "toolNameReorder": "Reorder Pages",
-  "toolDescReorder": "Rearrange the pages of a PDF by dragging them.",
   "toolNameOrganize": "Organize Pages",
   "toolDescOrganize": "Visually reorder and delete pages on a thumbnail grid.",
   "toolNameExtractPages": "Extract Pages",
@@ -820,7 +898,7 @@
   "toolNameImageOverlay": "Image Overlay",
   "toolDescImageOverlay": "Place and size an image anywhere on a page.",
   "toolNameAnnotate": "Annotate PDF",
-  "toolDescAnnotate": "Draw, highlight and add notes on the PDF.",
+  "toolDescAnnotate": "Draw, highlight, add notes and sign — saved as real PDF annotations.",
   "toolNameFillForm": "Form Editor",
   "toolDescFillForm": "Build a fillable form — add text, checkbox, radio and more.",
   "toolNamePdfInfo": "PDF Info",
@@ -909,20 +987,6 @@
   "toolDescImgBorder": "Add a coloured border around an image.",
   "toolDone": "Done — saved to your files.",
   "annotateAddText": "Add text",
-  "annotateTitlePage": "{tool} — p.{current}/{total}",
-  "@annotateTitlePage": {
-    "placeholders": {
-      "tool": {
-        "type": "String"
-      },
-      "current": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "batchDialogTitle": "{tool} — {count} files",
   "@batchDialogTitle": {
     "placeholders": {
@@ -1232,12 +1296,7 @@
   "undoLastRegion": "Undo last region",
   "clearPage": "Clear page",
   "sanitizeIntro": "Remove active and unsafe content before sharing.",
-  "sanitizeWillStrip": "This will strip:",
   "sanitizeUnchanged": "The visible page content is unchanged.",
-  "sanJavascript": "JavaScript",
-  "sanEmbeddedFiles": "Embedded / attached files",
-  "sanActions": "Open & event actions",
-  "sanMetadata": "Document metadata",
   "scalePercent": "Scale: {percent}%",
   "@scalePercent": {
     "placeholders": {
@@ -1262,6 +1321,137 @@
   "addRange": "Add Range",
   "retry": "Retry",
   "noAnalysisAvailable": "No analysis available",
+  "toolNamePermissionInspector": "Permission Inspector",
+  "toolDescPermissionInspector": "See what the document allows: printing, copying, editing and form filling.",
+  "toolNameSecurityScanner": "Security Scanner",
+  "toolDescSecurityScanner": "Find scripts, attachments, outbound links and signatures before you open or forward it.",
+  "toolNameFormInspector": "Form Inspector",
+  "toolDescFormInspector": "List every AcroForm field with its type, value and options.",
+  "toolNameStructureInspector": "Structure Inspector",
+  "toolDescStructureInspector": "Inspect the document skeleton: pages, fonts, resources and catalog flags.",
+  "toolNameObjectExplorer": "Object Explorer",
+  "toolDescObjectExplorer": "Browse the file\u2019s raw PDF objects.",
+  "toolNamePdfToJson": "PDF to JSON",
+  "toolDescPdfToJson": "Export the whole document \u2014 metadata, pages, text and fields \u2014 as JSON.",
+  "inspPermTitle": "Permissions",
+  "inspPermUnencryptedNote": "This PDF is not encrypted, so nothing is enforcing these — every viewer can do all of them.",
+  "inspPermEncryptedNote": "These are enforced by the document's security handler.",
+  "inspPermOwnerAccess": "Opened with owner access",
+  "inspPermPrint": "Printing",
+  "inspPermPrintFaithful": "High-quality printing",
+  "inspPermModify": "Changing the document",
+  "inspPermModifyAnnotations": "Adding or editing comments",
+  "inspPermFillForm": "Filling in forms",
+  "inspPermExtract": "Copying text and images",
+  "inspPermExtractAccessibility": "Copying for accessibility tools",
+  "inspPermAssemble": "Inserting, rotating or deleting pages",
+  "inspEncryption": "Encryption",
+  "inspFilter": "Handler",
+  "inspVersion": "Version",
+  "inspRevision": "Revision",
+  "inspKeyLength": "Key length",
+  "inspEncrypted": "Encrypted",
+  "inspRiskClean": "Nothing notable found",
+  "inspRiskLow": "Minor findings",
+  "inspRiskMedium": "Worth a look",
+  "inspRiskHigh": "Contains active content",
+  "inspFindings": "Findings",
+  "inspExternalLinks": "Outbound links",
+  "inspEmbeddedFiles": "Embedded files",
+  "inspFindingJavascript": "Document JavaScript",
+  "inspFindingOpenAction": "Runs on open",
+  "inspFindingAdditionalActions": "Event actions",
+  "inspFindingEmbeddedFiles": "Attachments",
+  "inspFindingExternalLinks": "Outbound links",
+  "inspFindingAcroForm": "Interactive form",
+  "inspFindingXfa": "Dynamic XFA form",
+  "inspFindingSignatures": "Digital signatures",
+  "inspFindingEncrypted": "Encrypted",
+  "inspFindingAnnotations": "Annotations",
+  "inspDocument": "Document",
+  "inspPdfVersion": "PDF version",
+  "inspPages": "Pages",
+  "inspHasOutline": "Has bookmarks",
+  "inspHasAcroForm": "Has a form",
+  "inspHasStructureTree": "Tagged for accessibility",
+  "inspHasXmp": "Has XMP metadata",
+  "inspPageLayout": "Page layout",
+  "inspPageMode": "Page mode",
+  "inspLanguage": "Language",
+  "inspPageN": "Page {n}",
+  "@inspPageN": {
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
+  "inspSize": "Size",
+  "inspRotation": "Rotation",
+  "inspAnnotations": "Annotations",
+  "inspImages": "Images",
+  "inspFormXObjects": "Form XObjects",
+  "inspFonts": "Fonts",
+  "inspObjectsTotal": "{count, plural, =1{1 object} other{{count} objects}}",
+  "@inspObjectsTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inspObjectN": "Object {num} {gen}",
+  "@inspObjectN": {
+    "placeholders": {
+      "num": {
+        "type": "Object"
+      },
+      "gen": {
+        "type": "Object"
+      }
+    }
+  },
+  "inspLoadMore": "Load more",
+  "inspIncludeText": "Include page text",
+  "inspIncludeTextHint": "Extracting text is most of the work on a large document.",
+  "inspFormNoFields": "This PDF has no form fields",
+  "inspFormFieldCount": "{count, plural, =1{1 field} other{{count} fields}}",
+  "@inspFormFieldCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inspFieldType": "Type",
+  "inspFieldValue": "Value",
+  "inspFieldRequired": "Required",
+  "inspFieldReadOnly": "Read-only",
+  "inspFieldOptions": "Options",
+  "inspFieldPage": "Page",
+  "inspMetadata": "Metadata",
+  "inspTitle": "Title",
+  "inspAuthor": "Author",
+  "inspSubject": "Subject",
+  "inspKeywords": "Keywords",
+  "inspCreator": "Creator",
+  "inspProducer": "Producer",
+  "sanitizeWhatToRemove": "What to remove",
+  "sanitizeJavaScript": "JavaScript",
+  "sanitizeJavaScriptSub": "Scripts that run inside the document",
+  "sanitizeEmbeddedFiles": "Attachments",
+  "sanitizeEmbeddedFilesSub": "Files carried inside the PDF",
+  "sanitizeActions": "Automatic actions",
+  "sanitizeActionsSub": "Anything that runs on open or on an event",
+  "sanitizeMetadata": "Metadata",
+  "sanitizeMetadataSub": "Title, author, producer and XMP",
+  "sanitizeAnnotations": "Annotations",
+  "sanitizeAnnotationsSub": "Comments, highlights and links — this changes how the document looks",
+  "sanitizeExternalLinks": "Outbound links",
+  "sanitizeExternalLinksSub": "Makes web links unclickable",
+  "sanitizeForms": "Form fields",
+  "sanitizeFormsSub": "Removes the interactive form entirely",
+  "sanitizeNothingSelected": "Choose at least one thing to remove",
   "selectPagesToRemove": "Select the pages to remove.",
   "selectPagesToKeep": "Select the pages to keep.",
   "documentProperties": "Document Properties",
@@ -1396,6 +1586,16 @@
   "creatingForm": "Creating fillable form",
   "radioGroup": "Radio group",
   "checkGroup": "Check group",
+  "fieldChangeType": "Field type",
+  "fieldChangeTypeWarn": "Changing to {type} discards: {lost}",
+  "@fieldChangeTypeWarn": {"placeholders": {"type": {"type": "String"}, "lost": {"type": "String"}}},
+  "fieldChangeTypeLost": "settings that don't apply",
+  "lostGroup": "its group",
+  "lostChecked": "the default tick",
+  "lostOptions": "its options",
+  "lostRules": "validation rules",
+  "lostCalc": "its calculation",
+  "changeAnyway": "Change anyway",
   "fieldName": "Field name",
   "optionValue": "Option value",
   "optionsCommaSeparated": "Options (comma-separated)",
@@ -1603,7 +1803,7 @@
       }
     }
   },
-  "a11yToolCard": "{tool}. {description}. Costs {credits} credits. Double tap to open, long press to favourite.",
+  "a11yToolCard": "{tool}. {description}. {credits, plural, =1{Costs 1 credit} other{Costs {credits} credits}}. Double tap to open, long press to favourite.",
   "@a11yToolCard": {
     "placeholders": {
       "tool": {
@@ -1693,10 +1893,13 @@
   "restorePurchasesTitle": "Restore purchases",
   "restorePurchasesSub": "Recover credits from a previous purchase",
   "restorePurchasesDone": "Checked for previous purchases.",
+  "fieldDecimals": "Decimal places",
+  "fieldGroupDigits": "Group digits (1,234)",
+  "fieldDecimalsHint": "0 keeps a PIN or account number exactly as typed",
   "fieldMinValue": "Minimum value",
   "fieldMaxValue": "Maximum value",
   "fieldMinLength": "Minimum characters",
-  "fieldFormatBadge": "Validated as {format}",
+  "fieldFormatBadge": "Checked as {format} when filled in this app",
   "@fieldFormatBadge": {
     "placeholders": {
       "format": {

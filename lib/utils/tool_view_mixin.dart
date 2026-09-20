@@ -60,13 +60,22 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
     bool navigateToPreview = true,
     void Function(File savedFile)? onDone,
     bool showInterstitial = true,
+    /// Set false when [onDone] navigates to the preview itself — the preview carries its own
+    /// "use in another tool" button, and offering the same thing in the snackbar makes it
+    /// long-lived enough to follow the user onto the next screen.
+    bool? offerNextTool,
   }) {
     if (s == null) return;
     if (s.done == true) {
       // A paid tool debited credits server-side — refresh the balance shown in the UI.
       CreditService().refreshBalance();
       final saved = s.extras?['savedFile'];
-      onToolSuccess(successMessage, output: saved is File ? saved : null);
+      // The preview carries its own "use in another tool" button, so the snackbar only needs to
+      // offer one when the user is not being taken there.
+      final goingToPreview = saved is File && onDone == null && navigateToPreview;
+      onToolSuccess(successMessage,
+          output: saved is File ? saved : null,
+          offerNextTool: offerNextTool ?? !goingToPreview);
       if (saved is File) {
         if (onDone != null) {
           onDone(saved);
@@ -79,8 +88,7 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
         }
       }
       // Shown *after* the result is on screen. Dispatched first, the interstitial covered the
-      // confirmation for most of the snackbar's four seconds, so the one affordance that led
-      // to the next tool expired behind an ad.
+      // confirmation for most of its lifetime.
       if (showInterstitial) AdsSingleton().dispatch(ShowInterstitialAd());
     } else if (s.error != null) {
       // Keyed off the 402 status rather than searching the message for "credit", which

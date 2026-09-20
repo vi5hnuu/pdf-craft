@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:pdf_craft/singletons/file_store.dart';
 
 /// Global, app-wide multi-file selection.
 ///
@@ -11,11 +12,24 @@ import 'package:flutter/foundation.dart';
 ///
 /// Files are kept unique by path and in insertion order.
 class SelectionService extends ChangeNotifier {
-  SelectionService._();
+  SelectionService._() {
+    // Selections are keyed by path, and rename, move and delete all change paths. Without this
+    // the selection went on pointing at files that no longer exist: the upload-size check reads
+    // a missing file as 0 bytes and lets it through, so the failure surfaced much later, inside
+    // the tool, as an upload of nothing.
+    FileStore().addListener(_pruneMissing);
+  }
   static final SelectionService _instance = SelectionService._();
   factory SelectionService() => _instance;
 
   final List<File> _files = [];
+
+  /// Drops any selected file that has since disappeared from disk.
+  void _pruneMissing() {
+    final before = _files.length;
+    _files.removeWhere((f) => !f.existsSync());
+    if (_files.length != before) notifyListeners();
+  }
 
   /// Currently selected files (unmodifiable view).
   List<File> get files => List.unmodifiable(_files);

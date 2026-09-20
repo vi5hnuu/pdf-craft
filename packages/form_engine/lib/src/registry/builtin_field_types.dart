@@ -45,6 +45,8 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     defaultPointSize: PointSize(18, 18),
     lockAspect: true,
     isToggle: true,
+    // Grouped in the editor only — see FieldTypeDescriptor.groupable.
+    groupable: true,
   ),
   FieldTypeDescriptor(
     id: FieldTypes.radio,
@@ -53,11 +55,16 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     lockAspect: true,
     isToggle: true,
     isGrouped: true,
+    groupable: true,
   ),
   FieldTypeDescriptor(
     id: FieldTypes.dropdown,
     defaultSize: FractionalSize(0.36, 0.045),
     acceptsOptions: true,
+    // Deliberately NOT acceptsValue. A dropdown does take a preselected option — the backend
+    // has always honoured combo.setValue — but `acceptsValue` also unlocks max length, comb,
+    // pattern and calculation, none of which the dropdown branch applies. The default-value
+    // control is offered on its own in the inspector instead of buying four dead ones with it.
   ),
   FieldTypeDescriptor(
     id: FieldTypes.date,

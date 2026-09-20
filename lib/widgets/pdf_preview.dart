@@ -141,6 +141,7 @@ class _PdfPreviewState extends State<PdfPreview> {
           // Our in-app viewer is intentionally lightweight; offer a way out to
           // a full external PDF viewer at any time (not just on error).
           PopupMenuButton<String>(
+            tooltip: L10n.of(context).actionMore,
             onSelected: (value) {
               switch (value) {
                 case 'external':
@@ -408,6 +409,7 @@ class _PdfPreviewState extends State<PdfPreview> {
   /// Tapping an entry jumps the viewer to that page.
   Future<void> _showOutline() async {
     await showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
@@ -494,12 +496,6 @@ class _OutlineSheetState extends State<_OutlineSheet> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: theme.dividerColor, borderRadius: BorderRadius.circular(AppRadius.surface)),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(children: [

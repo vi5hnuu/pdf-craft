@@ -48,6 +48,8 @@ class SchemaCodec {
         if (f.recipientId != null) 'recipient_id': f.recipientId,
         if (f.label.isNotEmpty) 'label': f.label,
         if (f.labelSize > 0) 'label_size': f.labelSize,
+        if (f.decimalPlaces != null) 'decimal_places': f.decimalPlaces,
+        if (f.groupDigits) 'group_digits': true,
         if (f.label.isNotEmpty && f.labelPosition != LabelPosition.right)
           'label_position': f.labelPosition.name,
         if (f.tooltip.isNotEmpty) 'tooltip': f.tooltip,
@@ -107,7 +109,7 @@ class SchemaCodec {
     const known = {
       'id', 'type', 'page', 'rect', 'name', 'value', 'options', 'group',
       'export_value', 'font_size', 'required', 'checked', 'recipient_id',
-      'label', 'label_size', 'label_position',
+      'label', 'label_size', 'label_position', 'decimal_places', 'group_digits',
       'tooltip', 'read_only', 'max_length', 'comb', 'alignment', 'multi_select',
       'format', 'date_format', 'validation', 'condition', 'calculation',
     };
@@ -127,6 +129,8 @@ class SchemaCodec {
       recipientId: json['recipient_id'] as String?,
       label: json['label'] as String? ?? '',
       labelSize: (json['label_size'] as num?)?.toDouble() ?? 0,
+      decimalPlaces: (json['decimal_places'] as num?)?.toInt(),
+      groupDigits: json['group_digits'] as bool? ?? false,
       labelPosition: LabelPosition.fromWire(json['label_position'] as String?),
       tooltip: json['tooltip'] as String? ?? '',
       readOnly: json['read_only'] as bool? ?? false,

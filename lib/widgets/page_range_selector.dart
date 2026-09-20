@@ -56,6 +56,11 @@ class PageRangeSelector extends StatefulWidget {
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
       useSafeArea: true,
       isScrollControlled: true,
+      // The same handle and rounded top every other sheet in the app has; this one was missed
+      // and so was the only sheet that looked like a plain panel shoved up from the edge.
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       builder: (sheetContext) => _PageRangeSheet(
         file: file,
         initial: selected,

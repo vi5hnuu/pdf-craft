@@ -47,6 +47,8 @@ import 'package:pdf_craft/models/request/scale_pdf.dart';
 import 'package:pdf_craft/models/request/insert_pdf.dart';
 import 'package:pdf_craft/models/request/extract_embedded_files.dart';
 import 'package:pdf_craft/models/request/analyze_pdf.dart';
+import 'package:pdf_craft/models/request/annotate_pdf.dart';
+import 'package:pdf_craft/models/request/inspect_pdf.dart';
 import 'package:pdf_craft/models/request/replace_pages.dart';
 import 'package:pdf_craft/models/request/extract_fonts.dart';
 import 'package:pdf_craft/models/request/rotate_image.dart';
@@ -201,6 +203,12 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     on<StampPdfEvent>((e, emit) => _handle(
       emit: emit, key: HttpStates.stampPdf,
       call: (p) => _pdfService.stampPdf(stampPdf: e.stampPdf, cancelToken: e.cancelToken, onSendProgress: p),
+      error: L10n.current.errToolFailed,
+    ));
+
+    on<AnnotatePdfEvent>((e, emit) => _handle(
+      emit: emit, key: HttpStates.annotatePdf,
+      call: (p) => _pdfService.annotatePdf(req: e.annotatePdf, cancelToken: e.cancelToken, onSendProgress: p),
       error: L10n.current.errToolFailed,
     ));
 
@@ -396,6 +404,24 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
         }
       } catch (_) {
         emit(state.copyWith(httpStates: state.httpStates.clone()..put(HttpStates.analyzePdf, HttpState.error(error: L10n.current.errToolFailed))));
+      }
+    });
+
+    // Every read-only inspector, keyed by the caller's state key so two open reports do not
+    // overwrite each other.
+    on<InspectPdfEvent>((event, emit) async {
+      emit(state.copyWith(httpStates: state.httpStates.clone()..put(event.stateKey, const HttpState.loading())));
+      try {
+        final res = await _pdfService.inspectPdf(url: event.url, req: event.inspect, cancelToken: event.cancelToken);
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(event.stateKey, HttpState.done(extras: {'report': res.data}))));
+      } on DioException catch (e) {
+        if (e.type == DioExceptionType.cancel) {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..remove(event.stateKey)));
+        } else {
+          emit(state.copyWith(httpStates: state.httpStates.clone()..put(event.stateKey, HttpState.fromDio(e, L10n.current.errToolFailed))));
+        }
+      } catch (_) {
+        emit(state.copyWith(httpStates: state.httpStates.clone()..put(event.stateKey, HttpState.error(error: L10n.current.errToolFailed))));
       }
     });
 

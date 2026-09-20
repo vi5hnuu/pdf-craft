@@ -44,6 +44,28 @@ class _FileTileState extends State<FileTile> {
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(FileTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A ListView reuses this element for whatever file now sits at the same index, so filtering,
+    // sorting or changing folder hands the state a different file without rebuilding it. Without
+    // this the tile kept the previous file's size, date and star: filtering a folder down to
+    // `invoice_form.pdf` showed it as "1.34 KB • 19 Sep", which was the file that had been in
+    // that row a moment earlier.
+    if (oldWidget.file.path != widget.file.path) {
+      // Cleared rather than left in place, so the row shows nothing for the instant before the
+      // real values land — never the wrong file's numbers.
+      _sizeStr = null;
+      _dateStr = null;
+      _isFavorite = false;
+      _load();
+    }
+  }
+
+  void _load() {
     if (widget.file is File) {
       _checkFavorite();
       _loadFileMeta();
@@ -98,6 +120,7 @@ class _FileTileState extends State<FileTile> {
           if (widget.onDelete != null)
             IconButton(
               onPressed: widget.onDelete,
+              tooltip: L10n.of(context).delete,
               icon: Icon(Icons.delete_outline, color: Colors.red.shade300),
             ),
         ],

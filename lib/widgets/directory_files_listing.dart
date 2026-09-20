@@ -95,6 +95,52 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           mode: _sortMode,
           ascending: _ascending);
 
+  /// Shown when the filters hide everything in this folder.
+  ///
+  /// The bare "No matching files" was actively misleading: the name filter only ever sees the
+  /// folder it is in, so typing a filename from the root reported that the file did not exist
+  /// when it was sitting one folder down. This says what was searched, and — while browsing —
+  /// hands the query to the search screen, which does look everywhere.
+  Widget _buildNoMatches(ThemeData theme) {
+    final l = L10n.of(context);
+    final faded = theme.colorScheme.onSurface.withValues(alpha: 0.5);
+    final filtering = _nameFilter.trim().isNotEmpty;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off, size: 48, color: faded),
+            const SizedBox(height: 12),
+            Text(l.noMatchingFiles,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: faded, fontWeight: FontWeight.w600)),
+            if (filtering) ...[
+              const SizedBox(height: 6),
+              Text(l.filterFolderOnlyNote,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(color: faded)),
+              // Only while browsing. In a tool's picker this would walk the user out of the flow
+              // they are part-way through, and they would come back with nothing picked.
+              if (_browseMode) ...[
+                const SizedBox(height: 12),
+                FilledButton.tonalIcon(
+                  icon: const Icon(Icons.search, size: 18),
+                  label: Text(l.searchAllFiles),
+                  onPressed: () => GoRouter.of(context).pushNamed(
+                    AppRoutes.searchRoute.name,
+                    queryParameters: {'q': _nameFilter.trim()},
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final router = GoRouter.of(context);
@@ -146,14 +192,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                         Flexible(
                           fit: FlexFit.tight,
                           child: sortedFiles.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    L10n.of(context).noMatchingFiles,
-                                    style: TextStyle(
-                                        color: theme.colorScheme.onSurface
-                                            .withValues(alpha: 0.5)),
-                                  ),
-                                )
+                              ? _buildNoMatches(theme)
                               : ListView.builder(
                             itemCount: sortedFiles.length,
                             itemBuilder: (context, index) {
@@ -175,6 +214,8 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                                 deletedFiles.remove(file);
                               }
                               return FileTile(
+                                // Keyed by path so the element follows the file, not the row index.
+                                key: ValueKey(file.path),
                                 file: file,
                                 selected: _isFileSelected(file),
                                 onPress: () => _onItemClick(file: file),
@@ -308,10 +349,13 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                 isDense: true,
                 hintText: L10n.of(context).filterByName,
                 prefixIcon: const Icon(Icons.search, size: 18),
-                suffixIcon: _nameFilter.isEmpty
+                // Trimmed, like the filter itself: a field holding only spaces filters nothing,
+                // so offering a Clear button for it points at a state the user cannot see.
+                suffixIcon: _nameFilter.trim().isEmpty
                     ? null
                     : IconButton(
                         icon: const Icon(Icons.close, size: 16),
+                        tooltip: L10n.of(context).clear,
                         onPressed: () {
                           _searchController.clear();
                           _filterDebouncer.cancel();
@@ -403,6 +447,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   void _showContextMenu(FileSystemEntity file) {
     final isDir = file is Directory;
     showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
@@ -412,12 +457,6 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(AppRadius.surface)),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
@@ -491,6 +530,7 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
     final l = L10n.of(context);
 
     showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
@@ -503,13 +543,8 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 36, height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(AppRadius.surface)),
-                ),
-              ),
+              // No hand-drawn grabber here: `showDragHandle` already draws one, and the two
+              // stacked read as a rendering fault.
               _infoRow(Icons.insert_drive_file_outlined, l.sortName, name, copyable: true),
               const SizedBox(height: 12),
               _infoRow(Icons.folder_outlined, l.infoPath, file.path, copyable: true),
@@ -619,8 +654,10 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
   void dispose() {
     if (_browseMode) {
       SelectionService().removeListener(_onSelectionChanged);
-      // Don't leak a cross-folder selection out of the browser.
-      SelectionService().clear();
+      // Deliberately NOT cleared here. The selection is cross-folder by design, and clearing it
+      // on dispose destroyed it the moment the user stepped into Search and back — Search is a
+      // root-level route, so the browser below it is disposed. Back still cancels a selection
+      // (see the PopScope above), and launching a tool consumes it.
     }
     _filterDebouncer.dispose();
     _searchController.dispose();
@@ -780,6 +817,7 @@ class _FolderPickerDialogState extends State<_FolderPickerDialog> {
                 if (_currentPath != widget.startPath)
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
+                    tooltip: L10n.of(context).goBack,
                     onPressed: () {
                       final parent = Directory(_currentPath).parent.path;
                       setState(() => _currentPath = parent);
@@ -795,6 +833,7 @@ class _FolderPickerDialogState extends State<_FolderPickerDialog> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
+                  tooltip: L10n.of(context).close,
                   onPressed: () => Navigator.pop(context),
                 ),
               ],

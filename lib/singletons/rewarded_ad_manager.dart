@@ -8,7 +8,13 @@ import 'package:pdf_craft/utils/ad_units.dart';
 /// server-side operations so those expensive tools can stay free.
 ///
 /// Mirrors [AppOpenAdManager]: load/cache, show, then preload the next.
-class RewardedAdManager {
+///
+/// A [ChangeNotifier] because [isReady] changes on its own, asynchronously, when a load
+/// completes. Screens that gate a button on it — the credits screen's "watch an ad" tile, the
+/// credit gate's offer — read it once at build; without a notification, an ad that finished
+/// loading a second after the screen opened left the tile saying "ad loading" until the user
+/// navigated away and came back.
+class RewardedAdManager extends ChangeNotifier {
   /// Null when no production unit is configured, in which case nothing is loaded and the
   /// feature reports itself unavailable — the alternative, falling back to the test unit,
   /// serves Google's sample ads to real users and breaches the AdMob policy.
@@ -20,6 +26,10 @@ class RewardedAdManager {
   static final RewardedAdManager _instance = RewardedAdManager._();
   RewardedAdManager._();
   factory RewardedAdManager() => _instance;
+
+  // No dispose override: this is a process-lifetime singleton, so nothing ever disposes it —
+  // and a dispose that called super would tear down the listener list the singleton exists to
+  // keep.
 
   bool get isReady => _cachedAd != null;
 
@@ -43,10 +53,12 @@ class RewardedAdManager {
         onAdLoaded: (ad) {
           _cachedAd = ad;
           _isLoading = false;
+          notifyListeners();
         },
         onAdFailedToLoad: (error) {
           _isLoading = false;
           LoggerSingleton().logger.e('Rewarded ad failed to load: $error');
+          notifyListeners();
         },
       ),
     );
@@ -76,6 +88,8 @@ class RewardedAdManager {
       return;
     }
     _cachedAd = null;
+    // No longer ready: anything offering the ad has to stop offering it.
+    notifyListeners();
 
     // Tells Google which account to credit when it calls our verification endpoint.
     // Without it the callback arrives with no user and nothing can be granted.

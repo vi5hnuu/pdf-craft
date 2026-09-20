@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -99,6 +100,8 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
                   ]),
                 ),
               ),
+              // Above the action bar, never over the document.
+              const BannerAdd(),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),

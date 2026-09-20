@@ -28,7 +28,6 @@ import 'package:pdf_craft/pages/pdf_info_view.dart';
 import 'package:pdf_craft/pages/pdf_to_jpg_view.dart';
 import 'package:pdf_craft/pages/protect_pdf_view.dart';
 import 'package:pdf_craft/pages/repair_pdf_view.dart';
-import 'package:pdf_craft/pages/reorder_pdf_view.dart';
 import 'package:pdf_craft/pages/rotate_pdf_view.dart';
 import 'package:pdf_craft/pages/search_screen.dart';
 import 'package:pdf_craft/pages/recents_screen.dart';
@@ -42,6 +41,12 @@ import 'package:pdf_craft/pages/delete_pages_view.dart';
 import 'package:pdf_craft/pages/remove_metadata_view.dart';
 import 'package:pdf_craft/pages/extract_images_view.dart';
 import 'package:pdf_craft/pages/sanitize_pdf_view.dart';
+import 'package:pdf_craft/pages/inspector/permission_inspector_view.dart';
+import 'package:pdf_craft/pages/inspector/security_scanner_view.dart';
+import 'package:pdf_craft/pages/inspector/form_inspector_view.dart';
+import 'package:pdf_craft/pages/inspector/structure_inspector_view.dart';
+import 'package:pdf_craft/pages/inspector/object_explorer_view.dart';
+import 'package:pdf_craft/pages/inspector/pdf_to_json_view.dart';
 import 'package:pdf_craft/pages/split_by_size_view.dart';
 import 'package:pdf_craft/pages/reverse_pages_view.dart';
 import 'package:pdf_craft/pages/mirror_pages_view.dart';
@@ -108,8 +113,25 @@ final GlobalKey<NavigatorState> cloudNavigatorKey =
 String? _requireFiles(BuildContext context, GoRouterState state) {
   final extra = state.extra;
   if (extra is! Map || extra['files'] is! List<File>) return AppRoutes.errorRoute.path;
+  // An *empty* list used to pass. Around forty-five route builders then call `.first` on it and
+  // throw `Bad state: No element`, which is a red screen rather than the error page this guard
+  // exists to reach.
+  if ((extra['files'] as List<File>).isEmpty) return AppRoutes.errorRoute.path;
   return null;
 }
+
+/// Place-image carries a single `file` rather than a `files` list, so it needs its own guard —
+/// it had none, and cast `state.extra as Map` straight into a builder that throws on a restored
+/// back stack instead of redirecting to the error page.
+String? _requireImagePlacement(BuildContext context, GoRouterState state) {
+  final extra = state.extra;
+  if (extra is! Map || extra['file'] is! File) return AppRoutes.errorRoute.path;
+  return null;
+}
+
+/// The directory listing casts `state.extra as FileSelectionConfig` unguarded.
+String? _requireSelectionConfig(BuildContext context, GoRouterState state) =>
+    state.extra is FileSelectionConfig ? null : AppRoutes.errorRoute.path;
 
 final GoRouter appRouter = GoRouter(
     debugLogDiagnostics: true,
@@ -168,7 +190,10 @@ final GoRouter appRouter = GoRouter(
         path: AppRoutes.searchRoute.path,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: const SearchScreen(),
+          // `?q=` lets a caller open search already looking for something — the file picker's
+          // folder-local filter uses it to hand its query over.
+          child: SearchScreen(
+              initialQuery: state.uri.queryParameters['q'] ?? ''),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
@@ -276,13 +301,6 @@ final GoRouter appRouter = GoRouter(
         name: AppRoutes.mergePdfRoute.name,
         // builder: (BuildContext context, GoRouterState state) => MergePdfView(files: state.extra as List<File>),
         builder: (BuildContext context, GoRouterState state) => MergePdfView(files: (state.extra as Map)['files'] as List<File>),
-      ),
-      GoRoute(
-        redirect: _requireFiles,
-        parentNavigatorKey: rootNavigatorKey,
-        path: AppRoutes.reorderPdfPagesRoute.path,
-        name: AppRoutes.reorderPdfPagesRoute.name,
-        builder: (BuildContext context, GoRouterState state) => ReorderPdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
       GoRoute(
         redirect: _requireFiles,
@@ -447,6 +465,7 @@ final GoRouter appRouter = GoRouter(
         parentNavigatorKey: rootNavigatorKey,
         path: AppRoutes.placeImageRoute.path,
         name: AppRoutes.placeImageRoute.name,
+        redirect: _requireImagePlacement,
         builder: (context, state) {
           final extra = state.extra as Map;
           return PlaceImageView(
@@ -515,6 +534,7 @@ final GoRouter appRouter = GoRouter(
         parentNavigatorKey: rootNavigatorKey,
         path: AppRoutes.batchProcessRoute.path,
         name: AppRoutes.batchProcessRoute.name,
+        redirect: _requireFiles,
         builder: (context, state) {
           final files = (state.extra as Map)['files'] as List<File>;
           return BatchProcessView(files: files);
@@ -692,6 +712,50 @@ final GoRouter appRouter = GoRouter(
         name: AppRoutes.analyzePdfRoute.name,
         builder: (context, state) => AnalyzePdfView(file: ((state.extra as Map)['files'] as List<File>).first),
       ),
+
+      // Read-only inspectors — single PDF in, JSON report out. No file is produced.
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.permissionInspectorRoute.path,
+        name: AppRoutes.permissionInspectorRoute.name,
+        builder: (context, state) => PermissionInspectorView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.securityScannerRoute.path,
+        name: AppRoutes.securityScannerRoute.name,
+        builder: (context, state) => SecurityScannerView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.formInspectorRoute.path,
+        name: AppRoutes.formInspectorRoute.name,
+        builder: (context, state) => FormInspectorView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.structureInspectorRoute.path,
+        name: AppRoutes.structureInspectorRoute.name,
+        builder: (context, state) => StructureInspectorView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.objectExplorerRoute.path,
+        name: AppRoutes.objectExplorerRoute.name,
+        builder: (context, state) => ObjectExplorerView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
+      GoRoute(
+        redirect: _requireFiles,
+        parentNavigatorKey: rootNavigatorKey,
+        path: AppRoutes.pdfToJsonRoute.path,
+        name: AppRoutes.pdfToJsonRoute.name,
+        builder: (context, state) => PdfToJsonView(file: ((state.extra as Map)['files'] as List<File>).first),
+      ),
       // Replace Pages — two files
       GoRoute(
         redirect: (context, state) {
@@ -800,6 +864,7 @@ final GoRouter appRouter = GoRouter(
                   GoRoute(
                     path: AppRoutes.filesListingRoute.path,
                     name: AppRoutes.filesListingRoute.name,
+                    redirect: _requireSelectionConfig,
                     pageBuilder: (context, state){
                       final config=state.extra as FileSelectionConfig;
                       return CustomTransitionPage<void>(

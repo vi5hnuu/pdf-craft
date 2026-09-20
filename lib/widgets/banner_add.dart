@@ -21,6 +21,16 @@ class _BannerAddState extends State<BannerAdd> {
   }
 
   @override
+  void dispose() {
+    // There was no dispose at all, so every banner leaked its native ad object: the Flutter
+    // widget went away and the AdMob instance behind it stayed alive for the life of the
+    // process. Six screens made that a slow drip; putting banners inside the tool flows would
+    // have multiplied it across twenty more.
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (ProService().isPro) return const SizedBox.shrink(); // no ads for Pro
     if(_bannerAd==null ) return const SizedBox.shrink();
@@ -32,7 +42,14 @@ class _BannerAddState extends State<BannerAdd> {
     final bannerAd = BannerAd(
       size: AdSize.banner,
       adUnitId: AdUnits.banner,
-      request: const AdRequest(keywords: ['gfg','geeksforgeeks','leetcode','codingninja','codechef','codeforces','naukri','pdf','ilovepdf','file management']),
+      // Keywords describe *this* app's audience. They used to be coding-site terms — gfg,
+      // leetcode, codechef, naukri — which asked AdMob to fill a PDF utility's inventory with
+      // ads aimed at people practising algorithms. Wrong audience means a worse match and a
+      // lower eCPM, so this is a revenue fix as much as a relevance one.
+      request: const AdRequest(keywords: [
+        'pdf', 'pdf editor', 'document scanner', 'e-sign', 'office',
+        'file manager', 'cloud storage', 'printing', 'productivity',
+      ]),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           if (!mounted) {

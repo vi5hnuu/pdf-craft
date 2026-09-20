@@ -115,6 +115,14 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
       ),
       actions: [
         TextButton(
+          // Explicitly neutral for a destructive prompt. The app's primary colour is a red, so a
+          // default TextButton drew "Cancel" in red beside a Delete button filled with the dark
+          // theme's `error` — which is a pale pink. The safe choice was shouting and the
+          // destructive one looked like the gentler of the two.
+          style: widget.destructive
+              ? TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onSurfaceVariant)
+              : null,
           onPressed: () =>
               Navigator.of(context).pop(ConfirmResult(false, _dontAskAgain)),
           child: Text(widget.cancelLabel ?? L10n.of(context).cancel),

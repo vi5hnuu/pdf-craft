@@ -37,6 +37,38 @@ class AppTheme {
         titleLarge: TextStyle(color: Color(0xFF111111), fontWeight: FontWeight.bold),
       ));
 
+  /// The shared text-field decoration.
+  ///
+  /// [error] matters as much as the rest: the two themes each listed `border`, `enabledBorder`
+  /// and `focusedBorder` and stopped there. `InputDecorator` falls back to `border` when no
+  /// error border is given, so a field that failed validation looked exactly like every other
+  /// field — and with the focus ring already drawn in the brand red, a rejected field was
+  /// indistinguishable from a selected one. The dialog simply refused to close and said nothing.
+  static InputDecorationTheme _inputs({
+    required Color borderColor,
+    required Color fill,
+    required Color error,
+  }) {
+    OutlineInputBorder side(Color c, [double w = 1.0]) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.surface),
+          borderSide: BorderSide(color: c, width: w),
+        );
+    return InputDecorationTheme(
+      border: side(borderColor),
+      enabledBorder: side(borderColor),
+      focusedBorder: side(_primary, 1.5),
+      errorBorder: side(error, 1.5),
+      focusedErrorBorder: side(error, 2),
+      labelStyle: const TextStyle(color: Color(0xFF888888)),
+      errorStyle: TextStyle(color: error, fontSize: 12),
+      // A validation message is a sentence, not a label: the default single line cut
+      // "New password must be at least 8 characters." off at "at least 8 cha…".
+      errorMaxLines: 3,
+      fillColor: fill,
+      filled: true,
+    );
+  }
+
   static ThemeData dark({bool hindi = false}) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
@@ -68,19 +100,10 @@ class AppTheme {
         ),
         visualDensity: VisualDensity.compact,
         textTheme: _textDark(hindi),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.surface),
-              borderSide: const BorderSide(color: Color(0xFF333333))),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.surface),
-              borderSide: const BorderSide(color: Color(0xFF333333))),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.surface),
-              borderSide: const BorderSide(color: _primary, width: 1.5)),
-          labelStyle: const TextStyle(color: Color(0xFF888888)),
-          fillColor: const Color(0xFF1A1A1A),
-          filled: true,
+        inputDecorationTheme: _inputs(
+          borderColor: const Color(0xFF333333),
+          fill: const Color(0xFF1A1A1A),
+          error: const Color(0xFFCF6679),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
@@ -182,19 +205,10 @@ class AppTheme {
         ),
         visualDensity: VisualDensity.compact,
         textTheme: _textLight(hindi),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.surface),
-              borderSide: const BorderSide(color: Color(0xFFDDDDDD))),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.surface),
-              borderSide: const BorderSide(color: Color(0xFFDDDDDD))),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.surface),
-              borderSide: const BorderSide(color: _primary, width: 1.5)),
-          labelStyle: const TextStyle(color: Color(0xFF888888)),
-          fillColor: Colors.white,
-          filled: true,
+        inputDecorationTheme: _inputs(
+          borderColor: const Color(0xFFDDDDDD),
+          fill: Colors.white,
+          error: const Color(0xFFB00020),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(

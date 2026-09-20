@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -240,6 +241,11 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
                         ),
                       ),
                     ),
+                    // Above the action bar, never over the document: a banner here sits at the
+                    // end of a settings list the user is already scrolling, and cannot cover a
+                    // rendered page or a control mid-operation.
+                    const BannerAdd(),
+                    const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(

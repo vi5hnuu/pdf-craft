@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/state/selection/selection_service.dart';
 import 'package:pdf_craft/tools/tool_registry.dart';
+import 'package:pdf_craft/widgets/tool_picker_sheet.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 
 /// Bottom action bar shown while a cross-folder selection is active. Lets the
@@ -54,54 +56,20 @@ class SelectionBar extends StatelessWidget {
 /// (single-file tools for one file, multi-file tools once their minimum is met,
 /// extension filters honored) — driven by [ToolRegistry].
 void showToolsForSelection(BuildContext context) {
-  final files = SelectionService().files;
-  final applicable = ToolRegistry.toolsForSelection(files);
-  showModalBottomSheet(
-    context: context,
-      // Without this the sheet runs under the status bar and the display cutout —
-      // on a punch-hole phone the top of a tall sheet sits behind the camera.
-      useSafeArea: true,
-    shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
-    builder: (_) => SafeArea(
-      child: applicable.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(L10n.of(context).selNoToolsApply),
-            )
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(L10n.of(context).selApplyTo(files.length),
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15)),
-                  ),
-                ),
-                Flexible(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: applicable
-                        .map((tool) => ListTile(
-                              leading:
-                                  Icon(tool.icon, color: tool.category.color),
-                              title: Text(tool.localizedName(context)),
-                              onTap: () {
-                                Navigator.pop(context);
-                                final selected = SelectionService().files;
-                                SelectionService().clear();
-                                tool.openWithFiles(context, selected);
-                              },
-                            ))
-                        .toList(),
-                  ),
-                ),
-              ],
-            ),
-    ),
+  final files = List<File>.from(SelectionService().files);
+  ToolPickerSheet.show(
+    context,
+    files: files,
+    subtitle: L10n.of(context).selApplyTo(files.length),
+    onSelected: (tool) async {
+      // The selection is dropped only once the tool has actually opened. Clearing first meant
+      // backing out of the price dialog destroyed a cross-folder selection with no way back —
+      // and it unmounted the element this used to route from, which is why every priced tool
+      // launched from here did nothing.
+      if (await tool.openWithFiles(context, files)) {
+        SelectionService().clear();
+      }
+    },
   );
 }
 
@@ -109,6 +77,7 @@ void showToolsForSelection(BuildContext context) {
 /// (or clear all).
 void showManageSelections(BuildContext context) {
   showModalBottomSheet(
+      showDragHandle: true,
     context: context,
       // Without this the sheet runs under the status bar and the display cutout —
       // on a punch-hole phone the top of a tall sheet sits behind the camera.
@@ -157,6 +126,7 @@ void showManageSelections(BuildContext context) {
                           overflow: TextOverflow.ellipsis),
                       trailing: IconButton(
                         icon: const Icon(Icons.remove_circle_outline),
+                        tooltip: L10n.of(context).removeFromSelection,
                         onPressed: () => SelectionService().removeByPath(f.path),
                       ),
                     );

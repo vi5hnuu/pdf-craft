@@ -7,6 +7,7 @@ import 'package:pdf_craft/models/file_selection_config.dart';
 import 'package:pdf_craft/models/request/image_studio.dart' show ImageStudioOp;
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/recent_tools_service.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/tools/credit_gate.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
@@ -125,14 +126,14 @@ class ToolDef {
 
   /// Opens the file-picker flow for this tool (used from the Tools screen).
   /// Heavy tools first pass through the opt-in rewarded-ad gate.
-  void openPicker(BuildContext context) {
-    CreditGate.run(
+  Future<bool> openPicker(BuildContext context) {
+    return CreditGate.run(
       context,
       creditToolId: creditToolId,
       toolName: localizedName(context),
-      proceed: () {
+      proceed: (routeContext) {
         RecentToolsService().record(id);
-        GoRouter.of(context).pushNamed(
+        GoRouter.of(routeContext).pushNamed(
           AppRoutes.fileManagement.name,
           extra: FileSelectionConfig(
             path: Constants.rootStoragePath,
@@ -151,22 +152,38 @@ class ToolDef {
   /// Opens the tool directly with an already-chosen [files] selection (used by
   /// the file→tool intellisense menu and the incoming-files chooser), skipping
   /// the picker. Heavy tools first pass through the opt-in rewarded-ad gate.
-  void openWithFiles(BuildContext context, List<File> files) async {
+  /// Returns true when the tool was actually opened.
+  ///
+  /// It used to return nothing and be `void … async`, which made every failure invisible: a
+  /// refused upload, a cancelled price dialog and a thrown error all looked identical to the
+  /// caller, and callers used that silence to decide it was safe to drop the selection. The
+  /// result is what lets the caller keep the selection when the user backs out.
+  Future<bool> openWithFiles(BuildContext context, List<File> files) async {
+    // A tool route with no files throws `Bad state: No element` inside the route builder, which
+    // is a red screen rather than the error page. Refuse here, where it can be handled.
+    if (files.isEmpty) return false;
     // Fail fast on files the server would reject for size — before quoting a price or
     // starting a long upload that can only end in an error.
-    if (uploads && !await UploadLimits.ensureWithinLimits(context, files)) return;
-    if (!context.mounted) return;
-    CreditGate.run(
+    if (uploads && !await UploadLimits.ensureWithinLimits(context, files)) return false;
+    if (!context.mounted) {
+      // A caller routing from an element that has already left the tree — typically a bottom
+      // sheet that popped itself before launching. It looks exactly like "the tool tile does
+      // nothing", and used to fail here in total silence. Say so.
+      LoggerSingleton().logger.w(
+          'openWithFiles($id): the caller\'s context is no longer mounted, so the tool cannot '
+          'be routed to. Launch it from a context that outlives the sheet.');
+      return false;
+    }
+    return CreditGate.run(
       context,
       creditToolId: creditToolId,
       toolName: localizedName(context),
       files: files, // known here, so the quote includes any size surcharge
-
-      proceed: () {
+      proceed: (routeContext) {
         RecentToolsService().record(id);
         // Pass a fresh, modifiable List<File> — selections come in as
         // unmodifiable lists and some tool views reorder/mutate the list.
-        GoRouter.of(context).pushNamed(
+        GoRouter.of(routeContext).pushNamed(
           route.name,
           extra: <String, dynamic>{'files': List<File>.from(files), ...?extra},
         );
@@ -183,7 +200,6 @@ class ToolRegistry {
     // ---- PDF Tools ----
     ToolDef(id: 'merge', name: 'Merge PDF', icon: Icons.merge, category: ToolCategories.pdf, route: AppRoutes.mergePdfRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: null),
     ToolDef(id: 'split', name: 'Split PDF', icon: Icons.call_split, category: ToolCategories.pdf, route: AppRoutes.splitPdfRoute, extensions: _pdf),
-    ToolDef(id: 'reorder', name: 'Reorder Pages', icon: Icons.swap_vert, category: ToolCategories.pdf, route: AppRoutes.reorderPdfPagesRoute, extensions: _pdf),
     ToolDef(id: 'organize', name: 'Organize Pages', icon: Icons.dashboard_customize_outlined, category: ToolCategories.pdf, route: AppRoutes.organizePagesRoute, extensions: _pdf),
     ToolDef(id: 'extract-pages', name: 'Extract Pages', icon: Icons.content_cut, category: ToolCategories.pdf, route: AppRoutes.extractPagesRoute, extensions: _pdf),
     ToolDef(id: 'delete-pages', name: 'Delete Pages', icon: Icons.delete_outline, category: ToolCategories.pdf, route: AppRoutes.deletePagesRoute, extensions: _pdf),
@@ -203,7 +219,7 @@ class ToolRegistry {
     ToolDef(id: 'pdf-info', name: 'PDF Info', icon: Icons.info_outline, category: ToolCategories.pdf, route: AppRoutes.pdfInfoRoute, extensions: _pdf),
     ToolDef(id: 'analyze', name: 'Analyze PDF', icon: Icons.analytics_outlined, category: ToolCategories.pdf, route: AppRoutes.analyzePdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'replace-pages', name: 'Replace Pages', icon: Icons.find_replace, category: ToolCategories.pdf, route: AppRoutes.replacePagesRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: 2, isHeavy: true),
-    ToolDef(id: 'sign', name: 'Sign PDF', icon: Icons.draw, category: ToolCategories.pdf, route: AppRoutes.signPdfRoute, extensions: _pdf),
+    ToolDef(id: 'sign', name: 'Sign PDF', icon: Icons.history_edu, category: ToolCategories.pdf, route: AppRoutes.signPdfRoute, extensions: _pdf),
     ToolDef(id: 'redact', name: 'Redact PDF', icon: Icons.hide_source, category: ToolCategories.pdf, route: AppRoutes.redactPdfRoute, extensions: _pdf),
     ToolDef(id: 'duplicate-pages', name: 'Duplicate Pages', icon: Icons.copy_all, category: ToolCategories.pdf, route: AppRoutes.duplicatePagesRoute, extensions: _pdf),
     ToolDef(id: 'bookmarks', name: 'Bookmarks', icon: Icons.bookmark_outline, category: ToolCategories.pdf, route: AppRoutes.bookmarksEditorRoute, extensions: _pdf),
@@ -211,19 +227,19 @@ class ToolRegistry {
 
     // ---- Enhance ----
     ToolDef(id: 'compress', name: 'Compress PDF', icon: Icons.compress, category: ToolCategories.enhance, route: AppRoutes.compressPdfRoute, extensions: _pdf, isHeavy: true),
-    ToolDef(id: 'optimize', name: 'Optimize PDF', icon: Icons.auto_fix_high, category: ToolCategories.enhance, route: AppRoutes.optimizePdfRoute, extensions: _pdf, isHeavy: true),
+    ToolDef(id: 'optimize', name: 'Optimize PDF', icon: Icons.tune, category: ToolCategories.enhance, route: AppRoutes.optimizePdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'remove-blanks', name: 'Remove Blanks', icon: Icons.delete_sweep_outlined, category: ToolCategories.enhance, route: AppRoutes.removeBlankPagesRoute, extensions: _pdf),
     ToolDef(id: 'n-up', name: 'N-Up Layout', icon: Icons.view_module_outlined, category: ToolCategories.enhance, route: AppRoutes.nUpPdfRoute, extensions: _pdf),
     ToolDef(id: 'resize-page', name: 'Resize Page Size', icon: Icons.aspect_ratio, category: ToolCategories.enhance, route: AppRoutes.resizePageRoute, extensions: _pdf, isHeavy: true),
-    ToolDef(id: 'scale-pdf', name: 'Scale PDF', icon: Icons.photo_size_select_large, category: ToolCategories.enhance, route: AppRoutes.scalePdfRoute, extensions: _pdf, isHeavy: true),
+    ToolDef(id: 'scale-pdf', name: 'Scale PDF', icon: Icons.zoom_out_map, category: ToolCategories.enhance, route: AppRoutes.scalePdfRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'watermark', name: 'Watermark', icon: Icons.branding_watermark, category: ToolCategories.enhance, route: AppRoutes.watermarkPdfRoute, extensions: _pdf),
-    ToolDef(id: 'grayscale', name: 'Grayscale', icon: Icons.invert_colors, category: ToolCategories.enhance, route: AppRoutes.grayscalePdfRoute, extensions: _pdf),
+    ToolDef(id: 'grayscale', name: 'Grayscale', icon: Icons.filter_b_and_w, category: ToolCategories.enhance, route: AppRoutes.grayscalePdfRoute, extensions: _pdf),
     ToolDef(id: 'extract-text', name: 'Extract Text', icon: Icons.text_snippet, category: ToolCategories.enhance, route: AppRoutes.extractTextRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'header-footer', name: 'Header/Footer', icon: Icons.view_headline, category: ToolCategories.enhance, route: AppRoutes.headerFooterRoute, extensions: _pdf),
     ToolDef(id: 'edit-metadata', name: 'Edit Metadata', icon: Icons.edit_note, category: ToolCategories.enhance, route: AppRoutes.editMetadataRoute, extensions: _pdf),
 
     // ---- Convert (all server-side / heavy) ----
-    ToolDef(id: 'pdf-to-jpg', name: 'PDF to JPG', icon: Icons.image, category: ToolCategories.convert, route: AppRoutes.pdfToJpgRoute, extensions: _pdf, isHeavy: true),
+    ToolDef(id: 'pdf-to-jpg', name: 'PDF to JPG', icon: Icons.photo_library_outlined, category: ToolCategories.convert, route: AppRoutes.pdfToJpgRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'extract-images', name: 'Extract Images', icon: Icons.collections_outlined, category: ToolCategories.convert, route: AppRoutes.extractImagesRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'extract-embedded', name: 'Extract Attachments', icon: Icons.attachment_outlined, category: ToolCategories.convert, route: AppRoutes.extractEmbeddedRoute, extensions: _pdf, isHeavy: true),
     ToolDef(id: 'extract-fonts', name: 'Extract Fonts', icon: Icons.font_download_outlined, category: ToolCategories.convert, route: AppRoutes.extractFontsRoute, extensions: _pdf, isHeavy: true),
@@ -239,6 +255,16 @@ class ToolRegistry {
     ToolDef(id: 'flatten', name: 'Flatten PDF', icon: Icons.layers_clear, category: ToolCategories.security, route: AppRoutes.flattenPdfRoute, extensions: _pdf),
     ToolDef(id: 'remove-metadata', name: 'Remove Metadata', icon: Icons.cleaning_services_outlined, category: ToolCategories.security, route: AppRoutes.removeMetadataRoute, extensions: _pdf),
     ToolDef(id: 'sanitize', name: 'Sanitize PDF', icon: Icons.security_outlined, category: ToolCategories.security, route: AppRoutes.sanitizePdfRoute, extensions: _pdf, isHeavy: true),
+
+    // ---- Inspectors (read-only: they report on a PDF, they never write one) ----
+    // No credits: they produce no document, and someone checking whether a file is safe to open
+    // should not have to pay to find out.
+    ToolDef(id: 'permission-inspector', name: 'Permission Inspector', icon: Icons.verified_user_outlined, category: ToolCategories.security, route: AppRoutes.permissionInspectorRoute, extensions: _pdf),
+    ToolDef(id: 'security-scanner', name: 'Security Scanner', icon: Icons.policy_outlined, category: ToolCategories.security, route: AppRoutes.securityScannerRoute, extensions: _pdf),
+    ToolDef(id: 'form-inspector', name: 'Form Inspector', icon: Icons.fact_check_outlined, category: ToolCategories.security, route: AppRoutes.formInspectorRoute, extensions: _pdf),
+    ToolDef(id: 'structure-inspector', name: 'Structure Inspector', icon: Icons.account_tree_outlined, category: ToolCategories.security, route: AppRoutes.structureInspectorRoute, extensions: _pdf),
+    ToolDef(id: 'object-explorer', name: 'Object Explorer', icon: Icons.data_object, category: ToolCategories.security, route: AppRoutes.objectExplorerRoute, extensions: _pdf),
+    ToolDef(id: 'pdf-to-json', name: 'PDF to JSON', icon: Icons.code, category: ToolCategories.security, route: AppRoutes.pdfToJsonRoute, extensions: _pdf, isHeavy: true),
 
     // ---- Batch ----
     ToolDef(id: 'batch', name: 'Batch Process', icon: Icons.layers, category: ToolCategories.batch, route: AppRoutes.batchProcessRoute, extensions: _pdf, multiSelect: true, minSelection: 2, maxSelection: null, isHeavy: true),
@@ -283,7 +309,7 @@ class ToolRegistry {
     // form), both priced; it was showing as free.
     'flatten': 'flatten-pdf',
     // AnnotatePdfView applies the annotation layer through the stamp endpoint.
-    'annotate': 'stamp-pdf',
+    'annotate': 'annotate-pdf', // its own endpoint now; priced the same as the stamp it used to use
     // Convert
     'pdf-to-jpg': 'pdf-to-jpg',
     'image-to-pdf': 'image-to-pdf',
@@ -308,8 +334,7 @@ class ToolRegistry {
   static const Map<String, String> descriptions = {
     'merge': 'Combine several PDFs into one file, in the order you choose.',
     'split': 'Split a PDF into parts by page ranges, fixed size, or bookmarks.',
-    'reorder': 'Rearrange the pages of a PDF by dragging them.',
-    'organize': 'Visually reorder and delete pages on a thumbnail grid.',
+    'organize': 'Reorder and delete pages on a thumbnail grid, then export.',
     'extract-pages': 'Pick pages to keep and export them as a new PDF.',
     'delete-pages': 'Remove selected pages and keep the rest.',
     'reverse-pages': 'Flip the page order so the last page comes first.',
@@ -323,7 +348,7 @@ class ToolRegistry {
     'stamp': 'Stamp text or an image onto pages.',
     'qr-stamp': 'Generate a QR code and stamp it onto the PDF.',
     'image-overlay': 'Place and size an image anywhere on a page.',
-    'annotate': 'Draw, highlight and add notes on the PDF.',
+    'annotate': 'Draw, highlight, add notes and sign — saved as real PDF annotations.',
     'fill-form': 'Build a fillable form — add text, checkbox, radio and more.',
     'pdf-info': 'View the PDF\'s metadata (title, author, dates).',
     'analyze': 'Report page/word counts and blank, duplicate & landscape pages.',
@@ -358,6 +383,12 @@ class ToolRegistry {
     'flatten': 'Fill existing form fields, then flatten them into the page.',
     'remove-metadata': 'Strip identifying metadata from the PDF.',
     'sanitize': 'Remove JavaScript, attachments and actions from the PDF.',
+    'permission-inspector': 'See what the document allows: printing, copying, editing and form filling.',
+    'security-scanner': 'Find scripts, attachments, outbound links and signatures before you open or forward it.',
+    'form-inspector': 'List every AcroForm field with its type, value and options.',
+    'structure-inspector': 'Inspect the document skeleton: pages, fonts, resources and catalog flags.',
+    'object-explorer': "Browse the file's raw PDF objects.",
+    'pdf-to-json': 'Export the whole document — metadata, pages, text and fields — as JSON.',
     'batch': 'Apply one tool to many PDFs at once.',
     'img-compress': 'Compress an image to a smaller JPEG.',
     'img-to-jpg': 'Convert an image to JPEG.',
@@ -369,10 +400,27 @@ class ToolRegistry {
     'img-border': 'Add a coloured border around an image.',
   };
 
-  /// Lookup by stable id (for recents). Returns null if not found.
+  /// Ids of retired tools, mapped to the tool that replaced them.
+  ///
+  /// Tool ids are persisted — favourites and recents are stored as bare id strings — so simply
+  /// deleting a `ToolDef` silently drops whatever the user had pinned. Retiring one means
+  /// forwarding its id instead.
+  ///
+  /// `reorder` merged into `organize`: both posted the same request to the same endpoint, and
+  /// Organize does everything Reorder did plus deleting pages.
+  static const Map<String, String> _retiredIds = {'reorder': 'organize'};
+
+  /// The live id for [id], following any retirement. Unknown ids pass through unchanged.
+  static String resolveId(String id) => _retiredIds[id] ?? id;
+
+  /// Lookup by stable id (for recents and favourites). Returns null if not found.
+  ///
+  /// Resolves retired ids, so a favourite saved against a tool that has since been merged still
+  /// opens the tool that replaced it rather than quietly disappearing from the row.
   static ToolDef? byId(String id) {
+    final live = resolveId(id);
     for (final t in tools) {
-      if (t.id == id) return t;
+      if (t.id == live) return t;
     }
     return null;
   }
@@ -389,8 +437,15 @@ class ToolRegistry {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return tools;
     return tools.where((t) {
+      // Descriptions count as well as names. With 66 tools the name is often not the word
+      // someone reaches for: "highlight" and "watermark" appear only in Annotate's description,
+      // so searching for either found nothing and the tool looked absent. Both languages are
+      // searched, so a Hindi user who types an English term still finds the tool.
       if (t.name.toLowerCase().contains(q)) return true;
-      return context != null && t.localizedName(context).toLowerCase().contains(q);
+      if (t.description.toLowerCase().contains(q)) return true;
+      if (context == null) return false;
+      return t.localizedName(context).toLowerCase().contains(q) ||
+          t.localizedDescription(context).toLowerCase().contains(q);
     }).toList();
   }
 

@@ -26,11 +26,39 @@ class _ToolsScreenState extends State<ToolsScreen> {
   final _debouncer = Debouncer(milliseconds: 200);
   String _query = '';
 
+  /// Whether this tab was on screen at the last dependency change — see
+  /// [didChangeDependencies], which uses the edge to decide when to drop the query.
+  bool _wasVisible = true;
+
   @override
   void initState() {
     super.initState();
     // Warm the favourites cache so cards can render their star synchronously.
     FavoriteToolsService().load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // This tab lives in a GoRouter shell branch, so its state survives a tab switch. That left a
+    // stale query filtering the grid on the next visit — and since the box scrolls away with the
+    // rest of the content, the cause was usually off-screen: the tools tab simply looked as if
+    // most of the tools had gone missing.
+    //
+    // An inactive branch is wrapped in `TickerMode(enabled: false)` (go_router's
+    // `_buildRouteBranchContainer`), which is the only visibility signal available without adding
+    // a dependency or plumbing the index down from MainScreen.
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (_wasVisible && !visible) _clearSearch();
+    _wasVisible = visible;
+  }
+
+  /// Drops the query and everything that depends on it. Safe to call from
+  /// `didChangeDependencies`: a rebuild always follows it, so no setState is needed.
+  void _clearSearch() {
+    _searchController.clear();
+    _debouncer.cancel();
+    _query = '';
   }
 
   @override
@@ -104,11 +132,8 @@ class _ToolsScreenState extends State<ToolsScreen> {
                   suffixIcon: searching
                       ? IconButton(
                           icon: const Icon(Icons.close),
-                          onPressed: () {
-                            _searchController.clear();
-                            _debouncer.cancel();
-                            setState(() => _query = '');
-                          },
+                          tooltip: L10n.of(context).clear,
+                          onPressed: () => setState(_clearSearch),
                         )
                       : null,
                   border: OutlineInputBorder(
@@ -377,7 +402,8 @@ class ToolCard extends StatelessWidget {
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () => tool.openPicker(context),
-        // Long-press to pin/unpin from favourites.
+        // Kept as a shortcut for anyone who already knows it, but no longer the only way in:
+        // the star below is the discoverable one.
         onLongPress: () => _toggleFavorite(context),
         child: Container(
         decoration: BoxDecoration(
@@ -390,6 +416,8 @@ class ToolCard extends StatelessWidget {
           // Center the icon+label block; the star badge is separately positioned.
           alignment: Alignment.center,
           fit: StackFit.expand,
+          // The star overhangs the padding so it sits in the corner rather than inset.
+          clipBehavior: Clip.none,
           children: [
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -431,9 +459,14 @@ class ToolCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // Credit-cost badge (top-right) — shown for paid tools once prices load.
+            // Credit-cost badge — shown for paid tools once prices load.
+            //
+            // Bottom-right, because top-right now belongs to the favourite star. Between a
+            // read-only badge and a control the user taps, the easier corner goes to the
+            // control; the star also sat next to the label down here, close enough to read as
+            // part of the tool's name.
             Positioned(
-              top: -2,
+              bottom: -2,
               right: -2,
               child: AnimatedBuilder(
                 animation: CreditService(),
@@ -462,12 +495,36 @@ class ToolCard extends StatelessWidget {
                 },
               ),
             ),
-            if (isFav)
-              const Positioned(
-                bottom: 0,
-                right: 0,
-                child: Icon(Icons.star, size: 14, color: Colors.amber),
+            // Always shown, filled when favourited and a hollow outline when not.
+            //
+            // It used to appear only once a tool *was* a favourite, and the only way to make one
+            // was a long-press — so the feature was invisible to anyone who had not already
+            // found it. An outline star advertises both that favourites exist and how to set one.
+            Positioned(
+              top: -6,
+              right: -6,
+              child: Semantics(
+                button: true,
+                label: isFav ? L10n.of(context).favRemove : L10n.of(context).favAdd,
+                child: InkResponse(
+                  onTap: () => _toggleFavorite(context),
+                  radius: 20,
+                  // A 36px target inside a ~110px grid cell: comfortably tappable without
+                  // crowding the icon and label it shares the card with.
+                  child: SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: Icon(
+                      isFav ? Icons.star : Icons.star_border,
+                      size: 16,
+                      color: isFav
+                          ? Colors.amber
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
               ),
+            ),
             ],
           ),
         ),

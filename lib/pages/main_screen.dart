@@ -50,19 +50,34 @@ class _MainScreenState extends State<MainScreen> {
         ),
         leadingWidth: 112,
         actions: [
-          // Quick language switch: English ⇄ हिन्दी. It replaces the theme menu that used to sit
-          // here, which only duplicated Settings → Appearance. The label shows the language the
-          // tap switches *to*.
+          // Quick language switch: English ⇄ हिन्दी.
+          //
+          // The glyph alone — a bare "हि" or "EN" — was the whole control, sitting between two
+          // icon buttons. It had no affordance: nothing said it was a language switch rather
+          // than a stray character, and to a reader who does not know Devanagari "हि" is not
+          // even legible as a word.
+          //
+          // A globe rather than the translate glyph: this is a PDF tool, and a translate icon
+          // in its app bar reads as an offer to translate the *document*. The globe is the
+          // conventional mark for the app's own locale. The target language stays beside it so
+          // the tap's outcome is still visible, spelled "हिं" — "हि" on its own is half a
+          // syllable, which is why it looked like a broken character.
           ListenableBuilder(
             listenable: LocaleManager(),
             builder: (context, _) => Tooltip(
               message: L10n.of(context).switchLanguageTooltip,
-              child: TextButton(
+              child: TextButton.icon(
                 onPressed: () => LocaleManager().toggleEnglishHindi(),
-                child: Text(
-                  LocaleManager().isHindi ? 'EN' : 'हि',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
+                icon: const Icon(Icons.language, size: 20),
+                label: Text(
+                  LocaleManager().isHindi ? 'EN' : 'हिं',
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onSurface,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
             ),
