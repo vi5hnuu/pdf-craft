@@ -550,7 +550,9 @@ class _DriveScreenState extends State<DriveScreen> {
           isDense: true,
           hintText: L10n.of(context).driveSearchHint,
           prefixIcon: const Icon(Icons.search, size: 20),
-          suffixIcon: _search.isEmpty
+          // Trimmed, like the query itself: a field holding only spaces searches for nothing,
+          // so offering a Clear button for it points at a state the user cannot see.
+          suffixIcon: _search.trim().isEmpty
               ? null
               : IconButton(
                   icon: const Icon(Icons.close, size: 18),

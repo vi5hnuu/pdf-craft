@@ -294,7 +294,7 @@
   "themeDark": "Dark",
   "settingsSectionStorage": "Storage",
   "settingsProcessedFolder": "Processed Files Folder",
-  "settingsProcessedSummary": "{count} files · {size} · tap to view",
+  "settingsProcessedSummary": "{count, plural, =1{1 file · {size} · tap to view} other{{count} files · {size} · tap to view}}",
   "@settingsProcessedSummary": {
     "placeholders": {
       "count": {
@@ -315,7 +315,7 @@
   "settingsAppIntroSub": "Replay the welcome walkthrough",
   "settingsVersion": "Version",
   "settingsClearProcessedTitle": "Clear Processed Files",
-  "settingsClearProcessedBody": "Delete all {count} files in the processed folder?",
+  "settingsClearProcessedBody": "{count, plural, =1{Delete the 1 file in the processed folder?} other{Delete all {count} files in the processed folder?}}",
   "@settingsClearProcessedBody": {
     "placeholders": {
       "count": {
@@ -466,7 +466,7 @@
   },
   "creditsOneTime": "One-time purchase",
   "creditsAvailableSoon": "Available soon",
-  "creditsClaimed": "Claimed +{count} credits!",
+  "creditsClaimed": "{count, plural, =1{Claimed +1 credit!} other{Claimed +{count} credits!}}",
   "@creditsClaimed": {
     "placeholders": {
       "count": {
@@ -477,7 +477,7 @@
   "creditsAdLoading": "Loading an ad — try again in a moment",
   "creditsRewardUnconfirmed": "Couldn't confirm your reward. Check your connection and try again.",
   "creditsAlreadyClaimed": "Already claimed today. Come back tomorrow.",
-  "creditsEarned": "Earned +{count} credits!",
+  "creditsEarned": "{count, plural, =1{Earned +1 credit!} other{Earned +{count} credits!}}",
   "@creditsEarned": {
     "placeholders": {
       "count": {
@@ -615,7 +615,7 @@
   "done": "Done",
   "rangeReadError": "Could not read the pages of this file.",
   "rangeAllPages": "All pages",
-  "rangeSomePages": "{count} pages ({first}–{last})",
+  "rangeSomePages": "{count, plural, =1{1 page ({first}–{last})} other{{count} pages ({first}–{last})}}",
   "@rangeSomePages": {
     "placeholders": {
       "count": {
@@ -741,6 +741,8 @@
   "annotateClear": "Clear",
   "annotateSelect": "Select",
   "annotateImage": "Image",
+  "annotateInsert": "Insert",
+  "actionMore": "More options",
   "annotateSignature": "Signature",
   "annotateOpacity": "Opacity",
   "annotateThickness": "Thickness",
@@ -1404,11 +1406,11 @@
   "inspImages": "Images",
   "inspFormXObjects": "Form XObjects",
   "inspFonts": "Fonts",
-  "inspObjectsTotal": "{count} objects",
+  "inspObjectsTotal": "{count, plural, =1{1 object} other{{count} objects}}",
   "@inspObjectsTotal": {
     "placeholders": {
       "count": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -1427,11 +1429,11 @@
   "inspIncludeText": "Include page text",
   "inspIncludeTextHint": "Extracting text is most of the work on a large document.",
   "inspFormNoFields": "This PDF has no form fields",
-  "inspFormFieldCount": "{count} fields",
+  "inspFormFieldCount": "{count, plural, =1{1 field} other{{count} fields}}",
   "@inspFormFieldCount": {
     "placeholders": {
       "count": {
-        "type": "Object"
+        "type": "int"
       }
     }
   },
@@ -1815,7 +1817,7 @@
       }
     }
   },
-  "a11yToolCard": "{tool}. {description}. Costs {credits} credits. Double tap to open, long press to favourite.",
+  "a11yToolCard": "{tool}. {description}. {credits, plural, =1{Costs 1 credit} other{Costs {credits} credits}}. Double tap to open, long press to favourite.",
   "@a11yToolCard": {
     "placeholders": {
       "tool": {

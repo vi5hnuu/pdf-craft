@@ -59,12 +59,12 @@ class AnnotatePdfView extends StatefulWidget {
   State<AnnotatePdfView> createState() => _AnnotatePdfViewState();
 }
 
-class _AnnotatePdfViewState extends State<AnnotatePdfView>
-    with ToolResultHandler, ToolViewMixin {
+class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandler, ToolViewMixin {
   // ── Document ──────────────────────────────────────────────────────────────
   PdfDocument? _doc;
   int _currentPage = 1;
   int _totalPages = 0;
+
   /// The rendered page, decoded. The painter draws it, so a highlighter has something to
   /// multiply against — see [AnnotationPainter.page].
   ui.Image? _pageDecoded;
@@ -112,8 +112,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   /// own preview, or in any other viewer that ignores annotations.
   bool _flatten = false;
 
-  List<Annotation> get _pageMarks =>
-      _annotations.where((a) => a.page == _currentPage - 1).toList();
+  List<Annotation> get _pageMarks => _annotations.where((a) => a.page == _currentPage - 1).toList();
 
   Annotation? get _selected {
     for (final a in _annotations) {
@@ -496,8 +495,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
           widthFrac: img.bounds.width,
           heightFrac: img.bounds.height,
           file: await MultipartFile.fromFile(input.path),
-          stamp: await MultipartFile.fromFile(tmp.path,
-              contentType: DioMediaType.parse('image/png')),
+          stamp:
+              await MultipartFile.fromFile(tmp.path, contentType: DioMediaType.parse('image/png')),
         ),
       );
       final data = resp.data;
@@ -523,8 +522,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
     return Scaffold(
       appBar: AppBar(
         title: Text(_totalPages > 0
-            ? l.annotateTitlePage(
-                ToolStrings.name(context, 'annotate'), _currentPage, _totalPages)
+            ? l.annotateTitlePage(ToolStrings.name(context, 'annotate'), _currentPage, _totalPages)
             : ToolStrings.name(context, 'annotate')),
         actions: [
           IconButton(
@@ -535,18 +533,13 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
               icon: const Icon(Icons.redo),
               tooltip: l.redo,
               onPressed: _redo.isEmpty ? null : () => _restore(_redo, _undo)),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.add_photo_alternate_outlined),
-            onSelected: (v) => _insertImage(signature: v == 'sig'),
-            itemBuilder: (ctx) => [
-              PopupMenuItem(value: 'sig', child: Text(L10n.of(ctx).annotateSignature)),
-              PopupMenuItem(value: 'img', child: Text(L10n.of(ctx).annotateImage)),
-            ],
-          ),
           // Flatten lives here rather than above Export, where its checkbox and two-line
           // explanation cost ~140px of canvas for a decision made once, at the end.
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
+            // Without this it announced itself as "Show menu" — and so did the insert menu
+            // that used to sit beside it, so the two adjacent buttons were indistinguishable.
+            tooltip: l.actionMore,
             onSelected: (_) => setState(() => _flatten = !_flatten),
             itemBuilder: (ctx) => [
               PopupMenuItem(
@@ -565,8 +558,10 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
                           _flatten
                               ? L10n.of(ctx).annotateFlattenOn
                               : L10n.of(ctx).annotateFlattenOff,
-                          style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                          style: Theme.of(ctx)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -785,10 +780,10 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
           },
         ),
       ),
-      handle(r.left - outX, r.top - outY, Icons.north_west,
-          (d) => resize(d, left: true, top: true)),
-      handle(r.right + outX, r.top - outY, Icons.north_east,
-          (d) => resize(d, left: false, top: true)),
+      handle(
+          r.left - outX, r.top - outY, Icons.north_west, (d) => resize(d, left: true, top: true)),
+      handle(
+          r.right + outX, r.top - outY, Icons.north_east, (d) => resize(d, left: false, top: true)),
       handle(r.left - outX, r.bottom + outY, Icons.south_west,
           (d) => resize(d, left: true, top: false)),
       handle(r.right + outX, r.bottom + outY, Icons.south_east,
@@ -869,31 +864,52 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   Widget _buildToolbar(ThemeData theme) {
     return Container(
       color: theme.colorScheme.surfaceContainerHighest,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(children: [
-          _toolBtn(_Tool.select, Icons.near_me_outlined, L10n.of(context).annotateSelect, theme),
-          _divider(),
-          _toolBtn(_Tool.pen, Icons.edit_outlined, L10n.of(context).annotatePen, theme),
-          _toolBtn(_Tool.highlighter, Icons.highlight_outlined,
-              L10n.of(context).annotateHighlight, theme),
-          _divider(),
-          _toolBtn(_Tool.text, Icons.text_fields, L10n.of(context).annotateText, theme),
-          _toolBtn(_Tool.sticky, Icons.sticky_note_2_outlined,
-              L10n.of(context).annotateSticky, theme),
-          _divider(),
-          _toolBtn(_Tool.rect, Icons.crop_square_outlined,
-              L10n.of(context).annotateRectangle, theme),
-          _toolBtn(_Tool.ellipse, Icons.circle_outlined,
-              L10n.of(context).annotateEllipse, theme),
-          _toolBtn(_Tool.line, Icons.remove, L10n.of(context).annotateLine, theme),
-          _toolBtn(_Tool.arrow, Icons.arrow_forward_outlined,
-              L10n.of(context).annotateArrow, theme),
-          _divider(),
-          _styleChip(theme),
-        ]),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      // The chip is pinned outside the scroll view. Inside it, on a 1080px phone, it sat past
+      // the last tool and off the edge — so the only control that shows the current colour and
+      // opens the style sheet was invisible, with nothing to suggest the row scrolled at all.
+      child: Row(children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(children: [
+              _toolBtn(
+                  _Tool.select, Icons.near_me_outlined, L10n.of(context).annotateSelect, theme),
+              _divider(),
+              _toolBtn(_Tool.pen, Icons.edit_outlined, L10n.of(context).annotatePen, theme),
+              _toolBtn(_Tool.highlighter, Icons.highlight_outlined,
+                  L10n.of(context).annotateHighlight, theme),
+              _divider(),
+              _toolBtn(_Tool.text, Icons.text_fields, L10n.of(context).annotateText, theme),
+              _toolBtn(_Tool.sticky, Icons.sticky_note_2_outlined, L10n.of(context).annotateSticky,
+                  theme),
+              _divider(),
+              _toolBtn(_Tool.rect, Icons.crop_square_outlined, L10n.of(context).annotateRectangle,
+                  theme),
+              _toolBtn(
+                  _Tool.ellipse, Icons.circle_outlined, L10n.of(context).annotateEllipse, theme),
+              _toolBtn(_Tool.line, Icons.remove, L10n.of(context).annotateLine, theme),
+              _toolBtn(
+                  _Tool.arrow, Icons.arrow_forward_outlined, L10n.of(context).annotateArrow, theme),
+              _divider(),
+              // Inserting a picture or a saved signature adds a mark like every other tool
+              // here, so it belongs in this row rather than in the app bar.
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                tooltip: L10n.of(context).annotateInsert,
+                onSelected: (v) => _insertImage(signature: v == 'sig'),
+                itemBuilder: (ctx) => [
+                  PopupMenuItem(value: 'sig', child: Text(L10n.of(ctx).annotateSignature)),
+                  PopupMenuItem(value: 'img', child: Text(L10n.of(ctx).annotateImage)),
+                ],
+              ),
+            ]),
+          ),
+        ),
+        _divider(),
+        _styleChip(theme),
+      ]),
     );
   }
 
@@ -957,8 +973,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
     );
   }
 
-  Widget _divider() => const SizedBox(
-      height: 32, child: VerticalDivider(width: 16, indent: 4, endIndent: 4));
+  Widget _divider() =>
+      const SizedBox(height: 32, child: VerticalDivider(width: 16, indent: 4, endIndent: 4));
 
   // ── Options ───────────────────────────────────────────────────────────────
 
@@ -984,8 +1000,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
       builder: (_) => StatefulBuilder(
         // Edits go through the screen's own setState so the canvas repaints, and through the
         // sheet's so its controls do.
-        builder: (context, setSheetState) =>
-            _buildOptions(Theme.of(context), setSheetState),
+        builder: (context, setSheetState) => _buildOptions(Theme.of(context), setSheetState),
       ),
     );
   }
@@ -1023,8 +1038,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
     }
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-          16, 4, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.fromLTRB(16, 4, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Align(
           alignment: Alignment.centerLeft,

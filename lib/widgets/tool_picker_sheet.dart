@@ -151,7 +151,9 @@ class _ToolPickerSheetState extends State<ToolPickerSheet> {
               isDense: true,
               hintText: l.toolsSearchHint,
               prefixIcon: const Icon(Icons.search, size: 20),
-              suffixIcon: _query.isEmpty
+              // Trimmed, like the query itself: a field holding only spaces filters nothing,
+              // so offering a Clear button for it points at a state the user cannot see.
+              suffixIcon: _query.trim().isEmpty
                   ? null
                   : IconButton(
                       icon: const Icon(Icons.close, size: 18),

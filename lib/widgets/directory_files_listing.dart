@@ -349,7 +349,9 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                 isDense: true,
                 hintText: L10n.of(context).filterByName,
                 prefixIcon: const Icon(Icons.search, size: 18),
-                suffixIcon: _nameFilter.isEmpty
+                // Trimmed, like the filter itself: a field holding only spaces filters nothing,
+                // so offering a Clear button for it points at a state the user cannot see.
+                suffixIcon: _nameFilter.trim().isEmpty
                     ? null
                     : IconButton(
                         icon: const Icon(Icons.close, size: 16),
