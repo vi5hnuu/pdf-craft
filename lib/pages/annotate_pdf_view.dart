@@ -521,9 +521,11 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_totalPages > 0
-            ? l.annotateTitlePage(ToolStrings.name(context, 'annotate'), _currentPage, _totalPages)
-            : ToolStrings.name(context, 'annotate')),
+        // Just the tool name. Appending "— p.1/3" only made the title too long for the space
+        // left by the actions, so it truncated to "Annotate PDF —…" and the counter never
+        // appeared — while the page strip below already shows every page with the current one
+        // highlighted, which says the same thing and lets you act on it.
+        title: Text(ToolStrings.name(context, 'annotate')),
         actions: [
           IconButton(
               icon: const Icon(Icons.undo),
@@ -973,6 +975,86 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
     );
   }
 
+  /// One colour choice.
+  ///
+  /// The ring sits outside the circle and takes its colour from the surface, not from the theme's
+  /// primary: the primary here is a red, so the ring on the red swatch — the default, and the one
+  /// most often selected — was red on red and showed nothing at all. Every swatch also carries a
+  /// hairline outline, without which the black one is a hole in a dark sheet.
+  Widget _swatch(ThemeData theme, Color c, {required bool selected}) {
+    return Container(
+      width: 34,
+      height: 34,
+      margin: const EdgeInsets.only(right: 6),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+            color: selected ? theme.colorScheme.onSurface : Colors.transparent, width: 2),
+      ),
+      child: Center(
+        child: Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: c,
+            shape: BoxShape.circle,
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          // Against a dark swatch the tick has to be light, and vice versa — one fixed colour
+          // disappears on half the palette.
+          child: selected
+              ? Icon(Icons.check,
+                  size: 15,
+                  color: ThemeData.estimateBrightnessForColor(c) == Brightness.dark
+                      ? Colors.white
+                      : Colors.black)
+              : null,
+        ),
+      ),
+    );
+  }
+
+  /// A named slider: icon, label, track, and an optional readout of the current value.
+  Widget _sliderRow(
+    ThemeData theme, {
+    required IconData icon,
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required VoidCallback onStart,
+    required ValueChanged<double> onChanged,
+    String? readout,
+  }) {
+    return Row(children: [
+      Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+      const SizedBox(width: 10),
+      SizedBox(
+        width: 84,
+        child: Text(label,
+            style:
+                theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+      ),
+      Expanded(
+        child: Slider(
+          value: value.clamp(min, max),
+          min: min,
+          max: max,
+          onChangeStart: (_) => onStart(),
+          onChanged: onChanged,
+        ),
+      ),
+      if (readout != null)
+        SizedBox(
+          width: 42,
+          child: Text(readout,
+              textAlign: TextAlign.end,
+              style:
+                  theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        ),
+    ]);
+  }
+
   Widget _divider() =>
       const SizedBox(height: 32, child: VerticalDivider(width: 16, indent: 4, endIndent: 4));
 
@@ -1065,20 +1147,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
                   _color = c;
                 }
               }),
-              child: Container(
-                width: 26,
-                height: 26,
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: c,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: color.toARGB32() == c.toARGB32()
-                          ? theme.colorScheme.primary
-                          : Colors.transparent,
-                      width: 2),
-                ),
-              ),
+              child: _swatch(theme, c, selected: color.toARGB32() == c.toARGB32()),
             ),
           const Spacer(),
           if (sel != null) ...[
@@ -1113,54 +1182,54 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
             ),
           ],
         ]),
-        Row(children: [
-          Icon(Icons.opacity, size: 18, color: theme.colorScheme.onSurfaceVariant),
-          Expanded(
-            child: Slider(
-              value: opacity,
-              min: 0.1,
-              max: 1.0,
-              onChangeStart: (_) => slideStart(),
-              onChanged: (v) => slide(() {
-                if (sel != null) {
-                  sel.opacity = v;
-                } else {
-                  _opacity = v;
-                }
-              }),
-            ),
+        // One slider per row rather than all three sharing one. Side by side they were three
+        // anonymous tracks about 100px wide each — nothing said which was which, and a third of
+        // the width made any of them hard to place.
+        _sliderRow(
+          theme,
+          icon: Icons.opacity,
+          label: l.annotateOpacity,
+          value: opacity,
+          min: 0.1,
+          max: 1.0,
+          readout: '${(opacity * 100).round()}%',
+          onStart: slideStart,
+          onChanged: (v) => slide(() {
+            if (sel != null) {
+              sel.opacity = v;
+            } else {
+              _opacity = v;
+            }
+          }),
+        ),
+        if (showStroke)
+          _sliderRow(
+            theme,
+            icon: Icons.line_weight,
+            label: l.annotateThickness,
+            value: _strokeOf(sel),
+            min: 0.001,
+            max: 0.02,
+            onStart: slideStart,
+            onChanged: (v) => slide(() => _setStroke(sel, v)),
           ),
-          if (showStroke) ...[
-            Icon(Icons.line_weight, size: 18, color: theme.colorScheme.onSurfaceVariant),
-            Expanded(
-              child: Slider(
-                value: _strokeOf(sel),
-                min: 0.001,
-                max: 0.02,
-                onChangeStart: (_) => slideStart(),
-                onChanged: (v) => slide(() => _setStroke(sel, v)),
-              ),
-            ),
-          ],
-          if (isText) ...[
-            Icon(Icons.format_size, size: 18, color: theme.colorScheme.onSurfaceVariant),
-            Expanded(
-              child: Slider(
-                value: sel is TextAnnotation ? sel.fontSize : _fontFrac,
-                min: 0.008,
-                max: 0.08,
-                onChangeStart: (_) => slideStart(),
-                onChanged: (v) => slide(() {
-                  if (sel is TextAnnotation) {
-                    sel.fontSize = v;
-                  } else {
-                    _fontFrac = v;
-                  }
-                }),
-              ),
-            ),
-          ],
-        ]),
+        if (isText)
+          _sliderRow(
+            theme,
+            icon: Icons.format_size,
+            label: l.fontSize,
+            value: sel is TextAnnotation ? sel.fontSize : _fontFrac,
+            min: 0.008,
+            max: 0.08,
+            onStart: slideStart,
+            onChanged: (v) => slide(() {
+              if (sel is TextAnnotation) {
+                sel.fontSize = v;
+              } else {
+                _fontFrac = v;
+              }
+            }),
+          ),
       ]),
     );
   }

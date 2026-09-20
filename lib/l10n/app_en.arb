@@ -987,20 +987,6 @@
   "toolDescImgBorder": "Add a coloured border around an image.",
   "toolDone": "Done — saved to your files.",
   "annotateAddText": "Add text",
-  "annotateTitlePage": "{tool} — p.{current}/{total}",
-  "@annotateTitlePage": {
-    "placeholders": {
-      "tool": {
-        "type": "String"
-      },
-      "current": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "batchDialogTitle": "{tool} — {count} files",
   "@batchDialogTitle": {
     "placeholders": {

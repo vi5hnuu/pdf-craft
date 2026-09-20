@@ -726,7 +726,6 @@
   "toolDescImgBorder": "इमेज के चारों ओर रंगीन बॉर्डर लगाएँ।",
   "toolDone": "हो गया — आपकी फ़ाइलों में सेव कर दिया गया।",
   "annotateAddText": "टेक्स्ट जोड़ें",
-  "annotateTitlePage": "{tool} — पृ.{current}/{total}",
   "batchDialogTitle": "{tool} — {count} फ़ाइलें",
   "batchAppBarTitle": "{tool} ({count} फ़ाइलें)",
   "formGroupTitle": "{type} ग्रुप",
