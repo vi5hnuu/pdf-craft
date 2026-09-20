@@ -165,6 +165,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       final file = files[
                           files.length >= _adAfterRow && index > _adAfterRow ? index - 1 : index];
                       return FileTile(
+                        // Keyed by path so the element follows the file, not the row index.
+                        key: ValueKey(file.path),
                         file: file,
                         onPress: () => _open(file),
                         onLongPress: () => FileActionsSheet.show(context, file, onChanged: _load),

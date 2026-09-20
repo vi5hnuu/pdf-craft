@@ -214,6 +214,8 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
                                 deletedFiles.remove(file);
                               }
                               return FileTile(
+                                // Keyed by path so the element follows the file, not the row index.
+                                key: ValueKey(file.path),
                                 file: file,
                                 selected: _isFileSelected(file),
                                 onPress: () => _onItemClick(file: file),

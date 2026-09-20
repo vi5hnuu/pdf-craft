@@ -80,6 +80,8 @@ class _RecentsScreenState extends State<RecentsScreen> {
                     itemBuilder: (context, index) {
                       final file = recents[index];
                       return FileTile(
+                        // Keyed by path so the element follows the file, not the row index.
+                        key: ValueKey(file.path),
                         file: file,
                         onPress: () => _open(file),
                         onLongPress: () =>

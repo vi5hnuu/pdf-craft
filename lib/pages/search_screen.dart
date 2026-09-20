@@ -262,6 +262,8 @@ class _SearchScreenState extends State<SearchScreen> {
             itemBuilder: (context, index) {
               final file = files[index];
               return FileTile(
+                // Keyed by path so the element follows the file, not the row index.
+                key: ValueKey(file.path),
                 file: file,
                 selected: SelectionService().contains(file.path),
                 onPress: () {
