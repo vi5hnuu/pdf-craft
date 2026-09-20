@@ -437,8 +437,15 @@ class ToolRegistry {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return tools;
     return tools.where((t) {
+      // Descriptions count as well as names. With 66 tools the name is often not the word
+      // someone reaches for: "highlight" and "watermark" appear only in Annotate's description,
+      // so searching for either found nothing and the tool looked absent. Both languages are
+      // searched, so a Hindi user who types an English term still finds the tool.
       if (t.name.toLowerCase().contains(q)) return true;
-      return context != null && t.localizedName(context).toLowerCase().contains(q);
+      if (t.description.toLowerCase().contains(q)) return true;
+      if (context == null) return false;
+      return t.localizedName(context).toLowerCase().contains(q) ||
+          t.localizedDescription(context).toLowerCase().contains(q);
     }).toList();
   }
 
