@@ -133,9 +133,9 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
               if (s?.done == true) {
                 setState(() => _report = s?.extras?[widget.extrasKey]);
               }
-              if (s?.error != null) {
-                NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
-              }
+              // No snackbar: the body below already gives the error its own icon, the message
+              // and a Retry. A snackbar repeated it a second time, over the top of the retry
+              // button the user needs.
             },
             builder: (context, state) {
               final s = state.httpStates[widget.stateKey];
@@ -228,13 +228,18 @@ class InspectorRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(
-          width: 140,
+        // Proportional rather than a fixed 140px: that width was measured against the English
+        // labels, and the longer Hindi ones wrapped to three lines inside it while the value
+        // beside them kept the same cramped column on a narrow phone.
+        Expanded(
+          flex: 2,
           child: Text(label,
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         ),
+        const SizedBox(width: 8),
         Expanded(
+          flex: 3,
           child: SelectableText(
             (value == null || value!.isEmpty) ? '—' : value!,
             style: theme.textTheme.bodyMedium,
