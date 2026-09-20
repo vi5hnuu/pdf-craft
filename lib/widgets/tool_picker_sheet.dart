@@ -183,6 +183,11 @@ class _ToolPickerSheetState extends State<ToolPickerSheet> {
                 )
               : ListView(
                   controller: scrollController,
+                  // The search field is at the top, so typing leaves the keyboard sitting over
+                  // the bottom of the list. Without this the last results could not be scrolled
+                  // clear of it.
+                  padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom),
                   children: [
                     if (favourites.isNotEmpty) ...[
                       _header(theme, l.favorites),

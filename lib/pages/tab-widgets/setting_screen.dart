@@ -9,6 +9,7 @@ import 'package:pdf_craft/utils/constants.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/locale_manager.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -70,21 +71,14 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Future<void> _clearCache() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).settingsClearProcessedTitle),
-        content: Text(L10n.of(ctx).settingsClearProcessedBody(_processedFileCount)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(L10n.of(ctx).delete, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    final confirm = await ConfirmDialog.show(
+      context,
+      title: L10n.current.settingsClearProcessedTitle,
+      message: L10n.current.settingsClearProcessedBody(_processedFileCount),
+      confirmLabel: L10n.current.delete,
+      destructive: true,
     );
-    if (confirm != true) return;
+    if (!confirm.confirmed) return;
     final dir = Directory(Constants.processedDirPath);
     if (dir.existsSync()) {
       for (final entity in dir.listSync()) {

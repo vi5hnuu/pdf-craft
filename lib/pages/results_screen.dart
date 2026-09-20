@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/file_actions_sheet.dart';
 import 'package:pdf_craft/widgets/file_tile.dart';
 import 'package:pdf_craft/widgets/skeleton_list.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 
 /// "Results" hub — every file a tool has produced, in one place.
 ///
@@ -86,6 +87,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Future<void> _delete(File file) async {
+    // The trash icon sits one thumb-width from the favourite star and the deletion is permanent,
+    // so it asks first — the same guard the file listings and "clear all" already use.
+    final confirm = await ConfirmDialog.show(
+      context,
+      title: L10n.current.deleteFileTitle,
+      message: L10n.current.confirmDeleteFile(file.path.split('/').last),
+      confirmLabel: L10n.current.delete,
+      destructive: true,
+    );
+    if (!confirm.confirmed) return;
     try {
       await file.delete();
     } catch (_) {}
@@ -96,21 +107,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Future<void> _clearAll() async {
     final count = _files?.length ?? 0;
     if (count == 0) return;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).resultsClearTitle),
-        content: Text(L10n.of(ctx).resultsClearBody(count)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(L10n.of(ctx).delete, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    // Through the shared dialog rather than a hand-rolled one, so a destructive confirm looks
+    // the same wherever it appears: warning icon, filled red button — not red text on a flat
+    // TextButton that carries no more weight than Cancel beside it.
+    final confirm = await ConfirmDialog.show(
+      context,
+      title: L10n.current.resultsClearTitle,
+      message: L10n.current.resultsClearBody(count),
+      confirmLabel: L10n.current.delete,
+      destructive: true,
     );
-    if (confirm != true) return;
+    if (!confirm.confirmed) return;
     for (final f in List<File>.from(_files ?? const [])) {
       try {
         await f.delete();

@@ -500,13 +500,8 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 36, height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(AppRadius.surface)),
-                ),
-              ),
+              // No hand-drawn grabber here: `showDragHandle` already draws one, and the two
+              // stacked read as a rendering fault.
               _infoRow(Icons.insert_drive_file_outlined, l.sortName, name, copyable: true),
               const SizedBox(height: 12),
               _infoRow(Icons.folder_outlined, l.infoPath, file.path, copyable: true),

@@ -7,6 +7,7 @@ import 'package:pdf_craft/services/auth/auth_api.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 
 /// The user's account hub. Shows who they are, a **clear path to verify their e-mail**
 /// when it isn't confirmed yet (resend + recheck), their credits, and account actions
@@ -378,22 +379,14 @@ class _AccountScreenState extends State<AccountScreen> {
   });
 
   Future<void> _deleteAccount() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.of(ctx).accountDeleteTitle),
-        content: Text(L10n.of(ctx).accountDeleteBody),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L10n.of(ctx).cancel)),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(L10n.of(ctx).delete),
-          ),
-        ],
-      ),
+    final ok = await ConfirmDialog.show(
+      context,
+      title: L10n.current.accountDeleteTitle,
+      message: L10n.current.accountDeleteBody,
+      confirmLabel: L10n.current.delete,
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok.confirmed) return;
     return _run(_actionDelete, () async {
       try {
         await AuthService().deleteAccount();
