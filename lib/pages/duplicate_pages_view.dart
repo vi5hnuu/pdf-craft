@@ -125,6 +125,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
         ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.surface),
           child: PdfPageThumbnail(
+            key: ValueKey('dup_thumb_$i'),
             document: _doc!,
             pageNumber: i + 1,
             width: double.infinity,

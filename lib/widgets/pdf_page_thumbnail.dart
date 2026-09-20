@@ -64,6 +64,22 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
     if (_bytes == null && !_error && !_loading) _load();
   }
 
+  @override
+  void didUpdateWidget(PdfPageThumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The load above is guarded on `_bytes == null`, which is exactly right for a rebuild and
+    // exactly wrong when the element is reused for a different page: the old bitmap is still
+    // there, so nothing reloads and the thumbnail shows the wrong page. Call sites that key by
+    // page never hit this, but the widget should not depend on every caller remembering to.
+    if (oldWidget.pageNumber != widget.pageNumber ||
+        oldWidget.document != widget.document) {
+      _bytes = null;
+      _error = false;
+      _loading = false;
+      _load();
+    }
+  }
+
   Future<void> _load() async {
     _loading = true;
     final cached = _cache[_key];
