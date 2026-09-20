@@ -762,6 +762,7 @@
   "annotateNoteHint": "Notes open when tapped in a PDF reader",
   "annotateTextHint": "Tap the page to place text",
   "annotateSelectHint": "Drag to move, corners to resize",
+  "annotateStyleSelected": "Style of the selected mark",
   "annotateStyle": "Style",
   "annotateFlattenLabel": "Burn marks into the page",
   "annotateFlattenOn": "Marks become part of the page: visible in every viewer, and permanent.",

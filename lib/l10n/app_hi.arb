@@ -516,6 +516,7 @@
   "annotateNoteHint": "PDF रीडर में टैप करने पर नोट खुलते हैं",
   "annotateTextHint": "टेक्स्ट रखने के लिए पेज पर टैप करें",
   "annotateSelectHint": "खींचकर सरकाएँ, कोनों से आकार बदलें",
+  "annotateStyleSelected": "चुने हुए निशान की शैली",
   "annotateStyle": "शैली",
   "annotateFlattenLabel": "निशानों को पेज में स्थायी करें",
   "annotateFlattenOn": "निशान पेज का हिस्सा बन जाते हैं: हर व्यूअर में दिखेंगे, और स्थायी होंगे।",

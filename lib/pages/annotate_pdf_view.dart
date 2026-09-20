@@ -543,6 +543,38 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
               PopupMenuItem(value: 'img', child: Text(L10n.of(ctx).annotateImage)),
             ],
           ),
+          // Flatten lives here rather than above Export, where its checkbox and two-line
+          // explanation cost ~140px of canvas for a decision made once, at the end.
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (_) => setState(() => _flatten = !_flatten),
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'flatten',
+                child: Row(children: [
+                  Icon(_flatten ? Icons.check_box : Icons.check_box_outline_blank,
+                      size: 20, color: Theme.of(ctx).colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(L10n.of(ctx).annotateFlattenLabel),
+                        Text(
+                          _flatten
+                              ? L10n.of(ctx).annotateFlattenOn
+                              : L10n.of(ctx).annotateFlattenOff,
+                          style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ]),
+              ),
+            ],
+          ),
         ],
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
@@ -574,7 +606,6 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
               ),
               if (_totalPages > 1) _buildPageNav(theme, pagesWithMarks),
               _buildToolbar(theme),
-              _buildOptions(theme),
               _buildSaveBar(theme, busy),
             ]),
             processingOverlay(state.httpStates[HttpStates.annotatePdf],
@@ -857,6 +888,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
           _toolBtn(_Tool.line, Icons.remove, L10n.of(context).annotateLine, theme),
           _toolBtn(_Tool.arrow, Icons.arrow_forward_outlined,
               L10n.of(context).annotateArrow, theme),
+          _divider(),
+          _styleChip(theme),
         ]),
       ),
     );
@@ -881,6 +914,47 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
     );
   }
 
+  /// Opens the style sheet, and shows at a glance what the next mark (or the selected one) will
+  /// look like — so the controls can live in a sheet without the current colour becoming
+  /// invisible, which is the usual cost of hiding a palette.
+  Widget _styleChip(ThemeData theme) {
+    final sel = _tool == _Tool.select ? _selected : null;
+    final color = sel?.color ?? _color;
+    final opacity = (sel?.opacity ?? _opacity).clamp(0.1, 1.0);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Tooltip(
+        message: L10n.of(context).annotateStyle,
+        child: InkWell(
+          onTap: _openStyleSheet,
+          borderRadius: BorderRadius.circular(AppRadius.surface),
+          child: Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.surface),
+              border: Border.all(color: theme.dividerColor),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: opacity),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: theme.dividerColor),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.tune, size: 16, color: theme.colorScheme.onSurfaceVariant),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _divider() => const SizedBox(
       height: 32, child: VerticalDivider(width: 16, indent: 4, endIndent: 4));
 
@@ -888,21 +962,35 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
 
   /// Style controls. In select mode they edit the selected mark; otherwise they set what the next
   /// mark will be. One panel either way, so the controls do not move around.
-  Widget _buildOptions(ThemeData theme) {
+  /// Opens the style controls.
+  ///
+  /// These used to sit permanently under the toolbar — colour swatches, opacity, thickness, text
+  /// size — and cost about 180px of a 2340px screen for controls that are touched occasionally
+  /// and then not again for minutes. The canvas is the point of this screen, so they moved into
+  /// a sheet, matching the field inspector in the form editor.
+  ///
+  /// `isScrollControlled` because the sheet grows when a text mark adds a size slider, and a
+  /// StatefulBuilder so a slider redraws its own thumb as well as the canvas behind it.
+  void _openStyleSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
+      builder: (_) => StatefulBuilder(
+        // Edits go through the screen's own setState so the canvas repaints, and through the
+        // sheet's so its controls do.
+        builder: (context, setSheetState) =>
+            _buildOptions(Theme.of(context), setSheetState),
+      ),
+    );
+  }
+
+  Widget _buildOptions(ThemeData theme, void Function(VoidCallback) setSheetState) {
     final l = L10n.of(context);
     final sel = _tool == _Tool.select ? _selected : null;
-
-    if (_tool == _Tool.select && sel == null) {
-      return Container(
-        width: double.infinity,
-        color: theme.colorScheme.surface,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Text(l.annotateNoSelection,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-      );
-    }
-
     final color = sel?.color ?? _color;
     final opacity = sel?.opacity ?? _opacity;
     final isText = sel is TextAnnotation || (sel == null && _tool == _Tool.text);
@@ -911,24 +999,39 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
         sel is LineAnnotation ||
         (sel == null && _tool != _Tool.text && _tool != _Tool.sticky);
 
-    /// A discrete edit: one undo step.
-    void mutate(void Function() change) {
-      if (sel != null) _pushUndo();
+    // Every edit has to reach two trees: the screen, so the canvas repaints, and the sheet, so
+    // its own swatch borders and slider thumbs move. Calling only one leaves the other stale.
+    void apply(VoidCallback change) {
       setState(change);
+      setSheetState(() {});
+    }
+
+    /// A discrete edit: one undo step.
+    void mutate(VoidCallback change) {
+      if (sel != null) _pushUndo();
+      apply(change);
     }
 
     /// A slider edit. The undo step is pushed when the drag *starts*, not on every tick —
     /// otherwise one drag of the opacity slider buried the user's actual work under fifty
     /// identical undo entries.
-    void slide(void Function() change) => setState(change);
+    void slide(VoidCallback change) => apply(change);
     void slideStart() {
       if (sel != null) _pushUndo();
     }
 
-    return Container(
-      color: theme.colorScheme.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          16, 4, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            sel != null ? l.annotateStyleSelected : l.annotateStyle,
+            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(height: 12),
         Row(children: [
           for (final c in [
             Colors.red,
@@ -981,6 +1084,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
               tooltip: l.annotateDeleteMark,
               onPressed: () {
                 _pushUndo();
+                // The mark being styled no longer exists, so the sheet has nothing to act on.
+                Navigator.pop(context);
                 setState(() {
                   _annotations.removeWhere((a) => a.id == sel.id);
                   // The decoded image deliberately stays in the cache. Undo restores the
@@ -1067,51 +1172,22 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView>
   Widget _buildSaveBar(ThemeData theme, bool busy) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        InkWell(
-          onTap: busy ? null : () => setState(() => _flatten = !_flatten),
-          child: Row(children: [
-            Checkbox(
-              value: _flatten,
-              onChanged: busy ? null : (v) => setState(() => _flatten = v ?? false),
-            ),
-            Expanded(
-              // The label says what ticking *does*, and the consequence sits underneath it.
-              // Swapping the label to describe the current state meant an unticked box read
-              // "Keep marks editable" — already true — so the tick appeared to mean nothing.
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(L10n.of(context).annotateFlattenLabel,
-                      style: theme.textTheme.bodyMedium),
-                  Text(
-                    _flatten
-                        ? L10n.of(context).annotateFlattenOn
-                        : L10n.of(context).annotateFlattenOff,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-          ]),
+      // Export alone. The flatten option and its two lines of explanation used to live here and
+      // made this block ~270px tall — permanently, for a choice made once at the end. It is a
+      // checkable item in the app-bar menu now.
+      child: SafeArea(
+        top: false,
+        child: FilledButton.icon(
+          onPressed: busy ? null : _onSave,
+          icon: const Icon(Icons.save_alt),
+          label: Text(L10n.of(context).exportPdf),
         ),
-        const SizedBox(height: 6),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: busy ? null : _onSave,
-            icon: const Icon(Icons.save_alt),
-            label: Text(L10n.of(context).exportPdf),
-          ),
-        ),
-      ]),
+      ),
     );
   }
 }
