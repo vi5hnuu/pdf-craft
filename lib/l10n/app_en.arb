@@ -37,6 +37,7 @@
     }
   },
   "savedTo": "Saved to {path}",
+  "errSavedToAppStorage": "Storage wasn't writable, so your result was saved inside the app instead. Open it from Results and share or move it from there.",
   "@savedTo": {
     "placeholders": {
       "path": {

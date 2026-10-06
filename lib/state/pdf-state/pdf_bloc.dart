@@ -65,6 +65,10 @@ import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/utils/storage_permissions.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
+import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:flutter/material.dart' show Colors;
 import '../../models/http_state.dart';
 part 'pdf_event.dart';
 part 'pdf_state.dart';
@@ -553,16 +557,38 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     required String fallbackPrefix,
     required String fallbackExt,
   }) async {
-    if (!await StoragePermissions.requestStoragePermissions()) {
-      throw Exception(L10n.current.errToolFailed);
-    }
-    final directory = Directory(Constants.processedDirPath);
-    if (!directory.existsSync()) await directory.create(recursive: true);
-
     final fallback = '${fallbackPrefix}_${DateTime.now().millisecondsSinceEpoch}.$fallbackExt';
-    final suggested = _filenameFromContentDisposition(fileRes.headers.value('content-disposition')) ?? fallback;
+    final suggested =
+        _filenameFromContentDisposition(fileRes.headers.value('content-disposition')) ?? fallback;
+
+    // The credit is already spent by the time we get here: the server charges on the request it
+    // just answered, and the interceptor reads the new balance off this very response
+    // (dio_singleton.dart). So a failure to write must never end with the bytes thrown away —
+    // that is the user paying for nothing. Public storage is tried first because that is where
+    // they expect their files; if it is not writable for any reason, the app's own directory
+    // always is, and needs no permission.
+    try {
+      if (await StoragePermissions.requestStoragePermissions()) {
+        return await _writeTo(Directory(Constants.processedDirPath), suggested, fileRes.data!);
+      }
+    } catch (e, st) {
+      LoggerSingleton().logger.w('Public save failed, falling back to app storage: $e', stackTrace: st);
+    }
+
+    final fallbackDir =
+        Directory('${(await getApplicationDocumentsDirectory()).path}/processed');
+    final saved = await _writeTo(fallbackDir, suggested, fileRes.data!);
+    // Said plainly, because the file is somewhere the user did not choose and would not find.
+    NotificationService.showSnackbar(
+        text: L10n.current.errSavedToAppStorage, color: Colors.orange);
+    return saved;
+  }
+
+  /// Writes [bytes] into [directory] under a name that does not collide.
+  Future<File> _writeTo(Directory directory, String suggested, Uint8List bytes) async {
+    if (!directory.existsSync()) await directory.create(recursive: true);
     final file = File(_uniquePath(directory.path, suggested));
-    await file.writeAsBytes(fileRes.data!);
+    await file.writeAsBytes(bytes);
     // Every server-backed tool lands here, so this one line is what makes a fresh result show
     // up in Recent Files and the Processed count without the user restarting the app.
     FileStore().changed();

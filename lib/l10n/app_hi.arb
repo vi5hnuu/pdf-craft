@@ -29,6 +29,7 @@
   "errSomethingWrong": "कुछ गलत हो गया",
   "pageNumber": "पेज {number}",
   "savedTo": "{path} में सेव किया गया",
+  "errSavedToAppStorage": "स्टोरेज में नहीं लिखा जा सका, इसलिए आपका नतीजा ऐप के अंदर सेव किया गया है। इसे 'परिणाम' से खोलें और वहाँ से शेयर या मूव करें।",
   "failedToSave": "सेव नहीं हो सका: {error}",
   "navFiles": "फ़ाइलें",
   "navTools": "टूल्स",
