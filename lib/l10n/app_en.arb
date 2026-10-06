@@ -28,6 +28,8 @@
   "actionSearch": "Search",
   "actionSettings": "Settings",
   "errSomethingWrong": "Something went wrong",
+  "errDeleteFailed": "Couldn't delete “{name}”. It may be open in another app, or on storage the app can't write to.",
+  "@errDeleteFailed": {"placeholders": {"name": {"type": "String"}}},
   "pageNumber": "Page {number}",
   "@pageNumber": {
     "placeholders": {
@@ -844,6 +846,8 @@
   "uploadToDriveBody": "A copy of this PDF will be uploaded to your Google Drive (in a “PDF Craft” folder). You can review or switch your account on the next screen.",
   "continueLabel": "Continue",
   "passwordRequired": "Password required",
+  "errPdfPasswordProtected": "This PDF is password-protected, so its pages can't be read. Remove the password first with the Unlock PDF tool.",
+  "errPdfUnreadable": "This PDF couldn't be opened. It may be damaged or not a real PDF.",
   "enterPdfPassword": "Enter PDF password",
   "goToPage": "Go to page",
   "untitled": "Untitled",

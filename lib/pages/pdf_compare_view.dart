@@ -1,5 +1,6 @@
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
+import 'package:pdf_craft/utils/open_pdf.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -42,19 +43,26 @@ class _PdfCompareViewState extends State<PdfCompareView> {
   }
 
   Future<void> _open() async {
-    try {
-      _doc1 = await PdfDocument.openFile(widget.file1.path);
-      _doc2 = await PdfDocument.openFile(widget.file2.path);
-      _ctrl1 = PdfController(document: PdfDocument.openFile(widget.file1.path));
-      _ctrl2 = PdfController(document: PdfDocument.openFile(widget.file2.path));
-      if (mounted) {
-        setState(() {
-          _totalPages1 = _doc1!.pagesCount;
-          _totalPages2 = _doc2!.pagesCount;
-        });
-        await _loadOverlayImages();
-      }
-    } catch (_) {}
+    // Either file being unreadable used to leave the whole compare screen blank and silent.
+    final doc1 = await openPdfOrReport(widget.file1);
+    if (doc1 == null) return;
+    final doc2 = await openPdfOrReport(widget.file2);
+    if (doc2 == null) {
+      await doc1.close();
+      return;
+    }
+    _doc1 = doc1;
+    _doc2 = doc2;
+    // The controllers reuse the documents already open. They each used to open the same file a
+    // second time, so comparing two PDFs held four native documents to show two.
+    _ctrl1 = PdfController(document: Future.value(doc1));
+    _ctrl2 = PdfController(document: Future.value(doc2));
+    if (!mounted) return;
+    setState(() {
+      _totalPages1 = doc1.pagesCount;
+      _totalPages2 = doc2.pagesCount;
+    });
+    await _loadOverlayImages();
   }
 
   Future<void> _loadOverlayImages() async {

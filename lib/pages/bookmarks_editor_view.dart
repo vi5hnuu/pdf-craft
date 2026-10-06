@@ -16,8 +16,8 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
+import 'package:pdf_craft/utils/open_pdf.dart';
 
 class BookmarksEditorView extends StatefulWidget {
   final File file;
@@ -48,11 +48,10 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
   }
 
   Future<void> _loadPageCount() async {
-    try {
-      final doc = await PdfDocument.openFile(_file.path);
-      if (mounted) setState(() => _totalPages = doc.pagesCount);
-      await doc.close();
-    } catch (_) {}
+    final doc = await openPdfOrReport(_file);
+    if (doc == null) return;
+    if (mounted) setState(() => _totalPages = doc.pagesCount);
+    await doc.close();
   }
 
   void _loadBookmarks() {
@@ -79,13 +78,17 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) {
-          final getChanged = p.httpStates[HttpStates.getBookmarks] != c.httpStates[HttpStates.getBookmarks];
-          final editChanged = p.httpStates[HttpStates.editBookmarks] != c.httpStates[HttpStates.editBookmarks];
+          final getChanged =
+              p.httpStates[HttpStates.getBookmarks] != c.httpStates[HttpStates.getBookmarks];
+          final editChanged =
+              p.httpStates[HttpStates.editBookmarks] != c.httpStates[HttpStates.editBookmarks];
           return getChanged || editChanged;
         },
         buildWhen: (p, c) {
-          final getChanged = p.httpStates[HttpStates.getBookmarks] != c.httpStates[HttpStates.getBookmarks];
-          final editChanged = p.httpStates[HttpStates.editBookmarks] != c.httpStates[HttpStates.editBookmarks];
+          final getChanged =
+              p.httpStates[HttpStates.getBookmarks] != c.httpStates[HttpStates.getBookmarks];
+          final editChanged =
+              p.httpStates[HttpStates.editBookmarks] != c.httpStates[HttpStates.editBookmarks];
           return getChanged || editChanged;
         },
         listener: (context, state) {
@@ -100,7 +103,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
             }
           } else if (getState?.error != null) {
             setState(() => _loadedOnce = true);
-            NotificationService.showSnackbar(text: L10n.current.bookmarksLoadFailed, color: Colors.red);
+            NotificationService.showSnackbar(
+                text: L10n.current.bookmarksLoadFailed, color: Colors.red);
           }
 
           final editState = state.httpStates[HttpStates.editBookmarks];
@@ -155,9 +159,11 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
   Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.bookmark_border, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+        Icon(Icons.bookmark_border,
+            size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
         const SizedBox(height: 12),
-        Text(L10n.of(context).noBookmarksInPdf, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(L10n.of(context).noBookmarksInPdf,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -233,7 +239,10 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
       child: FilledButton.icon(
         onPressed: loading ? null : _onSave,
         icon: loading
-            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : const Icon(Icons.save_alt),
         label: Text(L10n.of(context).saveBookmarks),
       ),
@@ -250,12 +259,17 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
       builder: (ctx) => AlertDialog(
         title: Text(L10n.of(context).addBookmarkTitle),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: titleC, decoration: InputDecoration(labelText: L10n.of(context).titleLabel, border: const OutlineInputBorder())),
+          TextField(
+              controller: titleC,
+              decoration: InputDecoration(
+                  labelText: L10n.of(context).titleLabel, border: const OutlineInputBorder())),
           const SizedBox(height: 12),
           TextField(
             controller: pageC,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: L10n.of(context).pageOfTotal(_totalPages), border: const OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: L10n.of(context).pageOfTotal(_totalPages),
+                border: const OutlineInputBorder()),
           ),
         ]),
         actions: [
@@ -264,10 +278,12 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
             onPressed: () {
               final page = (int.tryParse(pageC.text) ?? 1).clamp(1, _totalPages) - 1;
               setState(() => _bookmarks.add(_BookmarkItem(
-                title: titleC.text.trim().isEmpty ? L10n.current.bookmarkDefaultTitle : titleC.text.trim(),
-                pageIndex: page,
-                indent: 0,
-              )));
+                    title: titleC.text.trim().isEmpty
+                        ? L10n.current.bookmarkDefaultTitle
+                        : titleC.text.trim(),
+                    pageIndex: page,
+                    indent: 0,
+                  )));
               Navigator.pop(ctx);
             },
             child: Text(L10n.of(context).add),
@@ -290,12 +306,17 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
       builder: (ctx) => AlertDialog(
         title: Text(L10n.of(context).editBookmarkTitle),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: titleC, decoration: InputDecoration(labelText: L10n.of(context).titleLabel, border: const OutlineInputBorder())),
+          TextField(
+              controller: titleC,
+              decoration: InputDecoration(
+                  labelText: L10n.of(context).titleLabel, border: const OutlineInputBorder())),
           const SizedBox(height: 12),
           TextField(
             controller: pageC,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: L10n.of(context).pageOfTotal(_totalPages), border: const OutlineInputBorder()),
+            decoration: InputDecoration(
+                labelText: L10n.of(context).pageOfTotal(_totalPages),
+                border: const OutlineInputBorder()),
           ),
         ]),
         actions: [
@@ -383,6 +404,5 @@ class _BookmarkItem {
   String title;
   int pageIndex;
   int indent;
-  _BookmarkItem({required this.title, required this.pageIndex, required this.indent})
-      : id = _seq++;
+  _BookmarkItem({required this.title, required this.pageIndex, required this.indent}) : id = _seq++;
 }

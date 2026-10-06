@@ -14,6 +14,7 @@ import 'package:pdf_craft/widgets/file_actions_sheet.dart';
 import 'package:pdf_craft/widgets/file_tile.dart';
 import 'package:pdf_craft/widgets/skeleton_list.dart';
 import 'package:pdf_craft/widgets/confirm_dialog.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
 
 /// "Results" hub — every file a tool has produced, in one place.
 ///
@@ -99,7 +100,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
     if (!confirm.confirmed) return;
     try {
       await file.delete();
-    } catch (_) {}
+    } catch (e) {
+      // Silently swallowed before: the list reloaded with the file still in it, so confirming a
+      // delete and watching nothing happen read as a broken button.
+      LoggerSingleton().logger.w('Delete failed for ${file.path}: $e');
+      NotificationService.showSnackbar(
+          text: L10n.current.errDeleteFailed(file.path.split('/').last),
+          color: Colors.red);
+    }
     // The FileStore listener reloads this list, and every other listing too.
     FileStore().changed();
   }

@@ -14,6 +14,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/utils/open_pdf.dart';
 
 class DuplicatePagesView extends StatefulWidget {
   final File file;
@@ -39,10 +40,14 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
   }
 
   Future<void> _openDocument() async {
-    try {
-      final doc = await PdfDocument.openFile(widget.file.path);
-      if (mounted) setState(() { _doc = doc; _totalPages = doc.pagesCount; });
-    } catch (_) {}
+    final doc = await openPdfOrReport(widget.file);
+    if (doc == null) return;
+    if (mounted) {
+      setState(() {
+        _doc = doc;
+        _totalPages = doc.pagesCount;
+      });
+    }
   }
 
   @override
@@ -64,8 +69,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
             p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
-        listener: (context, state) => handleToolState(
-            state.httpStates[HttpStates.duplicatePages], successMessage: L10n.current.pagesDuplicated),
+        listener: (context, state) => handleToolState(state.httpStates[HttpStates.duplicatePages],
+            successMessage: L10n.current.pagesDuplicated),
         builder: (context, state) {
           final loading = state.httpStates[HttpStates.duplicatePages]?.loading == true;
           return Stack(children: [
@@ -101,7 +106,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
               // Count stepper + submit
               _buildBottomBar(theme, loading),
             ]),
-            processingOverlay(state.httpStates[HttpStates.duplicatePages],
+            processingOverlay(
+              state.httpStates[HttpStates.duplicatePages],
               label: L10n.of(context).duplicatingPages,
             ),
           ]);
@@ -149,14 +155,13 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    _stepBtn(Icons.remove, count > 1
-                        ? () => setState(() => _pageCounts[i] = count - 1)
-                        : null),
+                    _stepBtn(Icons.remove,
+                        count > 1 ? () => setState(() => _pageCounts[i] = count - 1) : null),
                     Text('×$count',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                    _stepBtn(Icons.add, count < 20
-                        ? () => setState(() => _pageCounts[i] = count + 1)
-                        : null),
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    _stepBtn(Icons.add,
+                        count < 20 ? () => setState(() => _pageCounts[i] = count + 1) : null),
                   ]),
                 ),
               ),
@@ -164,7 +169,9 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
           ),
         // Page number label
         Positioned(
-          bottom: 4, left: 0, right: 0,
+          bottom: 4,
+          left: 0,
+          right: 0,
           child: Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -204,7 +211,10 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
           child: FilledButton.icon(
             onPressed: _pageCounts.isEmpty || loading ? null : _onDuplicate,
             icon: loading
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.copy_all),
             label: Text(_pageCounts.isEmpty
                 ? L10n.of(context).selectPagesToDuplicate
@@ -221,12 +231,12 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
     final file = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
     runTool((cancelToken) => DuplicatePagesEvent(
-      duplicatePages: DuplicatePages(
-        pageCounts: Map<int, int>.from(_pageCounts),
-        file: file,
-      ),
-      cancelToken: cancelToken,
-    ));
+          duplicatePages: DuplicatePages(
+            pageCounts: Map<int, int>.from(_pageCounts),
+            file: file,
+          ),
+          cancelToken: cancelToken,
+        ));
   }
 
   @override

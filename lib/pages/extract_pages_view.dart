@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/page_selector_grid.dart';
 import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
+import 'package:pdf_craft/utils/open_pdf.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Extract Pages: pick the pages to keep and export a new PDF containing only
@@ -25,8 +26,7 @@ class ExtractPagesView extends StatefulWidget {
   State<ExtractPagesView> createState() => _ExtractPagesViewState();
 }
 
-class _ExtractPagesViewState extends State<ExtractPagesView>
-    with ToolResultHandler, ToolViewMixin {
+class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHandler, ToolViewMixin {
   PdfDocument? _doc;
   int _totalPages = 0;
   final Set<int> _selected = {};
@@ -40,10 +40,14 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
   }
 
   Future<void> _open() async {
-    try {
-      final doc = await PdfDocument.openFile(widget.file.path);
-      if (mounted) setState(() { _doc = doc; _totalPages = doc.pagesCount; });
-    } catch (_) {}
+    final doc = await openPdfOrReport(widget.file);
+    if (doc == null) return;
+    if (mounted) {
+      setState(() {
+        _doc = doc;
+        _totalPages = doc.pagesCount;
+      });
+    }
   }
 
   @override
@@ -64,14 +68,17 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
         title: Text(ToolStrings.name(context, 'extract-pages')),
         actions: [
           if (_selected.isNotEmpty)
-            TextButton(onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
+            TextButton(
+                onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
         ],
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
-        buildWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listenWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.reorderPdf], successMessage: L10n.of(context).pagesExtracted),
+        buildWhen: (p, c) =>
+            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+        listenWhen: (p, c) =>
+            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+        listener: (context, state) => handleToolState(state.httpStates[HttpStates.reorderPdf],
+            successMessage: L10n.of(context).pagesExtracted),
         builder: (context, state) {
           if (_doc == null) return const Center(child: CircularProgressIndicator());
           final loading = state.httpStates[HttpStates.reorderPdf]?.loading == true;
@@ -89,7 +96,8 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
                   totalPages: _totalPages,
                   selected: _selected,
                   accent: theme.colorScheme.primary,
-                  onToggle: (i) => setState(() => _selected.contains(i) ? _selected.remove(i) : _selected.add(i)),
+                  onToggle: (i) => setState(
+                      () => _selected.contains(i) ? _selected.remove(i) : _selected.add(i)),
                 ),
               ),
               Container(
@@ -101,11 +109,14 @@ class _ExtractPagesViewState extends State<ExtractPagesView>
                 child: FilledButton.icon(
                   onPressed: _selected.isEmpty || loading ? null : _onExtract,
                   icon: const Icon(Icons.content_cut),
-                  label: Text(_selected.isEmpty ? L10n.of(context).selectPagesToExtract : L10n.of(context).extractNPages(_selected.length)),
+                  label: Text(_selected.isEmpty
+                      ? L10n.of(context).selectPagesToExtract
+                      : L10n.of(context).extractNPages(_selected.length)),
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.reorderPdf], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.reorderPdf],
+                label: L10n.of(context).procWorking),
           ]);
         },
       ),

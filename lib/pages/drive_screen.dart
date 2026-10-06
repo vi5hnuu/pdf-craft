@@ -20,6 +20,7 @@ import 'package:pdf_craft/utils/utility.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
 
 enum _FileFilter { all, pdf, images, docs, other }
 
@@ -115,8 +116,12 @@ class _DriveScreenState extends State<DriveScreen> {
       // Users who never connected Drive now just see the "Connect Google Drive" prompt.
       await _drive.restoreSession();
       if (_drive.isSignedIn) await Future.wait([_loadFiles(), _loadStorage()]);
-    } catch (_) {}
-    finally {
+    } catch (e, st) {
+      // Swallowed entirely before, which is how the canAccessScopes UnimplementedError stayed
+      // invisible for so long: every returning user was quietly reported signed out with no
+      // hint that anything had failed. At minimum it must reach the log.
+      LoggerSingleton().logger.w('Drive session restore failed: $e', stackTrace: st);
+    } finally {
       if (mounted) setState(() => _signingIn = false);
     }
   }
@@ -209,7 +214,11 @@ class _DriveScreenState extends State<DriveScreen> {
     try {
       final about = await _drive.getStorageQuota();
       if (mounted) setState(() => _storageAbout = about);
-    } catch (_) {}
+    } catch (e) {
+      // Not surfaced to the user: the quota line is supplementary and the file list below it is
+      // what they came for. Logged so a persistent failure is diagnosable.
+      LoggerSingleton().logger.w('Drive storage quota unavailable: $e');
+    }
   }
 
   Future<void> _uploadFile(File file) async {
