@@ -40,7 +40,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
   }
 
   Future<void> _openDocument() async {
-    final doc = await openPdfOrReport(widget.file);
+    final doc = await openPdfOrLeave(context, widget.file);
     if (doc == null) return;
     if (mounted) {
       setState(() {

@@ -48,7 +48,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
   }
 
   Future<void> _loadPageCount() async {
-    final doc = await openPdfOrReport(_file);
+    final doc = await openPdfOrLeave(context, _file);
     if (doc == null) return;
     if (mounted) setState(() => _totalPages = doc.pagesCount);
     await doc.close();

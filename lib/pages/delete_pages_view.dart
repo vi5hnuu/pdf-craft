@@ -41,7 +41,7 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
   }
 
   Future<void> _open() async {
-    final doc = await openPdfOrReport(widget.file);
+    final doc = await openPdfOrLeave(context, widget.file);
     if (doc == null) return;
     if (mounted) {
       setState(() {

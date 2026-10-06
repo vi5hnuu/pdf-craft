@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart' show Colors;
+import 'package:flutter/material.dart' show BuildContext, Colors, Navigator;
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
@@ -24,9 +24,23 @@ Future<PdfDocument?> openPdfOrReport(File file) async {
           ? L10n.current.errPdfPasswordProtected
           : L10n.current.errPdfUnreadable,
       color: Colors.red,
+      // Longer than the 2s default: this one explains why the screen the user just opened is
+      // about to close again, so they need time to actually read it.
+      duration: const Duration(seconds: 5),
     );
     return null;
   }
+}
+
+/// As [openPdfOrReport], but also leaves the screen when the document cannot be opened.
+///
+/// A tool whose document will not load has nothing to show and nothing to do: it sat on its
+/// loading spinner forever, which reads as a hang. Going back to where the user came from, with
+/// the reason on screen, is the only honest end state.
+Future<PdfDocument?> openPdfOrLeave(BuildContext context, File file) async {
+  final doc = await openPdfOrReport(file);
+  if (doc == null && context.mounted) await Navigator.of(context).maybePop();
+  return doc;
 }
 
 /// Pdfium reports a wrong/missing password through the message rather than a typed error, so

@@ -40,7 +40,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
   }
 
   Future<void> _open() async {
-    final doc = await openPdfOrReport(widget.file);
+    final doc = await openPdfOrLeave(context, widget.file);
     if (doc == null) return;
     if (mounted) {
       setState(() {
