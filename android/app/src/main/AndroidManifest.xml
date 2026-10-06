@@ -40,6 +40,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/pdf" />
                 <data android:mimeType="image/*" />
+                <!-- Plenty of file managers hand a document over as octet-stream rather than
+                     its real type, and matched none of the filters above — PDF Craft simply
+                     was not in the share sheet. The chooser already says so plainly when
+                     nothing can use what it was given, so accepting the generic type costs a
+                     tidy "no tool applies" screen at worst. -->
+                <data android:mimeType="application/octet-stream" />
             </intent-filter>
             <!-- Receive a single shared file (ACTION_SEND). -->
             <intent-filter>
@@ -47,6 +53,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/pdf" />
                 <data android:mimeType="image/*" />
+                <!-- Plenty of file managers hand a document over as octet-stream rather than
+                     its real type, and matched none of the filters above — PDF Craft simply
+                     was not in the share sheet. The chooser already says so plainly when
+                     nothing can use what it was given, so accepting the generic type costs a
+                     tidy "no tool applies" screen at worst. -->
+                <data android:mimeType="application/octet-stream" />
             </intent-filter>
             <!-- Receive multiple shared files (ACTION_SEND_MULTIPLE). -->
             <intent-filter>
@@ -54,6 +66,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/pdf" />
                 <data android:mimeType="image/*" />
+                <!-- Plenty of file managers hand a document over as octet-stream rather than
+                     its real type, and matched none of the filters above — PDF Craft simply
+                     was not in the share sheet. The chooser already says so plainly when
+                     nothing can use what it was given, so accepting the generic type costs a
+                     tidy "no tool applies" screen at worst. -->
+                <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
         <!-- We handle ACTION_VIEW/SEND intents natively (MainActivity), so stop
