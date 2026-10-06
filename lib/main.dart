@@ -26,6 +26,7 @@ import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/purchase_service.dart';
 import 'package:pdf_craft/state/files-state/files_bloc.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
+import 'package:pdf_craft/services/pending_incoming_files.dart';
 
 
 /// Redirect guard for tool routes: ensures `state.extra` carries a `files`
@@ -118,10 +119,15 @@ class _NestedTabNavigationExampleAppState
 
   void _handleSharedFiles(List<String> paths) {
     if (paths.isEmpty) return;
-    final files = paths.map((p) => File(p)).toList();
-    // Defer until after the current frame so the router is ready.
+    PendingIncomingFiles.add(paths.map((p) => File(p)).toList());
+    // Only navigate once the app is past the splash. Pushing earlier is what broke every
+    // cold-start share: the splash finishes at 500ms and calls `go`, which replaces the stack
+    // and takes the just-pushed chooser with it. Before that point the splash (or onboarding)
+    // drains the queue itself, so the file is never lost — it just waits a moment.
+    if (!PendingIncomingFiles.ready) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      appRouter.pushNamed(AppRoutes.incomingFilesRoute.name, extra: files);
+      final ctx = rootNavigatorKey.currentContext;
+      if (ctx != null) PendingIncomingFiles.drain(ctx);
     });
   }
 

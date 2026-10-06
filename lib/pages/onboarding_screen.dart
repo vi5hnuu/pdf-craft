@@ -4,6 +4,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/services/pending_incoming_files.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -41,7 +42,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _finish() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
-    if (mounted) GoRouter.of(context).goNamed(AppRoutes.filesRoute.name);
+    if (!mounted) return;
+    GoRouter.of(context).goNamed(AppRoutes.filesRoute.name);
+    // A file shared before the app had ever been opened waited through onboarding; hand it over
+    // now that there is a home screen under it.
+    PendingIncomingFiles.ready = true;
+    PendingIncomingFiles.drain(context);
   }
 
   @override

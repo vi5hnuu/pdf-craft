@@ -138,6 +138,21 @@ final GoRouter appRouter = GoRouter(
     navigatorKey: rootNavigatorKey, //navigator = 1
     initialLocation: AppRoutes.splashRoute.path,
     redirect: (context, state) async {
+      // An "Open with" intent hands Flutter the file's URI as the platform's initial route, and
+      // GoRouter prefers that over `initialLocation` — so a cold-start ACTION_VIEW landed on
+      // "no routes for location: content://media/external/file/18", a dead-end error page on
+      // the app's main entry point. (`flutter_deeplinking_enabled=false` in the manifest stops
+      // Flutter's own deep-link handling but not this.) The file itself is safe: MainActivity
+      // has already copied it into the cache and it is waiting in PendingIncomingFiles, so
+      // sending the navigation back to the splash both clears the bogus location and lets the
+      // normal start-up path pick the file up.
+      // Checked on `uri`, not `matchedLocation`: GoRouter parses the URI and hands
+      // matchedLocation only the *path* part, so for content://media/external/file/18 it reads
+      // "/external/file/18" — no scheme left to spot. `hasScheme` is the reliable test, and no
+      // in-app location ever has one.
+      if (state.uri.hasScheme) {
+        return AppRoutes.splashRoute.path;
+      }
       // Splash, onboarding and the permission page itself never need storage access. Gating
       // them sent brand-new users to the permission wall before they had seen the intro (and
       // skipped the splash's ad initialisation).

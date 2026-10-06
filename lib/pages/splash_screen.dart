@@ -12,6 +12,7 @@ import 'package:pdf_craft/singletons/rewarded_interstitial_ad_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/app_logo.dart';
+import 'package:pdf_craft/services/pending_incoming_files.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -129,7 +130,14 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
     if (onboardingDone) {
       GoRouter.of(context).goNamed(AppRoutes.filesRoute.name);
+      // This `go` replaces the stack, so anything the share handler pushed while the splash was
+      // up has just been discarded. Draining here — after home is established, so Back works —
+      // is what makes a cold-start share arrive at all.
+      PendingIncomingFiles.ready = true;
+      PendingIncomingFiles.drain(context);
     } else {
+      // A brand-new user who shared a file before ever opening the app: onboard first and let
+      // the onboarding screen hand the file over when it reaches home.
       GoRouter.of(context).goNamed(AppRoutes.onboardingRoute.name);
     }
   }
