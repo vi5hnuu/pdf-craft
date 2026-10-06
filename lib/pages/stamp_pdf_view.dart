@@ -16,6 +16,8 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/placement_box.dart';
 import 'package:pdf_craft/widgets/pdf_effect_preview.dart';
+import 'package:pdf_craft/utils/page_range.dart';
+import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdfx/pdfx.dart';
 
 class StampPdfView extends StatefulWidget {
@@ -48,11 +50,28 @@ class _StampPdfViewState extends State<StampPdfView>
   /// instead of stretching it.
   double? _stampAspect;
 
+  /// 0 until known. The range fields are checked against it, so this screen needs it even
+  /// though it shows no page preview.
+  int _pageCount = 0;
+
   @override
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
     resetToolState([HttpStates.stampPdf]);
+    _loadPageCount();
+  }
+
+  Future<void> _loadPageCount() async {
+    try {
+      final doc = await PdfDocument.openFile(widget.file.path);
+      final count = doc.pagesCount;
+      await doc.close();
+      if (mounted) setState(() => _pageCount = count);
+    } catch (_) {
+      // Left at 0, which the validator reads as "length unknown" and skips the count check
+      // rather than blocking input it cannot judge. The run itself still reports a real failure.
+    }
   }
 
   @override
@@ -247,6 +266,19 @@ class _StampPdfViewState extends State<StampPdfView>
 
   void _onStamp() async {
     if (_stampFile == null) return;
+    // Before the credit, not after: an impossible range was being charged for and answered with
+    // the original file, unstamped.
+    final rangeError = pageRangeMessage(
+      validatePageRange(
+          from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount),
+      _pageCount,
+    );
+    if (rangeError != null) {
+      NotificationService.showSnackbar(text: rangeError, color: Colors.orange);
+      return;
+    }
+    final range = resolvePageRange(
+        from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount);
     final documentUpload = await MultipartFile.fromFile(widget.file.path);
     final stampUpload = await MultipartFile.fromFile(_stampFile!.path);
     if (!mounted) return;
@@ -256,8 +288,8 @@ class _StampPdfViewState extends State<StampPdfView>
         opacity:     _opacity,
         // Fields are 1-based because that is how readers count pages; the API is
         // 0-indexed, so the conversion happens here rather than in the user's head.
-        fromPage:    _oneBasedToIndex(_fromPageC.text) ?? 0,
-        toPage:      _oneBasedToIndex(_toPageC.text),
+        fromPage:    range.fromIndex,
+        toPage:      range.toIndex,
         // All four or none — a partial box is silently ignored by the server.
         xFrac:      _placement.left,
         yFrac:      _placement.top,
@@ -268,13 +300,6 @@ class _StampPdfViewState extends State<StampPdfView>
       ), cancelToken: cancelToken));
   }
 
-  /// Converts a 1-based page field to the 0-based index the API expects.
-  /// Returns null for an empty field so "optional" stays optional.
-  int? _oneBasedToIndex(String text) {
-    final parsed = int.tryParse(text.trim());
-    if (parsed == null) return null;
-    return parsed > 0 ? parsed - 1 : 0;
-  }
 
   @override
   void dispose() {

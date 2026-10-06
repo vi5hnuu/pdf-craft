@@ -20,6 +20,8 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/singletons/tool_settings_service.dart';
+import 'package:pdf_craft/utils/page_range.dart';
+import 'package:pdf_craft/singletons/notification_service.dart';
 
 class HeaderFooterView extends StatefulWidget {
   final File file;
@@ -329,11 +331,32 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
   }
 
   void _onApply() async {
+    // With both fields empty the server returns the document unchanged — and still charges for
+    // it. Proven on device: balance 3 -> 2 for a run that produced a copy of the input.
+    if (_headerTextC.text.trim().isEmpty && _footerTextC.text.trim().isEmpty) {
+      NotificationService.showSnackbar(
+          text: L10n.current.errHeaderFooterEmpty, color: Colors.orange);
+      return;
+    }
+    // Checked before anything is spent. "From 99, To 2" on a three-page document used to be
+    // sent as typed: the request succeeded, the credit was taken, and the file that came back
+    // was the original with no header or footer on it.
+    final rangeError = pageRangeMessage(
+      validatePageRange(
+          from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount ?? 0),
+      _pageCount ?? 0,
+    );
+    if (rangeError != null) {
+      NotificationService.showSnackbar(text: rangeError, color: Colors.orange);
+      return;
+    }
     // Saved on use rather than on every keystroke: what the user actually ran with is the
     // configuration worth restoring next time.
     unawaited(_rememberSettings());
     final uploadFile = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
+    final range = resolvePageRange(
+        from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount ?? 0);
     runTool((cancelToken) => HeaderFooterEvent(
       headerFooter: HeaderFooter(
         outFileName:    _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,
@@ -344,20 +367,12 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
         fontName:       _fontName,
         // Fields are 1-based because that is how readers count pages; the API is
         // 0-indexed, so the conversion happens here rather than in the user's head.
-        fromPage:       _oneBasedToIndex(_fromPageC.text) ?? 0,
-        toPage:         _oneBasedToIndex(_toPageC.text),
+        fromPage:       range.fromIndex,
+        toPage:         range.toIndex,
         topPadding:     _topPadding,
         bottomPadding:  _bottomPadding,
         file: uploadFile,
       ), cancelToken: cancelToken));
-  }
-
-  /// Converts a 1-based page field to the 0-based index the API expects.
-  /// Returns null for an empty field so "optional" stays optional.
-  int? _oneBasedToIndex(String text) {
-    final parsed = int.tryParse(text.trim());
-    if (parsed == null) return null;
-    return parsed > 0 ? parsed - 1 : 0;
   }
 
   @override
