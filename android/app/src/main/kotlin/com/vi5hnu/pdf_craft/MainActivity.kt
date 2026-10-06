@@ -2,7 +2,10 @@ package com.vi5hnu.pdf_craft
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -27,8 +30,14 @@ class MainActivity : FlutterActivity() {
 
     private var eventSink: EventChannel.EventSink? = null
 
-    // File paths from the intent that launched the app (consumed once by Dart).
-    private var initialPaths: List<String>? = null
+    // URIs from the intent that launched the app, consumed once by Dart. Held as URIs rather
+    // than copied paths because copying is file I/O: doing it in configureFlutterEngine put the
+    // whole copy on the main thread before the first frame, so sharing a large PDF stalled the
+    // app's start. The copy now happens on a worker when Dart asks.
+    private var initialUris: List<Uri>? = null
+
+    private val io = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -36,8 +45,16 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, methodChannelName)
             .setMethodCallHandler { call, result ->
                 if (call.method == "getInitialFiles") {
-                    result.success(initialPaths)
-                    initialPaths = null
+                    val uris = initialUris
+                    initialUris = null
+                    if (uris.isNullOrEmpty()) {
+                        result.success(emptyList<String>())
+                    } else {
+                        io.execute {
+                            val paths = uris.mapNotNull { copyUriToCache(it) }
+                            main.post { result.success(paths) }
+                        }
+                    }
                 } else {
                     result.notImplemented()
                 }
@@ -54,27 +71,38 @@ class MainActivity : FlutterActivity() {
                 }
             })
 
-        // The intent that started this Activity (cold start).
-        initialPaths = extractPaths(intent)
+        // The intent that started this Activity (cold start). Only the URIs are read here; the
+        // copying is deferred to the worker above.
+        initialUris = extractUris(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val paths = extractPaths(intent)
-        if (paths.isNotEmpty()) eventSink?.success(paths)
+        val uris = extractUris(intent)
+        if (uris.isEmpty()) return
+        // Off the main thread for the same reason as the cold-start path: a shared file can be
+        // large, and this runs while the user is looking at the app.
+        io.execute {
+            val paths = uris.mapNotNull { copyUriToCache(it) }
+            if (paths.isNotEmpty()) main.post { eventSink?.success(paths) }
+        }
     }
 
-    /** Resolves the file paths carried by a VIEW/SEND/SEND_MULTIPLE intent. */
-    private fun extractPaths(intent: Intent?): List<String> {
+    override fun onDestroy() {
+        io.shutdown()
+        super.onDestroy()
+    }
+
+    /** The URIs carried by a VIEW/SEND/SEND_MULTIPLE intent. No I/O. */
+    private fun extractUris(intent: Intent?): List<Uri> {
         if (intent == null) return emptyList()
-        val uris: List<Uri> = when (intent.action) {
+        return when (intent.action) {
             Intent.ACTION_VIEW -> intent.data?.let { listOf(it) } ?: emptyList()
             Intent.ACTION_SEND -> getStreamExtra(intent)?.let { listOf(it) } ?: emptyList()
             Intent.ACTION_SEND_MULTIPLE -> getStreamExtras(intent)
             else -> emptyList()
         }
-        return uris.mapNotNull { copyUriToCache(it) }
     }
 
     @Suppress("DEPRECATION")
@@ -96,6 +124,9 @@ class MainActivity : FlutterActivity() {
             } ?: return null
             outFile.absolutePath
         } catch (e: Exception) {
+            // Was a bare `null`. A failed copy then looked exactly like "nothing was shared", so
+            // the Dart side could not tell the user anything and the file vanished without trace.
+            Log.w("PdfCraft", "Could not copy shared file $uri into cache", e)
             null
         }
     }
