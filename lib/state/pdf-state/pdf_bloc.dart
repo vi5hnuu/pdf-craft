@@ -68,6 +68,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/utils/output_filename.dart';
 import 'package:flutter/material.dart' show Colors;
 import '../../models/http_state.dart';
 part 'pdf_event.dart';
@@ -559,7 +560,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
   }) async {
     final fallback = '${fallbackPrefix}_${DateTime.now().millisecondsSinceEpoch}.$fallbackExt';
     final suggested =
-        _filenameFromContentDisposition(fileRes.headers.value('content-disposition')) ?? fallback;
+        filenameFromContentDisposition(fileRes.headers.value('content-disposition')) ?? fallback;
 
     // The credit is already spent by the time we get here: the server charges on the request it
     // just answered, and the interceptor reads the new balance off this very response
@@ -587,7 +588,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
   /// Writes [bytes] into [directory] under a name that does not collide.
   Future<File> _writeTo(Directory directory, String suggested, Uint8List bytes) async {
     if (!directory.existsSync()) await directory.create(recursive: true);
-    final file = File(_uniquePath(directory.path, suggested));
+    final file = File(uniquePath(directory.path, suggested));
     await file.writeAsBytes(bytes);
     // Every server-backed tool lands here, so this one line is what makes a fresh result show
     // up in Recent Files and the Processed count without the user restarting the app.
@@ -598,38 +599,4 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
   /// Parses a filename out of a Content-Disposition header, handling both the
   /// RFC 5987 `filename*=UTF-8''name.ext` form and the plain/quoted `filename=`
   /// form. Returns null when no usable name is present.
-  String? _filenameFromContentDisposition(String? header) {
-    if (header == null || header.isEmpty) return null;
-    // Prefer the extended (filename*) form when present.
-    final ext = RegExp(r"filename\*\s*=\s*[^']*''([^;]+)", caseSensitive: false).firstMatch(header);
-    if (ext != null) {
-      final decoded = Uri.decodeComponent(ext.group(1)!.trim());
-      if (decoded.isNotEmpty) return _sanitizeName(decoded);
-    }
-    final plain = RegExp(r'filename\s*=\s*"?([^";]+)"?', caseSensitive: false).firstMatch(header);
-    if (plain != null) {
-      final name = plain.group(1)!.trim();
-      if (name.isNotEmpty) return _sanitizeName(name);
-    }
-    return null;
-  }
-
-  /// Strips any path separators a malicious/odd header might inject.
-  String _sanitizeName(String name) => name.split(RegExp(r'[\\/]')).last;
-
-  /// Returns a path in [dir] for [name], appending " (n)" before the extension
-  /// until it no longer collides with an existing file.
-  String _uniquePath(String dir, String name) {
-    var candidate = File('$dir/$name');
-    if (!candidate.existsSync()) return candidate.path;
-    final dot = name.lastIndexOf('.');
-    final base = dot == -1 ? name : name.substring(0, dot);
-    final ext = dot == -1 ? '' : name.substring(dot);
-    var n = 1;
-    do {
-      candidate = File('$dir/$base ($n)$ext');
-      n++;
-    } while (candidate.existsSync());
-    return candidate.path;
-  }
 }
