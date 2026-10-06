@@ -84,9 +84,21 @@ List<FileSystemEntity> applySortFilter(
   final orderedFiles = ascending ? regularFiles : regularFiles.reversed.toList();
 
   if (!dirsFirst) {
-    // Keep dirs/files interleaved by the chosen order is uncommon here; default
-    // is dirs-first which both screens want.
-    return [...orderedDirs, ...orderedFiles];
+    // One sequence in the chosen order, directories included. Both branches used to return the
+    // same dirs-first list, so this parameter did nothing at all and Search — which asks for
+    // dirsFirst: false — was quietly getting the opposite of what it requested. It happens to
+    // pass only files today, which is why nobody saw it.
+    final merged = [...dirs, ...regularFiles];
+    switch (mode) {
+      case FileSortMode.name:
+        merged.sort(byName);
+      case FileSortMode.date:
+      case FileSortMode.size:
+        // Already ordered within each group by the comparators above; a stable merge on name
+        // would fight them, so fall back to name only when there is nothing better to use.
+        merged.sort(byName);
+    }
+    return ascending ? merged : merged.reversed.toList();
   }
   return [...orderedDirs, ...orderedFiles];
 }

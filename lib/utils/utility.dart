@@ -9,6 +9,15 @@ class Utility{
     int i = (bytes > 0) ? (bytes.bitLength - 1) ~/ 10 : 0;
     double size = bytes / (1 << (i * 10));
 
+    // Compared *after* rounding, which is where the fault was. 1048575 bytes is 1023.999 KB —
+    // under the boundary, so the unit was right until toStringAsFixed(2) rounded it up and
+    // printed "1024.00 KB", a quantity that should never appear. Checking the rounded value
+    // catches exactly that case.
+    if (double.parse(size.toStringAsFixed(2)) >= 1024 && i + 1 < sizes.length) {
+      i += 1;
+      size /= 1024;
+    }
+
     // Format to 2 decimal places for readability
     return '${size.toStringAsFixed(2)} ${sizes[i]}';
   }
@@ -23,8 +32,19 @@ class Utility{
     return file.path.split('/').last;
   }
 
-  static fileExtension(File file) {
-    return '.${file.path.split('.').last}';
+  /// The file's extension, lower-cased, or '' when it has none.
+  ///
+  /// Was `'.' + path.split('.').last`, which had three faults, all of them reaching the user:
+  /// an upper-case name returned '.PDF' and every comparison in the app is against lower-case,
+  /// so REPORT.PDF was greyed out in every tool's file picker and opened externally as */*
+  /// instead of application/pdf; a file with no extension returned the whole path with a dot in
+  /// front; and a dot in a *directory* name was mistaken for the extension.
+  static String fileExtension(File file) {
+    final path = file.path;
+    final dot = path.lastIndexOf('.');
+    // A dot before the last separator belongs to a directory, not to this file.
+    if (dot <= 0 || dot < path.lastIndexOf('/')) return '';
+    return path.substring(dot).toLowerCase();
   }
 }
 /// Redaction helpers for anything that leaves the device.
