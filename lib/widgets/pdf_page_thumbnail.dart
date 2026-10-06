@@ -28,10 +28,9 @@ class PdfPageThumbnail extends StatefulWidget {
   @override
   State<PdfPageThumbnail> createState() => _PdfPageThumbnailState();
 
-  /// Drops any cached renders for [document] — call when a document is closed so
-  /// stale bytes for a reused identity hash can't leak into a new document.
+  /// Drops any cached renders for [document] — call when a document is closed.
   static void evictDocument(PdfDocument document) {
-    final prefix = '${identityHashCode(document)}_';
+    final prefix = '${document.id}_';
     _cache.removeWhere((key, _) => key.startsWith(prefix));
   }
 }
@@ -53,9 +52,16 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
     return ((wanted / 64).ceil() * 64).clamp(64, 2048);
   }
 
+  // Keyed on the document's own id, which pdfx generates as a randomUUID() each time a
+  // document is opened, so it is unique for the life of the process. identityHashCode was
+  // wrong for this: it is a *hash*, so two live documents may share one, and a hash belonging
+  // to a collected object can be handed to a later one — either of which would serve one
+  // document's page images for another's. Nothing was observed going wrong, but a cache key
+  // that is only probably unique is not a cache key.
+  //
   // The size is part of the key: the same page shown large and small needs two renders,
   // and without it the first size seen would be stretched to fit the other.
-  String get _key => '${identityHashCode(widget.document)}_${widget.pageNumber}_$_targetPx';
+  String get _key => '${widget.document.id}_${widget.pageNumber}_$_targetPx';
 
   @override
   void didChangeDependencies() {

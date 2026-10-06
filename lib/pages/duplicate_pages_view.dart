@@ -241,7 +241,14 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
 
   @override
   void dispose() {
-    _doc?.close();
+    final doc = _doc;
+    if (doc != null) {
+      // The other three screens that render page thumbnails evict before closing; this one did
+      // not, so its page bitmaps stayed in the process-wide cache after the document they
+      // belong to was gone, waiting to be pushed out by the 80-entry LRU.
+      PdfPageThumbnail.evictDocument(doc);
+      doc.close();
+    }
     super.dispose();
   }
 }
