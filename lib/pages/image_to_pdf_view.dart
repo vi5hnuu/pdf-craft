@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
+import 'package:pdf_craft/widgets/broken_image.dart';
 
 class ImageToPdfView extends StatefulWidget {
   final List<File> files;
@@ -102,13 +103,13 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
                               file,
                               width: md.size.width * 0.25,
                               fit: BoxFit.fitWidth,
+                              errorBuilder: BrokenImage.builder,
                               // A reorderable list of full-resolution camera photos decoded at
                               // their native size is tens of megabytes each; bound the decode to
                               // the thumbnail actually drawn.
                               cacheWidth: (md.size.width * 0.25 *
                                       MediaQuery.devicePixelRatioOf(context))
                                   .round(),
-                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
                             ),
                             Flexible(child: Padding(
                               padding: const EdgeInsets.all(12.0),

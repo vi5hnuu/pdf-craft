@@ -91,6 +91,9 @@ class _FormEditorViewState extends State<FormEditorView>
   @override
   void initState() {
     super.initState();
+    // Every other screen using this mixin clears its key on entry; without it a previous
+    // run's done/error state is still in the bloc and the editor reacts to it on open.
+    resetToolState([HttpStates.createForm]);
     AdsSingleton().dispatch(LoadInterstitialAd());
     _open();
   }

@@ -66,6 +66,16 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
     bool? offerNextTool,
   }) {
     if (s == null) return;
+    // Only react to work *this* screen started. 61 HttpStates keys are shared across tools —
+    // five screens share `reorderPdf` alone — so a tool still mounted beneath another (which is
+    // exactly what "use in another tool" creates) would otherwise handle the second screen's
+    // result as if it were its own: two previews pushed, two snackbars, two interstitials.
+    // The cancel token is set by runTool, so it is precisely "did I dispatch this?".
+    if (_cancelToken == null) return;
+    if (s.done == true || s.error != null) {
+      // Consumed. A late duplicate delivery of the same state must not fire everything twice.
+      _cancelToken = null;
+    }
     if (s.done == true) {
       // A paid tool debited credits server-side — refresh the balance shown in the UI.
       CreditService().refreshBalance();

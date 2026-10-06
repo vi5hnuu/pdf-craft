@@ -12,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/broken_image.dart';
 
 /// Flip Image: mirrors a picture horizontally or vertically.
 class FlipImageView extends StatefulWidget {
@@ -64,6 +65,7 @@ class _FlipImageViewState extends State<FlipImageView>
                           child: Image.file(
                             widget.file,
                             fit: BoxFit.contain,
+                            errorBuilder: BrokenImage.builder,
                             // The source is a user's photo, often far larger than this preview.
                             cacheWidth: (MediaQuery.sizeOf(context).width *
                                     MediaQuery.devicePixelRatioOf(context))

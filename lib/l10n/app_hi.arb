@@ -27,6 +27,7 @@
   "actionSearch": "खोजें",
   "actionSettings": "सेटिंग्स",
   "errSomethingWrong": "कुछ गलत हो गया",
+  "errImageUnreadable": "यह इमेज नहीं दिखाई जा सकती। हो सकता है इसे हटा दिया गया हो या कहीं और ले जाया गया हो।",
   "errDeleteFailed": "“{name}” को हटाया नहीं जा सका। हो सकता है यह किसी और ऐप में खुली हो, या ऐसी स्टोरेज पर हो जहाँ ऐप लिख नहीं सकता।",
   "@errDeleteFailed": {"placeholders": {"name": {"type": "String"}}},
   "pageNumber": "पेज {number}",

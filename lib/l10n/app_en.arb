@@ -28,6 +28,7 @@
   "actionSearch": "Search",
   "actionSettings": "Settings",
   "errSomethingWrong": "Something went wrong",
+  "errImageUnreadable": "This image can't be shown. It may have been moved or deleted.",
   "errDeleteFailed": "Couldn't delete “{name}”. It may be open in another app, or on storage the app can't write to.",
   "@errDeleteFailed": {"placeholders": {"name": {"type": "String"}}},
   "pageNumber": "Page {number}",
