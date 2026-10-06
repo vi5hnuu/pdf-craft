@@ -213,4 +213,14 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     }
   }
 
+  /// Stops a device-wide search that is still running when the bloc goes away.
+  ///
+  /// Without this the recursive scan kept walking the whole filesystem after nothing was left
+  /// to show it — wasted I/O and battery, and an emit into a closed bloc when it finished.
+  @override
+  Future<void> close() async {
+    await _searchSubscription?.cancel();
+    await _searchController?.close();
+    return super.close();
+  }
 }

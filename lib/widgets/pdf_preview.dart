@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/next_tool_sheet.dart';
 import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
 
 class PdfPreview extends StatefulWidget {
   final String pdfFilePath;
@@ -41,8 +43,16 @@ class PdfPreview extends StatefulWidget {
 
 class _PdfPreviewState extends State<PdfPreview> {
   PdfControllerPinch? _controller;
+  /// Held so it can be closed. `PdfControllerPinch.dispose()` releases textures and its two
+  /// notifiers but does NOT close the document (pdfx 2.9.2), so relying on the controller leaked
+  /// one native document per open — and another on every failed password attempt.
+  PdfDocument? _doc;
   String? _password;
   bool _loadError = false;
+  /// Whether the failure was actually a password. Without this every failure showed "PDF locked"
+  /// and offered a password prompt, so a damaged file sent the user hunting for a password that
+  /// did not exist.
+  bool _needsPassword = false;
   bool _nightMode = false;
   // Mutable so a rename can update the open file in place.
   late String _path = widget.pdfFilePath;
@@ -74,13 +84,20 @@ class _PdfPreviewState extends State<PdfPreview> {
 
   Future<void> _loadDocument() async {
     _controller?.dispose();
+    // Closed explicitly — disposing the controller does not do it.
+    await _doc?.close();
+    _doc = null;
     setState(() {
       _controller = null;
       _loadError = false;
     });
     try {
       final doc = await PdfDocument.openFile(_path, password: _password);
-      if (!mounted) return;
+      if (!mounted) {
+        await doc.close();
+        return;
+      }
+      _doc = doc;
       setState(() {
         _controller = PdfControllerPinch(
           viewportFraction: 1,
@@ -88,9 +105,14 @@ class _PdfPreviewState extends State<PdfPreview> {
           initialPage: 1,
         );
       });
-    } catch (_) {
+    } catch (e, st) {
+      LoggerSingleton().logger.w('Could not open $_path: $e', stackTrace: st);
       if (!mounted) return;
-      setState(() => _loadError = true);
+      final m = e.toString().toLowerCase();
+      setState(() {
+        _loadError = true;
+        _needsPassword = m.contains('password') || m.contains('encrypt');
+      });
     }
   }
 
@@ -257,6 +279,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     if (_loadError) {
       return _ErrorState(
         filePath: _path,
+        needsPassword: _needsPassword,
         onRetryWithPassword: () => _askForPasswordAndRetry(context),
       );
     }
@@ -284,10 +307,14 @@ class _PdfPreviewState extends State<PdfPreview> {
         ),
         documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator()),
         pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        errorBuilder: (_, error) => _ErrorState(
-          filePath: _path,
-          onRetryWithPassword: () => _askForPasswordAndRetry(context),
-        ),
+        errorBuilder: (_, error) {
+          final m = error.toString().toLowerCase();
+          return _ErrorState(
+            filePath: _path,
+            needsPassword: m.contains('password') || m.contains('encrypt'),
+            onRetryWithPassword: () => _askForPasswordAndRetry(context),
+          );
+        },
       ),
     );
 
@@ -444,6 +471,8 @@ class _PdfPreviewState extends State<PdfPreview> {
   @override
   void dispose() {
     _controller?.dispose();
+    // The controller does not close it, so this is the only thing that does.
+    unawaited(_doc?.close());
     super.dispose();
   }
 }
@@ -564,7 +593,16 @@ class _ErrorState extends StatelessWidget {
   final String filePath;
   final VoidCallback onRetryWithPassword;
 
-  const _ErrorState({required this.filePath, required this.onRetryWithPassword});
+  /// True only when the document really is encrypted. Everything else — a damaged file, a
+  /// truncated download, something that is not a PDF at all — gets its own wording and no
+  /// password button, because typing a password could never have helped.
+  final bool needsPassword;
+
+  const _ErrorState({
+    required this.filePath,
+    required this.needsPassword,
+    required this.onRetryWithPassword,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -586,32 +624,42 @@ class _ErrorState extends StatelessWidget {
                 color: primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.lock_outline, size: 44, color: primary),
+              child: Icon(
+                  needsPassword ? Icons.lock_outline : Icons.broken_image_outlined,
+                  size: 44,
+                  color: primary),
             ),
             const SizedBox(height: 20),
             Text(
-              L10n.of(context).pdfLocked,
+              needsPassword
+                  ? L10n.of(context).pdfLocked
+                  : L10n.of(context).errPdfUnreadable,
+              textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 8),
-            Text(
-              L10n.of(context).pdfLockedBody,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-            ),
+            if (needsPassword) ...[
+              const SizedBox(height: 8),
+              Text(
+                L10n.of(context).pdfLockedBody,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              ),
+            ],
             const SizedBox(height: 24),
             // Full-width stacked buttons — robust on narrow screens.
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: const Icon(Icons.lock_open_outlined, size: 18),
-                label: Text(L10n.of(context).enterPassword),
-                onPressed: onRetryWithPassword,
+            if (needsPassword) ...[
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.lock_open_outlined, size: 18),
+                  label: Text(L10n.of(context).enterPassword),
+                  onPressed: onRetryWithPassword,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
+            ],
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
