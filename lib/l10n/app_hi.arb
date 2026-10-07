@@ -27,6 +27,7 @@
   "actionSearch": "खोजें",
   "actionSettings": "सेटिंग्स",
   "errSomethingWrong": "कुछ गलत हो गया",
+  "errSharedFileUnreadable": "वह फ़ाइल नहीं खुल सकी — ऐप को उस तक पहुँच नहीं मिली। दोबारा शेयर करें, या 'फ़ाइलें' से खोलें।",
   "errCropNothingToTrim": "पहले कोई हैंडल अंदर खींचें — अभी कुछ नहीं कट रहा, इसलिए वही फ़ाइल वापस मिलेगी।",
   "errHeaderFooterEmpty": "पहले हेडर या फ़ुटर लिखें — वरना वही फ़ाइल वापस मिलेगी।",
   "errPageNotANumber": "पेज नंबर डालें, जैसे 1।",

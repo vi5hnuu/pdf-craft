@@ -28,6 +28,7 @@
   "actionSearch": "Search",
   "actionSettings": "Settings",
   "errSomethingWrong": "Something went wrong",
+  "errSharedFileUnreadable": "That file couldn't be opened — the app wasn't given access to it. Try sharing it again, or open it from Files.",
   "errCropNothingToTrim": "Drag a handle inward first — nothing is being trimmed, so this would return the same file.",
   "errHeaderFooterEmpty": "Add a header or a footer first — otherwise this would return the same file.",
   "errPageNotANumber": "Enter a page number, like 1.",

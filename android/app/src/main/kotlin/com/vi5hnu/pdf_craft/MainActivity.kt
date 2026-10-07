@@ -48,11 +48,11 @@ class MainActivity : FlutterActivity() {
                     val uris = initialUris
                     initialUris = null
                     if (uris.isNullOrEmpty()) {
-                        result.success(emptyList<String>())
+                        result.success(report(emptyList(), 0))
                     } else {
                         io.execute {
                             val paths = uris.mapNotNull { copyUriToCache(it) }
-                            main.post { result.success(paths) }
+                            main.post { result.success(report(paths, uris.size)) }
                         }
                     }
                 } else {
@@ -85,7 +85,10 @@ class MainActivity : FlutterActivity() {
         // large, and this runs while the user is looking at the app.
         io.execute {
             val paths = uris.mapNotNull { copyUriToCache(it) }
-            if (paths.isNotEmpty()) main.post { eventSink?.success(paths) }
+            // Sent even when nothing could be copied: "we were handed files and could read none
+            // of them" is the case the user most needs told, and it used to be indistinguishable
+            // from "nothing was shared".
+            main.post { eventSink?.success(report(paths, uris.size)) }
         }
     }
 
@@ -93,6 +96,14 @@ class MainActivity : FlutterActivity() {
         io.shutdown()
         super.onDestroy()
     }
+
+    /**
+     * What Dart receives: the paths that were successfully copied, and how many files the intent
+     * actually carried. The difference between the two is what lets the app say "that file could
+     * not be read" instead of silently doing nothing.
+     */
+    private fun report(paths: List<String>, attempted: Int): Map<String, Any> =
+        mapOf("paths" to paths, "attempted" to attempted)
 
     /** The URIs carried by a VIEW/SEND/SEND_MULTIPLE intent. No I/O. */
     private fun extractUris(intent: Intent?): List<Uri> {

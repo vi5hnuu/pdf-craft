@@ -88,7 +88,7 @@ class _NestedTabNavigationExampleAppState
     extends State<NestedTabNavigationExampleApp> with WidgetsBindingObserver {
 
   // Subscription to files shared into the app while it is running.
-  StreamSubscription<List<String>>? _sharingSub;
+  StreamSubscription<IncomingFiles>? _sharingSub;
 
   @override
   void initState() {
@@ -117,9 +117,18 @@ class _NestedTabNavigationExampleAppState
     IncomingFilesChannel.instance.getInitialFiles().then(_handleSharedFiles);
   }
 
-  void _handleSharedFiles(List<String> paths) {
-    if (paths.isEmpty) return;
-    PendingIncomingFiles.add(paths.map((p) => File(p)).toList());
+  void _handleSharedFiles(IncomingFiles incoming) {
+    // The intent carried files and none of them could be read — a permission that was not
+    // granted, a URI pointing at a directory, a provider that revoked access. This was silent:
+    // the app did nothing at all and the user was left looking at whatever was already on
+    // screen, with no way to tell whether the share had even arrived.
+    if (incoming.allFailed) {
+      NotificationService.showSnackbar(
+          text: L10n.current.errSharedFileUnreadable, color: Colors.red);
+      return;
+    }
+    if (incoming.isEmpty) return;
+    PendingIncomingFiles.add(incoming.paths.map((p) => File(p)).toList());
     // Only navigate once the app is past the splash. Pushing earlier is what broke every
     // cold-start share: the splash finishes at 500ms and calls `go`, which replaces the stack
     // and takes the just-pushed chooser with it. Before that point the splash (or onboarding)
