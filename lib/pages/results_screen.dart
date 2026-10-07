@@ -15,6 +15,7 @@ import 'package:pdf_craft/widgets/file_tile.dart';
 import 'package:pdf_craft/widgets/skeleton_list.dart';
 import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
+import 'package:pdf_craft/utils/processed_dirs.dart';
 
 /// "Results" hub — every file a tool has produced, in one place.
 ///
@@ -54,12 +55,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Future<void> _load() async {
-    final dir = Directory(Constants.processedDirPath);
-    if (!await dir.exists()) {
+    // Both result directories, not just the public one. When storage is not writable the save
+    // falls back to the app's own directory, and the message shown then tells the user to open
+    // the file from here — which was not true while this screen listed only public storage.
+    final dirs = await ProcessedDirs.all();
+    if (dirs.isEmpty) {
       if (mounted) setState(() => _files = []);
       return;
     }
-    final files = await dir.list().where((e) => e is File).cast<File>().toList();
+    final files = <File>[];
+    for (final dir in dirs) {
+      files.addAll(await dir.list().where((e) => e is File).cast<File>().toList());
+    }
     // Stat each file once, asynchronously, then sort newest first by the cached times. The
     // comparator used to call statSync() twice per comparison — O(n log n) blocking file-system
     // calls on the UI thread, which stalled the screen with many results.

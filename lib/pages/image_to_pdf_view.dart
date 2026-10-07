@@ -103,7 +103,14 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
                               file,
                               width: md.size.width * 0.25,
                               fit: BoxFit.fitWidth,
-                              errorBuilder: BrokenImage.builder,
+                              // Constrained here as well as on the Image: Flutter returns the
+                              // errorBuilder's widget directly from build(), before the
+                              // RawImage that would have applied `width`, so the placeholder is
+                              // unconstrained. Unbounded next to a Flexible in this Row, its
+                              // message overflows.
+                              errorBuilder: (c, e, st) => SizedBox(
+                                  width: md.size.width * 0.25,
+                                  child: BrokenImage.builder(c, e, st)),
                               // A reorderable list of full-resolution camera photos decoded at
                               // their native size is tens of megabytes each; bound the decode to
                               // the thumbnail actually drawn.

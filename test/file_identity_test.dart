@@ -83,6 +83,31 @@ void main() {
           reason: 'with dirsFirst false the listing should be one name-sorted sequence');
     });
 
+
+    test('dirsFirst: false honours the chosen mode, not just name', () async {
+      // The merged branch re-sorted by name whatever the mode was, so picking "Date" or "Size"
+      // in Search quietly returned name order. Caught in review; the original test only
+      // covered name mode, which is why it passed.
+      final dir = await Directory.systemTemp.createTemp('sortmode');
+      try {
+        final big = File('${dir.path}/aaa-big.pdf')..writeAsStringSync('x' * 500);
+        final small = File('${dir.path}/zzz-small.pdf')..writeAsStringSync('x');
+        final bySize = applySortFilter([big, small],
+            mode: FileSortMode.size, ascending: true, dirsFirst: false);
+        expect(bySize.map((e) => e.path.split('/').last).toList(),
+            ['zzz-small.pdf', 'aaa-big.pdf'],
+            reason: 'smallest first — name order would have put aaa first');
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    });
+
+    test('dirsFirst: true still groups directories above files', () {
+      final out = applySortFilter(entities(),
+          mode: FileSortMode.name, ascending: true, dirsFirst: true);
+      expect(out.take(2).whereType<Directory>().length, 2);
+    });
+
     test('the name filter is case-insensitive and matches a substring', () {
       final out = applySortFilter(entities(),
           nameQuery: 'APPLE', mode: FileSortMode.name, ascending: true);

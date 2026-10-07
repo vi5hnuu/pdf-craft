@@ -50,56 +50,60 @@ List<FileSystemEntity> applySortFilter(
   int byName(FileSystemEntity a, FileSystemEntity b) =>
       _nameOf(a).toLowerCase().compareTo(_nameOf(b).toLowerCase());
 
+  // One comparator for the whole function, so the dirs-first and merged orderings cannot
+  // disagree. The merged branch used to re-sort by name whatever the mode was, which silently
+  // turned Search's "Date" and "Size" into "Name".
+  //
+  // Stats are read once into a map before sorting rather than inside the comparator, which
+  // would re-stat O(N log N) times.
+  late final Comparator<FileSystemEntity> comparator;
+  // Directories have no meaningful size, so in size mode they order by name among themselves.
+  late final Comparator<FileSystemEntity> dirComparator;
+
   switch (mode) {
     case FileSortMode.name:
-      dirs.sort(byName);
-      regularFiles.sort(byName);
+      comparator = byName;
+      dirComparator = byName;
     case FileSortMode.date:
       final modTimes = <String, DateTime>{};
       for (final f in [...dirs, ...regularFiles]) {
         try {
           modTimes[f.path] = f.statSync().modified;
-        } catch (_) {}
+        } catch (_) {
+          // A file that vanished between listing and sorting simply has no date; it sorts
+          // oldest rather than breaking the sort.
+        }
       }
-      int byDate(FileSystemEntity a, FileSystemEntity b) =>
-          (modTimes[a.path] ?? DateTime(0))
-              .compareTo(modTimes[b.path] ?? DateTime(0));
-      dirs.sort(byDate);
-      regularFiles.sort(byDate);
+      comparator = (a, b) => (modTimes[a.path] ?? DateTime(0))
+          .compareTo(modTimes[b.path] ?? DateTime(0));
+      dirComparator = comparator;
     case FileSortMode.size:
-      // Size is meaningless for directories, so they stay name-sorted.
       final sizes = <String, int>{};
       for (final f in regularFiles) {
         try {
           sizes[f.path] = f.lengthSync();
-        } catch (_) {}
+        } catch (_) {
+          // Same: an unreadable length sorts smallest rather than throwing.
+        }
       }
-      dirs.sort(byName);
-      regularFiles.sort(
-          (a, b) => (sizes[a.path] ?? 0).compareTo(sizes[b.path] ?? 0));
+      comparator = (a, b) => (sizes[a.path] ?? 0).compareTo(sizes[b.path] ?? 0);
+      dirComparator = byName;
   }
-
-  // Comparators above produce ascending order; flip for descending.
-  final orderedDirs = ascending ? dirs : dirs.reversed.toList();
-  final orderedFiles = ascending ? regularFiles : regularFiles.reversed.toList();
 
   if (!dirsFirst) {
     // One sequence in the chosen order, directories included. Both branches used to return the
     // same dirs-first list, so this parameter did nothing at all and Search — which asks for
-    // dirsFirst: false — was quietly getting the opposite of what it requested. It happens to
-    // pass only files today, which is why nobody saw it.
-    final merged = [...dirs, ...regularFiles];
-    switch (mode) {
-      case FileSortMode.name:
-        merged.sort(byName);
-      case FileSortMode.date:
-      case FileSortMode.size:
-        // Already ordered within each group by the comparators above; a stable merge on name
-        // would fight them, so fall back to name only when there is nothing better to use.
-        merged.sort(byName);
-    }
+    // dirsFirst: false — was quietly getting the opposite of what it requested.
+    final merged = [...dirs, ...regularFiles]..sort(comparator);
     return ascending ? merged : merged.reversed.toList();
   }
+
+  dirs.sort(dirComparator);
+  regularFiles.sort(comparator);
+
+  // Comparators above produce ascending order; flip for descending.
+  final orderedDirs = ascending ? dirs : dirs.reversed.toList();
+  final orderedFiles = ascending ? regularFiles : regularFiles.reversed.toList();
   return [...orderedDirs, ...orderedFiles];
 }
 

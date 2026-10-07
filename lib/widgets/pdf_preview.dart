@@ -83,14 +83,20 @@ class _PdfPreviewState extends State<PdfPreview> {
   }
 
   Future<void> _loadDocument() async {
-    _controller?.dispose();
-    // Closed explicitly — disposing the controller does not do it.
-    await _doc?.close();
-    _doc = null;
+    // Disposed and dropped in the same synchronous step. Closing the document below is a real
+    // platform call, so a frame can be built while it is in flight — and build() reads
+    // _controller!.pageListenable, which on a disposed PdfControllerPinch throws "used after
+    // being disposed". Only reachable on a password retry, where a document is already open.
+    final old = _controller;
+    final oldDoc = _doc;
     setState(() {
       _controller = null;
+      _doc = null;
       _loadError = false;
     });
+    old?.dispose();
+    // Closed explicitly — disposing the controller does not do it.
+    await oldDoc?.close();
     try {
       final doc = await PdfDocument.openFile(_path, password: _password);
       if (!mounted) {

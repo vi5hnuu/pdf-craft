@@ -41,10 +41,22 @@ class PendingIncomingFiles {
   /// Routes to the chooser if anything is waiting, on top of the home screen so Back has
   /// somewhere to go. Safe to call when the queue is empty — it does nothing.
   ///
-  /// The caller must already have navigated to the destination it wants underneath.
+  /// Deferred to after the current frame on purpose. Callers drain immediately after a
+  /// `go(...)`, and the router's top-level redirect is async (it awaits a permission check), so
+  /// the `go` has not been applied yet: a `push` issued in the same synchronous block is
+  /// resolved against the *splash* match list, and Flutter's Router can drop the earlier
+  /// navigation entirely. The stack would then be [splash, chooser] with no home underneath,
+  /// and backing out of the chooser would strand the user on a splash that never moves again.
+  ///
+  /// I could not reproduce that on a real device — Back from the chooser reached home — but the
+  /// ordering it depends on is not something this code should be relying on either way.
   static void drain(BuildContext context) {
     if (_files.isEmpty) return;
-    GoRouter.of(context)
-        .pushNamed(AppRoutes.incomingFilesRoute.name, extra: take());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_files.isEmpty) return; // drained by someone else in the meantime
+      final router = GoRouter.maybeOf(context);
+      if (router == null) return;
+      router.pushNamed(AppRoutes.incomingFilesRoute.name, extra: take());
+    });
   }
 }

@@ -65,10 +65,10 @@ import 'package:pdf_craft/singletons/file_store.dart';
 import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/utils/storage_permissions.dart';
 import 'package:pdf_craft/utils/http_states.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/utils/output_filename.dart';
+import 'package:pdf_craft/utils/processed_dirs.dart';
 import 'package:flutter/material.dart' show Colors;
 import '../../models/http_state.dart';
 part 'pdf_event.dart';
@@ -576,9 +576,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
       LoggerSingleton().logger.w('Public save failed, falling back to app storage: $e', stackTrace: st);
     }
 
-    final fallbackDir =
-        Directory('${(await getApplicationDocumentsDirectory()).path}/processed');
-    final saved = await _writeTo(fallbackDir, suggested, fileRes.data!);
+    final saved = await _writeTo(await ProcessedDirs.appPrivate(), suggested, fileRes.data!);
     // Said plainly, because the file is somewhere the user did not choose and would not find.
     NotificationService.showSnackbar(
         text: L10n.current.errSavedToAppStorage, color: Colors.orange);
