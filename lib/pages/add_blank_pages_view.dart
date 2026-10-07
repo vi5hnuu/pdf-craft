@@ -12,6 +12,8 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/utils/page_range.dart';
+import 'package:pdfx/pdfx.dart';
 
 class AddBlankPagesView extends StatefulWidget {
   final File file;
@@ -32,11 +34,28 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
   double _pageWidth  = 595;
   double _pageHeight = 842;
 
+
+  /// 0 until known — the validator reads that as "length unknown" and skips the range check
+  /// rather than blocking input it cannot judge.
+  int _pageCount = 0;
+
+  Future<void> _loadPageCount() async {
+    try {
+      final doc = await PdfDocument.openFile(widget.file.path);
+      final count = doc.pagesCount;
+      await doc.close();
+      if (mounted) setState(() => _pageCount = count);
+    } catch (_) {
+      // Left at 0; the run itself still reports a real failure.
+    }
+  }
+
   @override
   void initState() {
     AdsSingleton().dispatch(LoadInterstitialAd());
     super.initState();
     resetToolState([HttpStates.addBlankPages]);
+    _loadPageCount();
   }
 
   @override
@@ -134,6 +153,17 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
     final positions = _parsePositions();
     if (positions.isEmpty) {
       NotificationService.showSnackbar(text: L10n.current.enterPagePosition, color: Colors.orange);
+      return;
+    }
+    // "2, abc, 99" on a three-page document used to insert a single blank and drop the other two
+    // requests without a word — the output had four pages and the user had asked for six.
+    // Proven on device. A typo or an impossible position is now said out loud instead.
+    final positionError = pageRangeMessage(
+      validatePositions(text: _positionsC.text, pageCount: _pageCount),
+      _pageCount,
+    );
+    if (positionError != null) {
+      NotificationService.showSnackbar(text: positionError, color: Colors.orange);
       return;
     }
     final uploadFile = await MultipartFile.fromFile(widget.file.path);

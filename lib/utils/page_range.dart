@@ -81,3 +81,20 @@ String? pageRangeMessage(PageRangeError? error, int pageCount) => switch (error)
       PageRangeError.beyondDocument => L10n.current.errPageBeyondDocument(pageCount),
       PageRangeError.backwards => L10n.current.errPageRangeBackwards,
     };
+
+/// What is wrong with a comma-separated list of insertion positions, or null when it is usable.
+///
+/// Positions are 1-based and mean "before this page", so [pageCount] + 1 is legitimate: it
+/// appends after the last page. Anything else is refused rather than quietly dropped — typing
+/// "2, abc, 99" on a three-page document used to insert one blank and discard the other two
+/// requests without a word, so the user believed they had three.
+PageRangeError? validatePositions({required String text, required int pageCount}) {
+  final parts = text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty);
+  if (parts.isEmpty) return null; // "nothing entered" is the caller's own check
+  for (final part in parts) {
+    final n = int.tryParse(part);
+    if (n == null || n < 1) return PageRangeError.notANumber;
+    if (pageCount > 0 && n > pageCount + 1) return PageRangeError.beyondDocument;
+  }
+  return null;
+}

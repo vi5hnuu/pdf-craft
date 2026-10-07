@@ -67,4 +67,33 @@ void main() {
       expect(resolvePageRange(from: '1', to: '99', pageCount: 3).toIndex, 2);
     });
   });
+
+  group('validatePositions', () {
+    test('accepts a list of real positions', () {
+      expect(validatePositions(text: '1,2,3', pageCount: 3), isNull);
+    });
+
+    test('accepts one past the end, which means "append"', () {
+      expect(validatePositions(text: '4', pageCount: 3), isNull);
+    });
+
+    test('refuses a position past that', () {
+      expect(validatePositions(text: '99', pageCount: 3), PageRangeError.beyondDocument);
+      expect(validatePositions(text: '2,99', pageCount: 3), PageRangeError.beyondDocument);
+    });
+
+    test('refuses a typo instead of dropping it', () {
+      // "2, abc, 99" used to insert one blank and silently discard the other two requests.
+      expect(validatePositions(text: '2,abc,99', pageCount: 3), PageRangeError.notANumber);
+      expect(validatePositions(text: '0', pageCount: 3), PageRangeError.notANumber);
+    });
+
+    test('ignores stray separators and whitespace', () {
+      expect(validatePositions(text: ' 1 , 2 , ', pageCount: 3), isNull);
+    });
+
+    test('an empty list is the caller\'s business, not an error here', () {
+      expect(validatePositions(text: '', pageCount: 3), isNull);
+    });
+  });
 }
