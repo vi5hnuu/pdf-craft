@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
+import 'package:pdf_craft/singletons/notification_service.dart';
 
 class CropPdfView extends StatefulWidget {
   final File file;
@@ -382,6 +383,19 @@ class _CropPdfViewState extends State<CropPdfView>
   }
 
   void _onCrop() async {
+    // All four handles start at zero, so opening this screen and pressing Crop sends a
+    // full-page crop. Proven on device: the balance went 2 -> 1 and the CropBox came back as
+    // the untouched A4 page. Below a thousandth of the page is under a point on A4 — no drag
+    // lands there, and nothing the server could do with it would be visible.
+    const noTrim = 0.001;
+    if (_cropTop < noTrim &&
+        _cropBottom < noTrim &&
+        _cropLeft < noTrim &&
+        _cropRight < noTrim) {
+      NotificationService.showSnackbar(
+          text: L10n.current.errCropNothingToTrim, color: Colors.orange);
+      return;
+    }
     final uploadFile = await MultipartFile.fromFile(widget.file.path);
     if (!mounted) return;
     runTool((cancelToken) => CropPdfEvent(

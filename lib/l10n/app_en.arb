@@ -28,6 +28,7 @@
   "actionSearch": "Search",
   "actionSettings": "Settings",
   "errSomethingWrong": "Something went wrong",
+  "errCropNothingToTrim": "Drag a handle inward first — nothing is being trimmed, so this would return the same file.",
   "errHeaderFooterEmpty": "Add a header or a footer first — otherwise this would return the same file.",
   "errPageNotANumber": "Enter a page number, like 1.",
   "errPageBeyondDocument": "{count, plural, =1{This document has only 1 page.} other{This document has only {count} pages.}}",
