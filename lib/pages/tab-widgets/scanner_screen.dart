@@ -24,6 +24,7 @@ import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:pdf_craft/widgets/processing_overlay.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/broken_image.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -284,7 +285,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 fit: BoxFit.contain,
                 errorBuilder: BrokenImage.builder,
                 // Scanned pages come off the camera at full sensor resolution.
-                cacheWidth: (MediaQuery.sizeOf(context).width *
+                cacheWidth: (toolContentWidthOf(context) *
                         MediaQuery.devicePixelRatioOf(context))
                     .round(),
               ),

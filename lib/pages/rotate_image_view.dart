@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/broken_image.dart';
 import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 /// Rotate Image: rotates a picture in 90° steps.
 class RotateImageView extends StatefulWidget {
@@ -64,7 +65,7 @@ class _RotateImageViewState extends State<RotateImageView>
                             fit: BoxFit.contain,
                             errorBuilder: BrokenImage.builder,
                             // The source is a user's photo, often far larger than this preview.
-                            cacheWidth: (MediaQuery.sizeOf(context).width *
+                            cacheWidth: (toolContentWidthOf(context) *
                                     MediaQuery.devicePixelRatioOf(context))
                                 .round(),
                           ),

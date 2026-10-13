@@ -30,6 +30,19 @@ WindowSize windowSizeFor(double width) {
   return WindowSize.compact;
 }
 
+/// Width a tool screen's content actually occupies — the window, capped where [kMaxToolContentWidth]
+/// caps it.
+///
+/// For sizing a bitmap, where reading the window would over-measure: inside a constrained pane a
+/// render bounded by screen width is decoded several times larger than it is drawn. Prefer
+/// `LayoutBuilder` constraints when the call site is in `build`; this is for the ones that are not,
+/// such as an async render that needs the figure before layout.
+double toolContentWidthOf(BuildContext context) {
+  final width = MediaQuery.sizeOf(context).width;
+  if (windowSizeFor(width) == WindowSize.compact) return width;
+  return width < kMaxToolContentWidth ? width : kMaxToolContentWidth;
+}
+
 /// Whether the device is tablet-shaped, independent of the current window.
 ///
 /// Shortest side, so it does not flip with rotation or split-screen. Read from

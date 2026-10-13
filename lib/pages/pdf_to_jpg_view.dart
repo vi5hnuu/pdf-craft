@@ -18,6 +18,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
 import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class PdfToJpgView extends StatefulWidget {
   final File file;
@@ -190,7 +191,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
         asset,
         fit: BoxFit.fitWidth,
         cacheWidth:
-            (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
+            (toolContentWidthOf(context) * MediaQuery.devicePixelRatioOf(context)).round(),
       );
 
   void _onPdfToJpf() async {

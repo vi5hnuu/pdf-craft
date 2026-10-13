@@ -1,6 +1,7 @@
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -74,7 +75,7 @@ class _PdfCompareViewState extends State<PdfCompareView> {
     // fitted, in one Stack — at 2x an A4 page that was two 1190x1684 bitmaps resident at once,
     // about 16 MB, to fill a phone-width box. 2x the *display* width still leaves plenty to
     // pinch into.
-    final target = MediaQuery.sizeOf(context).width * 2;
+    final target = toolContentWidthOf(context) * 2;
     try {
       final page1 = await _doc1!.getPage(_currentPage);
       final page2 = await _doc2!.getPage(_currentPage);
@@ -188,7 +189,7 @@ class _PdfCompareViewState extends State<PdfCompareView> {
 
   /// Physical pixels the overlay occupies across the screen's width.
   static int _displayPx(BuildContext context) =>
-      (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round();
+      (toolContentWidthOf(context) * MediaQuery.devicePixelRatioOf(context)).round();
 
   Widget _fileLabel(ThemeData theme, String name) {
     return Container(

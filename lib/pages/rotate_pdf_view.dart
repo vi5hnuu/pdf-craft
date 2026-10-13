@@ -17,6 +17,7 @@ import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/debouncer.dart';
 import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class Thumbnail {
   bool? isLoading;
@@ -99,7 +100,6 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   @override
   Widget build(BuildContext context) {
-    final md = MediaQuery.of(context);
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
 
@@ -282,7 +282,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
                             ...List.generate(thumbnails.length, (index) {
                               final pNo = _pageIndexes[index] + 1;
                               final thumbnail = thumbnails[pNo];
-                              final thumbW = md.size.width * 0.42;
+                              final thumbW = toolContentWidthOf(context) * 0.42;
                               final thumbH = thumbW * 1.37;
                               return Padding(
                                 key: ValueKey('page-$pNo'),
