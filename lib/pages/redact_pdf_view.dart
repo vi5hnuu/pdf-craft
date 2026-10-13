@@ -375,25 +375,18 @@ class _RedactBox extends StatelessWidget {
             Positioned(
               top: -12,
               right: -12,
-              // The visible dot stays 24px; the *target* around it is 44. A handle has to look
-              // small to leave the page visible, which is not a reason for it to be hard to
-              // hit — the annotate editor already separates the two this way.
+              // Deliberately still 24px, not the 48dp guidance. These handles sit *on* the
+              // region they manipulate, and _minSize is 12dp — a 44dp target covers a small box
+              // entirely, so the box's own drag can no longer be hit and a tap meant to move it
+              // deletes it instead. A target larger than the object it acts on is the wrong
+              // trade in a direct-manipulation canvas.
               child: GestureDetector(
                 onTap: onDelete,
-                behavior: HitTestBehavior.opaque,
-                child: const SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: Center(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Icon(Icons.close, color: Colors.white, size: 14),
-                      ),
-                    ),
-                  ),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  child: const Icon(Icons.close, color: Colors.white, size: 14),
                 ),
               ),
             ),
@@ -409,12 +402,7 @@ class _RedactBox extends StatelessWidget {
                   region.rect = Rect.fromLTWH(r.left, r.top, nw, nh);
                   onChanged();
                 },
-                // Same again: a 44px drag target around a 22px dot.
                 child: Container(
-                  width: 44,
-                  height: 44,
-                  alignment: Alignment.center,
-                  child: Container(
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
@@ -423,7 +411,6 @@ class _RedactBox extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: const Icon(Icons.open_in_full, color: Colors.white, size: 11),
-                  ),
                 ),
               ),
             ),

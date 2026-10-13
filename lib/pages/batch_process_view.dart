@@ -309,12 +309,21 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     if (_cancelToken != null && !_cancelToken!.isCancelled) {
       _cancelToken!.cancel('cancelled-by-user');
     }
-    if (mounted) {
-      setState(() {
-        _running = false;
-        _finished = true;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _running = false;
+      _finished = true;
+      // The in-flight row is marked here, not by the bloc listener: PdfBloc maps a cancelled
+      // request back to *idle*, and listenWhen only fires on done or error — so nothing would
+      // ever clear this row and it kept its spinner until the next run.
+      if (_currentIndex >= 0 && _currentIndex < _items.length) {
+        final item = _items[_currentIndex];
+        if (item.status == _FileStatus.processing) {
+          item.status = _FileStatus.error;
+          item.errorMsg = L10n.current.cancelled;
+        }
+      }
+    });
   }
 
   // Called by BlocListener when the current tool's state changes to done/error.

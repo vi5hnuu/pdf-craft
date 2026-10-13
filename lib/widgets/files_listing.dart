@@ -31,6 +31,13 @@ class _FilesListingState extends State<FilesListing> {
   /// one pane, so widening again restores it — a resize should not navigate anywhere by itself.
   String? _previewPath;
 
+  /// Whether the preview pane is actually on screen, as opposed to merely remembered.
+  ///
+  /// The selection survives a narrowing so widening restores it, which means _previewPath can be
+  /// set while only the list is rendered. Back must not be intercepted then: there is nothing
+  /// visible to close, and swallowing the press made the user press twice to leave the folder.
+  bool _previewVisible = false;
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<FilesBloc, FilesState>(
@@ -54,7 +61,7 @@ class _FilesListingState extends State<FilesListing> {
       // was pushed, so without this the first back would exit the directory while a document
       // was still on show.
       child: PopScope(
-        canPop: _previewPath == null,
+        canPop: !_previewVisible,
         onPopInvokedWithResult: (didPop, _) {
           if (!didPop) setState(() => _previewPath = null);
         },
@@ -64,10 +71,19 @@ class _FilesListingState extends State<FilesListing> {
               // The pane's own width, not the window's: beside a navigation rail this is about
               // 80dp narrower, which is enough to change the answer.
               child: LayoutBuilder(
-                builder: (context, constraints) =>
-                    windowSizeFor(constraints.maxWidth) == WindowSize.expanded
-                        ? _twoPane(context)
-                        : _listing(context),
+                builder: (context, constraints) {
+                  final twoPane =
+                      windowSizeFor(constraints.maxWidth) == WindowSize.expanded;
+                  final showingPreview = twoPane && _previewPath != null;
+                  if (showingPreview != _previewVisible) {
+                    // After the frame: this runs during layout, and PopScope only needs the
+                    // new value from the next press onwards.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) setState(() => _previewVisible = showingPreview);
+                    });
+                  }
+                  return twoPane ? _twoPane(context) : _listing(context);
+                },
               ),
             ),
             const BannerAdd(),
