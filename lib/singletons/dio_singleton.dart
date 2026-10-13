@@ -69,7 +69,12 @@ class DioSingleton {
       onError: (DioException e, handler) async {
         // On a 401, refresh the token once and transparently retry the request.
         if (e.response?.statusCode == 401 && e.requestOptions.extra['__retried'] != true) {
-          final newToken = await AuthService().refreshAccessToken();
+          // Deliberately not refreshAccessToken(): that falls back to creating a guest, and
+          // replaying this request under a different account would run it as someone the user
+          // never signed in as — and be charged again, since the server dedupes on
+          // (userId, idempotencyKey). Null here means the identity could not be kept, so the
+          // 401 is passed through instead.
+          final newToken = await AuthService().refreshForSameIdentity();
           if (newToken != null) {
             try {
               final req = e.requestOptions;
@@ -82,6 +87,14 @@ class DioSingleton {
               }
               final response = await dio.fetch(req);
               return handler.resolve(response);
+            } on DioException catch (retryErr) {
+              LoggerSingleton().logger.w('Retry after refresh failed: $retryErr');
+              CrashReporter().recordNonFatal(retryErr, StackTrace.current,
+                  reason: 'Retry after token refresh failed');
+              // Report what actually went wrong on the retry. Falling through to the original
+              // 401 told the caller only that a token had expired, which by then had been
+              // handled and said nothing about why the second attempt failed.
+              return handler.next(retryErr);
             } catch (retryErr) {
               LoggerSingleton().logger.w('Retry after refresh failed: $retryErr');
               CrashReporter().recordNonFatal(retryErr, StackTrace.current,

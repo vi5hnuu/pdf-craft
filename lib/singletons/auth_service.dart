@@ -30,7 +30,7 @@ class AuthService extends ChangeNotifier {
 
   AuthUser? _user;
   String? _accessToken; // in-memory copy for the sync interceptor read
-  Future<String?>? _inFlightRefresh; // single-flight guard
+  Future<_RefreshOutcome>? _inFlightRefresh; // single-flight guard
   Future<void>? _bootstrapping; // single-flight guard for bootstrap()
   bool _sessionExpired = false; // a full account's session just expired
 
@@ -284,26 +284,46 @@ class AuthService extends ChangeNotifier {
 
   // ── Token refresh (called by the Dio interceptor on 401) ───────────────────────
 
-  /// Refreshes the access token, single-flighted so concurrent 401s share one call.
-  /// Falls back to a new guest session if the refresh token is invalid/expired.
-  Future<String?> refreshAccessToken() {
+  /// Any usable access token, single-flighted so concurrent 401s share one call.
+  ///
+  /// Creates a guest session when the stored one is gone, so becoming a guest counts as
+  /// success here. That is what session bootstrap wants; a caller about to **retry** a
+  /// request must use [refreshForSameIdentity] instead.
+  Future<String?> refreshAccessToken() async => (await _sharedRefresh()).token;
+
+  /// A token for the identity the caller already had, or null if it could not be kept.
+  ///
+  /// Returns null when the stored refresh token was rejected and we fell back to a fresh
+  /// guest, and when the refresh could not be completed at all. Replaying a request with a
+  /// different account's token runs paid work as someone the user never signed in as, and
+  /// the server's idempotency key is (userId, idempotencyKey) — so a replay under a new id
+  /// is charged a second time rather than deduplicated.
+  Future<String?> refreshForSameIdentity() async {
+    final outcome = await _sharedRefresh();
+    return outcome.sameIdentity ? outcome.token : null;
+  }
+
+  Future<_RefreshOutcome> _sharedRefresh() {
     return _inFlightRefresh ??= _doRefresh().whenComplete(() => _inFlightRefresh = null);
   }
 
-  Future<String?> _doRefresh() async {
+  Future<_RefreshOutcome> _doRefresh() async {
     final refresh = await _storage.refreshToken;
     if (refresh == null) {
       await _createGuest();
-      return _accessToken;
+      return _RefreshOutcome(_accessToken, sameIdentity: false);
     }
     // Remember whether a *full* account is expiring, before we overwrite _user.
     final wasFull = _user != null && !_user!.isGuest;
     try {
       final data = await _api.refresh(refresh);
       await _applyTokens(data);
-      return _accessToken;
-    } catch (e) {
-      LoggerSingleton().logger.w('Refresh failed, falling back to guest: $e');
+      return _RefreshOutcome(_accessToken, sameIdentity: true);
+    } on AuthException catch (e) {
+      if (e.statusCode != 401 && e.statusCode != 403) {
+        return _keepSession(e);
+      }
+      LoggerSingleton().logger.w('Refresh token rejected, falling back to guest: $e');
       await _storage.clear();
       await _createGuest(); // keep the app usable
       // A real account just lost its session — flag it so the UI can offer to sign in
@@ -312,8 +332,25 @@ class AuthService extends ChangeNotifier {
         _sessionExpired = true;
         notifyListeners();
       }
-      return _accessToken;
+      return _RefreshOutcome(_accessToken, sameIdentity: false);
+    } catch (e) {
+      // Anything that is not the server rejecting the token — a malformed response, say — is
+      // treated as transient for the same reason.
+      return _keepSession(e);
     }
+  }
+
+  /// Leaves the stored session untouched after a refresh that failed for a reason other than
+  /// the server rejecting the token.
+  ///
+  /// Only a 401/403 means the refresh token is actually dead. This used to catch everything
+  /// and clear storage, so a timeout, an unreachable server or a 5xx threw away a perfectly
+  /// valid refresh token and dropped the user to a new guest — a brief backend blip signed a
+  /// real account out permanently, and they had to know their password to get back in. Keeping
+  /// the token means the next request simply refreshes again and recovers on its own.
+  _RefreshOutcome _keepSession(Object error) {
+    LoggerSingleton().logger.w('Refresh could not be completed, keeping the session: $error');
+    return const _RefreshOutcome(null, sameIdentity: false);
   }
 
   // ── shared ──────────────────────────────────────────────────────────────────
@@ -327,4 +364,15 @@ class AuthService extends ChangeNotifier {
         accessToken: access, refreshToken: refresh, userJson: jsonEncode(_user!.toJson()));
     notifyListeners();
   }
+}
+
+/// Result of a token refresh: the token now usable, and whether it still belongs to the
+/// identity the caller started with.
+///
+/// The two are separate because "we have a token" and "we have *your* token" have different
+/// correct answers — bootstrap is happy with a fresh guest, a request retry is not.
+class _RefreshOutcome {
+  final String? token;
+  final bool sameIdentity;
+  const _RefreshOutcome(this.token, {required this.sameIdentity});
 }
