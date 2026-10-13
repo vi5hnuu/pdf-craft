@@ -18,7 +18,10 @@ class ProtectPdf {
         'out_file_name':outFileName,
         'owner_password':ownerPassword,
         'user_password':userPassword,
-        'user_access_permissions':userAccessPermissions.map((perm)=>perm.bit).toList(),
+        // Names, not PDF bits. Sent as bits, Jackson read them as ordinals: 9-12 were out of
+        // range and failed, while 0 and 3-6 were valid indices and silently selected a
+        // *different* permission than the user picked.
+        'user_access_permissions':userAccessPermissions.map((perm)=>perm.name).toList(),
       }),contentType: DioMediaType.parse("application/json")),
     'file':file,
     };

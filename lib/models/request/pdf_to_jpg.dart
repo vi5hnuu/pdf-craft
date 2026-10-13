@@ -42,7 +42,10 @@ class PdfToJpgMeta{
   Map<String,dynamic> toJson() {
     return {
       "out_file_name":outFileName,
-      "quality":quality.dpi,
+      // The name, not the DPI: the API binds this to an enum and Jackson reads an integer as
+      // an ordinal, so 72/150/300 were all out of range and every request was a 400 before
+      // the controller ran. The DPI is still what the UI works in.
+      "quality":quality.name,
       "single":single,
       "direction":direction?.direction,
       "image_gap":imageGap,

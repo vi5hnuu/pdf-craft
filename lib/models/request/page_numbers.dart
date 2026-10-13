@@ -38,7 +38,9 @@ class PageNumbers {
       "page-numbers-info":MultipartFile.fromString(
         jsonEncode({
           "out_file_name":outFileName,
-          "page_no_type":pageNoType.type,
+          // The constant name, not the label: Jackson matches names case-sensitively, so "X"
+          // and "page_X_of_Y" never matched and every request was a 400.
+          "page_no_type":pageNoType.name,
           "size":size,
           "fill_color":fillColor.toJson(),
           "vertical_position":verticalPosition.position,

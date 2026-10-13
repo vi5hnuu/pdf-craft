@@ -5,7 +5,10 @@ class MergePdf {
   final String outFileName;
   final List<MultipartFile> files;
 
-  MergePdf({required this.outFileName, required this.files}) : assert(files.isNotEmpty);
+  /// Two files minimum, matching the server's @ValidateUpload(minFiles = 2). Asserting only
+  /// non-empty let a one-file merge upload and come back as an opaque 400.
+  MergePdf({required this.outFileName, required this.files})
+      : assert(files.length >= 2, 'merge needs at least two files');
 
   Map<String, dynamic> toJson() {
     return {
