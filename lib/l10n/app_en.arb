@@ -580,6 +580,8 @@
     }
   },
   "gateNotEnough": "Not enough credits for this tool.",
+  "gatePriceUnknown": "This tool may use credits. The price could not be checked just now.",
+  "gateContinue": "Continue",
   "gateGetCredits": "Get credits",
   "gateUse": "Use {count}",
   "@gateUse": {

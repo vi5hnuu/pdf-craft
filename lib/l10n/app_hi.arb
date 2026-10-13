@@ -413,6 +413,8 @@
   "gateLargerFiles": "बड़ी फ़ाइलों पर ज़्यादा क्रेडिट लग सकते हैं।",
   "gateBalance": "आपका बैलेंस: {count}",
   "gateNotEnough": "इस टूल के लिए क्रेडिट कम हैं।",
+  "gatePriceUnknown": "इस टूल में क्रेडिट लग सकते हैं। क़ीमत अभी जाँची नहीं जा सकी।",
+  "gateContinue": "जारी रखें",
   "gateGetCredits": "क्रेडिट पाएँ",
   "gateUse": "{count} इस्तेमाल करें",
   "uploadTooLargeTitle": "फ़ाइल बहुत बड़ी है",

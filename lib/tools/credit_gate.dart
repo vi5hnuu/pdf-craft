@@ -45,6 +45,16 @@ class CreditGate {
       return true;
     }
 
+    // An empty pricing table prices every tool at 0, which this gate used to read as "free"
+    // and wave straight through — so on a cold start, where /credits/costs races the guest
+    // token and often 401s, the user was never told a tool costs credits while the server
+    // charged anyway. Fetch it before deciding, and if it still cannot be had, say so.
+    final priceKnown = await CreditService().ensureCostsLoaded();
+    if (!context.mounted) return false;
+    if (!priceKnown) {
+      return _confirmUnknownPrice(context, toolName: toolName, proceed: proceed);
+    }
+
     final int sizeBytes = UploadLimits.totalBytes(files);
     final cost = sizeBytes > 0
         ? CreditService().costForSize(creditToolId, sizeBytes)
@@ -160,6 +170,53 @@ class CreditGate {
     if (host == null) return false;
     // The lint cannot see that `host` was resolved *after* the await rather than captured
     // before it; a GlobalKey's currentContext is null when unmounted, and that is checked above.
+    // ignore: use_build_context_synchronously
+    proceed(host);
+    return true;
+  }
+
+  /// Confirms a run whose price could not be fetched.
+  ///
+  /// Deliberately does not guess a number. The server charges whatever it charges and answers
+  /// 402 when the balance will not cover it, so the honest thing is to say the price is unknown,
+  /// show the balance, and let the user decide — rather than implying "free", which is what an
+  /// empty pricing table used to do.
+  static Future<bool> _confirmUnknownPrice(
+    BuildContext context, {
+    required String toolName,
+    required void Function(BuildContext routeContext) proceed,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(toolName),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(L10n.of(ctx).gatePriceUnknown),
+            const SizedBox(height: 8),
+            Text(L10n.of(ctx).gateBalance(CreditService().balance)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.of(ctx).cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.of(ctx).gateContinue),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return false;
+    // Same reasoning as run(): resolve the host after the await rather than trusting the
+    // caller's element, which is frequently gone by now. The lint cannot see that, and the
+    // GlobalKey's currentContext is null when unmounted, which is checked above.
+    final host = rootNavigatorKey.currentContext;
+    if (host == null) return false;
     // ignore: use_build_context_synchronously
     proceed(host);
     return true;
