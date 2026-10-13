@@ -34,12 +34,7 @@ class TokenStorage {
   Future<String?> get refreshToken => _read(_kRefresh);
   Future<String?> get userJson => _read(_kUser);
 
-  Future<void> updateAccessToken(String accessToken) => _write(_kAccess, accessToken);
 
-  Future<void> updateTokens(String accessToken, String refreshToken) async {
-    await _write(_kAccess, accessToken);
-    await _write(_kRefresh, refreshToken);
-  }
 
   Future<void> saveUser(String userJson) => _write(_kUser, userJson);
 

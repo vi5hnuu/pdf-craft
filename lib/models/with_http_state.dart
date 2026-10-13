@@ -1,56 +1,19 @@
 import 'package:pdf_craft/models/http_state.dart';
-import 'package:pdf_craft/singletons/logger_singleton.dart';
 
-mixin WithHttpState{
-  final Map<String, HttpState> httpStates={};
+/// Per-key request state carried by a bloc state.
+///
+/// Trimmed to what is used. It previously carried isDone, anyLoading, anyError, getAnyError,
+/// isError, hasHttpState and printStates as well — seven members with no callers anywhere,
+/// which made the surface look like a general-purpose API when two accessors are what the
+/// screens actually read.
+mixin WithHttpState {
+  final Map<String, HttpState> httpStates = {};
 
-  bool isLoading({required final String forr}){
+  bool isLoading({required final String forr}) {
     return httpStates.containsKey(forr) && httpStates[forr]!.loading;
   }
 
-  bool isDone({required final String forr}){
-    return httpStates[forr]?.done==true;
-  }
-
-  bool anyLoading({List<String> forr=const []}){
-    if(forr.isEmpty) forr=httpStates.keys.toList();
-    for(final key in forr){
-      if(httpStates.containsKey(key) && httpStates[key]!.loading) return true;
-    }
-    return false;
-  }
-
-  bool anyError({List<String> forr=const []}){
-    if(forr.isEmpty) forr=httpStates.keys.toList();
-    for(final key in forr){
-      if(httpStates[key]?.error!=null) return true;
-    }
-    return false;
-  }
-
-  String? getAnyError({List<String> forr=const []}){
-    if(forr.isEmpty) forr=httpStates.keys.toList();
-        for(final key in forr){
-      if(httpStates[key]?.error!=null) return httpStates[key]?.error;
-    }
-    return null;
-  }
-
-  bool isError({required final String forr}){
-    return httpStates.containsKey(forr) && httpStates[forr]!.error!=null;
-  }
-
-  String? getError({required final String forr}){
+  String? getError({required final String forr}) {
     return httpStates[forr]?.error;
-  }
-
-  bool hasHttpState({required final String forr}){
-    return httpStates[forr]!=null;
-  }
-
-  printStates(){
-    for(final kv in httpStates.entries){
-      LoggerSingleton().logger.d("http state ${kv.key} --> ${kv.value.error}/${kv.value.loading}");
-    }
   }
 }

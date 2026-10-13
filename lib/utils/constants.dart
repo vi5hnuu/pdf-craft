@@ -60,7 +60,6 @@ class Constants {
   static const String termsUrl = "https://legal.laxmi.solutions/pdf-craft/terms-of-service";
   static const String privacyUrl = "https://legal.laxmi.solutions/pdf-craft/privacy-policy";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";
-  static const String binDirPath = "storage/emulated/0/ilvPdfBin";
   static const String rootStoragePath = "storage/emulated/0";
   static const String downloadsStoragePath =
       '${Constants.rootStoragePath}/Download';

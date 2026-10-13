@@ -62,9 +62,6 @@ class GoogleAccount {
     return _client.signInSilently().then((a) => a ?? _client.signIn());
   }
 
-  /// Interactive sign-in that always shows the picker.
-  Future<GoogleSignInAccount?> switchAccount() => signIn(forcePicker: true);
-
   Future<void> signOut() async {
     try {
       await _client.signOut();

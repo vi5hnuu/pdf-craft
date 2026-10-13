@@ -8,6 +8,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/http_state.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
@@ -42,7 +43,13 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
   /// request can be cancelled from the overlay.
   void runTool(PdfEvent Function(CancelToken cancelToken) build) {
     _cancelToken = CancelToken();
-    pdfBloc.add(build(_cancelToken!));
+    final event = build(_cancelToken!);
+    // A breadcrumb, so a crash report says which tool the user was running. CrashReporter.log
+    // was written for this and had no callers at all, which left every report with no trail
+    // leading up to it. The event's runtime type is safe to disclose — it is our own class
+    // name, never a filename or anything the user typed.
+    CrashReporter().log('runTool ${event.runtimeType}');
+    pdfBloc.add(event);
   }
 
   /// Reads [source] for upload, or says why it cannot be read and returns null.

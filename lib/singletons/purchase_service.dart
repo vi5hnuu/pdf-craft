@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
@@ -137,6 +138,8 @@ class PurchaseService extends ChangeNotifier {
 
   /// Verifies the purchase server-side and, only on success, finalizes (consumes) it.
   Future<void> _deliverAndFinalize(PurchaseDetails p) async {
+    // Breadcrumbs only — product id and status, never the purchase token.
+    CrashReporter().log('purchase deliver ${p.productID} ${p.status.name}');
     try {
       final credited = await CreditService()
           .redeemPurchase(p.verificationData.serverVerificationData, p.productID);
@@ -148,6 +151,7 @@ class PurchaseService extends ChangeNotifier {
       // Transient/verification failure — DO NOT finalize. Play will redeliver it and we
       // retry on the next update/launch, so the user isn't charged without credits.
       LoggerSingleton().logger.w('Purchase verification deferred (will retry): $e');
+      CrashReporter().log('purchase deferred ${p.productID}');
       NotificationService.showSnackbar(
           text: L10n.current.purchaseVerifying, color: Colors.orange);
     }
