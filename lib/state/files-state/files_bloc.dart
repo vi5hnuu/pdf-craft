@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:pdf_craft/utils/output_filename.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/extensions/map_entensions.dart';
 import 'package:pdf_craft/models/with_http_state.dart';
@@ -138,8 +139,22 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       if (directory.existsSync() == false) {
         throw Exception(L10n.current.filesInvalidDirectory);
       }
-      return directory.listSync(followLinks: false)..removeWhere((fileEntity)=>(fileEntity is Directory) && Constants.excludedPaths.contains(fileEntity.path));
+      // list(), not listSync(): this enumerates an arbitrary device folder — the storage root,
+      // DCIM, Download — and blocking the UI thread on it is what made opening a large folder
+      // feel like a freeze.
+      final entities = await directory.list(followLinks: false).toList();
+      entities.removeWhere((fileEntity) =>
+          (fileEntity is Directory) && Constants.excludedPaths.contains(fileEntity.path));
+      return entities;
+    } on Exception catch (e) {
+      // Rethrown rather than flattened. The three throws above name a specific, actionable
+      // cause — permission denied, or not a directory — and the blanket catch replaced every
+      // one of them with "could not load files", so the user was never told it was a
+      // permission problem they could actually fix.
+      LoggerSingleton().logger.w('Listing ${Redact.path(path)} failed: $e');
+      rethrow;
     } catch (e) {
+      LoggerSingleton().logger.w('Listing ${Redact.path(path)} failed: $e');
       throw Exception(L10n.current.filesLoadFailed);
     }
   }
@@ -169,8 +184,11 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             yield* searchFiles(entity.path, userInput);
           }
         } on FileSystemException catch (e) {
+          // continue, not return: `return` ended the generator for this directory, so one
+          // unreadable entry abandoned the rest of the folder — and, through the recursion,
+          // everything below it.
           LoggerSingleton().logger.w("Failed to access ${Redact.path(entity.path)}: $e");
-          return;
+          continue;
         }
       }
     } else {
@@ -189,10 +207,11 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       throw Exception(L10n.current.filesNotInSource);
     }
 
-    // Construct the new file path
-    String newFilePath = "${directoryTo.path}/${file.path.split('/').last}";
+    // uniquePath, not a bare join: renameSync silently clobbers a file of the same name at the
+    // destination, so moving report.pdf into a folder that already had one destroyed the
+    // original. The helper is what _writeTo in PdfBloc already uses for exactly this.
+    final newFilePath = uniquePath(directoryTo.path, Utility.fileName(file: file));
 
-    // Move the file
     try {
       file.renameSync(newFilePath);
     } catch (e) {

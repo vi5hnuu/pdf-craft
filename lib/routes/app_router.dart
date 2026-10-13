@@ -133,6 +133,25 @@ String? _requireImagePlacement(BuildContext context, GoRouterState state) {
 String? _requireSelectionConfig(BuildContext context, GoRouterState state) =>
     state.extra is FileSelectionConfig ? null : AppRoutes.errorRoute.path;
 
+/// Locations that must stay reachable without storage access.
+///
+/// The redirect used to exempt only splash, onboarding and the permission page, and sent
+/// *everything else* to the permission wall — including Credits, Account and sign-in. So a user
+/// who declined "All files access" could not reach their own account, and could not buy credits,
+/// on a screen that needs no file access at all. Splash, onboarding and the wall itself are here
+/// for the original reason: gating them sent brand-new users to the wall before the intro, and
+/// skipped the splash's ad initialisation.
+/// Built from the route definitions rather than written out, so renaming a path cannot leave a
+/// stale literal here and silently put Credits back behind the permission wall.
+final Set<String> storageNotRequiredPaths = {
+  AppRoutes.splashRoute.path,
+  AppRoutes.onboardingRoute.path,
+  AppRoutes.errorRoute.path,
+  AppRoutes.creditsRoute.path,
+  AppRoutes.authRoute.path,
+  AppRoutes.accountRoute.path,
+};
+
 final GoRouter appRouter = GoRouter(
     debugLogDiagnostics: true,
     navigatorKey: rootNavigatorKey, //navigator = 1
@@ -153,15 +172,8 @@ final GoRouter appRouter = GoRouter(
       if (state.uri.hasScheme) {
         return AppRoutes.splashRoute.path;
       }
-      // Splash, onboarding and the permission page itself never need storage access. Gating
-      // them sent brand-new users to the permission wall before they had seen the intro (and
-      // skipped the splash's ad initialisation).
       final path = state.matchedLocation;
-      if (path == AppRoutes.splashRoute.path ||
-          path == AppRoutes.onboardingRoute.path ||
-          path == AppRoutes.errorRoute.path) {
-        return null;
-      }
+      if (storageNotRequiredPaths.contains(path)) return null;
       final granted=await StoragePermissions.isStoragePermissionGranted();
       if(granted) return null;
       return AppRoutes.errorRoute.path;
