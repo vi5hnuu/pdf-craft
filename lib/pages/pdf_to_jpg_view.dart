@@ -146,9 +146,9 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
                               }))
                             ],
                           ),),
-                          if(!isSingle)Image.asset("assets/tools/image-group-zip.png",fit: BoxFit.fitWidth,),
-                          if(isSingle && direction==Direction.HORIZONTAL.direction)Image.asset("assets/tools/image-horizontal-list.png",fit: BoxFit.fitWidth,),
-                          if(isSingle && direction==Direction.VERTICAL.direction) Image.asset("assets/tools/image-vertical-list.png",fit: BoxFit.fitWidth,),
+                          if(!isSingle)_diagram(context, "assets/tools/image-group-zip.webp"),
+                          if(isSingle && direction==Direction.HORIZONTAL.direction)_diagram(context, "assets/tools/image-horizontal-list.webp"),
+                          if(isSingle && direction==Direction.VERTICAL.direction) _diagram(context, "assets/tools/image-vertical-list.webp"),
                         ],
                       ),
                     ),
@@ -180,6 +180,17 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
       },),
     );
   }
+
+  /// One of the three mode diagrams.
+  ///
+  /// cacheWidth bounds the decode: the source is 500x500 and this is drawn at the content
+  /// width, so without it Flutter held a full-size ARGB bitmap for each one it had shown.
+  Widget _diagram(BuildContext context, String asset) => Image.asset(
+        asset,
+        fit: BoxFit.fitWidth,
+        cacheWidth:
+            (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
+      );
 
   void _onPdfToJpf() async {
     final file = await readForUpload(widget.file);

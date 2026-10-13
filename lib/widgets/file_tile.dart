@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/favorites_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
@@ -98,10 +97,15 @@ class _FileTileState extends State<FileTile> {
   }
 
   /// Shown when a file type has no icon, or has one whose asset is missing.
-  Widget _genericIcon(Color primary) => FaIcon(
-        widget.file is Directory ? FontAwesomeIcons.solidFolder : FontAwesomeIcons.file,
+  ///
+  /// Material icons, not FontAwesome: these two glyphs are the only reason the solid and
+  /// regular FontAwesome families shipped at all (476 KB of font files between them), and the
+  /// bundled Material set already has both. Only the Google brand mark on the sign-in button
+  /// now needs FontAwesome, so one family ships instead of three.
+  Widget _genericIcon(Color primary) => Icon(
+        widget.file is Directory ? Icons.folder : Icons.insert_drive_file,
         color: primary,
-        size: 20,
+        size: 22,
       );
 
   @override

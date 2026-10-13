@@ -33,12 +33,12 @@ dependencies:
   # Localization (English + Hindi) — SDK packages, no extra download size.
   flutter_localizations:
     sdk: flutter
-  intl: any
+  # Pinned rather than `any`: flutter_localizations constrains it anyway, so `any` bought
+  # nothing while letting an SDK bump silently change DateFormat/NumberFormat behaviour
+  # with no pubspec change to notice.
+  intl: ^0.20.2
 
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
   pdfx: ^2.8.0
   google_mobile_ads: ^8.0.0
   rxdart: ^0.28.0
