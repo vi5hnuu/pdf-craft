@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Remove Metadata: strips identifying document info (title, author, creator,
 /// producer, dates) and any XMP metadata so the exported PDF carries no traces.
@@ -46,7 +47,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
     final stripped = _strippedItems(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'remove-metadata'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.removeMetadata] != c.httpStates[HttpStates.removeMetadata],
         listenWhen: (p, c) => p.httpStates[HttpStates.removeMetadata] != c.httpStates[HttpStates.removeMetadata],
         listener: (context, state) =>
@@ -117,7 +118,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
             processingOverlay(state.httpStates[HttpStates.removeMetadata], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

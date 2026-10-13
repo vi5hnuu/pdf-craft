@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Insert PDF into PDF: places one PDF inside another after a chosen page.
@@ -66,7 +67,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'insert-pdf'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.insertPdf] != c.httpStates[HttpStates.insertPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.insertPdf] != c.httpStates[HttpStates.insertPdf],
         listener: (context, state) =>
@@ -135,7 +136,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
             processingOverlay(state.httpStates[HttpStates.insertPdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

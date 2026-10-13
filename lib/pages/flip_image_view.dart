@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/broken_image.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Flip Image: mirrors a picture horizontally or vertically.
 class FlipImageView extends StatefulWidget {
@@ -38,7 +39,7 @@ class _FlipImageViewState extends State<FlipImageView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'img-flip'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.flipImage] != c.httpStates[HttpStates.flipImage],
         listenWhen: (p, c) => p.httpStates[HttpStates.flipImage] != c.httpStates[HttpStates.flipImage],
         listener: (context, state) => handleToolState(
@@ -117,7 +118,7 @@ class _FlipImageViewState extends State<FlipImageView>
             processingOverlay(state.httpStates[HttpStates.flipImage], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

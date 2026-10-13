@@ -15,6 +15,7 @@ import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Visual page organiser: drag to reorder and tap ✕ to delete pages on a single
 /// thumbnail list, then export. Commits via the existing reorder endpoint, whose
@@ -124,7 +125,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
             ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.organizePages] != c.httpStates[HttpStates.organizePages],
         buildWhen: (p, c) =>
@@ -154,7 +155,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
             processingOverlay(state.httpStates[HttpStates.organizePages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

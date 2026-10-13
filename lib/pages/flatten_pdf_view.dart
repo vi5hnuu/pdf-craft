@@ -12,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Flatten PDF. If the PDF already has fillable form fields, they're listed so
 /// the user can fill them and flatten in one step; otherwise it's a plain flatten.
@@ -50,7 +51,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'flatten'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.flattenPdf] != c.httpStates[HttpStates.flattenPdf] ||
             p.httpStates[HttpStates.fillFlatten] != c.httpStates[HttpStates.fillFlatten] ||
@@ -93,7 +94,7 @@ class _FlattenPdfViewState extends State<FlattenPdfView>
             ),
           ]);
         },
-      ),
+      )),
     );
   }
 

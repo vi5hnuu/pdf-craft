@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/page_selector_grid.dart';
 import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Extract Pages: pick the pages to keep and export a new PDF containing only
@@ -71,7 +72,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
                 onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.extractPages] != c.httpStates[HttpStates.extractPages],
         listenWhen: (p, c) =>
@@ -119,7 +120,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
                 label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

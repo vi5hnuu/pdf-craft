@@ -14,6 +14,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class NUpPdfView extends StatefulWidget {
   final File file;
@@ -46,7 +47,7 @@ class _NUpPdfViewState extends State<NUpPdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'n-up'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.nUpPdf] != c.httpStates[HttpStates.nUpPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.nUpPdf] != c.httpStates[HttpStates.nUpPdf],
         listener: (context, state) => handleToolState(
@@ -94,7 +95,7 @@ class _NUpPdfViewState extends State<NUpPdfView>
             processingOverlay(state.httpStates[HttpStates.nUpPdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

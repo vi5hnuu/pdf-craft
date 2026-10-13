@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Draw black redaction boxes over content, then **reposition, resize or delete
@@ -117,7 +118,7 @@ class _RedactPdfViewState extends State<RedactPdfView>
           ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listener: (context, state) => handleToolState(
@@ -142,7 +143,7 @@ class _RedactPdfViewState extends State<RedactPdfView>
             ),
           ]);
         },
-      ),
+      )),
     );
   }
 

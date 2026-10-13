@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class MergePdfView extends StatefulWidget {
   final List<File> files;
@@ -45,7 +46,7 @@ class _MergePdfViewState extends State<MergePdfView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'merge')), elevation: 5),
-      body: BlocConsumer<PdfBloc,PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
         listenWhen: (previous, current) => previous.httpStates[HttpStates.mergePdf]!=current.httpStates[HttpStates.mergePdf],
         buildWhen: (previous, current) => previous.httpStates[HttpStates.mergePdf]!=current.httpStates[HttpStates.mergePdf],
         listener: (context, state) => handleToolState(
@@ -108,7 +109,7 @@ class _MergePdfViewState extends State<MergePdfView>
             processingOverlay(state.httpStates[HttpStates.mergePdf], label: L10n.of(context).procWorking),
           ],
         );
-      },),
+      },)),
     );
   }
 

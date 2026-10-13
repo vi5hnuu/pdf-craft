@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Sanitize PDF: removes active/unsafe content — JavaScript, embedded files,
 /// document actions and metadata — while leaving the visible pages intact.
@@ -79,7 +80,7 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
     final l = L10n.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'sanitize'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.sanitizePdf] != c.httpStates[HttpStates.sanitizePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.sanitizePdf] != c.httpStates[HttpStates.sanitizePdf],
         listener: (context, state) =>
@@ -188,7 +189,7 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
             processingOverlay(state.httpStates[HttpStates.sanitizePdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

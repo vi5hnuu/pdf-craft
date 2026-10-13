@@ -12,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Mirror Pages: flips every page horizontally or vertically (vector-preserving).
 class MirrorPagesView extends StatefulWidget {
@@ -38,7 +39,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'mirror-pages'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.mirrorPdf] != c.httpStates[HttpStates.mirrorPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.mirrorPdf] != c.httpStates[HttpStates.mirrorPdf],
         listener: (context, state) =>
@@ -92,7 +93,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
             processingOverlay(state.httpStates[HttpStates.mirrorPdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

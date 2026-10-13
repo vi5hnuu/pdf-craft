@@ -17,6 +17,7 @@ import 'package:pdf_craft/widgets/placement_box.dart';
 import 'package:pdf_craft/widgets/pdf_effect_preview.dart';
 import 'package:pdf_craft/utils/page_range.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 class StampPdfView extends StatefulWidget {
@@ -78,7 +79,7 @@ class _StampPdfViewState extends State<StampPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'stamp')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
         listener: (context, state) => handleToolState(
@@ -183,7 +184,7 @@ class _StampPdfViewState extends State<StampPdfView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class PdfToOfficeView extends StatefulWidget {
   final File file;
@@ -79,7 +80,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(_title)),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[_stateKey] != c.httpStates[_stateKey],
         listenWhen: (p, c) => p.httpStates[_stateKey] != c.httpStates[_stateKey],
         // The output is a Word/Excel/PowerPoint file, so it opens externally.
@@ -125,7 +126,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

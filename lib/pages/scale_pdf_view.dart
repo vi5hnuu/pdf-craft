@@ -11,6 +11,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Scale PDF: scales page size and content uniformly by a percentage.
 class ScalePdfView extends StatefulWidget {
@@ -40,7 +41,7 @@ class _ScalePdfViewState extends State<ScalePdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'scale-pdf'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.scalePdf] != c.httpStates[HttpStates.scalePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.scalePdf] != c.httpStates[HttpStates.scalePdf],
         listener: (context, state) =>
@@ -110,7 +111,7 @@ class _ScalePdfViewState extends State<ScalePdfView>
             processingOverlay(state.httpStates[HttpStates.scalePdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

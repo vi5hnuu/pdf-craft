@@ -21,6 +21,7 @@ import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/singletons/tool_settings_service.dart';
 import 'package:pdf_craft/utils/page_range.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class HeaderFooterView extends StatefulWidget {
   final File file;
@@ -118,7 +119,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
         listenWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
         listener: (context, state) => handleToolState(
@@ -262,7 +263,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

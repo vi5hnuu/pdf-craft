@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
 import 'package:pdf_craft/widgets/broken_image.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class ImageToPdfView extends StatefulWidget {
   final List<File> files;
@@ -54,7 +55,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'image-to-pdf')), elevation: 5),
-      body: BlocConsumer<PdfBloc,PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
           listener: (context, state) => handleToolState(
@@ -177,7 +178,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
             processingOverlay(state.httpStates[HttpStates.imageToPdf], label: L10n.of(context).procWorking),
           ],
         );
-      },)
+      },))
     );
   }
 

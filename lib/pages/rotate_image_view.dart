@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/broken_image.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Rotate Image: rotates a picture in 90° steps.
 class RotateImageView extends StatefulWidget {
@@ -38,7 +39,7 @@ class _RotateImageViewState extends State<RotateImageView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'img-rotate'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.rotateImage] != c.httpStates[HttpStates.rotateImage],
         listenWhen: (p, c) => p.httpStates[HttpStates.rotateImage] != c.httpStates[HttpStates.rotateImage],
         listener: (context, state) => handleToolState(
@@ -89,7 +90,7 @@ class _RotateImageViewState extends State<RotateImageView>
             processingOverlay(state.httpStates[HttpStates.rotateImage], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

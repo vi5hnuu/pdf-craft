@@ -19,6 +19,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/pdf_effect_preview.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/singletons/tool_settings_service.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class WatermarkPdfView extends StatefulWidget {
   final File file;
@@ -121,7 +122,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'watermark')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.watermarkPdf] != c.httpStates[HttpStates.watermarkPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.watermarkPdf] != c.httpStates[HttpStates.watermarkPdf],
         listener: (context, state) => handleToolState(
@@ -244,7 +245,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

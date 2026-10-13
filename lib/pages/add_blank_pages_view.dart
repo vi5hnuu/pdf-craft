@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/page_range.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 class AddBlankPagesView extends StatefulWidget {
@@ -61,7 +62,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'add-blank')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
         listenWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
         listener: (context, state) => handleToolState(
@@ -130,7 +131,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

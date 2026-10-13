@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Reverse Page Order: flips the page sequence (last page first). Reuses the
@@ -49,7 +50,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'reverse-pages'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.reversePages] != c.httpStates[HttpStates.reversePages],
         listenWhen: (p, c) => p.httpStates[HttpStates.reversePages] != c.httpStates[HttpStates.reversePages],
         listener: (context, state) =>
@@ -100,7 +101,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
             processingOverlay(state.httpStates[HttpStates.reversePages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

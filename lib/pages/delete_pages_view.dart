@@ -13,6 +13,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/page_selector_grid.dart';
 import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Delete Pages: pick pages to remove and export the remainder — a faster,
@@ -74,7 +75,7 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
                 onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.deletePages] != c.httpStates[HttpStates.deletePages],
         listenWhen: (p, c) =>
@@ -126,7 +127,7 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
                 label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

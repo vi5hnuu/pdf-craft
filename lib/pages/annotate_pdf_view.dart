@@ -47,6 +47,7 @@ import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 enum _Tool { select, pen, highlighter, text, sticky, rect, ellipse, line, arrow }
@@ -579,7 +580,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
           ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.annotatePdf] != c.httpStates[HttpStates.annotatePdf],
         listenWhen: (p, c) =>
@@ -614,7 +615,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
                 label: L10n.of(context).annotateSaving),
           ]);
         },
-      ),
+      )),
     );
   }
 

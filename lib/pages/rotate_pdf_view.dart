@@ -16,6 +16,7 @@ import 'package:pdf_craft/widgets/rotatable_item.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/debouncer.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class Thumbnail {
   bool? isLoading;
@@ -104,7 +105,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'rotate'))),
-      body: FutureBuilder(
+      body: ToolPane(child: FutureBuilder(
         future: _pdfController.document,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -379,7 +380,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
             },
           );
         },
-      ),
+      )),
     );
   }
 

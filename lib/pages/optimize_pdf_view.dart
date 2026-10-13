@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class OptimizePdfView extends StatefulWidget {
   final File file;
@@ -41,7 +42,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'optimize'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.optimizePdf] != c.httpStates[HttpStates.optimizePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.optimizePdf] != c.httpStates[HttpStates.optimizePdf],
         listener: (context, state) => handleToolState(
@@ -93,7 +94,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView>
             processingOverlay(state.httpStates[HttpStates.optimizePdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Resize Page Size: reflows every page onto a standard size (A4 / Letter /
 /// Legal), scaling the content to fit and centering it.
@@ -42,7 +43,7 @@ class _ResizePageViewState extends State<ResizePageView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'resize-page'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.resizePage] != c.httpStates[HttpStates.resizePage],
         listenWhen: (p, c) => p.httpStates[HttpStates.resizePage] != c.httpStates[HttpStates.resizePage],
         listener: (context, state) =>
@@ -110,7 +111,7 @@ class _ResizePageViewState extends State<ResizePageView>
             processingOverlay(state.httpStates[HttpStates.resizePage], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

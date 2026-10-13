@@ -20,6 +20,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class PageNumberPdfView extends StatefulWidget {
   final File file;
@@ -62,7 +63,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
         title: Text(ToolStrings.name(context, 'page-numbers')),
         elevation: 2,
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (prev, curr) =>
             prev.httpStates[HttpStates.pageNumbers] != curr.httpStates[HttpStates.pageNumbers],
         listenWhen: (prev, curr) =>
@@ -319,7 +320,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

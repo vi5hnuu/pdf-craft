@@ -14,6 +14,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/broken_image.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Add Border: frames an image with a solid coloured border.
 class AddBorderView extends StatefulWidget {
@@ -41,7 +42,7 @@ class _AddBorderViewState extends State<AddBorderView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'img-border'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.borderImage] != c.httpStates[HttpStates.borderImage],
         listenWhen: (p, c) => p.httpStates[HttpStates.borderImage] != c.httpStates[HttpStates.borderImage],
         listener: (context, state) => handleToolState(
@@ -143,7 +144,7 @@ class _AddBorderViewState extends State<AddBorderView>
             processingOverlay(state.httpStates[HttpStates.borderImage], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
