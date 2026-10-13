@@ -29,6 +29,19 @@ class ProService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Forgets the entitlement, for signing out.
+  ///
+  /// The cache exists so a paying user keeps an ad-free app offline, but it is per-account: left
+  /// in place across a sign-out it gave the *next* person on the device an ad-free app until
+  /// /credits/balance answered, and indefinitely if it never did.
+  Future<void> clear() async {
+    _verified = false;
+    _isPro = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+    notifyListeners();
+  }
+
   /// Applies the entitlement reported by the server and caches it for offline use.
   ///
   /// Only [CreditService] calls this, from the `/credits/balance` response.

@@ -12,6 +12,8 @@ import 'package:pdf_craft/models/auth/auth_user.dart';
 import 'package:pdf_craft/services/auth/auth_api.dart';
 import 'package:pdf_craft/services/auth/token_storage.dart';
 import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
+import 'package:pdf_craft/singletons/pro_service.dart';
+import 'package:pdf_craft/singletons/signature_store.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
 
 /// Owns the app's authentication state and tokens.
@@ -276,6 +278,12 @@ class AuthService extends ChangeNotifier {
     await _storage.clear();
     _accessToken = null;
     _user = null;
+    // Anything held per account has to go with the session. Clearing the token store alone
+    // left the previous account's ad-free entitlement in place until the server contradicted
+    // it, and left their handwritten signature one tap from being stamped onto the next
+    // person's document — it was only clearable from a button inside the signature sheet.
+    await ProService().clear();
+    await SignatureStore().clear();
     notifyListeners();
     try {
       await _createGuest();
