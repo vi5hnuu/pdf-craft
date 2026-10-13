@@ -51,6 +51,9 @@ Future<void> _bootstrap() async {
   // so every error inside a bloc — which is where all the tool work happens — was reported
   // nowhere. Setting it is the whole of its wiring.
   Bloc.observer = AppBlocObserver();
+  // Before the first frame: pins text rendering to the bundled font faces instead of letting
+  // google_fonts fetch them from the network.
+  AppTheme.configure();
   await ThemeManager().init();
   await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame
@@ -73,10 +76,6 @@ Future<void> _bootstrap() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: Colors.black,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
   runApp(const NestedTabNavigationExampleApp());
 }
 
@@ -201,12 +200,31 @@ class _NestedTabNavigationExampleAppState
           routerConfig: appRouter,
           // Surface a "session expired" prompt (sign in again / continue as guest)
           // over whatever screen is showing.
-          builder: (context, child) =>
-              _SessionExpiryGate(child: child ?? const SizedBox.shrink()),
+          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+            // Follows the resolved theme. This used to be a single
+            // SystemChrome.setSystemUIOverlayStyle in main() hardcoding a black bar with light
+            // icons — the only such call in the app — so a light-theme user got a black bar
+            // under a white app, and switching theme never changed it because ThemeManager
+            // only calls notifyListeners.
+            value: _overlayStyleFor(Theme.of(context)),
+            child: _SessionExpiryGate(child: child ?? const SizedBox.shrink()),
+          ),
         ),
       ),
     );
   }
+}
+
+/// System bar styling that matches [theme], so the icons stay legible against it.
+SystemUiOverlayStyle _overlayStyleFor(ThemeData theme) {
+  final isDark = theme.brightness == Brightness.dark;
+  return SystemUiOverlayStyle(
+    systemNavigationBarColor: theme.scaffoldBackgroundColor,
+    systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+    statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+  );
 }
 
 /// Watches [AuthService] and, when a signed-in account's session expires (the app has

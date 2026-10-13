@@ -1155,7 +1155,7 @@ class _FormEditorViewState extends State<FormEditorView>
                           fontSize: 8.5,
                           height: 1.2,
                           color: Colors.white,
-                          fontWeight: FontWeight.w800),
+                          fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -1196,7 +1196,7 @@ class _FormEditorViewState extends State<FormEditorView>
         child: Text(
           _groupLetter(f.group),
           style: const TextStyle(
-              fontSize: 8.5, height: 1.2, color: Colors.white, fontWeight: FontWeight.w800),
+              fontSize: 8.5, height: 1.2, color: Colors.white, fontWeight: FontWeight.w700),
         ),
       );
 

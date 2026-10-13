@@ -5,11 +5,25 @@ import 'package:pdf_craft/theme/app_radius.dart';
 class AppTheme {
   AppTheme._();
 
+  /// Pins font loading to the bundled faces.
+  ///
+  /// With fetching disabled a missing face throws instead of silently reaching the network, so
+  /// a weight that was never bundled fails loudly in debug rather than becoming a production
+  /// download. Called once from main() before the first frame.
+  static void configure() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+  }
+
   static const _primary = Color(0xFFE53935);
 
   /// Poppins has no Devanagari glyphs, so Hindi text fell back to a mismatched system font.
   /// Hind (same foundry as Poppins, covers Latin + Devanagari) is used when the app is in Hindi.
-  /// Google Fonts are fetched at runtime and cached, so this adds nothing to the APK.
+  ///
+  /// Both are bundled under assets/google_fonts/ and runtime fetching is off (see [configure]),
+  /// so they cost APK size rather than a network round-trip. The comment here used to say they
+  /// were fetched at runtime and "add nothing to the APK", which was true and was the problem:
+  /// this is the *root* text theme, so a first launch rendered every screen in Roboto until
+  /// fonts.gstatic.com answered, then reflowed — and never got the real face at all offline.
   static TextTheme Function([TextTheme?]) _fontTheme(bool hindi) =>
       hindi ? GoogleFonts.hindTextTheme : GoogleFonts.poppinsTextTheme;
 
