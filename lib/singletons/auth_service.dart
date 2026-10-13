@@ -301,11 +301,14 @@ class AuthService extends ChangeNotifier {
 
   /// A token for the identity the caller already had, or null if it could not be kept.
   ///
-  /// Returns null when the stored refresh token was rejected and we fell back to a fresh
-  /// guest, and when the refresh could not be completed at all. Replaying a request with a
-  /// different account's token runs paid work as someone the user never signed in as, and
-  /// the server's idempotency key is (userId, idempotencyKey) — so a replay under a new id
-  /// is charged a second time rather than deduplicated.
+  /// Returns null when a signed-in account's session was lost, and when the refresh could not
+  /// be completed at all. Replaying a request as a different *account* runs paid work as
+  /// somebody the user never signed in as, and the server's idempotency key is
+  /// (userId, idempotencyKey), so the replay is charged again rather than deduplicated.
+  ///
+  /// One guest becoming another is not that, and does retry: the user was anonymous either way,
+  /// and refusing it would fail requests that used to succeed — a guest whose stored refresh
+  /// token has gone is the ordinary case, not an edge one.
   Future<String?> refreshForSameIdentity() async {
     final outcome = await _sharedRefresh();
     return outcome.sameIdentity ? outcome.token : null;
@@ -316,13 +319,20 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<_RefreshOutcome> _doRefresh() async {
+    // Remember whether a *full* account is at stake, before anything overwrites _user.
+    //
+    // This is what "same identity" turns on, rather than whether the user id changed. Becoming
+    // a different guest crosses no account boundary the user could notice: they were anonymous
+    // before and are anonymous now, and the retry it allows is what used to happen. Losing a
+    // signed-in account is the case that must never be replayed — that is the one where the
+    // request would run, and be charged, as somebody the user never signed in as.
+    final wasFull = _user != null && !_user!.isGuest;
+
     final refresh = await _storage.refreshToken;
     if (refresh == null) {
       await _createGuest();
-      return _RefreshOutcome(_accessToken, sameIdentity: false);
+      return _RefreshOutcome(_accessToken, sameIdentity: !wasFull);
     }
-    // Remember whether a *full* account is expiring, before we overwrite _user.
-    final wasFull = _user != null && !_user!.isGuest;
     try {
       final data = await _api.refresh(refresh);
       await _applyTokens(data);
@@ -340,7 +350,7 @@ class AuthService extends ChangeNotifier {
         _sessionExpired = true;
         notifyListeners();
       }
-      return _RefreshOutcome(_accessToken, sameIdentity: false);
+      return _RefreshOutcome(_accessToken, sameIdentity: !wasFull);
     } catch (e) {
       // Anything that is not the server rejecting the token — a malformed response, say — is
       // treated as transient for the same reason.
