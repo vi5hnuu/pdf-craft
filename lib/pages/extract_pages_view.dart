@@ -34,7 +34,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.reorderPdf]);
+    resetToolState([HttpStates.extractPages]);
     _open();
   }
 
@@ -73,14 +73,14 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.extractPages] != c.httpStates[HttpStates.extractPages],
         listenWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listener: (context, state) => handleToolState(state.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.extractPages] != c.httpStates[HttpStates.extractPages],
+        listener: (context, state) => handleToolState(state.httpStates[HttpStates.extractPages],
             successMessage: L10n.of(context).pagesExtracted),
         builder: (context, state) {
           if (_doc == null) return const Center(child: CircularProgressIndicator());
-          final loading = state.httpStates[HttpStates.reorderPdf]?.loading == true;
+          final loading = state.httpStates[HttpStates.extractPages]?.loading == true;
           return Stack(children: [
             Column(children: [
               Padding(
@@ -115,7 +115,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.reorderPdf],
+            processingOverlay(state.httpStates[HttpStates.extractPages],
                 label: L10n.of(context).procWorking),
           ]);
         },
@@ -129,6 +129,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
     if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
+          stateKey: HttpStates.extractPages,
           reorderPdf: ReorderPdf(outFileName: 'extracted_pages', order: order, file: file),
           cancelToken: cancelToken,
         ));

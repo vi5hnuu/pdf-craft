@@ -98,7 +98,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     ));
 
     on<ReorderPdfEvent>((e, emit) => _handle(
-      emit: emit, key: HttpStates.reorderPdf,
+      emit: emit, key: e.stateKey,
       call: (p) => _pdfService.reorderPdf(reorderPdf: e.reorderPdf, cancelToken: e.cancelToken, onSendProgress: p),
       error: L10n.current.errToolFailed,
     ));

@@ -24,7 +24,26 @@ class MergePdfEvent extends PdfEvent{
 
 class ReorderPdfEvent extends PdfEvent{
   final ReorderPdf reorderPdf;
-  const ReorderPdfEvent({required this.reorderPdf, super.cancelToken});
+
+  /// Which [HttpStates] key this run reports under.
+  ///
+  /// Five screens reach the reorder endpoint — delete, reverse, organize, extract-pages and
+  /// the split range picker — and they all shared one key. That gave two real races whenever
+  /// one was open beneath another, which is exactly what "use in another tool" produces: a
+  /// newly mounted screen's resetToolState wiped the other's in-flight `loading`, taking its
+  /// overlay and Cancel button away while the request carried on and the credit was still
+  /// spent; and once both had dispatched, both consumed the single result — two previews
+  /// pushed, two snackbars, two interstitials, two balance refreshes.
+  ///
+  /// Same shape as [InspectPdfEvent.stateKey]. Defaults to the shared key, so a caller that
+  /// does not care is unaffected.
+  final String stateKey;
+
+  const ReorderPdfEvent({
+    required this.reorderPdf,
+    this.stateKey = HttpStates.reorderPdf,
+    super.cancelToken,
+  });
 }
 
 class SplitPdfEvent extends PdfEvent{

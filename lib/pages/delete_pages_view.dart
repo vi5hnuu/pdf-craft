@@ -35,7 +35,7 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.reorderPdf]);
+    resetToolState([HttpStates.deletePages]);
     _open();
   }
 
@@ -76,14 +76,14 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
       ),
       body: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.deletePages] != c.httpStates[HttpStates.deletePages],
         listenWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listener: (context, state) => handleToolState(state.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.deletePages] != c.httpStates[HttpStates.deletePages],
+        listener: (context, state) => handleToolState(state.httpStates[HttpStates.deletePages],
             successMessage: L10n.of(context).pagesDeleted),
         builder: (context, state) {
           if (_doc == null) return const Center(child: CircularProgressIndicator());
-          final loading = state.httpStates[HttpStates.reorderPdf]?.loading == true;
+          final loading = state.httpStates[HttpStates.deletePages]?.loading == true;
           final canDelete = _selected.isNotEmpty && _remaining >= 1;
           return Stack(children: [
             Column(children: [
@@ -122,7 +122,7 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.reorderPdf],
+            processingOverlay(state.httpStates[HttpStates.deletePages],
                 label: L10n.of(context).procWorking),
           ]);
         },
@@ -139,6 +139,7 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
     if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
+          stateKey: HttpStates.deletePages,
           reorderPdf: ReorderPdf(outFileName: 'pages_removed', order: order, file: file),
           cancelToken: cancelToken,
         ));

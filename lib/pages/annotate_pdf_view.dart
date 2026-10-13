@@ -125,7 +125,11 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.annotatePdf, HttpStates.stampPdf]);
+    // Not HttpStates.stampPdf: this screen never dispatches StampPdfEvent — _stampImages
+    // calls PdfService().stampPdf directly — so resetting that key did nothing here except
+    // wipe the stamp tool's in-flight state if it happened to be open underneath, taking its
+    // overlay and Cancel away while its upload carried on.
+    resetToolState([HttpStates.annotatePdf]);
     _openDocument();
   }
 

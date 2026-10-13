@@ -30,7 +30,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.reorderPdf]);
+    resetToolState([HttpStates.reversePages]);
     _loadCount();
   }
 
@@ -50,12 +50,12 @@ class _ReversePagesViewState extends State<ReversePagesView>
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'reverse-pages'))),
       body: BlocConsumer<PdfBloc, PdfState>(
-        buildWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listenWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+        buildWhen: (p, c) => p.httpStates[HttpStates.reversePages] != c.httpStates[HttpStates.reversePages],
+        listenWhen: (p, c) => p.httpStates[HttpStates.reversePages] != c.httpStates[HttpStates.reversePages],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.reorderPdf], successMessage: L10n.of(context).pageOrderReversed),
+            handleToolState(state.httpStates[HttpStates.reversePages], successMessage: L10n.of(context).pageOrderReversed),
         builder: (context, state) {
-          final loading = state.httpStates[HttpStates.reorderPdf]?.loading == true;
+          final loading = state.httpStates[HttpStates.reversePages]?.loading == true;
           final pages = _totalPages;
           return Stack(children: [
             Column(children: [
@@ -97,7 +97,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.reorderPdf], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.reversePages], label: L10n.of(context).procWorking),
           ]);
         },
       ),
@@ -111,6 +111,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
     if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
+          stateKey: HttpStates.reversePages,
           reorderPdf: ReorderPdf(outFileName: 'reversed_pages', order: order, file: file),
           cancelToken: cancelToken,
         ));
