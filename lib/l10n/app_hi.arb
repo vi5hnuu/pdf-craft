@@ -35,6 +35,7 @@
   "@errPageBeyondDocument": {"placeholders": {"count": {"type": "int"}}},
   "errPageRangeBackwards": "आख़िरी पेज पहले पेज से पहले नहीं हो सकता।",
   "errImageUnreadable": "यह इमेज नहीं दिखाई जा सकती। हो सकता है इसे हटा दिया गया हो या कहीं और ले जाया गया हो।",
+  "errFileGone": "यह फ़ाइल अब पढ़ी नहीं जा सकती। इसे हटाया, नाम बदला या कहीं और ले जाया गया हो सकता है।",
   "errDeleteFailed": "“{name}” को हटाया नहीं जा सका। हो सकता है यह किसी और ऐप में खुली हो, या ऐसी स्टोरेज पर हो जहाँ ऐप लिख नहीं सकता।",
   "@errDeleteFailed": {"placeholders": {"name": {"type": "String"}}},
   "pageNumber": "पेज {number}",

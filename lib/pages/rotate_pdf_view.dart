@@ -1,6 +1,5 @@
 import 'dart:collection';
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -388,7 +387,8 @@ class _RotatePdfViewState extends State<RotatePdfView>
     final zeroIndexed = Map.fromEntries(
       pageAngles.entries.map((e) => MapEntry(e.key - 1, e.value)),
     );
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => RotatePdfEvent(
       rotatePdf: RotatePdf(

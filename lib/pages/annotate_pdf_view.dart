@@ -450,7 +450,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
       return;
     }
 
-    final upload = await MultipartFile.fromFile(widget.file.path);
+    final upload = await readForUpload(widget.file);
+    if (upload == null) return;
     if (!mounted) return;
 
     final baseName =

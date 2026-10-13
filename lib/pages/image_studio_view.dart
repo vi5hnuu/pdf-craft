@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/request/image_studio.dart' as img_studio;
@@ -337,7 +336,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   // ── Submit handlers ───────────────────────────────────────────────────────────
 
   Future<void> _onCompress() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => CompressImageEvent(
       compressImage: img_studio.CompressImage(
@@ -347,7 +347,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   }
 
   Future<void> _onConvertToJpg() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ConvertToJpgEvent(
       convertToJpg: img_studio.ConvertToJpg(
@@ -357,7 +358,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   }
 
   Future<void> _onConvertFromJpg() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ConvertFromJpgEvent(
       convertFromJpg: img_studio.ConvertFromJpg(
@@ -367,7 +369,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   }
 
   Future<void> _onFilter() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => FilterImageEvent(
       filterImage: fi.FilterImage(
@@ -384,7 +387,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
       NotificationService.showSnackbar(text: L10n.current.enterDimension, color: Colors.orange);
       return;
     }
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ResizeImageEvent(
       resizeImage: img_studio.ResizeImage(

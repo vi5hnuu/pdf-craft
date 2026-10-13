@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
@@ -279,8 +278,10 @@ class _StampPdfViewState extends State<StampPdfView>
     }
     final range = resolvePageRange(
         from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount);
-    final documentUpload = await MultipartFile.fromFile(widget.file.path);
-    final stampUpload = await MultipartFile.fromFile(_stampFile!.path);
+    final documentUpload = await readForUpload(widget.file);
+    if (documentUpload == null) return;
+    final stampUpload = await readForUpload(_stampFile!);
+    if (stampUpload == null) return;
     if (!mounted) return;
     runTool((cancelToken) => StampPdfEvent(
       stampPdf: StampPdf(

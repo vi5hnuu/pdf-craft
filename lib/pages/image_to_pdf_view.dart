@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -187,7 +186,8 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
   }
 
   void _onConvertToPdf() async {
-    final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
+    final files = await readAllForUpload(widget.files);
+    if (files == null) return;
     runTool((cancelToken) => ImageToPdfEvent(
         imageToPdf: ImageToPdf(
           outFileName: outFileNameC.text.isEmpty ? "imageToPdf_file" : outFileNameC.text,

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -228,7 +227,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
   int get _totalCopies => _pageCounts.values.fold(0, (a, b) => a + b);
 
   Future<void> _onDuplicate() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => DuplicatePagesEvent(
           duplicatePages: DuplicatePages(

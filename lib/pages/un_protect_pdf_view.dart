@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -95,7 +94,8 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView>
   }
 
   void _onUnProtectPdf() async{
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => UnprotectPdfEvent(unlockPdf: UnProtectPdf(outFileName: outputFileNameC.text.isEmpty ? "protected" : outputFileNameC.text, password: password, file: uploadFile), cancelToken: cancelToken));
   }

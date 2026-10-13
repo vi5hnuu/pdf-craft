@@ -503,7 +503,8 @@ class _PlaceImageViewState extends State<PlaceImageView>
     final h = _hFrac.clamp(0.01, 1.0 - y);
     final pdfName = widget.pdfFile.path.split('/').last.replaceAll('.pdf', '');
 
-    final uploadFile = await MultipartFile.fromFile(widget.pdfFile.path);
+    final uploadFile = await readForUpload(widget.pdfFile);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => PlaceImageEvent(
       placeImage: PlaceImage(

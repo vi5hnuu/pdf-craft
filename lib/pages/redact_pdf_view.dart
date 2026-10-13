@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -298,7 +297,8 @@ class _RedactPdfViewState extends State<RedactPdfView>
       }
     });
 
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => RedactPdfEvent(
       redactPdf: RedactPdf(regions: regions, file: file),

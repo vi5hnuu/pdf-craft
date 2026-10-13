@@ -3,7 +3,6 @@ import 'package:pdfx/pdfx.dart';
 import 'dart:typed_data';
 import 'dart:math' as math;
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -140,7 +139,8 @@ class _NUpPdfViewState extends State<NUpPdfView>
 
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => NUpPdfEvent(
       nUp: NUp(

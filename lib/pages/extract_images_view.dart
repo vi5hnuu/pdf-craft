@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -93,7 +92,8 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
   }
 
   Future<void> _onExtract() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ExtractImagesEvent(
           extractImages: ExtractImages(file: file),

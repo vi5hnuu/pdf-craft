@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
@@ -97,7 +96,8 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
   }
 
   Future<void> _onMirror() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => MirrorPdfEvent(
           mirrorPdf: MirrorPdf(direction: _direction, file: file),

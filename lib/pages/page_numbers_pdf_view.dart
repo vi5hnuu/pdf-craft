@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -362,7 +361,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
       NotificationService.showSnackbar(text: L10n.current.invalidFontSize, color: Colors.red);
       return;
     }
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => PageNumbersEvent(
       pageNumber: PageNumbers(

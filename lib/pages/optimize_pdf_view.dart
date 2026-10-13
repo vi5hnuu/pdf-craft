@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -100,7 +99,8 @@ class _OptimizePdfViewState extends State<OptimizePdfView>
 
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     runTool((cancelToken) => OptimizePdfEvent(
       optimizePdf: OptimizePdf(
         outFileName: '${baseName}_optimized',

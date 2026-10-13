@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -193,7 +192,8 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
   }
 
   Future<void> _onSanitize() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => SanitizePdfEvent(
           sanitizePdf: SanitizePdf(

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -135,7 +134,8 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
       for (int i = 0; i < _totalPages; i++)
         if (!_selected.contains(i)) i
     ];
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
           reorderPdf: ReorderPdf(outFileName: 'pages_removed', order: order, file: file),

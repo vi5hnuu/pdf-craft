@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -154,8 +153,10 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
   }
 
   Future<void> _onReplace() async {
-    final base = await MultipartFile.fromFile(_base.path);
-    final repl = await MultipartFile.fromFile(_replacement.path);
+    final base = await readForUpload(_base);
+    if (base == null) return;
+    final repl = await readForUpload(_replacement);
+    if (repl == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReplacePagesEvent(
           replacePages: ReplacePages(

@@ -70,7 +70,8 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
   }
 
   Future<void> _fetch() async {
-    final upload = await MultipartFile.fromFile(widget.file.path);
+    final upload = await readForUpload(widget.file);
+    if (upload == null) return;
     if (!mounted) return;
     runTool((cancelToken) => widget.buildEvent(cancelToken, upload));
   }

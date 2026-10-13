@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -56,7 +55,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
 
   void _loadBookmarks() {
     Future.microtask(() async {
-      final file = await MultipartFile.fromFile(_file.path);
+      final file = await readForUpload(_file);
+      if (file == null) return;
       if (!mounted) return;
       pdfBloc.add(GetBookmarksEvent(getBookmarks: GetBookmarks(file: file)));
     });
@@ -343,7 +343,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
 
   Future<void> _onSave() async {
     final tree = _buildTree(_bookmarks);
-    final file = await MultipartFile.fromFile(_file.path);
+    final file = await readForUpload(_file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => EditBookmarksEvent(
           editBookmarks: EditBookmarks(

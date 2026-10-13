@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -122,7 +121,8 @@ class _FlipImageViewState extends State<FlipImageView>
   }
 
   Future<void> _onApply() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => FlipImageEvent(
           flipImage: FlipImage(direction: _horizontal ? 'HORIZONTAL' : 'VERTICAL', file: file),

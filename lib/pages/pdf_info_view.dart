@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -34,7 +33,8 @@ class _PdfInfoViewState extends State<PdfInfoView>
   }
 
   void _fetch() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => GetMetadataEvent(
       getMetadata: GetMetadata(file: uploadFile), cancelToken: cancelToken));

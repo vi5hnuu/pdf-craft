@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -173,7 +172,8 @@ class _ProtectPdfViewState extends State<ProtectPdfView>
   }
 
   void _onProtectPdf() async{
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ProtectPdfEvent(protectPdf: ProtectPdf(outFileName: outFileNameC.text.isNotEmpty ? outFileNameC.text : "protected_file", ownerPassword: ownerPassword, userPassword: userPassword, userAccessPermissions: userPermissions.toSet(), file: uploadFile), cancelToken: cancelToken));
   }

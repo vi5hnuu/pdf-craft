@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -353,7 +352,8 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
     // Saved on use rather than on every keystroke: what the user actually ran with is the
     // configuration worth restoring next time.
     unawaited(_rememberSettings());
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     final range = resolvePageRange(
         from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount ?? 0);

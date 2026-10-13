@@ -50,7 +50,8 @@ class _ObjectExplorerViewState extends State<ObjectExplorerView>
 
   Future<void> _fetch() async {
     // A MultipartFile is a one-shot stream, so each page needs a fresh one built from the file.
-    _upload = await MultipartFile.fromFile(widget.file.path);
+    _upload = await readForUpload(widget.file);
+    if (_upload == null) return;
     if (!mounted) return;
     final offset = _requested;
     runTool((cancelToken) => InspectPdfEvent(

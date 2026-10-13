@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -124,7 +123,8 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
   }
 
   Future<void> _onSplit() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => SplitBySizeEvent(
           splitBySize: SplitBySize(outFileName: 'split_by_size', maxSizeMb: _sizeMb, file: file),

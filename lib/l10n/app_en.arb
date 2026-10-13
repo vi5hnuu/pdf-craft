@@ -36,6 +36,7 @@
   "@errPageBeyondDocument": {"placeholders": {"count": {"type": "int"}}},
   "errPageRangeBackwards": "The last page can't come before the first.",
   "errImageUnreadable": "This image can't be shown. It may have been moved or deleted.",
+  "errFileGone": "That file can't be read any more. It may have been moved, renamed or deleted.",
   "errDeleteFailed": "Couldn't delete “{name}”. It may be open in another app, or on storage the app can't write to.",
   "@errDeleteFailed": {"placeholders": {"name": {"type": "String"}}},
   "pageNumber": "Page {number}",

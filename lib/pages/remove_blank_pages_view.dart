@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -102,7 +101,8 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView>
   }
 
   Future<void> _onApply() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => RemoveBlankPagesEvent(
       removeBlankPages: RemoveBlankPages(

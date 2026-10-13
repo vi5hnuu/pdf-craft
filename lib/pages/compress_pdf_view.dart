@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
@@ -105,7 +104,8 @@ class _CompressPdfViewState extends State<CompressPdfView>
   }
 
   void _onCompress() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     runTool((cancelToken) => CompressPdfEvent(
       compressPdf: CompressPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'compressed_file',

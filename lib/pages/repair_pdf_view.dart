@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -102,7 +101,8 @@ class _RepairPdfViewState extends State<RepairPdfView>
   }
 
   void _onRepair() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     runTool((cancelToken) => RepairPdfEvent(
       repairPdf: RepairPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : null,

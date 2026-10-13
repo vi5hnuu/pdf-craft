@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -183,7 +182,8 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
   }
 
   void _onPdfToJpf() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     runTool((cancelToken) => PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(outFileName: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null, pages: _pages.toList()..sort())), cancelToken: cancelToken));
   }
 

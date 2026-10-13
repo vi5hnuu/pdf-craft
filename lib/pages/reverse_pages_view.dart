@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -107,7 +106,8 @@ class _ReversePagesViewState extends State<ReversePagesView>
   Future<void> _onReverse() async {
     final n = _totalPages ?? 0;
     final order = [for (int i = n - 1; i >= 0; i--) i];
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
           reorderPdf: ReorderPdf(outFileName: 'reversed_pages', order: order, file: file),

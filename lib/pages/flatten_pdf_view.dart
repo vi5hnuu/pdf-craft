@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -40,7 +39,8 @@ class _FlattenPdfViewState extends State<FlattenPdfView>
   }
 
   Future<void> _loadFields() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => GetFormFieldsEvent(getFormFields: GetFormFields(file: uploadFile), cancelToken: cancelToken));
   }
@@ -192,7 +192,8 @@ class _FlattenPdfViewState extends State<FlattenPdfView>
   }
 
   void _onFlatten() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => FlattenPdfEvent(
       flattenPdf: FlattenPdf(
@@ -202,7 +203,8 @@ class _FlattenPdfViewState extends State<FlattenPdfView>
   }
 
   void _onFillFlatten() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => FillFlattenEvent(
       fillFlatten: FillFlatten(

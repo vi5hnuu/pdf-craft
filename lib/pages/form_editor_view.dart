@@ -6,7 +6,6 @@ import 'package:pdf_craft/pages/form-editor/field_list_sheet.dart';
 import 'package:pdf_craft/pages/form-editor/field_appearance_painter.dart';
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -1591,7 +1590,8 @@ class _FormEditorViewState extends State<FormEditorView>
     // test pins the exact JSON the running server parses.
     final specs = engine.AcroFormSpecMapper(formFieldTypes).toSpecs(_toSchema());
 
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => CreateFormEvent(
           createForm: CreateForm(

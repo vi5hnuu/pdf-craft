@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -38,7 +37,8 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
   }
 
   Future<void> _fetch() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => AnalyzePdfEvent(analyzePdf: AnalyzePdf(file: uploadFile), cancelToken: cancelToken));
   }

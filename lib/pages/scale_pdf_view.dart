@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -115,7 +114,8 @@ class _ScalePdfViewState extends State<ScalePdfView>
   }
 
   Future<void> _onScale() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ScalePdfEvent(
           scalePdf: ScalePdf(scale: _percent / 100.0, pages: _pages.toList()..sort(), file: file),

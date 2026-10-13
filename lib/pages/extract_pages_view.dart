@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -125,7 +124,8 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
 
   Future<void> _onExtract() async {
     final order = _selected.toList()..sort();
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
           reorderPdf: ReorderPdf(outFileName: 'extracted_pages', order: order, file: file),
