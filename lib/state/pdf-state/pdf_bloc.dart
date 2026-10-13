@@ -495,12 +495,18 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, const HttpState.loading())));
     try {
       final res = await call((sent, total) {
+        // Dio owns this callback's lifetime, not the handler's: on CancelToken.cancel() the
+        // response future completes while the body may still be draining, so a tick can
+        // arrive after _handle has returned. emit() throws StateError once the handler is
+        // done, so every emit past an await or inside a Dio callback is guarded.
+        if (emit.isDone) return;
         if (total > 0) {
           emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.loading(progress: sent / total))));
         }
       });
       if (res.data == null) throw Exception(error);
       final file = await _saveFileToProcessed(res);
+      if (emit.isDone) return;
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.done(extras: {'savedFile': file}))));
     } on DioException catch (e) {
       // A user-cancelled request should leave no error behind — reset to idle.
@@ -524,12 +530,15 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, const HttpState.loading())));
     try {
       final res = await call((sent, total) {
+        // Same reasoning as _handle: a progress tick can outlive the handler.
+        if (emit.isDone) return;
         if (total > 0) {
           emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.loading(progress: sent / total))));
         }
       });
       if (res.data == null) throw Exception(error);
       final file = await _saveImageToProcessed(res);
+      if (emit.isDone) return;
       emit(state.copyWith(httpStates: state.httpStates.clone()..put(key, HttpState.done(extras: {'savedFile': file}))));
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) {
