@@ -261,7 +261,8 @@ class _RedactPdfViewState extends State<RedactPdfView>
     final hasRects = _pageRects.values.any((l) => l.isNotEmpty);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.fromLTRB(12, 12, 12,
+          12 + MediaQuery.viewPaddingOf(context).bottom),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -373,13 +374,25 @@ class _RedactBox extends StatelessWidget {
             Positioned(
               top: -12,
               right: -12,
+              // The visible dot stays 24px; the *target* around it is 44. A handle has to look
+              // small to leave the page visible, which is not a reason for it to be hard to
+              // hit — the annotate editor already separates the two this way.
               child: GestureDetector(
                 onTap: onDelete,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                  child: const Icon(Icons.close, color: Colors.white, size: 14),
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Icon(Icons.close, color: Colors.white, size: 14),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -395,7 +408,12 @@ class _RedactBox extends StatelessWidget {
                   region.rect = Rect.fromLTWH(r.left, r.top, nw, nh);
                   onChanged();
                 },
+                // Same again: a 44px drag target around a 22px dot.
                 child: Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  child: Container(
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
@@ -404,6 +422,7 @@ class _RedactBox extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: const Icon(Icons.open_in_full, color: Colors.white, size: 11),
+                  ),
                 ),
               ),
             ),

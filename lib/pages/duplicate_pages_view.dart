@@ -186,20 +186,29 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
     );
   }
 
+  /// One of the adjacent -/+ steppers.
+  ///
+  /// A 40x40 target rather than the 6px padding it had, which came to about 30x30 — under the
+  /// 48dp guidance and, with the two sitting side by side in a narrow pill, easy to hit the
+  /// wrong one. The glyph size is unchanged, so only the hit area grows.
   Widget _stepBtn(IconData icon, VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
       customBorder: const CircleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 18, color: onTap == null ? Colors.white38 : Colors.white),
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: Center(
+          child: Icon(icon, size: 18, color: onTap == null ? Colors.white38 : Colors.white),
+        ),
       ),
     );
   }
 
   Widget _buildBottomBar(ThemeData theme, bool loading) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16,
+          16 + MediaQuery.viewPaddingOf(context).bottom),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),

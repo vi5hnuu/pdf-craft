@@ -1847,6 +1847,7 @@
     }
   },
   "a11yFavourited": "Favourited",
+  "a11yToolInfo": "What this tool does",
   "a11yField": "{type} field named {name}",
   "@a11yField": {
     "placeholders": {

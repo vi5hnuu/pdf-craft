@@ -490,12 +490,26 @@ class ToolCard extends StatelessWidget {
               Positioned(
                 top: -2,
                 left: -2,
-                child: GestureDetector(
-                  onTap: () => _showInfo(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: Icon(Icons.info_outline, size: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.35)),
+                // A 40x40 target around a 15px glyph. It used to be a 2px padding around the
+                // icon — about 19x19, well under the 48dp guidance and partly overhanging the
+                // card — repeated on all 61 cards. The glyph stays the same size so the card
+                // does not look different; only the hit area grows, and Semantics gives it a
+                // name it did not have.
+                child: Semantics(
+                  button: true,
+                  label: L10n.of(context).a11yToolInfo,
+                  child: GestureDetector(
+                    onTap: () => _showInfo(context),
+                    behavior: HitTestBehavior.opaque,
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Icon(Icons.info_outline,
+                            size: 15,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.35)),
+                      ),
+                    ),
                   ),
                 ),
               ),

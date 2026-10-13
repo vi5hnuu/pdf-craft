@@ -214,7 +214,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       // Action bar
       Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16,
+            16 + MediaQuery.viewPaddingOf(context).bottom),
         decoration: BoxDecoration(
           color: theme.scaffoldBackgroundColor,
           border: Border(top: BorderSide(color: theme.dividerColor)),

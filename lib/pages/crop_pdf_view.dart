@@ -148,7 +148,8 @@ class _CropPdfViewState extends State<CropPdfView>
               _buildMarginReadout(theme),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.fromLTRB(14, 14, 14,
+                    14 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),

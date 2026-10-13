@@ -1194,6 +1194,7 @@
   "a11yToolCardFree": "{tool}. {description}. मुफ़्त. खोलने के लिए दो बार टैप करें, पसंदीदा बनाने के लिए देर तक दबाएँ.",
   "a11yAboutTool": "{tool} के बारे में",
   "a11yFavourited": "पसंदीदा",
+  "a11yToolInfo": "यह टूल क्या करता है",
   "a11yField": "{name} नाम का {type} फ़ील्ड",
   "a11yFieldInGroup": "{name} नाम का {type} फ़ील्ड, समूह {group}",
   "a11yEditField": "फ़ील्ड बदलें",

@@ -65,7 +65,8 @@ class _ErrorpageState extends State<Errorpage> {
                         right: 26,
                         bottom: 28,
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: EdgeInsets.fromLTRB(4, 4, 4,
+                              4 + MediaQuery.viewPaddingOf(context).bottom),
                           decoration: BoxDecoration(
                             color: theme.scaffoldBackgroundColor,
                             shape: BoxShape.circle,

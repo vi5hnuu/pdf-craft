@@ -350,17 +350,23 @@ class _RotatePdfViewState extends State<RotatePdfView>
                       // ── Submit bar ────────────────────────────────────
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.fromLTRB(14, 14, 14,
+                            14 + MediaQuery.viewPaddingOf(context).bottom),
                         decoration: BoxDecoration(
                           color: theme.scaffoldBackgroundColor,
                           border:
                               Border(top: BorderSide(color: theme.dividerColor)),
                         ),
                         child: FilledButton(
-                          onPressed:
-                              fileAngle == 0 && pageAngles.isEmpty
-                                  ? null
-                                  : _onRotatePages,
+                          // `loading` in the predicate too. The overlay only blocks the screen
+                          // once the bloc has emitted loading, and _onRotatePages first awaits
+                          // reading the file — so in that gap the button stayed live and two
+                          // fast taps dispatched two uploads and debited twice. The neighbouring
+                          // tools (scale, mirror) already guarded this.
+                          onPressed: (state.httpStates[HttpStates.rotatePdf]?.loading == true) ||
+                                  (fileAngle == 0 && pageAngles.isEmpty)
+                              ? null
+                              : _onRotatePages,
                           child: Text(ToolStrings.name(context, 'rotate')),
                         ),
                       ),

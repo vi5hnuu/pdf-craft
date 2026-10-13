@@ -85,6 +85,15 @@ class _BatchProcessViewState extends State<BatchProcessView> {
   _Tool _tool = _Tool.grayscale;
   int _currentIndex = -1; // -1 = not started
   bool _running = false;
+
+  /// Cancels the item currently uploading.
+  ///
+  /// A 50-file run had no stop at all: every item was dispatched without a token, so once
+  /// started the only way out was to leave the screen — which left the upload running.
+  CancelToken? _cancelToken;
+
+  /// Set by [_cancelBatch] so the chain stops instead of advancing to the next file.
+  bool _cancelled = false;
   bool _finished = false;
 
   @override
@@ -93,6 +102,16 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     _bloc = BlocProvider.of<PdfBloc>(context);
     _items = widget.files.map((f) => _FileItem(f)).toList();
     _preloadFileSizes();
+  }
+
+  @override
+  void dispose() {
+    // Leaving mid-run used to leave the current upload streaming with nothing to receive it.
+    _cancelled = true;
+    if (_cancelToken != null && !_cancelToken!.isCancelled) {
+      _cancelToken!.cancel('screen-disposed');
+    }
+    super.dispose();
   }
 
   Future<void> _preloadFileSizes() async {
@@ -131,6 +150,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
 
     setState(() {
       _running = true;
+      _cancelled = false;
       _finished = false;
       for (final item in _items) {
         item.status = _FileStatus.pending;
@@ -222,7 +242,8 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     final item = _items[_currentIndex];
     // _processNext is re-entered from the catch below and from the bloc listener, both after
     // an await, so the guard belongs here too rather than only at the call sites.
-    if (!mounted) return;
+    if (!mounted || _cancelled) return;
+    _cancelToken = CancelToken();
     setState(() => item.status = _FileStatus.processing);
 
     final baseName = Utility.fileName(file: item.file);
@@ -234,6 +255,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
         case _Tool.grayscale:
           _bloc.add(GrayscalePdfEvent(
             grayscalePdf: GrayscalePdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.compress:
           _bloc.add(CompressPdfEvent(
@@ -242,22 +264,27 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               level: CompressionLevel.RECOMMENDED,
               file: multipart,
             ),
+            cancelToken: _cancelToken,
           ));
         case _Tool.repair:
           _bloc.add(RepairPdfEvent(
             repairPdf: RepairPdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.flatten:
           _bloc.add(FlattenPdfEvent(
             flattenPdf: FlattenPdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.optimize:
           _bloc.add(OptimizePdfEvent(
             optimizePdf: OptimizePdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.removeBlankPages:
           _bloc.add(RemoveBlankPagesEvent(
             removeBlankPages: RemoveBlankPages(file: multipart),
+            cancelToken: _cancelToken,
           ));
       }
     } catch (e) {
@@ -270,6 +297,23 @@ class _BatchProcessViewState extends State<BatchProcessView> {
         _currentIndex++;
       });
       await _processNext();
+    }
+  }
+
+  /// Stops the run after the item currently in flight.
+  ///
+  /// Items already finished keep their results — they are written to disk and paid for — so
+  /// this abandons the remainder rather than undoing anything.
+  void _cancelBatch() {
+    _cancelled = true;
+    if (_cancelToken != null && !_cancelToken!.isCancelled) {
+      _cancelToken!.cancel('cancelled-by-user');
+    }
+    if (mounted) {
+      setState(() {
+        _running = false;
+        _finished = true;
+      });
     }
   }
 
@@ -371,7 +415,8 @@ class _BatchProcessViewState extends State<BatchProcessView> {
             ),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16,
+                  16 + MediaQuery.viewPaddingOf(context).bottom),
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
                 border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -381,10 +426,19 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                       onPressed: _startBatch,
                       child: Text(L10n.of(context).runAgain),
                     )
-                  : FilledButton(
-                      onPressed: _running ? null : _startBatch,
-                      child: Text(_running ? L10n.of(context).processingEllipsis : L10n.of(context).startBatch),
-                    ),
+                  : _running
+                      // A Cancel while running, rather than a disabled button: the only way to
+                      // stop a 50-file run used to be leaving the screen, which left the
+                      // current upload going.
+                      ? OutlinedButton.icon(
+                          onPressed: _cancelBatch,
+                          icon: const Icon(Icons.close),
+                          label: Text(L10n.of(context).cancel),
+                        )
+                      : FilledButton(
+                          onPressed: _startBatch,
+                          child: Text(L10n.of(context).startBatch),
+                        ),
             ),
           ],
         ),
