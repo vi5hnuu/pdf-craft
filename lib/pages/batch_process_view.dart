@@ -220,6 +220,9 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     }
 
     final item = _items[_currentIndex];
+    // _processNext is re-entered from the catch below and from the bloc listener, both after
+    // an await, so the guard belongs here too rather than only at the call sites.
+    if (!mounted) return;
     setState(() => item.status = _FileStatus.processing);
 
     final baseName = Utility.fileName(file: item.file);
@@ -258,6 +261,9 @@ class _BatchProcessViewState extends State<BatchProcessView> {
           ));
       }
     } catch (e) {
+      // Reached after an await, so the screen may be gone — leaving a batch mid-run used to
+      // call setState on a defunct element and then recurse into more of them.
+      if (!mounted) return;
       setState(() {
         item.status = _FileStatus.error;
         item.errorMsg = L10n.current.failedToPrepareFile;

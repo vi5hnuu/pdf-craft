@@ -220,6 +220,9 @@ class _StampPdfViewState extends State<StampPdfView>
       allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'],
     );
     if (result != null && result.files.single.path != null) {
+      // The picker is a separate activity, so this resumes long after the tap and the screen
+      // may have been popped in the meantime. _measureStamp below already checks; this did not.
+      if (!mounted) return;
       final picked = File(result.files.single.path!);
       setState(() {
         _stampFile = picked;
