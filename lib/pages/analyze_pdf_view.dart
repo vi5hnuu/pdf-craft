@@ -115,8 +115,8 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
   }
 
   Widget _statGrid(ThemeData theme, List<_Stat> stats) {
-    return GridView.count(
-      crossAxisCount: 2,
+    return GridView.extent(
+      maxCrossAxisExtent: 220,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       childAspectRatio: 2.6,

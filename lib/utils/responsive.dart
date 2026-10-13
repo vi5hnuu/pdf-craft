@@ -30,15 +30,6 @@ WindowSize windowSizeFor(double width) {
   return WindowSize.compact;
 }
 
-/// Columns for a grid of roughly phone-sized cells across [width].
-///
-/// Driven by cell width rather than size class, so a grid gains columns instead of inflating its
-/// cells. Pass a smaller [targetCellWidth] for denser grids such as page thumbnails.
-int gridColumnsFor(double width, {double targetCellWidth = 130, int maxColumns = 8}) {
-  if (!width.isFinite || width <= 0) return 3;
-  return (width / targetCellWidth).floor().clamp(3, maxColumns);
-}
-
 /// Whether the device is tablet-shaped, independent of the current window.
 ///
 /// Shortest side, so it does not flip with rotation or split-screen. Read from

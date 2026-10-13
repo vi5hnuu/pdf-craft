@@ -21,36 +21,6 @@ void main() {
     });
   });
 
-  group('gridColumnsFor', () {
-    test('keeps the phone default at phone widths', () {
-      expect(gridColumnsFor(360), 3);
-      expect(gridColumnsFor(411), 3);
-    });
-
-    test('adds columns rather than inflating cells', () {
-      expect(gridColumnsFor(800), greaterThan(3));
-      expect(gridColumnsFor(1280), greaterThan(gridColumnsFor(800)));
-    });
-
-    test('never drops below three or past the cap', () {
-      expect(gridColumnsFor(100), 3);
-      expect(gridColumnsFor(10000), 8);
-      expect(gridColumnsFor(10000, maxColumns: 5), 5);
-    });
-
-    test('an unbounded or absent width falls back to the phone default', () {
-      // Reachable from a parent that gives infinite width, where a division would be NaN.
-      expect(gridColumnsFor(double.infinity), 3);
-      expect(gridColumnsFor(0), 3);
-      expect(gridColumnsFor(-1), 3);
-    });
-
-    test('a denser grid asks for a smaller cell', () {
-      expect(gridColumnsFor(800, targetCellWidth: 80),
-          greaterThan(gridColumnsFor(800, targetCellWidth: 200)));
-    });
-  });
-
   group('ToolPane', () {
     /// Lays [pane] out in a box [width] wide and reports the child's painted width.
     Future<double> childWidth(WidgetTester tester, double width) async {

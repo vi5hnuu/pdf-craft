@@ -201,8 +201,10 @@ class _ToolsScreenState extends State<ToolsScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        // Cells stay card-sized and the count follows the width, rather than three cells
+        // growing to a third of a tablet each.
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: _toolCardExtent,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
           childAspectRatio: 0.95,
@@ -270,6 +272,10 @@ class _FavoriteToolsRow extends StatelessWidget {
     );
   }
 }
+
+/// Widest a tool card may get. Both tool grids use it, so the search results and the category
+/// sections stay the same size as each other at every width.
+const double _toolCardExtent = 130;
 
 /// Horizontal row of the user's recently used tools (hidden when empty).
 ///
@@ -375,8 +381,8 @@ class _CategorySection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 3,
+          GridView.extent(
+            maxCrossAxisExtent: _toolCardExtent,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10,
