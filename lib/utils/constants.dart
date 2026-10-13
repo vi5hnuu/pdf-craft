@@ -124,7 +124,9 @@ class Constants {
     'csv':'assets/file-types/csv.webp',
     'xls':'assets/file-types/csv.webp',
     'xlsx':'assets/file-types/csv.webp',
-    'doc':'assets/file-types/doc.webp',
+    // Shares the Word icon with 'docx'. It used to point at a doc.webp that was never in the
+    // bundle, so every .doc row painted Flutter's grey exception box.
+    'doc':'assets/file-types/docx.webp',
     'docx':'assets/file-types/docx.webp',
     'html':'assets/file-types/html.webp',
     'json':'assets/file-types/json.webp',
