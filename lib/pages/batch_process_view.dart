@@ -79,7 +79,9 @@ class _BatchProcessViewState extends State<BatchProcessView> {
   late final PdfBloc _bloc;
   late final List<_FileItem> _items;
   // Pre-cached file sizes so itemBuilder never calls lengthSync()
-  final Map<String, String> _fileSizes = {};
+  /// Raw byte length per file path. Kept as bytes rather than a formatted string because
+  /// the price depends on size, so _totalCost needs the number, not its label.
+  final Map<String, int> _fileSizes = {};
   _Tool _tool = _Tool.grayscale;
   int _currentIndex = -1; // -1 = not started
   bool _running = false;
@@ -97,13 +99,28 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     for (final f in widget.files) {
       try {
         final len = await f.length();
-        if (mounted) setState(() => _fileSizes[f.path] = Utility.bytesToSize(len));
+        if (mounted) setState(() => _fileSizes[f.path] = len);
       } catch (_) {}
     }
   }
 
-  /// Total credits this run will spend: the per-file price times the number of files.
-  int get _totalCost => CreditService().costFor(_tool.creditToolId) * _items.length;
+  /// Total credits this run will spend.
+  ///
+  /// Priced per file at the size the server will actually charge for, not the base price times
+  /// the file count: the server adds a per-block surcharge, so a batch of large files was being
+  /// confirmed at a fraction of what it then took. Files whose length has not been read yet fall
+  /// back to the base price, which is what _preloadFileSizes is racing to improve on.
+  int get _totalCost {
+    final toolId = _tool.creditToolId;
+    var total = 0;
+    for (final item in _items) {
+      final bytes = _fileSizes[item.file.path];
+      total += bytes == null
+          ? CreditService().costFor(toolId)
+          : CreditService().costForSize(toolId, bytes);
+    }
+    return total;
+  }
 
   Future<void> _startBatch() async {
     // A batch is the one place where a single tap can spend a large number of credits, so
@@ -149,9 +166,14 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(L10n.of(context).perFilePerCount(perFile, _items.length),
-                style: Theme.of(ctx).textTheme.bodySmall),
+            // Only shown when the total really is the base price times the file count. Once a
+            // size surcharge applies the two no longer agree, and a per-file figure that
+            // contradicts the total it sits under is worse than no per-file figure.
+            if (perFile * _items.length == total) ...[
+              const SizedBox(height: 6),
+              Text(L10n.of(context).perFilePerCount(perFile, _items.length),
+                  style: Theme.of(ctx).textTheme.bodySmall),
+            ],
             const SizedBox(height: 8),
             Text(L10n.of(context).gateBalance(balance)),
             if (!enough) ...[
@@ -329,7 +351,9 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                     subtitle: item.errorMsg != null
                         ? Text(item.errorMsg!, style: const TextStyle(color: Colors.red, fontSize: 11))
                         : Text(
-                            _fileSizes[item.file.path] ?? '',
+                            _fileSizes[item.file.path] == null
+                                ? ''
+                                : Utility.bytesToSize(_fileSizes[item.file.path]!),
                             style: TextStyle(
                               fontSize: 11,
                               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
