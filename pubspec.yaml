@@ -68,6 +68,11 @@ dependencies:
   extension_google_sign_in_as_googleapis_auth: ^2.0.12
   flutter_secure_storage: ^9.2.2
   in_app_purchase: ^3.2.0
+  # Already in the tree via in_app_purchase; declared directly because PurchaseService imports
+  # InAppPurchaseAndroidPlatformAddition to consume a purchase itself. Consuming is Android-only
+  # and the cross-platform completePurchase() only acknowledges, so the federated package alone
+  # cannot finalize a consumable.
+  in_app_purchase_android: ^0.5.1
   package_info_plus: ^9.0.1
 
   # In-repo form engine: the field schema, type registry and the codecs that
