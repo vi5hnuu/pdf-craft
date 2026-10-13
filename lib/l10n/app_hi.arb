@@ -1124,6 +1124,7 @@
   "filesPermissionDenied": "अनुमति नहीं मिली",
   "filesInvalidDirectory": "फ़ोल्डर का पता सही नहीं है",
   "filesLoadFailed": "फ़ोल्डर की फ़ाइलें लोड नहीं हो सकीं",
+  "filesSelectToPreview": "यहाँ देखने के लिए कोई PDF चुनें",
   "filesNoSuchDirectory": "ऐसा कोई फ़ोल्डर नहीं है",
   "filesNotInSource": "फ़ाइल उस फ़ोल्डर में नहीं है",
   "filesFileNotExist": "फ़ाइल मौजूद नहीं है",
