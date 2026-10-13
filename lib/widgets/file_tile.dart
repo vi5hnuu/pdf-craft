@@ -99,9 +99,14 @@ class _FileTileState extends State<FileTile> {
   /// Shown when a file type has no icon, or has one whose asset is missing.
   ///
   /// Material icons, not FontAwesome: these two glyphs are the only reason the solid and
-  /// regular FontAwesome families shipped at all (476 KB of font files between them), and the
-  /// bundled Material set already has both. Only the Google brand mark on the sign-in button
-  /// now needs FontAwesome, so one family ships instead of three.
+  /// regular FontAwesome families were referenced at all, and the bundled Material set already
+  /// has both. Only the Google brand mark on the sign-in button still needs FontAwesome, so
+  /// one family is referenced instead of three.
+  ///
+  /// Worth being accurate about the size: almost none. Flutter tree-shakes icon fonts — the
+  /// release build reduces the brands family from 215 KB to 1.4 KB — so three families each
+  /// carrying one glyph already cost about what one does. This is a dependency-surface change,
+  /// not the ~476 KB saving it first looks like.
   Widget _genericIcon(Color primary) => Icon(
         widget.file is Directory ? Icons.folder : Icons.insert_drive_file,
         color: primary,
