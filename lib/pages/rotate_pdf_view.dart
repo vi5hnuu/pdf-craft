@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +44,18 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   final int pageSize = 10;
   final ScrollController controller = ScrollController();
-  final Map<int, Thumbnail> thumbnails = {};
+  /// Rendered page thumbnails, oldest first so the cap can evict from the front.
+  ///
+  /// Capped because these are full JPEGs and the list appends ten more on every scroll to the
+  /// end: nothing used to drop them, so scrolling a long PDF held every page it had rendered.
+  final LinkedHashMap<int, Thumbnail> thumbnails = LinkedHashMap();
+
+  /// How many rendered pages to keep — comfortably more than a screenful.
+  static const int _maxCachedThumbnails = 40;
+
+  /// Width, in logical pixels, a thumbnail is painted at. Rendering at the page's intrinsic
+  /// size produced bitmaps many times larger than the box they are drawn in.
+  static const double _thumbnailWidth = 180;
 
   PdfDocument? document;
   late PdfController _pdfController;
@@ -440,22 +452,39 @@ class _RotatePdfViewState extends State<RotatePdfView>
       final image =
           await _loadPageImage(document: document, pageNumber: pageNo);
       if (image == null) throw Exception();
-      if (!mounted) return;
-      setState(() => thumbnails.put(pageNo, Thumbnail(image: image)));
+      _setThumbnail(pageNo, Thumbnail(image: image));
     } catch (_) {
-      if (!mounted) return;
-      setState(() => thumbnails.put(pageNo, Thumbnail(error: L10n.current.thumbnailFailed)));
+      _setThumbnail(pageNo, Thumbnail(error: L10n.current.thumbnailFailed));
     }
+  }
+
+  /// Records a thumbnail, dropping the oldest once the cache is full.
+  void _setThumbnail(int pageNo, Thumbnail thumbnail) {
+    if (!mounted) return;
+    setState(() {
+      thumbnails.put(pageNo, thumbnail);
+      while (thumbnails.length > _maxCachedThumbnails) {
+        final oldest = thumbnails.keys.first;
+        if (oldest == pageNo) break;
+        thumbnails.remove(oldest);
+      }
+    });
   }
 
   Future<PdfPageImage?> _loadPageImage(
       {required PdfDocument document, required int pageNumber}) async {
     assert(pageNumber > 0);
+    // Read before the first await: it comes from the element's inherited widgets.
+    final ratio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
     try {
       final page = await document.getPage(pageNumber);
+      // Bounded by the width it is drawn at rather than the page's own size: an A4 page at
+      // intrinsic size is a multi-megabyte bitmap for a thumbnail.
+      final target = _thumbnailWidth * ratio;
+      final width = page.width <= target ? page.width : target;
       final image = await page.render(
-        width: page.width,
-        height: page.height,
+        width: width,
+        height: page.height / page.width * width,
         format: PdfPageImageFormat.jpeg,
       );
       await page.close();
@@ -473,6 +502,10 @@ class _RotatePdfViewState extends State<RotatePdfView>
     fileAngleC.dispose();
     pageNoC.dispose();
     pageAngleC.dispose();
+    // Disposing the controller does not close the document (see PdfPreview), so the native
+    // handle and its page cache leaked on every visit to this screen.
+    document?.close();
+    thumbnails.clear();
     super.dispose();
   }
 }
