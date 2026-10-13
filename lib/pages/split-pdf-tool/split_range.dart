@@ -11,6 +11,7 @@ import 'package:pdf_craft/models/enums/split_type.dart';
 import 'package:pdf_craft/models/request/split_pdf.dart';
 import 'package:pdf_craft/models/thumbnail_stats.dart';
 import 'package:pdf_craft/models/thumbnail.dart';
+import 'package:pdf_craft/utils/debouncer.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/constants.dart';
@@ -38,6 +39,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   final int pageSize=10;
   int fixedRange=10;
   final ScrollController controller=ScrollController();
+  final Debouncer _scrollDebounce=Debouncer(milliseconds: 120);
   /// Rendered page thumbnails, oldest first so the cap can evict from the front.
   ///
   /// Capped because these are full JPEGs for a document that may run to thousands of pages,
@@ -76,7 +78,11 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
         if(widget.type==SplitType.FIXED_RANGE) initNextRanges();
       });
     });
-    if(widget.type==SplitType.FIXED_RANGE) controller.addListener(() => _tryRenderingNextThumbnails());
+    // Debounced: _tryRenderingNextThumbnails awaits a reload and walks the whole cache, and
+    // this fired on every scroll tick.
+    if(widget.type==SplitType.FIXED_RANGE) {
+      controller.addListener(() => _scrollDebounce.run(_tryRenderingNextThumbnails));
+    }
     super.initState();
   }
 
@@ -328,6 +334,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
 
   @override
   void dispose() {
+    _scrollDebounce.dispose();
     rangeStart.dispose();
     rangeEnd.dispose();
     controller.dispose();

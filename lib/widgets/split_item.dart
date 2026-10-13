@@ -19,8 +19,13 @@ class SplitItem extends StatelessWidget {
     this.onDelete
   });
 
+  /// Physical pixels a thumbnail occupies, so the JPEG is not decoded at full page size.
+  int _thumbPx(BuildContext context) =>
+      (pageWidth * MediaQuery.devicePixelRatioOf(context)).round();
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Stack(children: [
       Flex(
         direction: Axis.horizontal,
@@ -29,20 +34,22 @@ class SplitItem extends StatelessWidget {
           Container(
             height: pageWidth*1.4,
             width: pageWidth,
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(AppRadius.surface)),
-            child: (startThumbnail.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,)),
+            decoration: BoxDecoration(border: Border.all(color: theme.dividerColor),borderRadius: BorderRadius.circular(AppRadius.surface)),
+            child: (startThumbnail.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,cacheWidth: _thumbPx(context),)),
           ),
           if(endThumbnail!=null) Column(
             children: [
               Text("${range.from+1}-${range.to+1}"),
-              SizedBox(width: 50,child: Container(height: 2,decoration: const BoxDecoration(color: Colors.white),),)
+              // theme.dividerColor, not Colors.white: on the light theme's white canvas this
+              // connector between the two thumbnails was invisible.
+              SizedBox(width: 50,child: Container(height: 2,decoration: BoxDecoration(color: theme.dividerColor),),)
             ],
           ),
           if(endThumbnail!=null) Container(
             height: pageWidth*1.4,
             width: pageWidth,
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey),borderRadius: BorderRadius.circular(AppRadius.surface)),
-            child: (endThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (endThumbnail!.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(endThumbnail!.image!.bytes,fit: BoxFit.fitWidth,)),
+            decoration: BoxDecoration(border: Border.all(color: theme.dividerColor),borderRadius: BorderRadius.circular(AppRadius.surface)),
+            child: (endThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (endThumbnail!.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(endThumbnail!.image!.bytes,fit: BoxFit.fitWidth,cacheWidth: _thumbPx(context),)),
           )
         ],
       ),

@@ -72,12 +72,15 @@ class _ToolsScreenState extends State<ToolsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final searching = _query.trim().isNotEmpty;
-    final results = ToolRegistry.search(_query, context: context);
+    // Only when searching: this ran on every build and the result was discarded whenever the
+    // box was empty, which is most of the time.
+    final results = searching ? ToolRegistry.search(_query, context: context) : const <ToolDef>[];
 
-    // Rebuild on favourite changes so stars and the favourites row stay live.
-    return AnimatedBuilder(
-      animation: FavoriteToolsService(),
-      builder: (context, _) => SafeArea(
+    // No AnimatedBuilder on FavoriteToolsService here. It used to wrap this whole
+    // CustomScrollView, so toggling one star rebuilt the search field, every category grid,
+    // the banner ads and all 61 cards. The two things that actually depend on favourites —
+    // the favourites row and each card's star — now listen for themselves.
+    return SafeArea(
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -151,14 +154,15 @@ class _ToolsScreenState extends State<ToolsScreen> {
             _buildToolsGrid(theme, results)
           else ...[
             // Pinned favourites row (hidden when none).
-            SliverToBoxAdapter(child: _FavoriteToolsRow()),
-            // Recently used row (live via RecentToolsService).
             SliverToBoxAdapter(
               child: AnimatedBuilder(
-                animation: RecentToolsService(),
-                builder: (context, _) => _RecentToolsRow(),
+                animation: FavoriteToolsService(),
+                builder: (context, _) => _FavoriteToolsRow(),
               ),
             ),
+            // Recently used row — _RecentToolsRow subscribes to RecentToolsService itself, so
+            // it no longer needs an AnimatedBuilder here recreating it (and its future).
+            SliverToBoxAdapter(child: _RecentToolsRow()),
             // Category sections.
             for (int i = 0; i < ToolCategories.all.length; i++) ...[
               SliverToBoxAdapter(
@@ -175,7 +179,6 @@ class _ToolsScreenState extends State<ToolsScreen> {
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
-      ),
       ),
     );
   }
@@ -269,11 +272,39 @@ class _FavoriteToolsRow extends StatelessWidget {
 }
 
 /// Horizontal row of the user's recently used tools (hidden when empty).
-class _RecentToolsRow extends StatelessWidget {
+///
+/// Stateful so the future is created once. As a StatelessWidget it built a new one on every
+/// build — and its parent rebuilds often — so each rebuild re-read SharedPreferences and the
+/// row flashed back to empty while the read was in flight.
+class _RecentToolsRow extends StatefulWidget {
+  @override
+  State<_RecentToolsRow> createState() => _RecentToolsRowState();
+}
+
+class _RecentToolsRowState extends State<_RecentToolsRow> {
+  late Future<List<String>> _recentIds = RecentToolsService().getRecentToolIds();
+
+  @override
+  void initState() {
+    super.initState();
+    // Re-read when the service says the list changed, rather than on every build.
+    RecentToolsService().addListener(_reload);
+  }
+
+  @override
+  void dispose() {
+    RecentToolsService().removeListener(_reload);
+    super.dispose();
+  }
+
+  void _reload() {
+    if (mounted) setState(() => _recentIds = RecentToolsService().getRecentToolIds());
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<String>>(
-      future: RecentToolsService().getRecentToolIds(),
+      future: _recentIds,
       builder: (context, snapshot) {
         final ids = snapshot.data ?? const [];
         final tools = ids
@@ -383,6 +414,15 @@ class ToolCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Listens for itself: the star is read below, and this used to depend on an AnimatedBuilder
+    // wrapping the entire tools screen.
+    return AnimatedBuilder(
+      animation: FavoriteToolsService(),
+      builder: (context, _) => _card(context),
+    );
+  }
+
+  Widget _card(BuildContext context) {
     final theme = Theme.of(context);
     final isFav = FavoriteToolsService().isFavorite(tool.id);
     final cost = tool.creditCost;

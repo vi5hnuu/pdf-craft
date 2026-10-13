@@ -72,19 +72,40 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       _searchController = controller;
 
       final List<File> files = [];
+      // Emissions are coalesced instead of one per match found.
+      //
+      // Every emission rebuilds the results list, and the screen re-shapes it — which in the
+      // default date order stats every result. Emitting per match therefore cost N stats for
+      // the Nth result: about 45,000 blocking syscalls on the UI thread over a full 300-result
+      // search, which is what made searching feel like a freeze. The user cannot perceive
+      // more than a handful of list updates a second anyway.
+      Timer? coalesce;
+      void publish() {
+        coalesce?.cancel();
+        coalesce = null;
+        if (!controller.isClosed) controller.add(List<File>.from(files));
+      }
+
       _searchSubscription = searchFiles(event.path, event.nameLike).listen(
         (data) {
           files.add(data);
-          if (!controller.isClosed) controller.add(List<File>.from(files));
+          // First match publishes at once, so the list appears immediately rather than after
+          // the interval; later ones ride the timer.
+          if (files.length == 1) {
+            publish();
+          } else {
+            coalesce ??= Timer(const Duration(milliseconds: 150), publish);
+          }
           // Cap results to keep memory/UI bounded on huge trees.
-          if (files.length >= _maxSearchResults) _searchSubscription?.cancel();
+          if (files.length >= _maxSearchResults) {
+            publish();
+            _searchSubscription?.cancel();
+          }
         },
         onError: controller.addError,
         // Emit the final list (possibly empty) so the UI can distinguish
         // "still searching" from "finished with no results".
-        onDone: () {
-          if (!controller.isClosed) controller.add(List<File>.from(files));
-        },
+        onDone: publish,
       );
       emit(state.copyWith(searchStream: controller.stream));
     });

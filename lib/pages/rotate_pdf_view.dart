@@ -15,6 +15,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/rotatable_item.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/utils/debouncer.dart';
 
 class Thumbnail {
   bool? isLoading;
@@ -43,6 +44,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   final int pageSize = 10;
   final ScrollController controller = ScrollController();
+  final Debouncer _scrollDebounce = Debouncer(milliseconds: 120);
   /// Rendered page thumbnails, oldest first so the cap can evict from the front.
   ///
   /// Capped because these are full JPEGs and the list appends ten more on every scroll to the
@@ -83,7 +85,9 @@ class _RotatePdfViewState extends State<RotatePdfView>
       });
       _tryRenderingNextThumbnails();
     });
-    controller.addListener(() => _tryRenderingNextThumbnails());
+    // Debounced: _tryRenderingNextThumbnails awaits a reload and walks the whole cache, and
+    // this fired on every scroll tick. Debouncer already exists for exactly this.
+    controller.addListener(() => _scrollDebounce.run(_tryRenderingNextThumbnails));
     fileAngleC.addListener(() {
       final v = int.tryParse(fileAngleC.text) ?? 0;
       if (v != fileAngle) setState(() => fileAngle = v);
@@ -315,9 +319,18 @@ class _RotatePdfViewState extends State<RotatePdfView>
                                                   ? ClipRRect(
                                                       borderRadius:
                                                           BorderRadius.circular(AppRadius.surface),
+                                                      // cacheWidth bounds the decoded
+                                                      // texture: without it Flutter decodes
+                                                      // the JPEG at full size however small
+                                                      // it is drawn.
                                                       child: Image.memory(
                                                           thumbnail!.image!.bytes,
-                                                          fit: BoxFit.contain))
+                                                          fit: BoxFit.contain,
+                                                          cacheWidth: (thumbW *
+                                                                  MediaQuery
+                                                                      .devicePixelRatioOf(
+                                                                          context))
+                                                              .round()))
                                                   : const SizedBox.shrink(),
                                     ),
                                   ),
@@ -496,6 +509,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   @override
   void dispose() {
+    _scrollDebounce.dispose();
     controller.dispose();
     _pdfController.dispose();
     outFileNameC.dispose();
