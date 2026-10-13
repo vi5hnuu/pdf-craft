@@ -316,8 +316,6 @@
       }
     }
   },
-  "settingsPasswordHints": "Password Hints",
-  "settingsPasswordHintsSub": "Saved hints for protected PDFs",
   "settingsSectionPrivacy": "Privacy & Data",
   "settingsPrivacyBody": "Tools run on our secure server so results are identical on every device. Files are sent over an encrypted (HTTPS) connection, processed, and removed afterwards — we don't keep your documents.",
   "settingsSectionAbout": "About",
@@ -335,7 +333,6 @@
     }
   },
   "settingsProcessedCleared": "Processed files cleared",
-  "settingsPasswordHintsCleared": "Password hints cleared",
   "authModeCreate": "Create account",
   "authModeSignIn": "Sign in",
   "authBenefitCredits": "Your credits stay safe",
@@ -1172,8 +1169,6 @@
   "toolLabel": "Tool",
   "runAgain": "Run again",
   "fileNameLabel": "File name",
-  "passwordHintOptional": "Password hint (optional)",
-  "passwordHintExample": "e.g. My birthday year",
   "ownerPassword": "Owner password",
   "userPassword": "User password",
   "atLeast10Chars": "At least 10 characters",
@@ -1274,7 +1269,6 @@
   "showPassword": "Show password",
   "hidePassword": "Hide password",
   "willHaveOwnerPermissions": "⚠️ Will have owner permissions ⚠️",
-  "passwordHintTitle": "Password hint",
   "passwordLabel": "Password",
   "removePassword": "Remove password",
   "quickActions": "Quick Actions",

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/utils/legacy_prefs.dart';
 import 'package:pdf_craft/singletons/app_bloc_observer.dart';
 import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:flutter/services.dart';
@@ -53,6 +54,9 @@ Future<void> _bootstrap() async {
   await ThemeManager().init();
   await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame
+  // Delete what retired features left in prefs. Backgrounded: nothing on the first frame
+  // depends on it, and it is a no-op after the launch that cleans up.
+  unawaited(LegacyPrefs.purge());
   // Establish an auth session (guest on first launch) in the background. This used to be
   // awaited here, so a slow or unreachable auth server held the first frame until the 20s
   // connect timeout (measured on a release build: first frame at +20.4s). Requests don't need

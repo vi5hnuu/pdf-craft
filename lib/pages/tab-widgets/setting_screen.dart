@@ -10,7 +10,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/locale_manager.dart';
 import 'package:pdf_craft/widgets/confirm_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -89,19 +88,6 @@ class _SettingScreenState extends State<SettingScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context).settingsProcessedCleared), backgroundColor: Colors.orange),
-      );
-    }
-  }
-
-  Future<void> _clearPasswordHints() async {
-    final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys().where((k) => k.startsWith('pwd_hint_')).toList();
-    for (final k in keys) {
-      await prefs.remove(k);
-    }
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(L10n.of(context).settingsPasswordHintsCleared)),
       );
     }
   }
@@ -227,16 +213,6 @@ class _SettingScreenState extends State<SettingScreen> {
                     trailing: TextButton(
                       onPressed: _processedFileCount == 0 ? null : _clearCache,
                       child: Text(L10n.of(context).clear, style: const TextStyle(color: Colors.red)),
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 56),
-                  ListTile(
-                    leading: const Icon(Icons.key_outlined),
-                    title: Text(L10n.of(context).settingsPasswordHints),
-                    subtitle: Text(L10n.of(context).settingsPasswordHintsSub),
-                    trailing: TextButton(
-                      onPressed: _clearPasswordHints,
-                      child: Text(L10n.of(context).clear),
                     ),
                   ),
                 ]),
