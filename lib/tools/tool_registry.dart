@@ -294,6 +294,7 @@ class ToolRegistry {
     'scale-pdf': 'scale-pdf',
     'watermark': 'watermark-pdf',
     'grayscale': 'grayscale-pdf',
+    'analyze': 'analyze-pdf',
     'header-footer': 'header-footer',
     'page-numbers': 'page-numbers',
     'crop': 'crop-pdf',
