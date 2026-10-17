@@ -1,6 +1,13 @@
 class HttpStates{
   static const String mergePdf="MERGE_PDF";
   static const String reorderPdf="REORDER_PDF";
+  // One key per *screen* that reaches the reorder endpoint, not one per endpoint. Sharing
+  // reorderPdf across five screens let a newly opened one wipe another's in-flight state, and
+  // let both consume the same result. See ReorderPdfEvent.stateKey.
+  static const String deletePages="DELETE_PAGES_VIEW";
+  static const String reversePages="REVERSE_PAGES_VIEW";
+  static const String organizePages="ORGANIZE_PAGES_VIEW";
+  static const String extractPages="EXTRACT_PAGES_VIEW";
   static const String splitPdf="SPLIT_PDF";
   static const String pdfToJpg="PDF_TO_JPG";
   static const String imageToPdf="IMAGE_TO_PDF";

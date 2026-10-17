@@ -25,6 +25,7 @@ import 'package:pdf_craft/utils/constants.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:share_plus/share_plus.dart';
 
 class InspectorScaffold extends StatefulWidget {
@@ -70,7 +71,8 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
   }
 
   Future<void> _fetch() async {
-    final upload = await MultipartFile.fromFile(widget.file.path);
+    final upload = await readForUpload(widget.file);
+    if (upload == null) return;
     if (!mounted) return;
     runTool((cancelToken) => widget.buildEvent(cancelToken, upload));
   }
@@ -123,7 +125,7 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
                     onPressed: _share),
               ],
       ),
-      body: Column(children: [
+      body: ToolPane(child: Column(children: [
         Expanded(
           child: BlocConsumer<PdfBloc, PdfState>(
             buildWhen: (p, c) => p.httpStates[widget.stateKey] != c.httpStates[widget.stateKey],
@@ -169,7 +171,7 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
         // A report is a read-only screen with nothing in flight and no document on display —
         // the one place in a tool flow where a banner does not get in the way.
         const BannerAdd(),
-      ]),
+      ])),
     );
   }
 }

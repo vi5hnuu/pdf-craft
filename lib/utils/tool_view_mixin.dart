@@ -8,7 +8,9 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/http_state.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/ads_singleton.dart';
+import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
+import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
@@ -41,7 +43,53 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
   /// request can be cancelled from the overlay.
   void runTool(PdfEvent Function(CancelToken cancelToken) build) {
     _cancelToken = CancelToken();
-    pdfBloc.add(build(_cancelToken!));
+    final event = build(_cancelToken!);
+    // A breadcrumb, so a crash report says which tool the user was running. CrashReporter.log
+    // was written for this and had no callers at all, which left every report with no trail
+    // leading up to it. The event's runtime type is safe to disclose — it is our own class
+    // name, never a filename or anything the user typed.
+    CrashReporter().log('runTool ${event.runtimeType}');
+    pdfBloc.add(event);
+  }
+
+  /// Reads [source] for upload, or says why it cannot be read and returns null.
+  ///
+  /// Tool screens used to call `MultipartFile.fromFile` straight from a `void async` handler
+  /// with no try. It stats the path and throws if the file has been moved, renamed, deleted or
+  /// is simply unreadable, and that throw escaped all the way to runZonedGuarded — so the user
+  /// tapped Run and *nothing happened at all*: no overlay, no error, no explanation. It is
+  /// reachable rather than theoretical, because UploadLimits deliberately counts an unreadable
+  /// file as 0 bytes, so a file that has gone away sails through the size check.
+  ///
+  /// Returning null rather than throwing lets the caller simply `return` and leave the screen
+  /// as it was.
+  Future<MultipartFile?> readForUpload(File source) async {
+    try {
+      if (!await source.exists()) {
+        throw PathNotFoundException(source.path, const OSError('No such file'));
+      }
+      return await MultipartFile.fromFile(source.path);
+    } catch (e) {
+      LoggerSingleton().logger.w('Upload source unreadable: ${source.path} ($e)');
+      if (mounted) {
+        NotificationService.showSnackbar(text: L10n.current.errFileGone, color: Colors.red);
+      }
+      return null;
+    }
+  }
+
+  /// Reads every file in [sources] for upload, or returns null if any cannot be read.
+  ///
+  /// All-or-nothing on purpose: silently dropping one file of a merge would produce a result
+  /// the user did not ask for and could not tell was incomplete.
+  Future<List<MultipartFile>?> readAllForUpload(Iterable<File> sources) async {
+    final parts = <MultipartFile>[];
+    for (final source in sources) {
+      final part = await readForUpload(source);
+      if (part == null) return null;
+      parts.add(part);
+    }
+    return parts;
   }
 
   /// Cancels the current request, if any.
@@ -116,6 +164,15 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
             : null,
       );
     }
+  }
+
+  @override
+  void dispose() {
+    // Leaving the screen used to leave the upload running: cancelTool had exactly one caller,
+    // the overlay's Cancel button, so backing out mid-upload left a request of up to the
+    // 50 MB limit streaming with nothing left to receive the result.
+    cancelTool();
+    super.dispose();
   }
 
   /// The processing overlay for [s], with Cancel wired to the active request.

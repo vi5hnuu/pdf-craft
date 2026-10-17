@@ -6,6 +6,7 @@ import 'package:pdf_craft/singletons/rate_app_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/locale_manager.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 import 'package:pdf_craft/widgets/app_logo.dart';
 
 class MainScreen extends StatefulWidget {
@@ -20,11 +21,29 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
+/// One tab, described once so the bottom bar and the rail cannot drift apart.
+class _Destination {
+  final IconData icon;
+  final IconData activeIcon;
+  final String Function(BuildContext) label;
+
+  const _Destination(this.icon, this.activeIcon, this.label);
+}
+
+const _destinations = <_Destination>[
+  _Destination(Icons.folder_copy_outlined, Icons.folder, _filesLabel),
+  _Destination(Icons.auto_fix_high_outlined, Icons.auto_fix_high, _toolsLabel),
+  _Destination(Icons.document_scanner_outlined, Icons.document_scanner, _scannerLabel),
+  _Destination(Icons.cloud_outlined, Icons.cloud, _cloudLabel),
+];
+
+// Tear-offs rather than closures, so _destinations can stay const.
+String _filesLabel(BuildContext c) => L10n.of(c).navFiles;
+String _toolsLabel(BuildContext c) => L10n.of(c).navTools;
+String _scannerLabel(BuildContext c) => L10n.of(c).navScanner;
+String _cloudLabel(BuildContext c) => L10n.of(c).navCloud;
+
 class _MainScreenState extends State<MainScreen> {
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +61,16 @@ class _MainScreenState extends State<MainScreen> {
         if (should && context.mounted) _showRateDialog(context);
       },
       child: Scaffold(
-      body: widget.navigationShell,
+      // A rail once there is width for it; the bottom bar would otherwise spend scarce
+      // landscape height and sit a long way from where the hands rest on a tablet.
+      // MediaQuery here, not LayoutBuilder: this decision is about the window.
+      body: _usesRail(context)
+          ? Row(children: [
+              _rail(context),
+              const VerticalDivider(width: 1, thickness: 1),
+              Expanded(child: widget.navigationShell),
+            ])
+          : widget.navigationShell,
       appBar: AppBar(
         leading: const Padding(
           padding: EdgeInsets.only(left: 16.0),
@@ -100,31 +128,46 @@ class _MainScreenState extends State<MainScreen> {
           child: Container(height: 1, color: theme.dividerColor),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        iconSize: 24,
-        showUnselectedLabels: true,
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.folder_copy_outlined),
-              label: L10n.of(context).navFiles,
-              activeIcon: const Icon(Icons.folder)),
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.auto_fix_high_outlined),
-              label: L10n.of(context).navTools,
-              activeIcon: const Icon(Icons.auto_fix_high)),
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.document_scanner_outlined),
-              label: L10n.of(context).navScanner,
-              activeIcon: const Icon(Icons.document_scanner)),
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.cloud_outlined),
-              label: L10n.of(context).navCloud,
-              activeIcon: const Icon(Icons.cloud)),
-        ],
-        currentIndex: widget.navigationShell.currentIndex,
-        onTap: _onTap,
-      ),
+      bottomNavigationBar: _usesRail(context)
+          ? null
+          : BottomNavigationBar(
+              iconSize: 24,
+              showUnselectedLabels: true,
+              items: [
+                for (final d in _destinations)
+                  BottomNavigationBarItem(
+                    icon: Icon(d.icon),
+                    activeIcon: Icon(d.activeIcon),
+                    label: d.label(context),
+                  ),
+              ],
+              currentIndex: widget.navigationShell.currentIndex,
+              onTap: _onTap,
+            ),
     ),
+    );
+  }
+
+  static bool _usesRail(BuildContext context) =>
+      windowSizeFor(MediaQuery.sizeOf(context).width).atLeast(WindowSize.medium);
+
+  Widget _rail(BuildContext context) {
+    // Labels only once there is room: at medium width a labelled rail would claim a third of it.
+    final size = windowSizeFor(MediaQuery.sizeOf(context).width);
+    return NavigationRail(
+      selectedIndex: widget.navigationShell.currentIndex,
+      onDestinationSelected: _onTap,
+      labelType: size == WindowSize.expanded
+          ? NavigationRailLabelType.all
+          : NavigationRailLabelType.selected,
+      destinations: [
+        for (final d in _destinations)
+          NavigationRailDestination(
+            icon: Icon(d.icon),
+            selectedIcon: Icon(d.activeIcon),
+            label: Text(d.label(context)),
+          ),
+      ],
     );
   }
 

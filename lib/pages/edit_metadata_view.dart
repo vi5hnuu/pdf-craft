@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class EditMetadataView extends StatefulWidget {
   final File file;
@@ -41,7 +41,7 @@ class _EditMetadataViewState extends State<EditMetadataView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'edit-metadata')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.editMetadata] != c.httpStates[HttpStates.editMetadata],
         listenWhen: (p, c) => p.httpStates[HttpStates.editMetadata] != c.httpStates[HttpStates.editMetadata],
         listener: (context, state) => handleToolState(
@@ -95,7 +95,7 @@ class _EditMetadataViewState extends State<EditMetadataView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 
@@ -105,7 +105,8 @@ class _EditMetadataViewState extends State<EditMetadataView>
       );
 
   void _onSave() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => EditMetadataEvent(
       editMetadata: EditMetadata(

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
@@ -13,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class CompressPdfView extends StatefulWidget {
   final File file;
@@ -41,7 +41,7 @@ class _CompressPdfViewState extends State<CompressPdfView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'compress')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.compressPdf] != c.httpStates[HttpStates.compressPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.compressPdf] != c.httpStates[HttpStates.compressPdf],
         listener: (context, state) => handleToolState(
@@ -100,12 +100,13 @@ class _CompressPdfViewState extends State<CompressPdfView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 
   void _onCompress() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     runTool((cancelToken) => CompressPdfEvent(
       compressPdf: CompressPdf(
         outFileName: _outFileNameC.text.isNotEmpty ? _outFileNameC.text : 'compressed_file',

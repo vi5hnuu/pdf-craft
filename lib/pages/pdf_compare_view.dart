@@ -1,6 +1,7 @@
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -68,11 +69,22 @@ class _PdfCompareViewState extends State<PdfCompareView> {
   Future<void> _loadOverlayImages() async {
     if (_doc1 == null || _doc2 == null) return;
     setState(() => _loadingOverlay = true);
+    // Read before the first await: it comes from the element's inherited widgets.
+    //
+    // Bounded by the screen rather than a blanket 2x of the page. The overlay draws both pages,
+    // fitted, in one Stack — at 2x an A4 page that was two 1190x1684 bitmaps resident at once,
+    // about 16 MB, to fill a phone-width box. 2x the *display* width still leaves plenty to
+    // pinch into.
+    final target = toolContentWidthOf(context) * 2;
     try {
       final page1 = await _doc1!.getPage(_currentPage);
       final page2 = await _doc2!.getPage(_currentPage);
-      final img1 = await page1.render(width: page1.width * 2, height: page1.height * 2, format: PdfPageImageFormat.jpeg);
-      final img2 = await page2.render(width: page2.width * 2, height: page2.height * 2, format: PdfPageImageFormat.jpeg);
+      final w1 = page1.width <= target ? page1.width : target;
+      final w2 = page2.width <= target ? page2.width : target;
+      final img1 = await page1.render(
+          width: w1, height: page1.height / page1.width * w1, format: PdfPageImageFormat.jpeg);
+      final img2 = await page2.render(
+          width: w2, height: page2.height / page2.width * w2, format: PdfPageImageFormat.jpeg);
       await page1.close();
       await page2.close();
       if (mounted) setState(() { _overlayImg1 = img1; _overlayImg2 = img2; _loadingOverlay = false; });
@@ -163,14 +175,21 @@ class _PdfCompareViewState extends State<PdfCompareView> {
     }
     return Center(
       child: Stack(alignment: Alignment.center, children: [
-        Image.memory(_overlayImg1!.bytes, fit: BoxFit.contain),
+        // cacheWidth bounds the decoded texture as well as the render: without it Flutter
+        // decodes the JPEG at its full size however small it is drawn.
+        Image.memory(_overlayImg1!.bytes, fit: BoxFit.contain, cacheWidth: _displayPx(context)),
         Opacity(
           opacity: _blendOpacity,
-          child: Image.memory(_overlayImg2!.bytes, fit: BoxFit.contain),
+          child: Image.memory(_overlayImg2!.bytes,
+              fit: BoxFit.contain, cacheWidth: _displayPx(context)),
         ),
       ]),
     );
   }
+
+  /// Physical pixels the overlay occupies across the screen's width.
+  static int _displayPx(BuildContext context) =>
+      (toolContentWidthOf(context) * MediaQuery.devicePixelRatioOf(context)).round();
 
   Widget _fileLabel(ThemeData theme, String name) {
     return Container(

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -15,6 +14,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Analyze PDF: a read-only report bundling page/word counts and detected
 /// blank / duplicate / landscape pages plus embedded-resource counts.
@@ -38,7 +38,8 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
   }
 
   Future<void> _fetch() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => AnalyzePdfEvent(analyzePdf: AnalyzePdf(file: uploadFile), cancelToken: cancelToken));
   }
@@ -48,7 +49,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'analyze'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.analyzePdf] != c.httpStates[HttpStates.analyzePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.analyzePdf] != c.httpStates[HttpStates.analyzePdf],
         listener: (context, state) {
@@ -75,7 +76,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
           if (a == null) return Center(child: Text(L10n.of(context).noAnalysisAvailable));
           return _buildReport(theme, a);
         },
-      ),
+      )),
     );
   }
 
@@ -114,8 +115,8 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
   }
 
   Widget _statGrid(ThemeData theme, List<_Stat> stats) {
-    return GridView.count(
-      crossAxisCount: 2,
+    return GridView.extent(
+      maxCrossAxisExtent: 220,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       childAspectRatio: 2.6,

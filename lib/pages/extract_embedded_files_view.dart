@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -12,6 +11,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Extract Embedded Files: pulls file attachments out of the PDF into a ZIP.
 class ExtractEmbeddedFilesView extends StatefulWidget {
@@ -36,7 +36,7 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-embedded'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.extractEmbedded] != c.httpStates[HttpStates.extractEmbedded],
         listenWhen: (p, c) => p.httpStates[HttpStates.extractEmbedded] != c.httpStates[HttpStates.extractEmbedded],
         listener: (context, state) => handleToolState(
@@ -68,7 +68,8 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -83,12 +84,13 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
             processingOverlay(state.httpStates[HttpStates.extractEmbedded], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
   Future<void> _onExtract() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ExtractEmbeddedFilesEvent(
           extractEmbeddedFiles: ExtractEmbeddedFiles(file: file),

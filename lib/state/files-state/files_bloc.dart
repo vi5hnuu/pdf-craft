@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:pdf_craft/utils/output_filename.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/extensions/map_entensions.dart';
 import 'package:pdf_craft/models/with_http_state.dart';
@@ -71,19 +72,40 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       _searchController = controller;
 
       final List<File> files = [];
+      // Emissions are coalesced instead of one per match found.
+      //
+      // Every emission rebuilds the results list, and the screen re-shapes it — which in the
+      // default date order stats every result. Emitting per match therefore cost N stats for
+      // the Nth result: about 45,000 blocking syscalls on the UI thread over a full 300-result
+      // search, which is what made searching feel like a freeze. The user cannot perceive
+      // more than a handful of list updates a second anyway.
+      Timer? coalesce;
+      void publish() {
+        coalesce?.cancel();
+        coalesce = null;
+        if (!controller.isClosed) controller.add(List<File>.from(files));
+      }
+
       _searchSubscription = searchFiles(event.path, event.nameLike).listen(
         (data) {
           files.add(data);
-          if (!controller.isClosed) controller.add(List<File>.from(files));
+          // First match publishes at once, so the list appears immediately rather than after
+          // the interval; later ones ride the timer.
+          if (files.length == 1) {
+            publish();
+          } else {
+            coalesce ??= Timer(const Duration(milliseconds: 150), publish);
+          }
           // Cap results to keep memory/UI bounded on huge trees.
-          if (files.length >= _maxSearchResults) _searchSubscription?.cancel();
+          if (files.length >= _maxSearchResults) {
+            publish();
+            _searchSubscription?.cancel();
+          }
         },
         onError: controller.addError,
         // Emit the final list (possibly empty) so the UI can distinguish
         // "still searching" from "finished with no results".
-        onDone: () {
-          if (!controller.isClosed) controller.add(List<File>.from(files));
-        },
+        onDone: publish,
       );
       emit(state.copyWith(searchStream: controller.stream));
     });
@@ -119,27 +141,43 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
 
   /// Logs the technical error for debugging and returns the user-facing [message].
-  String _logged(Object error, String message) {
-    LoggerSingleton().logger.w('$message ($error)');
-    return message;
+  /// Logs [error] and returns what the user should see.
+  ///
+  /// A [FilesFailure] already carries a message written for the user, so it is passed through;
+  /// anything else falls back to [fallback], because a raw "Exception: Failed to..." is not
+  /// something to show. Without the distinction the specific causes — permission denied, not a
+  /// directory — were all flattened into the generic text, so the one thing the user could
+  /// actually fix was never named.
+  String _logged(Object error, String fallback) {
+    LoggerSingleton().logger.w('$fallback ($error)');
+    return error is FilesFailure ? error.message : fallback;
   }
 
   Future<List<FileSystemEntity>> _loadDirectoryFiles(String path) async {
     try {
       if (!await StoragePermissions.requestStoragePermissions()) {
-        throw Exception(L10n.current.filesPermissionDenied);
+        throw FilesFailure(L10n.current.filesPermissionDenied);
       }
       if (Constants.isHiddenFileOrDir(path) ||
           Constants.excludedPaths.any((pth) => pth.endsWith(path))) {
-        throw Exception(L10n.current.filesPermissionDenied);
+        throw FilesFailure(L10n.current.filesPermissionDenied);
       }
 
       Directory directory = Directory(path);
       if (directory.existsSync() == false) {
-        throw Exception(L10n.current.filesInvalidDirectory);
+        throw FilesFailure(L10n.current.filesInvalidDirectory);
       }
-      return directory.listSync(followLinks: false)..removeWhere((fileEntity)=>(fileEntity is Directory) && Constants.excludedPaths.contains(fileEntity.path));
+      // list(), not listSync(): this enumerates an arbitrary device folder — the storage root,
+      // DCIM, Download — and blocking the UI thread on it is what made opening a large folder
+      // feel like a freeze.
+      final entities = await directory.list(followLinks: false).toList();
+      entities.removeWhere((fileEntity) =>
+          (fileEntity is Directory) && Constants.excludedPaths.contains(fileEntity.path));
+      return entities;
+    } on FilesFailure {
+      rethrow; // already carries a message meant for the user
     } catch (e) {
+      LoggerSingleton().logger.w('Listing ${Redact.path(path)} failed: $e');
       throw Exception(L10n.current.filesLoadFailed);
     }
   }
@@ -169,8 +207,11 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             yield* searchFiles(entity.path, userInput);
           }
         } on FileSystemException catch (e) {
+          // continue, not return: `return` ended the generator for this directory, so one
+          // unreadable entry abandoned the rest of the folder — and, through the recursion,
+          // everything below it.
           LoggerSingleton().logger.w("Failed to access ${Redact.path(entity.path)}: $e");
-          return;
+          continue;
         }
       }
     } else {
@@ -189,10 +230,11 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       throw Exception(L10n.current.filesNotInSource);
     }
 
-    // Construct the new file path
-    String newFilePath = "${directoryTo.path}/${file.path.split('/').last}";
+    // uniquePath, not a bare join: renameSync silently clobbers a file of the same name at the
+    // destination, so moving report.pdf into a folder that already had one destroyed the
+    // original. The helper is what _writeTo in PdfBloc already uses for exactly this.
+    final newFilePath = uniquePath(directoryTo.path, Utility.fileName(file: file));
 
-    // Move the file
     try {
       file.renameSync(newFilePath);
     } catch (e) {
@@ -223,4 +265,13 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     await _searchController?.close();
     return super.close();
   }
+}
+
+/// A listing failure whose message is written for the user rather than for a log.
+class FilesFailure implements Exception {
+  final String message;
+  const FilesFailure(this.message);
+
+  @override
+  String toString() => message;
 }

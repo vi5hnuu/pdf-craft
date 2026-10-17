@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +20,8 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class PageNumberPdfView extends StatefulWidget {
   final File file;
@@ -63,7 +64,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
         title: Text(ToolStrings.name(context, 'page-numbers')),
         elevation: 2,
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (prev, curr) =>
             prev.httpStates[HttpStates.pageNumbers] != curr.httpStates[HttpStates.pageNumbers],
         listenWhen: (prev, curr) =>
@@ -261,7 +262,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
                           // that would land on top of a footer looked perfectly placed here.
                           PdfEffectPreview(
                             filePath: widget.file.path,
-                            maxHeight: MediaQuery.of(context).size.width * 1.1,
+                            maxHeight: toolContentWidthOf(context) * 1.1,
                             overlayBuilder: (context, canvas, pagePoints) {
                               // Font size and padding are in PDF points, so they are scaled to
                               // the render rather than used as logical pixels.
@@ -320,7 +321,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 
@@ -362,7 +363,8 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
       NotificationService.showSnackbar(text: L10n.current.invalidFontSize, color: Colors.red);
       return;
     }
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => PageNumbersEvent(
       pageNumber: PageNumbers(

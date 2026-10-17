@@ -39,17 +39,62 @@ class PdfPageThumbnail extends StatefulWidget {
 const int _maxCached = 80;
 final LinkedHashMap<String, Uint8List> _cache = LinkedHashMap();
 
+/// Physical pixels to rasterise a thumbnail at, rounded up to a 64px bucket so that
+/// near-identical sizes share one render instead of each claiming a cache slot.
+///
+/// Pure and public so the rounding is testable without a document or a platform channel.
+/// [logicalWidth] is allowed to be non-finite or zero: a caller inside a grid cell passes
+/// `double.infinity` to mean "fill the cell". That used to reach `ceil()`, which throws
+/// `UnsupportedError` on a non-finite value, and the throw escaped mid-load and left the
+/// thumbnail on a spinner forever. A width we cannot size from yields the floor instead.
+@visibleForTesting
+int thumbnailTargetPx(double logicalWidth, double devicePixelRatio) {
+  const int bucket = 64;
+  const int minPx = 64;
+  const int maxPx = 2048;
+  final wanted = logicalWidth * devicePixelRatio;
+  if (!wanted.isFinite || wanted <= 0) return minPx;
+  return ((wanted / bucket).ceil() * bucket).clamp(minPx, maxPx);
+}
+
 class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
   Uint8List? _bytes;
   bool _error = false;
   bool _loading = false;
 
-  /// Physical pixels this thumbnail actually occupies, rounded to a bucket so that
-  /// near-identical sizes share one render instead of each claiming a cache slot.
-  int get _targetPx {
-    final ratio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
-    final wanted = widget.width * ratio;
-    return ((wanted / 64).ceil() * 64).clamp(64, 2048);
+  /// Logical width this thumbnail is actually painted at, learned from layout.
+  ///
+  /// [PdfPageThumbnail.width] may be `double.infinity`: callers inside a grid cell pass it to
+  /// mean "fill the cell", which is legitimate but is not a number anything can be rendered at.
+  /// The real width is only known once the parent has laid the widget out, so it is resolved in
+  /// [build] rather than assumed.
+  double? _paintedWidth;
+
+  /// Used when neither the widget nor its constraints give a finite width — an unbounded box.
+  /// Small on purpose: the render is upscaled by `BoxFit.cover` rather than being wrong, and
+  /// the alternative is guessing large and rasterising a full page for a thumbnail.
+  static const double _unboundedFallbackWidth = 120;
+
+  int get _targetPx => thumbnailTargetPx(
+      _paintedWidth ?? _unboundedFallbackWidth,
+      MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0);
+
+  /// Records the width layout gave us and starts the render once it is known.
+  void _resolveWidth(double width) {
+    if (_paintedWidth != null && (_paintedWidth! - width).abs() < 1) return;
+    final isFirst = _paintedWidth == null;
+    _paintedWidth = width;
+    // A different width is a different render, so anything already loaded is the wrong size.
+    if (!isFirst) {
+      _bytes = null;
+      _error = false;
+    }
+    if (_bytes == null && !_error && !_loading) {
+      // After the frame: this runs inside build, and _load calls setState.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _load();
+      });
+    }
   }
 
   // Keyed on the document's own id, which pdfx generates as a randomUUID() each time a
@@ -63,12 +108,9 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
   // and without it the first size seen would be stretched to fit the other.
   String get _key => '${widget.document.id}_${widget.pageNumber}_$_targetPx';
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Needs the device pixel ratio, so it cannot run in initState.
-    if (_bytes == null && !_error && !_loading) _load();
-  }
+  // No didChangeDependencies load: it needs the painted width as well as the device pixel
+  // ratio, and the width is not known until layout. build() starts the load instead.
+
 
   @override
   void didUpdateWidget(PdfPageThumbnail oldWidget) {
@@ -88,13 +130,20 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
 
   Future<void> _load() async {
     _loading = true;
-    final cached = _cache[_key];
-    if (cached != null) {
-      _bytes = cached;
-      _loading = false;
-      return; // already have it — no spinner, no work
-    }
+    // Everything is inside the try, and _loading is cleared in the finally. It used to be set
+    // before an unguarded expression that could throw, and the guard in the caller then read
+    // "already loading" forever — one bad pixel calculation became a permanent spinner.
     try {
+      // Captured before anything awaits: _paintedWidth can change mid-flight if the cell is
+      // resized, and keying the result by the *new* width would file a bitmap rendered at the
+      // old size under it — poisoning that bucket for every thumbnail for the rest of the
+      // session.
+      final key = _key;
+      final cached = _cache[key];
+      if (cached != null) {
+        if (mounted) setState(() => _bytes = cached);
+        return; // already have it — no spinner, no work
+      }
       final page = await widget.document.getPage(widget.pageNumber);
 
       // Render at the size actually shown rather than the page's full size. A page
@@ -111,44 +160,47 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
       );
       await page.close();
       if (image == null) throw Exception('render failed');
-      _cache[_key] = image.bytes;
+      _cache[key] = image.bytes;
       if (_cache.length > _maxCached) _cache.remove(_cache.keys.first);
-      _loading = false;
-      if (mounted) setState(() => _bytes = image.bytes);
+      // Only adopt it if the size it was rendered for is still the size being drawn; otherwise
+      // the newer _resolveWidth has already scheduled the right one.
+      if (mounted && key == _key) setState(() => _bytes = image.bytes);
     } catch (_) {
-      _loading = false;
       if (mounted) setState(() => _error = true);
+    } finally {
+      _loading = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_error) {
+    // LayoutBuilder because widget.width is allowed to be double.infinity; the constraints are
+    // the only place the painted width can be read, and the render size depends on it.
+    return LayoutBuilder(builder: (context, constraints) {
+      _resolveWidth(switch (null) {
+        _ when widget.width.isFinite => widget.width,
+        _ when constraints.maxWidth.isFinite => constraints.maxWidth,
+        _ => _unboundedFallbackWidth,
+      });
       return SizedBox(
         width: widget.width,
         height: widget.height,
-        child: const Center(child: Icon(Icons.error, color: Colors.red)),
+        child: _content(),
       );
-    }
-    if (_bytes == null) {
-      return SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: const Center(child: CircularProgressIndicator()),
-      );
-    }
-    return SizedBox(
-      width: widget.width,
-      height: widget.height,
-      // gaplessPlayback avoids a flicker if the widget rebuilds with new bytes.
-      // cacheWidth bounds the decoded texture: without it Flutter decodes the JPEG at
-      // its full size regardless of how small it is drawn.
-      child: Image.memory(
-        _bytes!,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        cacheWidth: _targetPx,
-      ),
+    });
+  }
+
+  Widget _content() {
+    if (_error) return const Center(child: Icon(Icons.error, color: Colors.red));
+    if (_bytes == null) return const Center(child: CircularProgressIndicator());
+    // gaplessPlayback avoids a flicker if the widget rebuilds with new bytes.
+    // cacheWidth bounds the decoded texture: without it Flutter decodes the JPEG at
+    // its full size regardless of how small it is drawn.
+    return Image.memory(
+      _bytes!,
+      fit: BoxFit.cover,
+      gaplessPlayback: true,
+      cacheWidth: _targetPx,
     );
   }
 }

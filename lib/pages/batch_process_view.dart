@@ -79,10 +79,21 @@ class _BatchProcessViewState extends State<BatchProcessView> {
   late final PdfBloc _bloc;
   late final List<_FileItem> _items;
   // Pre-cached file sizes so itemBuilder never calls lengthSync()
-  final Map<String, String> _fileSizes = {};
+  /// Raw byte length per file path. Kept as bytes rather than a formatted string because
+  /// the price depends on size, so _totalCost needs the number, not its label.
+  final Map<String, int> _fileSizes = {};
   _Tool _tool = _Tool.grayscale;
   int _currentIndex = -1; // -1 = not started
   bool _running = false;
+
+  /// Cancels the item currently uploading.
+  ///
+  /// A 50-file run had no stop at all: every item was dispatched without a token, so once
+  /// started the only way out was to leave the screen — which left the upload running.
+  CancelToken? _cancelToken;
+
+  /// Set by [_cancelBatch] so the chain stops instead of advancing to the next file.
+  bool _cancelled = false;
   bool _finished = false;
 
   @override
@@ -93,17 +104,42 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     _preloadFileSizes();
   }
 
+  @override
+  void dispose() {
+    // Leaving mid-run used to leave the current upload streaming with nothing to receive it.
+    _cancelled = true;
+    if (_cancelToken != null && !_cancelToken!.isCancelled) {
+      _cancelToken!.cancel('screen-disposed');
+    }
+    super.dispose();
+  }
+
   Future<void> _preloadFileSizes() async {
     for (final f in widget.files) {
       try {
         final len = await f.length();
-        if (mounted) setState(() => _fileSizes[f.path] = Utility.bytesToSize(len));
+        if (mounted) setState(() => _fileSizes[f.path] = len);
       } catch (_) {}
     }
   }
 
-  /// Total credits this run will spend: the per-file price times the number of files.
-  int get _totalCost => CreditService().costFor(_tool.creditToolId) * _items.length;
+  /// Total credits this run will spend.
+  ///
+  /// Priced per file at the size the server will actually charge for, not the base price times
+  /// the file count: the server adds a per-block surcharge, so a batch of large files was being
+  /// confirmed at a fraction of what it then took. Files whose length has not been read yet fall
+  /// back to the base price, which is what _preloadFileSizes is racing to improve on.
+  int get _totalCost {
+    final toolId = _tool.creditToolId;
+    var total = 0;
+    for (final item in _items) {
+      final bytes = _fileSizes[item.file.path];
+      total += bytes == null
+          ? CreditService().costFor(toolId)
+          : CreditService().costForSize(toolId, bytes);
+    }
+    return total;
+  }
 
   Future<void> _startBatch() async {
     // A batch is the one place where a single tap can spend a large number of credits, so
@@ -114,6 +150,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
 
     setState(() {
       _running = true;
+      _cancelled = false;
       _finished = false;
       for (final item in _items) {
         item.status = _FileStatus.pending;
@@ -149,9 +186,14 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(L10n.of(context).perFilePerCount(perFile, _items.length),
-                style: Theme.of(ctx).textTheme.bodySmall),
+            // Only shown when the total really is the base price times the file count. Once a
+            // size surcharge applies the two no longer agree, and a per-file figure that
+            // contradicts the total it sits under is worse than no per-file figure.
+            if (perFile * _items.length == total) ...[
+              const SizedBox(height: 6),
+              Text(L10n.of(context).perFilePerCount(perFile, _items.length),
+                  style: Theme.of(ctx).textTheme.bodySmall),
+            ],
             const SizedBox(height: 8),
             Text(L10n.of(context).gateBalance(balance)),
             if (!enough) ...[
@@ -198,6 +240,10 @@ class _BatchProcessViewState extends State<BatchProcessView> {
     }
 
     final item = _items[_currentIndex];
+    // _processNext is re-entered from the catch below and from the bloc listener, both after
+    // an await, so the guard belongs here too rather than only at the call sites.
+    if (!mounted || _cancelled) return;
+    _cancelToken = CancelToken();
     setState(() => item.status = _FileStatus.processing);
 
     final baseName = Utility.fileName(file: item.file);
@@ -209,6 +255,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
         case _Tool.grayscale:
           _bloc.add(GrayscalePdfEvent(
             grayscalePdf: GrayscalePdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.compress:
           _bloc.add(CompressPdfEvent(
@@ -217,25 +264,33 @@ class _BatchProcessViewState extends State<BatchProcessView> {
               level: CompressionLevel.RECOMMENDED,
               file: multipart,
             ),
+            cancelToken: _cancelToken,
           ));
         case _Tool.repair:
           _bloc.add(RepairPdfEvent(
             repairPdf: RepairPdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.flatten:
           _bloc.add(FlattenPdfEvent(
             flattenPdf: FlattenPdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.optimize:
           _bloc.add(OptimizePdfEvent(
             optimizePdf: OptimizePdf(outFileName: outName, file: multipart),
+            cancelToken: _cancelToken,
           ));
         case _Tool.removeBlankPages:
           _bloc.add(RemoveBlankPagesEvent(
             removeBlankPages: RemoveBlankPages(file: multipart),
+            cancelToken: _cancelToken,
           ));
       }
     } catch (e) {
+      // Reached after an await, so the screen may be gone — leaving a batch mid-run used to
+      // call setState on a defunct element and then recurse into more of them.
+      if (!mounted) return;
       setState(() {
         item.status = _FileStatus.error;
         item.errorMsg = L10n.current.failedToPrepareFile;
@@ -243,6 +298,32 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       });
       await _processNext();
     }
+  }
+
+  /// Stops the run after the item currently in flight.
+  ///
+  /// Items already finished keep their results — they are written to disk and paid for — so
+  /// this abandons the remainder rather than undoing anything.
+  void _cancelBatch() {
+    _cancelled = true;
+    if (_cancelToken != null && !_cancelToken!.isCancelled) {
+      _cancelToken!.cancel('cancelled-by-user');
+    }
+    if (!mounted) return;
+    setState(() {
+      _running = false;
+      _finished = true;
+      // The in-flight row is marked here, not by the bloc listener: PdfBloc maps a cancelled
+      // request back to *idle*, and listenWhen only fires on done or error — so nothing would
+      // ever clear this row and it kept its spinner until the next run.
+      if (_currentIndex >= 0 && _currentIndex < _items.length) {
+        final item = _items[_currentIndex];
+        if (item.status == _FileStatus.processing) {
+          item.status = _FileStatus.error;
+          item.errorMsg = L10n.current.cancelled;
+        }
+      }
+    });
   }
 
   // Called by BlocListener when the current tool's state changes to done/error.
@@ -329,7 +410,9 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                     subtitle: item.errorMsg != null
                         ? Text(item.errorMsg!, style: const TextStyle(color: Colors.red, fontSize: 11))
                         : Text(
-                            _fileSizes[item.file.path] ?? '',
+                            _fileSizes[item.file.path] == null
+                                ? ''
+                                : Utility.bytesToSize(_fileSizes[item.file.path]!),
                             style: TextStyle(
                               fontSize: 11,
                               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -341,7 +424,8 @@ class _BatchProcessViewState extends State<BatchProcessView> {
             ),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16,
+                  16 + MediaQuery.viewPaddingOf(context).bottom),
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
                 border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -351,10 +435,19 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                       onPressed: _startBatch,
                       child: Text(L10n.of(context).runAgain),
                     )
-                  : FilledButton(
-                      onPressed: _running ? null : _startBatch,
-                      child: Text(_running ? L10n.of(context).processingEllipsis : L10n.of(context).startBatch),
-                    ),
+                  : _running
+                      // A Cancel while running, rather than a disabled button: the only way to
+                      // stop a 50-file run used to be leaving the screen, which left the
+                      // current upload going.
+                      ? OutlinedButton.icon(
+                          onPressed: _cancelBatch,
+                          icon: const Icon(Icons.close),
+                          label: Text(L10n.of(context).cancel),
+                        )
+                      : FilledButton(
+                          onPressed: _startBatch,
+                          child: Text(L10n.of(context).startBatch),
+                        ),
             ),
           ],
         ),

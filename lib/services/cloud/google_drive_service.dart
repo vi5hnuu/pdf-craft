@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:pdf_craft/utils/output_filename.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:pdf_craft/singletons/google_account.dart';
@@ -176,7 +177,12 @@ class GoogleDriveService {
     }
 
     final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/$name');
+    // The name comes from Drive, which permits '/' in a file name, so it is somebody else's
+    // string being used to build a path. Unsanitised, a file shared into the user's Drive as
+    // `../../something` wrote outside the cache directory — and a same-named download silently
+    // replaced the previous one. Both helpers already existed for this.
+    final safeName = sanitizeOutputName(name);
+    final file = File(uniquePath(dir.path, safeName.isEmpty ? 'download' : safeName));
     final sink = file.openWrite();
 
     // Bytes are counted, not accumulated. The old version kept every chunk in a `chunks` list

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Remove Metadata: strips identifying document info (title, author, creator,
 /// producer, dates) and any XMP metadata so the exported PDF carries no traces.
@@ -47,7 +47,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
     final stripped = _strippedItems(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'remove-metadata'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.removeMetadata] != c.httpStates[HttpStates.removeMetadata],
         listenWhen: (p, c) => p.httpStates[HttpStates.removeMetadata] != c.httpStates[HttpStates.removeMetadata],
         listener: (context, state) =>
@@ -102,7 +102,8 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -117,12 +118,13 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
             processingOverlay(state.httpStates[HttpStates.removeMetadata], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
   Future<void> _onRemove() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => RemoveMetadataEvent(
           removeMetadata: RemoveMetadata(file: file),

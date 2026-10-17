@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -16,6 +15,7 @@ import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Visual page organiser: drag to reorder and tap ✕ to delete pages on a single
 /// thumbnail list, then export. Commits via the existing reorder endpoint, whose
@@ -53,7 +53,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.reorderPdf]);
+    resetToolState([HttpStates.organizePages]);
     _open();
   }
 
@@ -82,9 +82,11 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
   void _reset() => setState(() => _order = List.generate(_totalPages, (i) => i));
 
   Future<void> _onSave() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
+          stateKey: HttpStates.organizePages,
           reorderPdf: ReorderPdf(
             outFileName: _outFileNameC.text.trim().isEmpty
                 ? 'organized_file'
@@ -123,13 +125,13 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
             ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.organizePages] != c.httpStates[HttpStates.organizePages],
         buildWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.organizePages] != c.httpStates[HttpStates.organizePages],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.reorderPdf], successMessage: L10n.of(context).pagesOrganized),
+            handleToolState(state.httpStates[HttpStates.organizePages], successMessage: L10n.of(context).pagesOrganized),
         builder: (context, state) {
           if (_loadError) {
             return const Center(child: Icon(Icons.error_outline, color: Colors.red, size: 40));
@@ -148,12 +150,12 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                       style: theme.textTheme.bodySmall),
                 ),
               Expanded(child: _buildList(theme)),
-              _buildSaveBar(theme, state.httpStates[HttpStates.reorderPdf]?.loading == true),
+              _buildSaveBar(theme, state.httpStates[HttpStates.organizePages]?.loading == true),
             ]),
-            processingOverlay(state.httpStates[HttpStates.reorderPdf], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.organizePages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -220,7 +222,8 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
   Widget _buildSaveBar(ThemeData theme, bool loading) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.fromLTRB(12, 12, 12,
+          12 + MediaQuery.viewPaddingOf(context).bottom),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),

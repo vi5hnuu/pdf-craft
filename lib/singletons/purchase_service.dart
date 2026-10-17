@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
+import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/full_screen_ad_policy.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
@@ -84,10 +87,19 @@ class PurchaseService extends ChangeNotifier {
       // app was killed would otherwise be unrecoverable.
       // The Play purchase sheet leaves the activity; don't greet the buyer with an app-open ad.
       return await FullScreenAdPolicy().runExternal(() => _iap.buyConsumable(
-          purchaseParam: PurchaseParam(
-            productDetails: details,
-            applicationUserName: AuthService().user?.id,
-          )));
+            purchaseParam: PurchaseParam(
+              productDetails: details,
+              applicationUserName: AuthService().user?.id,
+            ),
+            // The plugin's default is autoConsume: true, which consumes the purchase and
+            // *awaits* that before the result ever reaches _onPurchaseUpdates. The token was
+            // therefore already gone by the time the server was asked to credit it, so the
+            // retry this class promises could never happen: a consumed one-time purchase is
+            // not returned by queryPurchases, so restorePurchases() could not see it again and
+            // any single failure lost the credits for good. Consuming is done in
+            // _deliverAndFinalize instead, once the server has credited.
+            autoConsume: false,
+          ));
     } catch (e) {
       LoggerSingleton().logger.w('buyConsumable failed: $e');
       NotificationService.showSnackbar(text: L10n.current.purchaseCouldNotStart, color: Colors.red);
@@ -126,17 +138,20 @@ class PurchaseService extends ChangeNotifier {
 
   /// Verifies the purchase server-side and, only on success, finalizes (consumes) it.
   Future<void> _deliverAndFinalize(PurchaseDetails p) async {
+    // Breadcrumbs only — product id and status, never the purchase token.
+    CrashReporter().log('purchase deliver ${p.productID} ${p.status.name}');
     try {
       final credited = await CreditService()
           .redeemPurchase(p.verificationData.serverVerificationData, p.productID);
       if (credited) {
-        await _finalizeIfPending(p);
+        await _consumeCredited(p);
         NotificationService.showSnackbar(text: L10n.current.creditsAdded, color: Colors.green);
       }
     } catch (e) {
       // Transient/verification failure — DO NOT finalize. Play will redeliver it and we
       // retry on the next update/launch, so the user isn't charged without credits.
       LoggerSingleton().logger.w('Purchase verification deferred (will retry): $e');
+      CrashReporter().log('purchase deferred ${p.productID}');
       NotificationService.showSnackbar(
           text: L10n.current.purchaseVerifying, color: Colors.orange);
     }
@@ -145,6 +160,33 @@ class PurchaseService extends ChangeNotifier {
   Future<void> _finalizeIfPending(PurchaseDetails p) async {
     if (p.pendingCompletePurchase) {
       await _iap.completePurchase(p);
+    }
+  }
+
+  /// Finalizes a credited purchase: acknowledge it, then **consume** it.
+  ///
+  /// Both steps are needed. On Android `completePurchase` only acknowledges, and Play will not
+  /// sell a consumable again until it is consumed — so acknowledging alone would credit the user
+  /// once and then refuse every later purchase of the same product. Consuming is Android-only,
+  /// hence the platform guard; acknowledging is what finalizes it everywhere else.
+  ///
+  /// Nothing here runs until the server has credited the purchase, which is what keeps the
+  /// promise at the top of this class: until it does, the purchase stays unconsumed and
+  /// unacknowledged, so Play keeps returning it to [restore] and we retry. Play auto-refunds a
+  /// purchase left unacknowledged for three days, so a purchase we can never credit ends with the
+  /// user's money back rather than with credits they paid for and never got.
+  Future<void> _consumeCredited(PurchaseDetails p) async {
+    await _finalizeIfPending(p);
+    if (!Platform.isAndroid) return;
+    try {
+      await _iap
+          .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>()
+          .consumePurchase(p);
+    } catch (e) {
+      // The credits are already granted and the purchase acknowledged, so this is not a
+      // failure the user should see — but it does mean they cannot re-buy this product until
+      // Play expires the entitlement, so it must be visible to us.
+      LoggerSingleton().logger.w('Consume failed after crediting: $e');
     }
   }
 

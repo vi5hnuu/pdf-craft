@@ -72,12 +72,15 @@ class _ToolsScreenState extends State<ToolsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final searching = _query.trim().isNotEmpty;
-    final results = ToolRegistry.search(_query, context: context);
+    // Only when searching: this ran on every build and the result was discarded whenever the
+    // box was empty, which is most of the time.
+    final results = searching ? ToolRegistry.search(_query, context: context) : const <ToolDef>[];
 
-    // Rebuild on favourite changes so stars and the favourites row stay live.
-    return AnimatedBuilder(
-      animation: FavoriteToolsService(),
-      builder: (context, _) => SafeArea(
+    // No AnimatedBuilder on FavoriteToolsService here. It used to wrap this whole
+    // CustomScrollView, so toggling one star rebuilt the search field, every category grid,
+    // the banner ads and all 61 cards. The two things that actually depend on favourites —
+    // the favourites row and each card's star — now listen for themselves.
+    return SafeArea(
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -151,14 +154,15 @@ class _ToolsScreenState extends State<ToolsScreen> {
             _buildToolsGrid(theme, results)
           else ...[
             // Pinned favourites row (hidden when none).
-            SliverToBoxAdapter(child: _FavoriteToolsRow()),
-            // Recently used row (live via RecentToolsService).
             SliverToBoxAdapter(
               child: AnimatedBuilder(
-                animation: RecentToolsService(),
-                builder: (context, _) => _RecentToolsRow(),
+                animation: FavoriteToolsService(),
+                builder: (context, _) => _FavoriteToolsRow(),
               ),
             ),
+            // Recently used row — _RecentToolsRow subscribes to RecentToolsService itself, so
+            // it no longer needs an AnimatedBuilder here recreating it (and its future).
+            SliverToBoxAdapter(child: _RecentToolsRow()),
             // Category sections.
             for (int i = 0; i < ToolCategories.all.length; i++) ...[
               SliverToBoxAdapter(
@@ -175,7 +179,6 @@ class _ToolsScreenState extends State<ToolsScreen> {
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
-      ),
       ),
     );
   }
@@ -198,8 +201,10 @@ class _ToolsScreenState extends State<ToolsScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        // Cells stay card-sized and the count follows the width, rather than three cells
+        // growing to a third of a tablet each.
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: _toolCardExtent,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
           childAspectRatio: 0.95,
@@ -218,13 +223,17 @@ class _ToolsScreenState extends State<ToolsScreen> {
 /// padding, 10px spacing, 0.95 aspect ratio). The horizontal Favorites / Recently used rows use
 /// the same size — they used a fixed 88px card, narrower than the grid, which clipped the
 /// credit-cost badge.
-Size _toolCellSize(BuildContext context) {
-  const columns = 3;
+Size _toolCellSize(double availableWidth) {
   const spacing = 10.0;
   const sidePadding = 16.0;
   const aspectRatio = 0.95;
-  final width =
-      (MediaQuery.sizeOf(context).width - sidePadding * 2 - spacing * (columns - 1)) / columns;
+  final gridWidth = availableWidth - sidePadding * 2;
+  // The same arithmetic SliverGridDelegateWithMaxCrossAxisExtent uses, so a row's cards are
+  // exactly the grid's below them at every width. Taking a width rather than a BuildContext is
+  // what lets the caller pass the space it actually has — beside a rail or inside a pane that is
+  // not the window.
+  final columns = (gridWidth / (_toolCardExtent + spacing)).ceil().clamp(1, 1 << 30);
+  final width = (gridWidth - spacing * (columns - 1)) / columns;
   return Size(width, width / aspectRatio);
 }
 
@@ -251,29 +260,64 @@ class _FavoriteToolsRow extends StatelessWidget {
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           ]),
         ),
-        SizedBox(
-          height: _toolCellSize(context).height,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: tools.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => SizedBox(
-                width: _toolCellSize(context).width,
-                child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
-          ),
-        ),
+        LayoutBuilder(builder: (context, constraints) {
+          final cell = _toolCellSize(constraints.maxWidth);
+          return SizedBox(
+            height: cell.height,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: tools.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) => SizedBox(
+                  width: cell.width,
+                  child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+            ),
+          );
+        }),
       ],
     );
   }
 }
 
+/// Widest a tool card may get. Both tool grids use it, so the search results and the category
+/// sections stay the same size as each other at every width.
+const double _toolCardExtent = 130;
+
 /// Horizontal row of the user's recently used tools (hidden when empty).
-class _RecentToolsRow extends StatelessWidget {
+///
+/// Stateful so the future is created once. As a StatelessWidget it built a new one on every
+/// build — and its parent rebuilds often — so each rebuild re-read SharedPreferences and the
+/// row flashed back to empty while the read was in flight.
+class _RecentToolsRow extends StatefulWidget {
+  @override
+  State<_RecentToolsRow> createState() => _RecentToolsRowState();
+}
+
+class _RecentToolsRowState extends State<_RecentToolsRow> {
+  late Future<List<String>> _recentIds = RecentToolsService().getRecentToolIds();
+
+  @override
+  void initState() {
+    super.initState();
+    // Re-read when the service says the list changed, rather than on every build.
+    RecentToolsService().addListener(_reload);
+  }
+
+  @override
+  void dispose() {
+    RecentToolsService().removeListener(_reload);
+    super.dispose();
+  }
+
+  void _reload() {
+    if (mounted) setState(() => _recentIds = RecentToolsService().getRecentToolIds());
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<String>>(
-      future: RecentToolsService().getRecentToolIds(),
+      future: _recentIds,
       builder: (context, snapshot) {
         final ids = snapshot.data ?? const [];
         final tools = ids
@@ -289,19 +333,22 @@ class _RecentToolsRow extends StatelessWidget {
               child: Text(L10n.of(context).toolsRecentlyUsed,
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
-            SizedBox(
-              // Same cell size as the grid below, so cards (and their cost badge) match exactly.
-              height: _toolCellSize(context).height,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: tools.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) => SizedBox(
-                    width: _toolCellSize(context).width,
-                    child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
-              ),
-            ),
+            // Same cell size as the grid below, so cards (and their cost badge) match exactly.
+            LayoutBuilder(builder: (context, constraints) {
+              final cell = _toolCellSize(constraints.maxWidth);
+              return SizedBox(
+                height: cell.height,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: tools.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, i) => SizedBox(
+                      width: cell.width,
+                      child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+                ),
+              );
+            }),
           ],
         );
       },
@@ -344,8 +391,8 @@ class _CategorySection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 3,
+          GridView.extent(
+            maxCrossAxisExtent: _toolCardExtent,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10,
@@ -383,6 +430,15 @@ class ToolCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Listens for itself: the star is read below, and this used to depend on an AnimatedBuilder
+    // wrapping the entire tools screen.
+    return AnimatedBuilder(
+      animation: FavoriteToolsService(),
+      builder: (context, _) => _card(context),
+    );
+  }
+
+  Widget _card(BuildContext context) {
     final theme = Theme.of(context);
     final isFav = FavoriteToolsService().isFavorite(tool.id);
     final cost = tool.creditCost;
@@ -450,12 +506,26 @@ class ToolCard extends StatelessWidget {
               Positioned(
                 top: -2,
                 left: -2,
-                child: GestureDetector(
-                  onTap: () => _showInfo(context),
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: Icon(Icons.info_outline, size: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.35)),
+                // A 40x40 target around a 15px glyph. It used to be a 2px padding around the
+                // icon — about 19x19, well under the 48dp guidance and partly overhanging the
+                // card — repeated on all 61 cards. The glyph stays the same size so the card
+                // does not look different; only the hit area grows, and Semantics gives it a
+                // name it did not have.
+                child: Semantics(
+                  button: true,
+                  label: L10n.of(context).a11yToolInfo,
+                  child: GestureDetector(
+                    onTap: () => _showInfo(context),
+                    behavior: HitTestBehavior.opaque,
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Icon(Icons.info_outline,
+                            size: 15,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.35)),
+                      ),
+                    ),
                   ),
                 ),
               ),

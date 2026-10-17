@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +17,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class SplitPdfView extends StatefulWidget {
   final File file;
@@ -60,7 +60,7 @@ class _SplitPdfViewState extends State<SplitPdfView>
         title: Text(ToolStrings.name(context, 'split')),
         elevation: 5,
       ),
-      body: PopScope(
+      body: ToolPane(child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if(type!=null) {
@@ -106,12 +106,13 @@ class _SplitPdfViewState extends State<SplitPdfView>
             );
           },
             ),
-      ));
+      )));
   }
 
   _onExtractAllPages() async {
     final noRangesTypes = [SplitType.FIXED_RANGE, SplitType.EXTRACT_ALL_PAGES, SplitType.SPLIT_BY_BOOKMARK];
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => SplitPdfEvent(splitPdf: SplitPdf(
       outFileName: outFileNameC.text.isEmpty ? 'splitted_file' : outFileNameC.text,

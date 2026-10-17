@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Replace Pages: swaps a page range in the base document for all pages of a
@@ -72,7 +72,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'replace-pages'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.replacePages] != c.httpStates[HttpStates.replacePages],
         listenWhen: (p, c) => p.httpStates[HttpStates.replacePages] != c.httpStates[HttpStates.replacePages],
         listener: (context, state) =>
@@ -123,7 +123,8 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -138,7 +139,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
             processingOverlay(state.httpStates[HttpStates.replacePages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -154,8 +155,10 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
   }
 
   Future<void> _onReplace() async {
-    final base = await MultipartFile.fromFile(_base.path);
-    final repl = await MultipartFile.fromFile(_replacement.path);
+    final base = await readForUpload(_base);
+    if (base == null) return;
+    final repl = await readForUpload(_replacement);
+    if (repl == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReplacePagesEvent(
           replacePages: ReplacePages(

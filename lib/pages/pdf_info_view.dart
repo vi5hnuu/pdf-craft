@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -13,6 +12,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class PdfInfoView extends StatefulWidget {
   final File file;
@@ -34,7 +34,8 @@ class _PdfInfoViewState extends State<PdfInfoView>
   }
 
   void _fetch() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => GetMetadataEvent(
       getMetadata: GetMetadata(file: uploadFile), cancelToken: cancelToken));
@@ -45,7 +46,7 @@ class _PdfInfoViewState extends State<PdfInfoView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'pdf-info')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.getMetadata] != c.httpStates[HttpStates.getMetadata],
         listenWhen: (p, c) => p.httpStates[HttpStates.getMetadata] != c.httpStates[HttpStates.getMetadata],
         listener: (context, state) {
@@ -104,7 +105,7 @@ class _PdfInfoViewState extends State<PdfInfoView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

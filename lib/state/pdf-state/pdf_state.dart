@@ -1,6 +1,6 @@
 part of 'pdf_bloc.dart';
 
-@Immutable("cannot modify aarti state")
+@Immutable("PdfState is replaced, never mutated — see the clone() calls in PdfBloc")
 class PdfState extends Equatable with WithHttpState {
 
   PdfState._({

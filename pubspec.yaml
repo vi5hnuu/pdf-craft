@@ -33,12 +33,12 @@ dependencies:
   # Localization (English + Hindi) — SDK packages, no extra download size.
   flutter_localizations:
     sdk: flutter
-  intl: any
+  # Pinned rather than `any`: flutter_localizations constrains it anyway, so `any` bought
+  # nothing while letting an SDK bump silently change DateFormat/NumberFormat behaviour
+  # with no pubspec change to notice.
+  intl: ^0.20.2
 
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
   pdfx: ^2.8.0
   google_mobile_ads: ^8.0.0
   rxdart: ^0.28.0
@@ -68,6 +68,11 @@ dependencies:
   extension_google_sign_in_as_googleapis_auth: ^2.0.12
   flutter_secure_storage: ^9.2.2
   in_app_purchase: ^3.2.0
+  # Already in the tree via in_app_purchase; declared directly because PurchaseService imports
+  # InAppPurchaseAndroidPlatformAddition to consume a purchase itself. Consuming is Android-only
+  # and the cross-platform completePurchase() only acknowledges, so the federated package alone
+  # cannot finalize a consumable.
+  in_app_purchase_android: ^0.5.1
   package_info_plus: ^9.0.1
 
   # In-repo form engine: the field schema, type registry and the codecs that
@@ -128,6 +133,13 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+   # Poppins (Latin) and Hind (Latin + Devanagari), the two families AppTheme uses. Bundled
+   # rather than fetched: google_fonts downloads at runtime by default, so a first launch hit
+   # fonts.gstatic.com before the real typeface existed, every screen flashed in Roboto and
+   # reflowed — this is the root textTheme — and an offline first run stayed Roboto for good.
+   # google_fonts resolves these from the asset bundle by filename, so they belong here rather
+   # than in a `fonts:` section.
+   - assets/google_fonts/
    - assets/logo.webp
    - assets/logo_light.webp
    - assets/tools/

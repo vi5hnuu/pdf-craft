@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -13,6 +12,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class MergePdfView extends StatefulWidget {
   final List<File> files;
@@ -46,7 +46,7 @@ class _MergePdfViewState extends State<MergePdfView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'merge')), elevation: 5),
-      body: BlocConsumer<PdfBloc,PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
         listenWhen: (previous, current) => previous.httpStates[HttpStates.mergePdf]!=current.httpStates[HttpStates.mergePdf],
         buildWhen: (previous, current) => previous.httpStates[HttpStates.mergePdf]!=current.httpStates[HttpStates.mergePdf],
         listener: (context, state) => handleToolState(
@@ -109,7 +109,7 @@ class _MergePdfViewState extends State<MergePdfView>
             processingOverlay(state.httpStates[HttpStates.mergePdf], label: L10n.of(context).procWorking),
           ],
         );
-      },),
+      },)),
     );
   }
 
@@ -118,7 +118,8 @@ class _MergePdfViewState extends State<MergePdfView>
   }
 
   void _startMerge() async {
-    final files = await Future.wait(widget.files.map((file)=>MultipartFile.fromFile(file.path)));
+    final files = await readAllForUpload(widget.files);
+    if (files == null) return;
     runTool((cancelToken) => MergePdfEvent(mergePdf: MergePdf(outFileName: outFileNameC.text.isEmpty ? "merged_file" : outFileNameC.text, files: files), cancelToken: cancelToken));
   }
 }

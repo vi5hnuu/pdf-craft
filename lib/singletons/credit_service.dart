@@ -140,6 +140,27 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
   /// price is merely unknown can check this.
   bool get costsLoaded => _costsLoaded;
 
+  /// Fetches the pricing table if it is not already known, and reports whether it now is.
+  ///
+  /// For callers that are about to make a decision that depends on the price — [CreditGate]
+  /// above all. A cold start races the guest token, so the start-up fetch often 401s; without
+  /// this, the first tool the user opens is priced from an empty table and looks free.
+  Future<bool> ensureCostsLoaded() async {
+    if (_costsLoaded) return true;
+    // Single-flighted and time-boxed. This sits in front of the confirm dialog on every priced
+    // tool, so without the first a burst of taps starts a fetch each, and without the second an
+    // offline tap left the screen doing nothing visible for the full connect timeout.
+    final inFlight = _inFlightCosts ??= _reloadCosts().whenComplete(() => _inFlightCosts = null);
+    try {
+      await inFlight.timeout(const Duration(seconds: 4));
+    } on TimeoutException {
+      // The fetch carries on in the background; this caller just stops waiting on it.
+    }
+    return _costsLoaded;
+  }
+
+  Future<void>? _inFlightCosts;
+
   /// Claims the daily free allowance. Returns the granted amount (throws on 409 if already claimed).
   Future<int> claimDaily() async {
     final res = await _dio.post('${Constants.baseUrl}/credits/daily');

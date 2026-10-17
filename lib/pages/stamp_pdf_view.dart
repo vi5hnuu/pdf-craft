@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +17,7 @@ import 'package:pdf_craft/widgets/placement_box.dart';
 import 'package:pdf_craft/widgets/pdf_effect_preview.dart';
 import 'package:pdf_craft/utils/page_range.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 class StampPdfView extends StatefulWidget {
@@ -79,7 +79,7 @@ class _StampPdfViewState extends State<StampPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'stamp')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
         listener: (context, state) => handleToolState(
@@ -184,7 +184,7 @@ class _StampPdfViewState extends State<StampPdfView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 
@@ -221,6 +221,9 @@ class _StampPdfViewState extends State<StampPdfView>
       allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'],
     );
     if (result != null && result.files.single.path != null) {
+      // The picker is a separate activity, so this resumes long after the tap and the screen
+      // may have been popped in the meantime. _measureStamp below already checks; this did not.
+      if (!mounted) return;
       final picked = File(result.files.single.path!);
       setState(() {
         _stampFile = picked;
@@ -279,8 +282,10 @@ class _StampPdfViewState extends State<StampPdfView>
     }
     final range = resolvePageRange(
         from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount);
-    final documentUpload = await MultipartFile.fromFile(widget.file.path);
-    final stampUpload = await MultipartFile.fromFile(_stampFile!.path);
+    final documentUpload = await readForUpload(widget.file);
+    if (documentUpload == null) return;
+    final stampUpload = await readForUpload(_stampFile!);
+    if (stampUpload == null) return;
     if (!mounted) return;
     runTool((cancelToken) => StampPdfEvent(
       stampPdf: StampPdf(

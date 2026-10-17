@@ -1,21 +1,22 @@
 // ignore_for_file: constant_identifier_names
-// These values are the wire contract: the backend (and in several cases PDFBox itself)
-// expects the SCREAMING_CASE spelling, either because the enum is serialised via `.name`
-// or because its wire getter returns the same text. Renaming them to lowerCamelCase would
-// silently change what a live server receives, so the lint is suppressed deliberately.
+// These names are the wire contract: the API binds them to its own enum by constant name, so
+// renaming them to lowerCamelCase would silently change what a live server receives. The lint
+// is suppressed deliberately.
 
+/// A permission the owner can grant to readers of a protected PDF.
+///
+/// Carries no PDF bit number. It used to, and `protect_pdf.dart` sent that number instead of the
+/// name — which the API read as an enum *ordinal*, so bits 9 to 12 failed outright and 0 and 3
+/// to 6 silently resolved to a different permission than the user had picked. The bit lives on
+/// the server, which is the only place that needs it.
 enum UserAccessPermission {
-  PRINT(3),
-  MODIFICATION(4),
-  EXTRACT(5),
-  MODIFY_ANNOTATIONS(6),
-  FILL_IN_FORM(9),
-  EXTRACT_FOR_ACCESSIBILITY(10),
-  ASSEMBLE_DOCUMENT(11),
-  FAITHFUL_PRINT(12),
-  READ_ONLY(0);
-
-  final int bit;
-
-  const UserAccessPermission(this.bit);
+  PRINT,
+  MODIFICATION,
+  EXTRACT,
+  MODIFY_ANNOTATIONS,
+  FILL_IN_FORM,
+  EXTRACT_FOR_ACCESSIBILITY,
+  ASSEMBLE_DOCUMENT,
+  FAITHFUL_PRINT,
+  READ_ONLY,
 }

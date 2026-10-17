@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
@@ -13,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Mirror Pages: flips every page horizontally or vertically (vector-preserving).
 class MirrorPagesView extends StatefulWidget {
@@ -39,7 +39,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'mirror-pages'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.mirrorPdf] != c.httpStates[HttpStates.mirrorPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.mirrorPdf] != c.httpStates[HttpStates.mirrorPdf],
         listener: (context, state) =>
@@ -77,7 +77,8 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -92,12 +93,13 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
             processingOverlay(state.httpStates[HttpStates.mirrorPdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
   Future<void> _onMirror() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => MirrorPdfEvent(
           mirrorPdf: MirrorPdf(direction: _direction, file: file),

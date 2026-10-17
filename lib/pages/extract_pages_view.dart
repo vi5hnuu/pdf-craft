@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -14,6 +13,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/page_selector_grid.dart';
 import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Extract Pages: pick the pages to keep and export a new PDF containing only
@@ -35,7 +35,7 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.reorderPdf]);
+    resetToolState([HttpStates.extractPages]);
     _open();
   }
 
@@ -72,16 +72,16 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
                 onPressed: () => setState(_selected.clear), child: Text(L10n.of(context).clear)),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.extractPages] != c.httpStates[HttpStates.extractPages],
         listenWhen: (p, c) =>
-            p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listener: (context, state) => handleToolState(state.httpStates[HttpStates.reorderPdf],
+            p.httpStates[HttpStates.extractPages] != c.httpStates[HttpStates.extractPages],
+        listener: (context, state) => handleToolState(state.httpStates[HttpStates.extractPages],
             successMessage: L10n.of(context).pagesExtracted),
         builder: (context, state) {
           if (_doc == null) return const Center(child: CircularProgressIndicator());
-          final loading = state.httpStates[HttpStates.reorderPdf]?.loading == true;
+          final loading = state.httpStates[HttpStates.extractPages]?.loading == true;
           return Stack(children: [
             Column(children: [
               Padding(
@@ -101,7 +101,8 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -115,19 +116,21 @@ class _ExtractPagesViewState extends State<ExtractPagesView> with ToolResultHand
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.reorderPdf],
+            processingOverlay(state.httpStates[HttpStates.extractPages],
                 label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
   Future<void> _onExtract() async {
     final order = _selected.toList()..sort();
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
+          stateKey: HttpStates.extractPages,
           reorderPdf: ReorderPdf(outFileName: 'extracted_pages', order: order, file: file),
           cancelToken: cancelToken,
         ));

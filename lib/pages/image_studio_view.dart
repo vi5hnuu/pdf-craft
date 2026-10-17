@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/request/image_studio.dart' as img_studio;
@@ -13,6 +12,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Unified Image Studio view: compress, convert to/from JPG, and resize.
 /// The [op] parameter selects the initial tab.
@@ -77,7 +77,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
           ],
         ),
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.imageStudio] != c.httpStates[HttpStates.imageStudio] ||
             p.httpStates[HttpStates.filterImage] != c.httpStates[HttpStates.filterImage],
@@ -138,7 +138,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
             processingOverlay(state.httpStates[HttpStates.imageStudio] ?? state.httpStates[HttpStates.filterImage], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -337,7 +337,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   // ── Submit handlers ───────────────────────────────────────────────────────────
 
   Future<void> _onCompress() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => CompressImageEvent(
       compressImage: img_studio.CompressImage(
@@ -347,7 +348,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   }
 
   Future<void> _onConvertToJpg() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ConvertToJpgEvent(
       convertToJpg: img_studio.ConvertToJpg(
@@ -357,7 +359,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   }
 
   Future<void> _onConvertFromJpg() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ConvertFromJpgEvent(
       convertFromJpg: img_studio.ConvertFromJpg(
@@ -367,7 +370,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
   }
 
   Future<void> _onFilter() async {
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => FilterImageEvent(
       filterImage: fi.FilterImage(
@@ -384,7 +388,8 @@ class _ImageStudioViewState extends State<ImageStudioView>
       NotificationService.showSnackbar(text: L10n.current.enterDimension, color: Colors.orange);
       return;
     }
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ResizeImageEvent(
       resizeImage: img_studio.ResizeImage(

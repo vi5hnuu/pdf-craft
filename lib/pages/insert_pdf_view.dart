@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Insert PDF into PDF: places one PDF inside another after a chosen page.
@@ -67,7 +67,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'insert-pdf'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.insertPdf] != c.httpStates[HttpStates.insertPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.insertPdf] != c.httpStates[HttpStates.insertPdf],
         listener: (context, state) =>
@@ -120,7 +120,8 @@ class _InsertPdfViewState extends State<InsertPdfView>
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -135,7 +136,7 @@ class _InsertPdfViewState extends State<InsertPdfView>
             processingOverlay(state.httpStates[HttpStates.insertPdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -151,8 +152,10 @@ class _InsertPdfViewState extends State<InsertPdfView>
   }
 
   Future<void> _onInsert() async {
-    final base = await MultipartFile.fromFile(_base.path);
-    final insert = await MultipartFile.fromFile(_insert.path);
+    final base = await readForUpload(_base);
+    if (base == null) return;
+    final insert = await readForUpload(_insert);
+    if (insert == null) return;
     if (!mounted) return;
     runTool((cancelToken) => InsertPdfEvent(
           insertPdf: InsertPdf(

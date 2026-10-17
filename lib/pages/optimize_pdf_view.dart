@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class OptimizePdfView extends StatefulWidget {
   final File file;
@@ -42,7 +42,7 @@ class _OptimizePdfViewState extends State<OptimizePdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'optimize'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.optimizePdf] != c.httpStates[HttpStates.optimizePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.optimizePdf] != c.httpStates[HttpStates.optimizePdf],
         listener: (context, state) => handleToolState(
@@ -94,13 +94,14 @@ class _OptimizePdfViewState extends State<OptimizePdfView>
             processingOverlay(state.httpStates[HttpStates.optimizePdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     runTool((cancelToken) => OptimizePdfEvent(
       optimizePdf: OptimizePdf(
         outFileName: '${baseName}_optimized',

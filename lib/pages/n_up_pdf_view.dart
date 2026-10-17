@@ -3,7 +3,6 @@ import 'package:pdfx/pdfx.dart';
 import 'dart:typed_data';
 import 'dart:math' as math;
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -15,6 +14,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class NUpPdfView extends StatefulWidget {
   final File file;
@@ -47,7 +47,7 @@ class _NUpPdfViewState extends State<NUpPdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'n-up'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.nUpPdf] != c.httpStates[HttpStates.nUpPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.nUpPdf] != c.httpStates[HttpStates.nUpPdf],
         listener: (context, state) => handleToolState(
@@ -95,7 +95,7 @@ class _NUpPdfViewState extends State<NUpPdfView>
             processingOverlay(state.httpStates[HttpStates.nUpPdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -140,7 +140,8 @@ class _NUpPdfViewState extends State<NUpPdfView>
 
   Future<void> _onApply() async {
     final baseName = widget.file.path.split('/').last.replaceAll('.pdf', '');
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => NUpPdfEvent(
       nUp: NUp(

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -15,6 +14,9 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/rotatable_item.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/utils/debouncer.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class Thumbnail {
   bool? isLoading;
@@ -43,7 +45,19 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   final int pageSize = 10;
   final ScrollController controller = ScrollController();
+  final Debouncer _scrollDebounce = Debouncer(milliseconds: 120);
+  /// Rendered page thumbnails, keyed by 1-based page number.
+  ///
+  /// Deliberately uncapped. An LRU here was wrong twice over: this map's *size* is the cursor
+  /// for what to load next and the count of rows to render, so evicting from it stalled loading
+  /// at the cap and blanked the rows that had been dropped. The memory it was defending against
+  /// is already gone — these render at the ~180dp they are drawn at rather than the page's
+  /// intrinsic size, which is roughly fifty times smaller per page.
   final Map<int, Thumbnail> thumbnails = {};
+
+  /// Width, in logical pixels, a thumbnail is painted at. Rendering at the page's intrinsic
+  /// size produced bitmaps many times larger than the box they are drawn in.
+  static const double _thumbnailWidth = 180;
 
   PdfDocument? document;
   late PdfController _pdfController;
@@ -72,7 +86,9 @@ class _RotatePdfViewState extends State<RotatePdfView>
       });
       _tryRenderingNextThumbnails();
     });
-    controller.addListener(() => _tryRenderingNextThumbnails());
+    // Debounced: _tryRenderingNextThumbnails awaits a reload and walks the whole cache, and
+    // this fired on every scroll tick. Debouncer already exists for exactly this.
+    controller.addListener(() => _scrollDebounce.run(_tryRenderingNextThumbnails));
     fileAngleC.addListener(() {
       final v = int.tryParse(fileAngleC.text) ?? 0;
       if (v != fileAngle) setState(() => fileAngle = v);
@@ -83,13 +99,12 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   @override
   Widget build(BuildContext context) {
-    final md = MediaQuery.of(context);
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'rotate'))),
-      body: FutureBuilder(
+      body: ToolPane(child: FutureBuilder(
         future: _pdfController.document,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -266,7 +281,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
                             ...List.generate(thumbnails.length, (index) {
                               final pNo = _pageIndexes[index] + 1;
                               final thumbnail = thumbnails[pNo];
-                              final thumbW = md.size.width * 0.42;
+                              final thumbW = toolContentWidthOf(context) * 0.42;
                               final thumbH = thumbW * 1.37;
                               return Padding(
                                 key: ValueKey('page-$pNo'),
@@ -304,9 +319,18 @@ class _RotatePdfViewState extends State<RotatePdfView>
                                                   ? ClipRRect(
                                                       borderRadius:
                                                           BorderRadius.circular(AppRadius.surface),
+                                                      // cacheWidth bounds the decoded
+                                                      // texture: without it Flutter decodes
+                                                      // the JPEG at full size however small
+                                                      // it is drawn.
                                                       child: Image.memory(
                                                           thumbnail!.image!.bytes,
-                                                          fit: BoxFit.contain))
+                                                          fit: BoxFit.contain,
+                                                          cacheWidth: (thumbW *
+                                                                  MediaQuery
+                                                                      .devicePixelRatioOf(
+                                                                          context))
+                                                              .round()))
                                                   : const SizedBox.shrink(),
                                     ),
                                   ),
@@ -326,17 +350,23 @@ class _RotatePdfViewState extends State<RotatePdfView>
                       // ── Submit bar ────────────────────────────────────
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.fromLTRB(14, 14, 14,
+                            14 + MediaQuery.viewPaddingOf(context).bottom),
                         decoration: BoxDecoration(
                           color: theme.scaffoldBackgroundColor,
                           border:
                               Border(top: BorderSide(color: theme.dividerColor)),
                         ),
                         child: FilledButton(
-                          onPressed:
-                              fileAngle == 0 && pageAngles.isEmpty
-                                  ? null
-                                  : _onRotatePages,
+                          // `loading` in the predicate too. The overlay only blocks the screen
+                          // once the bloc has emitted loading, and _onRotatePages first awaits
+                          // reading the file — so in that gap the button stayed live and two
+                          // fast taps dispatched two uploads and debited twice. The neighbouring
+                          // tools (scale, mirror) already guarded this.
+                          onPressed: (state.httpStates[HttpStates.rotatePdf]?.loading == true) ||
+                                  (fileAngle == 0 && pageAngles.isEmpty)
+                              ? null
+                              : _onRotatePages,
                           child: Text(ToolStrings.name(context, 'rotate')),
                         ),
                       ),
@@ -349,7 +379,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
             },
           );
         },
-      ),
+      )),
     );
   }
 
@@ -376,7 +406,8 @@ class _RotatePdfViewState extends State<RotatePdfView>
     final zeroIndexed = Map.fromEntries(
       pageAngles.entries.map((e) => MapEntry(e.key - 1, e.value)),
     );
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => RotatePdfEvent(
       rotatePdf: RotatePdf(
@@ -440,22 +471,31 @@ class _RotatePdfViewState extends State<RotatePdfView>
       final image =
           await _loadPageImage(document: document, pageNumber: pageNo);
       if (image == null) throw Exception();
-      if (!mounted) return;
-      setState(() => thumbnails.put(pageNo, Thumbnail(image: image)));
+      _setThumbnail(pageNo, Thumbnail(image: image));
     } catch (_) {
-      if (!mounted) return;
-      setState(() => thumbnails.put(pageNo, Thumbnail(error: L10n.current.thumbnailFailed)));
+      _setThumbnail(pageNo, Thumbnail(error: L10n.current.thumbnailFailed));
     }
+  }
+
+  void _setThumbnail(int pageNo, Thumbnail thumbnail) {
+    if (!mounted) return;
+    setState(() => thumbnails.put(pageNo, thumbnail));
   }
 
   Future<PdfPageImage?> _loadPageImage(
       {required PdfDocument document, required int pageNumber}) async {
     assert(pageNumber > 0);
+    // Read before the first await: it comes from the element's inherited widgets.
+    final ratio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
     try {
       final page = await document.getPage(pageNumber);
+      // Bounded by the width it is drawn at rather than the page's own size: an A4 page at
+      // intrinsic size is a multi-megabyte bitmap for a thumbnail.
+      final target = _thumbnailWidth * ratio;
+      final width = page.width <= target ? page.width : target;
       final image = await page.render(
-        width: page.width,
-        height: page.height,
+        width: width,
+        height: page.height / page.width * width,
         format: PdfPageImageFormat.jpeg,
       );
       await page.close();
@@ -467,12 +507,17 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   @override
   void dispose() {
+    _scrollDebounce.dispose();
     controller.dispose();
     _pdfController.dispose();
     outFileNameC.dispose();
     fileAngleC.dispose();
     pageNoC.dispose();
     pageAngleC.dispose();
+    // Disposing the controller does not close the document (see PdfPreview), so the native
+    // handle and its page cache leaked on every visit to this screen.
+    document?.close();
+    thumbnails.clear();
     super.dispose();
   }
 }

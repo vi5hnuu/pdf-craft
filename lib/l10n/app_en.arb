@@ -7,6 +7,7 @@
   "languageHindi": "हिन्दी",
   "switchLanguageTooltip": "Switch language",
   "cancel": "Cancel",
+  "cancelled": "Cancelled",
   "removeFromSelection": "Remove from selection",
   "delete": "Delete",
   "gotIt": "Got it",
@@ -36,6 +37,7 @@
   "@errPageBeyondDocument": {"placeholders": {"count": {"type": "int"}}},
   "errPageRangeBackwards": "The last page can't come before the first.",
   "errImageUnreadable": "This image can't be shown. It may have been moved or deleted.",
+  "errFileGone": "That file can't be read any more. It may have been moved, renamed or deleted.",
   "errDeleteFailed": "Couldn't delete “{name}”. It may be open in another app, or on storage the app can't write to.",
   "@errDeleteFailed": {"placeholders": {"name": {"type": "String"}}},
   "pageNumber": "Page {number}",
@@ -316,8 +318,6 @@
       }
     }
   },
-  "settingsPasswordHints": "Password Hints",
-  "settingsPasswordHintsSub": "Saved hints for protected PDFs",
   "settingsSectionPrivacy": "Privacy & Data",
   "settingsPrivacyBody": "Tools run on our secure server so results are identical on every device. Files are sent over an encrypted (HTTPS) connection, processed, and removed afterwards — we don't keep your documents.",
   "settingsSectionAbout": "About",
@@ -335,7 +335,6 @@
     }
   },
   "settingsProcessedCleared": "Processed files cleared",
-  "settingsPasswordHintsCleared": "Password hints cleared",
   "authModeCreate": "Create account",
   "authModeSignIn": "Sign in",
   "authBenefitCredits": "Your credits stay safe",
@@ -580,6 +579,8 @@
     }
   },
   "gateNotEnough": "Not enough credits for this tool.",
+  "gatePriceUnknown": "This tool may use credits. The price could not be checked just now.",
+  "gateContinue": "Continue",
   "gateGetCredits": "Get credits",
   "gateUse": "Use {count}",
   "@gateUse": {
@@ -1170,8 +1171,6 @@
   "toolLabel": "Tool",
   "runAgain": "Run again",
   "fileNameLabel": "File name",
-  "passwordHintOptional": "Password hint (optional)",
-  "passwordHintExample": "e.g. My birthday year",
   "ownerPassword": "Owner password",
   "userPassword": "User password",
   "atLeast10Chars": "At least 10 characters",
@@ -1272,7 +1271,6 @@
   "showPassword": "Show password",
   "hidePassword": "Hide password",
   "willHaveOwnerPermissions": "⚠️ Will have owner permissions ⚠️",
-  "passwordHintTitle": "Password hint",
   "passwordLabel": "Password",
   "removePassword": "Remove password",
   "quickActions": "Quick Actions",
@@ -1705,6 +1703,7 @@
   "filesPermissionDenied": "Permission denied",
   "filesInvalidDirectory": "Invalid directory path",
   "filesLoadFailed": "Failed to load directory files",
+  "filesSelectToPreview": "Select a PDF to preview it here",
   "filesNoSuchDirectory": "No such directory exists",
   "filesNotInSource": "File does not exist in the source directory",
   "filesFileNotExist": "File does not exist",
@@ -1850,6 +1849,7 @@
     }
   },
   "a11yFavourited": "Favourited",
+  "a11yToolInfo": "What this tool does",
   "a11yField": "{type} field named {name}",
   "@a11yField": {
     "placeholders": {

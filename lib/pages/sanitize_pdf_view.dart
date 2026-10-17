@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Sanitize PDF: removes active/unsafe content — JavaScript, embedded files,
 /// document actions and metadata — while leaving the visible pages intact.
@@ -80,7 +80,7 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
     final l = L10n.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'sanitize'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.sanitizePdf] != c.httpStates[HttpStates.sanitizePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.sanitizePdf] != c.httpStates[HttpStates.sanitizePdf],
         listener: (context, state) =>
@@ -171,7 +171,8 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -188,12 +189,13 @@ class _SanitizePdfViewState extends State<SanitizePdfView>
             processingOverlay(state.httpStates[HttpStates.sanitizePdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
   Future<void> _onSanitize() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => SanitizePdfEvent(
           sanitizePdf: SanitizePdf(

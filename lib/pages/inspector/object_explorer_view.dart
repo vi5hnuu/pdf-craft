@@ -15,6 +15,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Lists the file's indirect (COS) objects.
 ///
@@ -50,7 +51,8 @@ class _ObjectExplorerViewState extends State<ObjectExplorerView>
 
   Future<void> _fetch() async {
     // A MultipartFile is a one-shot stream, so each page needs a fresh one built from the file.
-    _upload = await MultipartFile.fromFile(widget.file.path);
+    _upload = await readForUpload(widget.file);
+    if (_upload == null) return;
     if (!mounted) return;
     final offset = _requested;
     runTool((cancelToken) => InspectPdfEvent(
@@ -82,7 +84,7 @@ class _ObjectExplorerViewState extends State<ObjectExplorerView>
     final l = L10n.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'object-explorer'))),
-      body: Column(children: [
+      body: ToolPane(child: Column(children: [
         Expanded(
           child: BlocConsumer<PdfBloc, PdfState>(
             buildWhen: (p, c) =>
@@ -151,7 +153,7 @@ class _ObjectExplorerViewState extends State<ObjectExplorerView>
           ),
         ),
         const BannerAdd(),
-      ]),
+      ])),
     );
   }
 

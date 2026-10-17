@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +17,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class BookmarksEditorView extends StatefulWidget {
   final File file;
@@ -56,7 +56,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
 
   void _loadBookmarks() {
     Future.microtask(() async {
-      final file = await MultipartFile.fromFile(_file.path);
+      final file = await readForUpload(_file);
+      if (file == null) return;
       if (!mounted) return;
       pdfBloc.add(GetBookmarksEvent(getBookmarks: GetBookmarks(file: file)));
     });
@@ -76,7 +77,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
           ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) {
           final getChanged =
               p.httpStates[HttpStates.getBookmarks] != c.httpStates[HttpStates.getBookmarks];
@@ -152,7 +153,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
             processingOverlay(editState, label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -231,7 +232,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
   Widget _buildSaveBar(ThemeData theme, bool loading) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.fromLTRB(12, 12, 12,
+          12 + MediaQuery.viewPaddingOf(context).bottom),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -343,7 +345,8 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
 
   Future<void> _onSave() async {
     final tree = _buildTree(_bookmarks);
-    final file = await MultipartFile.fromFile(_file.path);
+    final file = await readForUpload(_file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => EditBookmarksEvent(
           editBookmarks: EditBookmarks(

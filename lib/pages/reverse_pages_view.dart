@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Reverse Page Order: flips the page sequence (last page first). Reuses the
@@ -31,7 +31,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.reorderPdf]);
+    resetToolState([HttpStates.reversePages]);
     _loadCount();
   }
 
@@ -50,13 +50,13 @@ class _ReversePagesViewState extends State<ReversePagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'reverse-pages'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
-        buildWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
-        listenWhen: (p, c) => p.httpStates[HttpStates.reorderPdf] != c.httpStates[HttpStates.reorderPdf],
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+        buildWhen: (p, c) => p.httpStates[HttpStates.reversePages] != c.httpStates[HttpStates.reversePages],
+        listenWhen: (p, c) => p.httpStates[HttpStates.reversePages] != c.httpStates[HttpStates.reversePages],
         listener: (context, state) =>
-            handleToolState(state.httpStates[HttpStates.reorderPdf], successMessage: L10n.of(context).pageOrderReversed),
+            handleToolState(state.httpStates[HttpStates.reversePages], successMessage: L10n.of(context).pageOrderReversed),
         builder: (context, state) {
-          final loading = state.httpStates[HttpStates.reorderPdf]?.loading == true;
+          final loading = state.httpStates[HttpStates.reversePages]?.loading == true;
           final pages = _totalPages;
           return Stack(children: [
             Column(children: [
@@ -85,7 +85,8 @@ class _ReversePagesViewState extends State<ReversePagesView>
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(12, 12, 12,
+                    12 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -97,19 +98,21 @@ class _ReversePagesViewState extends State<ReversePagesView>
                 ),
               ),
             ]),
-            processingOverlay(state.httpStates[HttpStates.reorderPdf], label: L10n.of(context).procWorking),
+            processingOverlay(state.httpStates[HttpStates.reversePages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
   Future<void> _onReverse() async {
     final n = _totalPages ?? 0;
     final order = [for (int i = n - 1; i >= 0; i--) i];
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => ReorderPdfEvent(
+          stateKey: HttpStates.reversePages,
           reorderPdf: ReorderPdf(outFileName: 'reversed_pages', order: order, file: file),
           cancelToken: cancelToken,
         ));

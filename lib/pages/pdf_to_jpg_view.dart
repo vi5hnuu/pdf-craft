@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -18,6 +17,8 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class PdfToJpgView extends StatefulWidget {
   final File file;
@@ -63,7 +64,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
         title: Text(ToolStrings.name(context, 'pdf-to-jpg')),
         elevation: 5,
       ),
-      body: BlocConsumer<PdfBloc,PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.pdfToJpg]!=current.httpStates[HttpStates.pdfToJpg],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.pdfToJpg]!=current.httpStates[HttpStates.pdfToJpg],
           // The output is an image (or a zip of them), so it opens externally.
@@ -147,9 +148,9 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
                               }))
                             ],
                           ),),
-                          if(!isSingle)Image.asset("assets/tools/image-group-zip.png",fit: BoxFit.fitWidth,),
-                          if(isSingle && direction==Direction.HORIZONTAL.direction)Image.asset("assets/tools/image-horizontal-list.png",fit: BoxFit.fitWidth,),
-                          if(isSingle && direction==Direction.VERTICAL.direction) Image.asset("assets/tools/image-vertical-list.png",fit: BoxFit.fitWidth,),
+                          if(!isSingle)_diagram(context, "assets/tools/image-group-zip.webp"),
+                          if(isSingle && direction==Direction.HORIZONTAL.direction)_diagram(context, "assets/tools/image-horizontal-list.webp"),
+                          if(isSingle && direction==Direction.VERTICAL.direction) _diagram(context, "assets/tools/image-vertical-list.webp"),
                         ],
                       ),
                     ),
@@ -178,12 +179,24 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
             processingOverlay(state.httpStates[HttpStates.pdfToJpg], label: L10n.of(context).procWorking),
           ],
         );
-      },),
+      },)),
     );
   }
 
+  /// One of the three mode diagrams.
+  ///
+  /// cacheWidth bounds the decode: the source is 500x500 and this is drawn at the content
+  /// width, so without it Flutter held a full-size ARGB bitmap for each one it had shown.
+  Widget _diagram(BuildContext context, String asset) => Image.asset(
+        asset,
+        fit: BoxFit.fitWidth,
+        cacheWidth:
+            (toolContentWidthOf(context) * MediaQuery.devicePixelRatioOf(context)).round(),
+      );
+
   void _onPdfToJpf() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     runTool((cancelToken) => PdfToJpgEvent(pdfToJpg: PdfToJpg(file: file, meta: PdfToJpgMeta(outFileName: outFileNameC.text.isEmpty ? "pdfToJpg_file" : outFileNameC.text, quality: Quality.fromDpi(qualityDpi), single: isSingle, direction: isSingle ?  Direction.fromJson(direction!) : null, imageGap: isSingle ? int.tryParse(gapController.value.text) ?? 0 : null, pages: _pages.toList()..sort())), cancelToken: cancelToken));
   }
 

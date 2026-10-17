@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/utils/legacy_prefs.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 import 'package:pdf_craft/singletons/app_bloc_observer.dart';
 import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:flutter/services.dart';
@@ -50,9 +52,15 @@ Future<void> _bootstrap() async {
   // so every error inside a bloc — which is where all the tool work happens — was reported
   // nowhere. Setting it is the whole of its wiring.
   Bloc.observer = AppBlocObserver();
+  // Before the first frame: pins text rendering to the bundled font faces instead of letting
+  // google_fonts fetch them from the network.
+  AppTheme.configure();
   await ThemeManager().init();
   await LocaleManager().init(); // saved language (System / English / Hindi) before first frame
   await ProService().load(); // load ad-free/Pro entitlement before first frame
+  // Delete what retired features left in prefs. Backgrounded: nothing on the first frame
+  // depends on it, and it is a no-op after the launch that cleans up.
+  unawaited(LegacyPrefs.purge());
   // Establish an auth session (guest on first launch) in the background. This used to be
   // awaited here, so a slow or unreachable auth server held the first frame until the 20s
   // connect timeout (measured on a release build: first frame at +20.4s). Requests don't need
@@ -65,14 +73,11 @@ Future<void> _bootstrap() async {
   // Start the IAP lifecycle app-wide: recovers unfinished purchases and processes any
   // purchase that completes while the credits screen isn't open.
   unawaited(PurchaseService().init());
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: Colors.black,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  // Tablets rotate; phones stay portrait. The 52 tool screens have never been laid out for a
+  // ~350dp-high phone landscape, so unlocking there would be a change without the work behind it.
+  SystemChrome.setPreferredOrientations(isTabletDevice
+      ? DeviceOrientation.values
+      : const [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   runApp(const NestedTabNavigationExampleApp());
 }
 
@@ -197,12 +202,31 @@ class _NestedTabNavigationExampleAppState
           routerConfig: appRouter,
           // Surface a "session expired" prompt (sign in again / continue as guest)
           // over whatever screen is showing.
-          builder: (context, child) =>
-              _SessionExpiryGate(child: child ?? const SizedBox.shrink()),
+          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+            // Follows the resolved theme. This used to be a single
+            // SystemChrome.setSystemUIOverlayStyle in main() hardcoding a black bar with light
+            // icons — the only such call in the app — so a light-theme user got a black bar
+            // under a white app, and switching theme never changed it because ThemeManager
+            // only calls notifyListeners.
+            value: _overlayStyleFor(Theme.of(context)),
+            child: _SessionExpiryGate(child: child ?? const SizedBox.shrink()),
+          ),
         ),
       ),
     );
   }
+}
+
+/// System bar styling that matches [theme], so the icons stay legible against it.
+SystemUiOverlayStyle _overlayStyleFor(ThemeData theme) {
+  final isDark = theme.brightness == Brightness.dark;
+  return SystemUiOverlayStyle(
+    systemNavigationBarColor: theme.scaffoldBackgroundColor,
+    systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+    statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+  );
 }
 
 /// Watches [AuthService] and, when a signed-in account's session expires (the app has

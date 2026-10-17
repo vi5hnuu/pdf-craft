@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -13,6 +12,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/page_range.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 class AddBlankPagesView extends StatefulWidget {
@@ -62,7 +62,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'add-blank')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
         listenWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
         listener: (context, state) => handleToolState(
@@ -131,7 +131,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 
@@ -166,7 +166,8 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
       NotificationService.showSnackbar(text: positionError, color: Colors.orange);
       return;
     }
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => AddBlankPagesEvent(
       addBlankPages: AddBlankPages(

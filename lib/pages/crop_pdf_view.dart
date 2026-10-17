@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -14,6 +13,7 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class CropPdfView extends StatefulWidget {
   final File file;
@@ -88,7 +88,7 @@ class _CropPdfViewState extends State<CropPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'crop'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.cropPdf] != c.httpStates[HttpStates.cropPdf],
         listenWhen: (p, c) =>
@@ -149,7 +149,8 @@ class _CropPdfViewState extends State<CropPdfView>
               _buildMarginReadout(theme),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.fromLTRB(14, 14, 14,
+                    14 + MediaQuery.viewPaddingOf(context).bottom),
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
                   border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -163,7 +164,7 @@ class _CropPdfViewState extends State<CropPdfView>
             processingOverlay(state.httpStates[HttpStates.cropPdf], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -396,7 +397,8 @@ class _CropPdfViewState extends State<CropPdfView>
           text: L10n.current.errCropNothingToTrim, color: Colors.orange);
       return;
     }
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     runTool((cancelToken) => CropPdfEvent(
       cropPdf: CropPdf(

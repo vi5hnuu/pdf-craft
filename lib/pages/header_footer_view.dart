@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +21,7 @@ import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/singletons/tool_settings_service.dart';
 import 'package:pdf_craft/utils/page_range.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class HeaderFooterView extends StatefulWidget {
   final File file;
@@ -119,7 +119,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
         listenWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
         listener: (context, state) => handleToolState(
@@ -263,7 +263,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 
@@ -353,7 +353,8 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
     // Saved on use rather than on every keystroke: what the user actually ran with is the
     // configuration worth restoring next time.
     unawaited(_rememberSettings());
-    final uploadFile = await MultipartFile.fromFile(widget.file.path);
+    final uploadFile = await readForUpload(widget.file);
+    if (uploadFile == null) return;
     if (!mounted) return;
     final range = resolvePageRange(
         from: _fromPageC.text, to: _toPageC.text, pageCount: _pageCount ?? 0);

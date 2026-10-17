@@ -47,6 +47,7 @@ import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 enum _Tool { select, pen, highlighter, text, sticky, rect, ellipse, line, arrow }
@@ -125,7 +126,11 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
   void initState() {
     super.initState();
     AdsSingleton().dispatch(LoadInterstitialAd());
-    resetToolState([HttpStates.annotatePdf, HttpStates.stampPdf]);
+    // Not HttpStates.stampPdf: this screen never dispatches StampPdfEvent — _stampImages
+    // calls PdfService().stampPdf directly — so resetting that key did nothing here except
+    // wipe the stamp tool's in-flight state if it happened to be open underneath, taking its
+    // overlay and Cancel away while its upload carried on.
+    resetToolState([HttpStates.annotatePdf]);
     _openDocument();
   }
 
@@ -450,7 +455,8 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
       return;
     }
 
-    final upload = await MultipartFile.fromFile(widget.file.path);
+    final upload = await readForUpload(widget.file);
+    if (upload == null) return;
     if (!mounted) return;
 
     final baseName =
@@ -574,7 +580,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
           ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.annotatePdf] != c.httpStates[HttpStates.annotatePdf],
         listenWhen: (p, c) =>
@@ -609,7 +615,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
                 label: L10n.of(context).annotateSaving),
           ]);
         },
-      ),
+      )),
     );
   }
 

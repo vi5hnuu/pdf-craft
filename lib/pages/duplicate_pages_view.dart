@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -15,6 +14,7 @@ import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class DuplicatePagesView extends StatefulWidget {
   final File file;
@@ -64,7 +64,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
             ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
         listenWhen: (p, c) =>
@@ -92,8 +92,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
                     ? const Center(child: CircularProgressIndicator())
                     : GridView.builder(
                         padding: const EdgeInsets.all(12),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
+                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 120,
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
                           childAspectRatio: 0.7,
@@ -112,7 +112,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
             ),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -187,20 +187,29 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
     );
   }
 
+  /// One of the adjacent -/+ steppers.
+  ///
+  /// A 40x40 target rather than the 6px padding it had, which came to about 30x30 — under the
+  /// 48dp guidance and, with the two sitting side by side in a narrow pill, easy to hit the
+  /// wrong one. The glyph size is unchanged, so only the hit area grows.
   Widget _stepBtn(IconData icon, VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
       customBorder: const CircleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 18, color: onTap == null ? Colors.white38 : Colors.white),
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: Center(
+          child: Icon(icon, size: 18, color: onTap == null ? Colors.white38 : Colors.white),
+        ),
       ),
     );
   }
 
   Widget _buildBottomBar(ThemeData theme, bool loading) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16,
+          16 + MediaQuery.viewPaddingOf(context).bottom),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -228,7 +237,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
   int get _totalCopies => _pageCounts.values.fold(0, (a, b) => a + b);
 
   Future<void> _onDuplicate() async {
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => DuplicatePagesEvent(
           duplicatePages: DuplicatePages(

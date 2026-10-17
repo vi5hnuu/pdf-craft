@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -11,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Draw black redaction boxes over content, then **reposition, resize or delete
@@ -118,7 +118,7 @@ class _RedactPdfViewState extends State<RedactPdfView>
           ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listener: (context, state) => handleToolState(
@@ -143,7 +143,7 @@ class _RedactPdfViewState extends State<RedactPdfView>
             ),
           ]);
         },
-      ),
+      )),
     );
   }
 
@@ -262,7 +262,8 @@ class _RedactPdfViewState extends State<RedactPdfView>
     final hasRects = _pageRects.values.any((l) => l.isNotEmpty);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.fromLTRB(12, 12, 12,
+          12 + MediaQuery.viewPaddingOf(context).bottom),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -298,7 +299,8 @@ class _RedactPdfViewState extends State<RedactPdfView>
       }
     });
 
-    final file = await MultipartFile.fromFile(widget.file.path);
+    final file = await readForUpload(widget.file);
+    if (file == null) return;
     if (!mounted) return;
     runTool((cancelToken) => RedactPdfEvent(
       redactPdf: RedactPdf(regions: regions, file: file),
@@ -373,6 +375,11 @@ class _RedactBox extends StatelessWidget {
             Positioned(
               top: -12,
               right: -12,
+              // Deliberately still 24px, not the 48dp guidance. These handles sit *on* the
+              // region they manipulate, and _minSize is 12dp — a 44dp target covers a small box
+              // entirely, so the box's own drag can no longer be hit and a tap meant to move it
+              // deletes it instead. A target larger than the object it acts on is the wrong
+              // trade in a direct-manipulation canvas.
               child: GestureDetector(
                 onTap: onDelete,
                 child: Container(

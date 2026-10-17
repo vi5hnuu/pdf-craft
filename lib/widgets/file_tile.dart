@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/favorites_service.dart';
 import 'package:pdf_craft/utils/constants.dart';
@@ -97,6 +96,23 @@ class _FileTileState extends State<FileTile> {
     if (mounted) setState(() => _isFavorite = !_isFavorite);
   }
 
+  /// Shown when a file type has no icon, or has one whose asset is missing.
+  ///
+  /// Material icons, not FontAwesome: these two glyphs are the only reason the solid and
+  /// regular FontAwesome families were referenced at all, and the bundled Material set already
+  /// has both. Only the Google brand mark on the sign-in button still needs FontAwesome, so
+  /// one family is referenced instead of three.
+  ///
+  /// Worth being accurate about the size: almost none. Flutter tree-shakes icon fonts — the
+  /// release build reduces the brands family from 215 KB to 1.4 KB — so three families each
+  /// carrying one glyph already cost about what one does. This is a dependency-surface change,
+  /// not the ~476 KB saving it first looks like.
+  Widget _genericIcon(Color primary) => Icon(
+        widget.file is Directory ? Icons.folder : Icons.insert_drive_file,
+        color: primary,
+        size: 22,
+      );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -155,15 +171,17 @@ class _FileTileState extends State<FileTile> {
           child: fileIcon != null
               ? Padding(
                   padding: const EdgeInsets.all(6),
-                  child: Image.asset(fileIcon, fit: BoxFit.contain),
+                  // errorBuilder because a mapping can outlive its asset: 'doc' pointed at a
+                  // file that was never bundled, and with no builder Flutter paints its grey
+                  // exception box in the middle of the list. Falling back to the generic icon
+                  // keeps a missing asset cosmetic rather than making the row look broken.
+                  child: Image.asset(
+                    fileIcon,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => _genericIcon(primary),
+                  ),
                 )
-              : FaIcon(
-                  widget.file is Directory
-                      ? FontAwesomeIcons.solidFolder
-                      : FontAwesomeIcons.file,
-                  color: primary,
-                  size: 20,
-                ),
+              : _genericIcon(primary),
         ),
         title: Text(
           widget.file.path.split('/').last,
