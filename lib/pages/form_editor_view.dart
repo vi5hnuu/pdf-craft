@@ -1946,14 +1946,21 @@ class _GroupPaletteEntry {
   const _GroupPaletteEntry(this.type, this.icon, this.label);
 }
 
-/// Palette tile sizing, scaled by the user's text size.
+/// Palette tile sizing, measured against the user's text size.
 ///
 /// The tile was a fixed 66x78 box with an unbounded 10.5px Text inside it, so "रेडियो समूह"
-/// wrapped to two lines and overflowed vertically while "Date" clipped horizontally. Two lines
-/// are now budgeted for, and the box grows with the text rather than clipping it.
+/// wrapped to two lines and overflowed vertically while "Date" clipped horizontally.
+///
+/// The height is measured with a [TextPainter] rather than computed from the font size.
+/// Arithmetic was off by about two pixels — line height, ascent and descent do not add up the
+/// way the numbers suggest — which is small enough to look like nothing and still enough to
+/// trip a RenderFlex overflow.
 class _PaletteMetrics {
   static const double labelSize = 10.5;
   static const double labelLineHeight = 1.25;
+
+  /// Icon, the gap under it, and the tile's own vertical padding.
+  static const double _chrome = 22 + 4 + 12;
 
   final double tileWidth;
   final double stripHeight;
@@ -1961,12 +1968,22 @@ class _PaletteMetrics {
   const _PaletteMetrics(this.tileWidth, this.stripHeight);
 
   factory _PaletteMetrics.of(BuildContext context) {
-    final scaled = MediaQuery.textScalerOf(context).scale(labelSize);
-    final labelBlock = scaled * labelLineHeight * 2;
+    final scaler = MediaQuery.textScalerOf(context);
+    final style = DefaultTextStyle.of(context)
+        .style
+        .copyWith(fontSize: labelSize, height: labelLineHeight);
+    // Two lines of the real face at the real scale, which is what a tile has to hold.
+    final painter = TextPainter(
+      text: TextSpan(text: 'Ag\nAg', style: style),
+      textDirection: Directionality.of(context),
+      textScaler: scaler,
+      maxLines: 2,
+    )..layout();
+    final scaled = scaler.scale(labelSize);
     return _PaletteMetrics(
       (66 * scaled / labelSize).clamp(66.0, 132.0),
-      // icon + gap + two lines + the tile's own padding + the strip's
-      22 + 4 + labelBlock + 12 + 16,
+      // Plus the strip's own vertical padding.
+      _chrome + painter.height + 16,
     );
   }
 }
