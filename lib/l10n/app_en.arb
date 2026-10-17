@@ -2051,5 +2051,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "paletteGroupText": "Text",
+  "paletteGroupToggles": "Choices",
+  "paletteGroupLists": "Lists",
+  "paletteGroupOther": "Other",
+  "paletteAddField": "Add a field"
 }

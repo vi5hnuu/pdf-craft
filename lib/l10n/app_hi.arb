@@ -1246,5 +1246,10 @@
   "deleteSavedSignatureMessage": "आपका सेव किया गया हस्ताक्षर इस डिवाइस से हट जाएगा। आपको इसे दोबारा बनाना होगा।",
   "unProtectPasswordHelper": "डॉक्यूमेंट का मौजूदा पासवर्ड डालें।",
   "fromLabel": "से",
-  "rangeThumbnailUnavailable": "प्रीव्यू उपलब्ध नहीं"
+  "rangeThumbnailUnavailable": "प्रीव्यू उपलब्ध नहीं",
+  "paletteGroupText": "टेक्स्ट",
+  "paletteGroupToggles": "विकल्प",
+  "paletteGroupLists": "सूचियाँ",
+  "paletteGroupOther": "अन्य",
+  "paletteAddField": "फ़ील्ड जोड़ें"
 }
