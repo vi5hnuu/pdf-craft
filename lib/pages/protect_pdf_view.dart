@@ -75,7 +75,12 @@ class _ProtectPdfViewState extends State<ProtectPdfView>
           builder: (context, state) {
             return Stack(
               children: [
-                Padding(
+                // The two password validators could never fire: TextFormField.validator only
+                // runs from an enclosing Form, and there was none. onUserInteraction shows the
+                // rule as it is broken rather than leaving a dead button and a static helper.
+                Form(
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Flex(
                     direction: Axis.vertical,
@@ -165,6 +170,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView>
                       )
                     ],
                   ),
+                ),
                 ),
                 processingOverlay(state.httpStates[HttpStates.protectPdf], label: L10n.of(context).procWorking),
               ],

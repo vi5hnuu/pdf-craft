@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Renders a single PDF page as a thumbnail, **rendering each page only once**.
@@ -191,7 +192,9 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
   }
 
   Widget _content() {
-    if (_error) return const Center(child: Icon(Icons.error, color: Colors.red));
+    // No retry: a page that failed to render inside an already-open document has nothing
+    // to retry against, but the cell still owes the user a reason.
+    if (_error) return const ToolErrorState(compact: true);
     if (_bytes == null) return const Center(child: CircularProgressIndicator());
     // gaplessPlayback avoids a flicker if the widget rebuilds with new bytes.
     // cacheWidth bounds the decoded texture: without it Flutter decodes the JPEG at

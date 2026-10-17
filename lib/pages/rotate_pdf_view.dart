@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -112,7 +113,8 @@ class _RotatePdfViewState extends State<RotatePdfView>
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || snapshot.data == null) {
-            return const Center(child: Icon(Icons.error, color: Colors.red));
+            return ToolErrorState(
+                message: snapshot.error?.toString(), onRetry: () => setState(() {}));
           }
           return BlocConsumer<PdfBloc, PdfState>(
             buildWhen: (previous, current) =>

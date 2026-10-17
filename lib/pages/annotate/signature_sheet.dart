@@ -13,6 +13,7 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/signature_store.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -82,6 +83,21 @@ class _SignatureSheetState extends State<SignatureSheet> {
     if (mounted) Navigator.pop(context, bytes);
   }
 
+  /// Confirmed: this removes the *persisted* signature from the device, which is the asset
+  /// this sheet exists to let the user reuse. It was a single unguarded tap.
+  Future<void> _confirmDeleteSaved() async {
+    final result = await ConfirmDialog.show(
+      context,
+      title: L10n.current.deleteSavedSignatureTitle,
+      message: L10n.current.deleteSavedSignatureMessage,
+      confirmLabel: L10n.current.delete,
+      destructive: true,
+    );
+    if (!result.confirmed || !mounted) return;
+    await SignatureStore().clear();
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -135,10 +151,7 @@ class _SignatureSheetState extends State<SignatureSheet> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
                     tooltip: l.delete,
-                    onPressed: () async {
-                      await SignatureStore().clear();
-                      if (context.mounted) setState(() {});
-                    },
+                    onPressed: _confirmDeleteSaved,
                   ),
                   onTap: () => Navigator.pop(context, saved),
                 ),

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -90,6 +91,21 @@ class _RedactPdfViewState extends State<RedactPdfView>
     }
   }
 
+  Future<void> _confirmClearPage() async {
+    final result = await ConfirmDialog.show(
+      context,
+      title: L10n.current.redactClearPageTitle,
+      message: L10n.current.redactClearPageMessage,
+      confirmLabel: L10n.current.clear,
+      destructive: true,
+    );
+    if (!result.confirmed || !mounted) return;
+    setState(() {
+      _rects.clear();
+      _selectedId = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -109,12 +125,9 @@ class _RedactPdfViewState extends State<RedactPdfView>
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: L10n.of(context).clearPage,
-            onPressed: _rects.isEmpty
-                ? null
-                : () => setState(() {
-                      _rects.clear();
-                      _selectedId = null;
-                    }),
+            // Confirmed: this wipes every box on the page, and the undo beside it is
+            // removeLast(), which cannot restore a clear().
+            onPressed: _rects.isEmpty ? null : _confirmClearPage,
           ),
         ],
       ),

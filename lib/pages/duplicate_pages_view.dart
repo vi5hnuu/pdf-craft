@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -50,6 +51,18 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
     }
   }
 
+  Future<void> _confirmClear() async {
+    final result = await ConfirmDialog.show(
+      context,
+      title: L10n.current.duplicateClearTitle,
+      message: L10n.current.duplicateClearMessage,
+      confirmLabel: L10n.current.clear,
+      destructive: true,
+    );
+    if (!result.confirmed || !mounted) return;
+    setState(() => _pageCounts.clear());
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -58,8 +71,10 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
         title: Text(ToolStrings.name(context, 'duplicate-pages')),
         actions: [
           if (_pageCounts.isNotEmpty)
+            // Confirmed: a plain TextButton in the app bar discarded every count the user
+            // had set, with no undo.
             TextButton(
-              onPressed: () => setState(() => _pageCounts.clear()),
+              onPressed: _confirmClear,
               child: Text(L10n.of(context).clear),
             ),
         ],

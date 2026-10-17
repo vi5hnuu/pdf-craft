@@ -74,6 +74,9 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView>
                          enableSuggestions: false,
                          decoration: InputDecoration(
                            labelText: L10n.of(context).passwordLabel,
+                           // The button below is dead until this is filled in, and nothing said
+                           // so. protect-pdf already states its rule this way.
+                           helperText: L10n.of(context).unProtectPasswordHelper,
                            border: const OutlineInputBorder(),
                            suffixIcon: IconButton(
                              tooltip: _obscure ? L10n.of(context).showPassword : L10n.of(context).hidePassword,
