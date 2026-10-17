@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/models/http_state.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/purchase_service.dart';
@@ -88,7 +89,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
         child: AnimatedBuilder(
           animation: Listenable.merge([CreditService(), PurchaseService()]),
           builder: (context, _) => ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screenPadding,
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               _balanceCard(theme),
@@ -150,7 +151,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                   await PurchaseService().restore();
                   await CreditService().refreshBalance();
                   NotificationService.showSnackbar(
-                      text: L10n.current.restorePurchasesDone, color: Colors.green);
+                      text: L10n.current.restorePurchasesDone, kind: SnackKind.success);
                 }),
               ),
             ],
@@ -247,7 +248,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
   Future<void> _claimDaily() => _run(_actionDaily, () async {
     try {
       final granted = await CreditService().claimDaily();
-      NotificationService.showSnackbar(text: L10n.current.creditsClaimed(granted), color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.creditsClaimed(granted), kind: SnackKind.success);
     } on DioException catch (e) {
       // Every exception used to become "Already claimed today". With the server unreachable a
       // network failure therefore read as a successful-but-used-up claim, which is both wrong
@@ -258,11 +259,11 @@ class _CreditsScreenState extends State<CreditsScreen> {
         text: alreadyClaimed
             ? L10n.current.creditsAlreadyClaimed
             : HttpState.fromDio(e, L10n.current.errSomethingWrong).error!,
-        color: Colors.orange,
+        kind: SnackKind.warning,
       );
     } catch (_) {
       NotificationService.showSnackbar(
-          text: L10n.current.errSomethingWrong, color: Colors.orange);
+          text: L10n.current.errSomethingWrong, kind: SnackKind.warning);
     }
   });
 
@@ -279,7 +280,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
           final granted = await CreditService().awaitRewardedCredits();
           if (granted > 0) {
             NotificationService.showSnackbar(
-                text: L10n.current.creditsEarned(granted), color: Colors.green);
+                text: L10n.current.creditsEarned(granted), kind: SnackKind.success);
           } else {
             // The poll gives the SSV callback twelve seconds to land. If nothing arrived, the
             // credit is not "on its way" — the grant happens only when Google's callback
@@ -288,12 +289,12 @@ class _CreditsScreenState extends State<CreditsScreen> {
             // not coming.
             NotificationService.showSnackbar(
                 text: L10n.current.creditsRewardUnconfirmed,
-                color: Colors.orange);
+                kind: SnackKind.warning);
           }
         } catch (_) {
           NotificationService.showSnackbar(
               text: L10n.current.creditsCouldNotConfirm,
-              color: Colors.orange);
+              kind: SnackKind.warning);
         } finally {
           if (mounted) setState(() => _running = null);
         }
@@ -301,7 +302,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
       onUnavailable: () {
         if (mounted) setState(() => _running = null);
         NotificationService.showSnackbar(
-            text: L10n.current.creditsNoAd, color: Colors.orange);
+            text: L10n.current.creditsNoAd, kind: SnackKind.warning);
       },
     );
   }

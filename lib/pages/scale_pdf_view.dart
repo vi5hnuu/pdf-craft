@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -52,7 +53,7 @@ class _ScalePdfViewState extends State<ScalePdfView>
             Column(children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.screenPadding,
                   // Scrollable because the page selector expands to a thumbnail grid, which
                   // overflows a fixed column on a short screen.
                   child: SingleChildScrollView(

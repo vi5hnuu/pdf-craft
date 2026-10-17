@@ -137,7 +137,7 @@ class _FileTileState extends State<FileTile> {
             IconButton(
               onPressed: widget.onDelete,
               tooltip: L10n.of(context).delete,
-              icon: Icon(Icons.delete_outline, color: Colors.red.shade300),
+              icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
             ),
         ],
       );

@@ -10,7 +10,7 @@ class FormSchema {
   ///
   /// v2: rules reference field **ids** rather than names, so renaming a field no longer
   ///     silently rewires what its dependants compute.
-  static const int currentVersion = 2;
+  static const int currentVersion = 3;
 
   final int version;
 

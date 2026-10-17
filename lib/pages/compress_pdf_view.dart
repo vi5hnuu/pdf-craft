@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -40,7 +41,7 @@ class _CompressPdfViewState extends State<CompressPdfView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'compress')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'compress'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.compressPdf] != c.httpStates[HttpStates.compressPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.compressPdf] != c.httpStates[HttpStates.compressPdf],
@@ -50,7 +51,7 @@ class _CompressPdfViewState extends State<CompressPdfView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
@@ -54,7 +55,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         final s = state.httpStates[HttpStates.imageToPdf];
         if (s?.done == true) {
           final savedFile = s?.extras?['savedFile'];
-          NotificationService.showSnackbar(text: L10n.current.scanImagesMerged, color: Colors.green);
+          NotificationService.showSnackbar(text: L10n.current.scanImagesMerged, kind: SnackKind.success);
           if (savedFile is File) {
             OpenFile.open(
               savedFile.path,
@@ -63,7 +64,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           }
           setState(() => _result = null);
         } else if (s?.error != null) {
-          NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
+          NotificationService.showSnackbar(text: s!.error!, kind: SnackKind.error);
         }
       },
       builder: (context, state) {
@@ -128,7 +129,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     icon: Icons.image_outlined,
                     label: L10n.of(context).scanToJpeg,
                     description: L10n.of(context).scanToJpegDesc,
-                    color: const Color(0xFF7B1FA2),
+                    color: AppSemanticColors.of(context).info,
                     loading: _scanningCard == 1,
                     enabled: !_busy,
                     onTap: () => _startScan(DocumentFormat.jpeg, 1),
@@ -292,7 +293,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: Text(L10n.of(context).pageNumber(index + 1),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ),
             ],
           ),
@@ -329,7 +332,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       });
     } catch (_) {
       setState(() => _scanningCard = null);
-      NotificationService.showSnackbar(text: L10n.current.scanCancelledOrFailed, color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.scanCancelledOrFailed, kind: SnackKind.error);
     }
   }
 
@@ -375,13 +378,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
       FileStore().changed();
       if (!mounted) return;
       setState(() => _result = null);
-      NotificationService.showSnackbar(text: L10n.current.savedTo(target.path), color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.savedTo(target.path), kind: SnackKind.success);
       router.pushNamed(
         AppRoutes.pdfFilePreviewRoute.name,
         pathParameters: {'pdfFilePath': target.path},
       );
     } catch (e) {
-      NotificationService.showSnackbar(text: L10n.current.failedToSave('$e'), color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.failedToSave('$e'), kind: SnackKind.error);
     }
   }
 

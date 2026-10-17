@@ -113,7 +113,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       LoggerSingleton().logger.w('Delete failed for ${file.path}: $e');
       NotificationService.showSnackbar(
           text: L10n.current.errDeleteFailed(file.path.split('/').last),
-          color: Colors.red);
+          kind: SnackKind.error);
     }
     // The FileStore listener reloads this list, and every other listing too.
     FileStore().changed();
@@ -139,7 +139,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       } catch (_) {}
     }
     FileStore().changed();
-    NotificationService.showSnackbar(text: L10n.current.resultsCleared, color: Colors.orange);
+    NotificationService.showSnackbar(text: L10n.current.resultsCleared, kind: SnackKind.warning);
   }
 
   @override

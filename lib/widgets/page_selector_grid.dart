@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
@@ -16,8 +17,11 @@ class PageSelectorGrid extends StatelessWidget {
   final Set<int> selected;
   final ValueChanged<int> onToggle;
 
-  /// Accent color for the selection highlight.
-  final Color accent;
+  /// Accent colour for the selection highlight. Defaults to the brand primary.
+  ///
+  /// It used to default to [Colors.blue], and no caller ever overrode it, so every range
+  /// picker in the app was blue while the brand is red.
+  final Color? accent;
 
   const PageSelectorGrid({
     super.key,
@@ -25,11 +29,12 @@ class PageSelectorGrid extends StatelessWidget {
     required this.totalPages,
     required this.selected,
     required this.onToggle,
-    this.accent = Colors.blue,
+    this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = accent ?? Theme.of(context).colorScheme.primary;
     return GridView.builder(
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -58,13 +63,30 @@ class PageSelectorGrid extends StatelessWidget {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.35),
+                    color: accentColor.withValues(alpha: 0.28),
                     borderRadius: BorderRadius.circular(AppRadius.surface),
-                    border: Border.all(color: accent, width: 2),
+                    border: Border.all(color: accentColor, width: 2),
                   ),
-                  child: const Center(
-                    child: Icon(Icons.check_circle, color: Colors.white, size: 30),
+                ),
+              ),
+            // A solid badge rather than a bare glyph over the wash. A white tick on a 35%-alpha
+            // accent laid over a white page thumbnail measured 1.47:1 — invisible, leaving the
+            // 2px border as the only thing distinguishing a selected page. Filling the badge
+            // makes the contrast independent of whatever the page happens to show, and putting
+            // it in the corner stops it covering the content being chosen.
+            if (isSel)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppSemanticColors.onFilled(accentColor), width: 1.5),
                   ),
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(Icons.check,
+                      color: AppSemanticColors.onFilled(accentColor), size: 16),
                 ),
               ),
             Positioned(

@@ -102,7 +102,7 @@ class PurchaseService extends ChangeNotifier {
           ));
     } catch (e) {
       LoggerSingleton().logger.w('buyConsumable failed: $e');
-      NotificationService.showSnackbar(text: L10n.current.purchaseCouldNotStart, color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.purchaseCouldNotStart, kind: SnackKind.error);
       return false;
     }
   }
@@ -124,7 +124,7 @@ class PurchaseService extends ChangeNotifier {
           _setPending(false);
           LoggerSingleton().logger.w('Purchase error: ${p.error}');
           NotificationService.showSnackbar(
-              text: L10n.current.purchaseFailed, color: Colors.red);
+              text: L10n.current.purchaseFailed, kind: SnackKind.error);
           await _finalizeIfPending(p); // clear the failed item from the queue
           break;
 
@@ -145,7 +145,7 @@ class PurchaseService extends ChangeNotifier {
           .redeemPurchase(p.verificationData.serverVerificationData, p.productID);
       if (credited) {
         await _consumeCredited(p);
-        NotificationService.showSnackbar(text: L10n.current.creditsAdded, color: Colors.green);
+        NotificationService.showSnackbar(text: L10n.current.creditsAdded, kind: SnackKind.success);
       }
     } catch (e) {
       // Transient/verification failure — DO NOT finalize. Play will redeliver it and we
@@ -153,7 +153,7 @@ class PurchaseService extends ChangeNotifier {
       LoggerSingleton().logger.w('Purchase verification deferred (will retry): $e');
       CrashReporter().log('purchase deferred ${p.productID}');
       NotificationService.showSnackbar(
-          text: L10n.current.purchaseVerifying, color: Colors.orange);
+          text: L10n.current.purchaseVerifying, kind: SnackKind.warning);
     }
   }
 

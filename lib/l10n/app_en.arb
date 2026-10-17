@@ -20,7 +20,13 @@
   "favorites": "Favorites",
   "recent": "Recent",
   "toolsAvailable": "{count} tools available",
-  "@toolsAvailable": {"placeholders": {"count": {"type": "int"}}},
+  "@toolsAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "applyATool": "Apply a tool",
   "outputFileName": "Output File Name",
   "actionOpen": "Open",
@@ -34,12 +40,24 @@
   "errHeaderFooterEmpty": "Add a header or a footer first — otherwise this would return the same file.",
   "errPageNotANumber": "Enter a page number, like 1.",
   "errPageBeyondDocument": "{count, plural, =1{This document has only 1 page.} other{This document has only {count} pages.}}",
-  "@errPageBeyondDocument": {"placeholders": {"count": {"type": "int"}}},
+  "@errPageBeyondDocument": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "errPageRangeBackwards": "The last page can't come before the first.",
   "errImageUnreadable": "This image can't be shown. It may have been moved or deleted.",
   "errFileGone": "That file can't be read any more. It may have been moved, renamed or deleted.",
   "errDeleteFailed": "Couldn't delete “{name}”. It may be open in another app, or on storage the app can't write to.",
-  "@errDeleteFailed": {"placeholders": {"name": {"type": "String"}}},
+  "@errDeleteFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "pageNumber": "Page {number}",
   "@pageNumber": {
     "placeholders": {
@@ -355,7 +373,13 @@
   "authSignIn": "Sign in",
   "authOr": "or",
   "authContinueAs": "Continue as {email}",
-  "@authContinueAs": {"placeholders": {"email": {"type": "String"}}},
+  "@authContinueAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "authUseAnotherAccount": "Use a different account",
   "authContinueGoogle": "Continue with Google",
   "authHaveAccount": "Already have an account? ",
@@ -733,7 +757,13 @@
   "bookmarkDefaultTitle": "Bookmark",
   "splitDone": "PDF split",
   "optionLabelDefault": "Option {index}",
-  "@optionLabelDefault": {"placeholders": {"index": {"type": "int"}}},
+  "@optionLabelDefault": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
   "fromPage": "From page",
   "analyzePages": "Pages",
   "analyzeWords": "Words",
@@ -815,7 +845,13 @@
   "nUpTwo": "2-Up",
   "nUpFour": "4-Up",
   "nUpCreate": "Create {n}-Up PDF",
-  "@nUpCreate": {"placeholders": {"n": {"type": "int"}}},
+  "@nUpCreate": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "processingEllipsis": "Processing…",
   "aspectLocked": "Locked",
   "aspectFree": "Free",
@@ -823,20 +859,68 @@
   "rotateNone": "None (0°)",
   "rotateAction": "Rotate",
   "deletePagesAction": "{count, plural, =1{Delete 1 page} other{Delete {count} pages}} · {remaining} left",
-  "@deletePagesAction": {"placeholders": {"count": {"type": "int"}, "remaining": {"type": "int"}}},
+  "@deletePagesAction": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
   "duplicateAction": "{copies, plural, =1{Add 1 copy} other{Add {copies} copies}} across {pages, plural, =1{1 page} other{{pages} pages}}",
-  "@duplicateAction": {"placeholders": {"copies": {"type": "int"}, "pages": {"type": "int"}}},
+  "@duplicateAction": {
+    "placeholders": {
+      "copies": {
+        "type": "int"
+      },
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
   "insertAfterPage": "After page {position} of the base document",
-  "@insertAfterPage": {"placeholders": {"position": {"type": "int"}}},
+  "@insertAfterPage": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
   "insertSliderStart": "Start",
   "insertSliderAfter": "After {position}",
-  "@insertSliderAfter": {"placeholders": {"position": {"type": "int"}}},
+  "@insertSliderAfter": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
   "reverseExplainer": "{count, plural, =1{The last page becomes the first. This document has 1 page.} other{The last page becomes the first. This document has {count} pages.}}",
-  "@reverseExplainer": {"placeholders": {"count": {"type": "int"}}},
+  "@reverseExplainer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cropScopePages": "{count, plural, =1{1 page} other{{count} pages}}",
-  "@cropScopePages": {"placeholders": {"count": {"type": "int"}}},
+  "@cropScopePages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cropScopePage": "Page {page}",
-  "@cropScopePage": {"placeholders": {"page": {"type": "int"}}},
+  "@cropScopePage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
   "fieldLabel": "Label on the page",
   "fieldLabelHint": "Printed next to the field — leave empty if the document already prints one",
   "fieldLabelSize": "Label size (pt)",
@@ -1177,7 +1261,6 @@
   "userPermissions": "User permissions",
   "vertical": "Vertical",
   "horizontal": "Horizontal",
-  "fromPage": "From page",
   "toPageOptional": "To page (optional)",
   "invalidFontSize": "Invalid font size (min 4)",
   "fontLabel": "Font",
@@ -1341,9 +1424,9 @@
   "toolNameStructureInspector": "Structure Inspector",
   "toolDescStructureInspector": "Inspect the document skeleton: pages, fonts, resources and catalog flags.",
   "toolNameObjectExplorer": "Object Explorer",
-  "toolDescObjectExplorer": "Browse the file\u2019s raw PDF objects.",
+  "toolDescObjectExplorer": "Browse the file’s raw PDF objects.",
   "toolNamePdfToJson": "PDF to JSON",
-  "toolDescPdfToJson": "Export the whole document \u2014 metadata, pages, text and fields \u2014 as JSON.",
+  "toolDescPdfToJson": "Export the whole document — metadata, pages, text and fields — as JSON.",
   "inspPermTitle": "Permissions",
   "inspPermUnencryptedNote": "This PDF is not encrypted, so nothing is enforcing these — every viewer can do all of them.",
   "inspPermEncryptedNote": "These are enforced by the document's security handler.",
@@ -1480,8 +1563,6 @@
   "blankPagesRemoved": "Blank pages removed",
   "detectionSensitivity": "Detection Sensitivity",
   "followingWillBeRemoved": "The following will be removed:",
-  "metaTitle": "Title",
-  "metaAuthor": "Author",
   "metaSubjectKeywords": "Subject & Keywords",
   "metaCreatorProducer": "Creator & Producer app",
   "metaDates": "Creation & modified dates",
@@ -1561,7 +1642,6 @@
   "saving": "Saving…",
   "saveAnnotations": "Save annotations",
   "failedToPrepareFile": "Failed to prepare file",
-  "processingEllipsis": "Processing…",
   "startBatch": "Start batch",
   "compressingPdf": "Compressing your PDF",
   "cropHint": "Drag the blue handles inward — the shaded area is removed.",
@@ -1599,7 +1679,16 @@
   "checkGroup": "Check group",
   "fieldChangeType": "Field type",
   "fieldChangeTypeWarn": "Changing to {type} discards: {lost}",
-  "@fieldChangeTypeWarn": {"placeholders": {"type": {"type": "String"}, "lost": {"type": "String"}}},
+  "@fieldChangeTypeWarn": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "lost": {
+        "type": "String"
+      }
+    }
+  },
   "fieldChangeTypeLost": "settings that don't apply",
   "lostGroup": "its group",
   "lostChecked": "the default tick",
@@ -1943,5 +2032,63 @@
       }
     }
   },
-  "dateFormatLabel": "Date format"
+  "dateFormatLabel": "Date format",
+  "toolErrorGeneric": "Could not load this. Check the file and try again.",
+  "redactClearPageTitle": "Clear this page?",
+  "redactClearPageMessage": "Every redaction box on this page will be removed. Undo cannot bring them back.",
+  "duplicateClearTitle": "Clear all selections?",
+  "duplicateClearMessage": "Every page count you have set will be reset to one.",
+  "deleteBookmarkTitle": "Delete bookmark?",
+  "deleteBookmarkMessage": "\"{title}\" will be removed. This cannot be undone.",
+  "deleteSavedSignatureTitle": "Delete saved signature?",
+  "deleteSavedSignatureMessage": "Your saved signature will be removed from this device. You will need to draw it again.",
+  "unProtectPasswordHelper": "Enter the document's current password.",
+  "fromLabel": "From",
+  "rangeThumbnailUnavailable": "Preview unavailable",
+  "@deleteBookmarkMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "paletteGroupText": "Text",
+  "paletteGroupToggles": "Choices",
+  "paletteGroupLists": "Lists",
+  "paletteGroupOther": "Other",
+  "paletteAddField": "Add a field",
+  "optionValueHint": "What the PDF records when this is ticked. Defaults to Yes.",
+  "fieldButton": "Button",
+  "sectionBehaviour": "Behaviour",
+  "fieldBorderColor": "Border colour",
+  "fieldBackgroundColor": "Background",
+  "fieldTextColor": "Text colour",
+  "fieldBorderWidth": "Border width (pt)",
+  "fieldBorderStyle": "Border style",
+  "borderSolid": "Solid",
+  "borderDashed": "Dashed",
+  "borderBeveled": "Beveled",
+  "borderInset": "Inset",
+  "borderUnderline": "Underline",
+  "colorDefault": "Default",
+  "colorTransparent": "None",
+  "fieldNoExport": "Leave out of exported data",
+  "fieldPassword": "Mask as it is typed",
+  "fieldNoSpellCheck": "No spell check",
+  "fieldNoScroll": "Do not scroll past the box",
+  "fieldEditableCombo": "Allow typing a value not listed",
+  "fieldSortOptions": "Show options sorted",
+  "fieldHidden": "Hidden everywhere",
+  "fieldNoPrint": "On screen only, never printed",
+  "sectionButton": "Button",
+  "buttonActionLabel": "What it does",
+  "buttonActionSubmit": "Submit the form",
+  "buttonActionReset": "Reset the form",
+  "buttonActionPrint": "Print",
+  "buttonActionUri": "Open a link",
+  "buttonTargetLabel": "URL",
+  "buttonCaptionLabel": "Button text",
+  "optionExportValues": "Exported values",
+  "optionExportValuesHint": "One per option, comma separated. Leave empty to export what is shown.",
+  "sectionStyle": "Colours & border"
 }

@@ -1,5 +1,6 @@
 import '../logic/calculation.dart';
 import '../logic/condition.dart';
+import '../model/field_appearance.dart';
 import '../model/field_rules.dart';
 import '../model/form_field.dart';
 import '../model/recipient.dart';
@@ -64,6 +65,14 @@ class SchemaCodec {
         if (f.condition != null) 'condition': f.condition!.toJson(),
         if (f.calculation != null && !f.calculation!.isEmpty)
           'calculation': f.calculation!.toJson(),
+        // Omitted when they hold only defaults, so a draft of ordinary fields is byte-for-byte
+        // what it was before these existed.
+        if (!f.appearance.isDefault) 'appearance': f.appearance.toJson(),
+        if (!f.behaviour.isDefault) 'behaviour': f.behaviour.toJson(),
+        if (f.optionValues.isNotEmpty) 'option_values': f.optionValues,
+        if (f.buttonAction.isNotEmpty) 'button_action': f.buttonAction,
+        if (f.buttonTarget.isNotEmpty) 'button_target': f.buttonTarget,
+        if (f.caption.isNotEmpty) 'caption': f.caption,
       };
 
   /// Reads a stored schema, migrating it forward if it was written by an older
@@ -112,6 +121,8 @@ class SchemaCodec {
       'label', 'label_size', 'label_position', 'decimal_places', 'group_digits',
       'tooltip', 'read_only', 'max_length', 'comb', 'alignment', 'multi_select',
       'format', 'date_format', 'validation', 'condition', 'calculation',
+      'appearance', 'behaviour', 'option_values', 'button_action',
+      'button_target', 'caption',
     };
     return FormFieldModel(
       id: json['id'] as String,
@@ -149,6 +160,16 @@ class SchemaCodec {
       calculation: json['calculation'] == null
           ? null
           : Calculation.fromJson((json['calculation'] as Map).cast<String, Object?>()),
+      appearance: json['appearance'] == null
+          ? const FieldAppearance()
+          : FieldAppearance.fromJson((json['appearance'] as Map).cast<String, Object?>()),
+      behaviour: json['behaviour'] == null
+          ? const FieldBehaviour()
+          : FieldBehaviour.fromJson((json['behaviour'] as Map).cast<String, Object?>()),
+      optionValues: (json['option_values'] as List?)?.cast<String>().toList() ?? <String>[],
+      buttonAction: json['button_action'] as String? ?? '',
+      buttonTarget: json['button_target'] as String? ?? '',
+      caption: json['caption'] as String? ?? '',
       // Anything this build does not recognise rides along untouched.
       extras: {
         for (final e in json.entries)
@@ -161,6 +182,10 @@ class SchemaCodec {
   Map<String, Object?> _migrate(Map<String, Object?> json, {required int from}) {
     var result = json;
     if (from < 2) result = _v1ToV2(result);
+    // v2 -> v3 needs no rewriting: appearance, behaviour and the push-button properties are
+    // additive and absent from a v2 draft, where every decoder above already defaults them.
+    // The version still moves, so a v3 draft is refused by a build that predates them rather
+    // than being silently stripped on save.
     return result;
   }
 

@@ -18,6 +18,10 @@ abstract final class FieldTypes {
   static const email = 'email';
   static const phone = 'phone';
   static const listbox = 'listbox';
+
+  /// An action button: submit, reset, print or open a link. The one AcroForm type the builder
+  /// had no way to produce, which ruled out the whole action class.
+  static const pushbutton = 'pushbutton';
 }
 
 /// The types shipped today, in palette order.
@@ -102,5 +106,10 @@ const List<FieldTypeDescriptor> builtinFieldTypes = [
     acceptsOptions: true,
     acceptsValue: true,
     allowsMultiSelect: true,
+  ),
+  // No value, no options and no rules: a button does something rather than holding something.
+  FieldTypeDescriptor(
+    id: FieldTypes.pushbutton,
+    defaultSize: FractionalSize(0.24, 0.045),
   ),
 ];

@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -54,7 +56,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
         listenWhen: (p, c) => p.httpStates[HttpStates.analyzePdf] != c.httpStates[HttpStates.analyzePdf],
         listener: (context, state) {
           final s = state.httpStates[HttpStates.analyzePdf];
-          if (s?.error != null) NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
+          if (s?.error != null) NotificationService.showSnackbar(text: s!.error!, kind: SnackKind.error);
         },
         builder: (context, state) {
           final s = state.httpStates[HttpStates.analyzePdf];
@@ -62,15 +64,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
             return Center(child: SpinKitThreeBounce(color: theme.colorScheme.primary, size: 36));
           }
           if (s.error != null) {
-            return Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.error_outline, size: 56, color: Colors.red),
-                const SizedBox(height: 12),
-                Text(s.error!, textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                FilledButton(onPressed: _fetch, child: Text(L10n.of(context).retry)),
-              ]),
-            );
+            return ToolErrorState(message: s.error, onRetry: _fetch);
           }
           final a = (s.extras?['analysis'] as Map?)?.cast<String, dynamic>();
           if (a == null) return Center(child: Text(L10n.of(context).noAnalysisAvailable));
@@ -87,7 +81,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
     final size = (a['fileSizeBytes'] as num?)?.toInt() ?? 0;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.screenPadding,
       children: [
         _statGrid(theme, [
           _Stat(L10n.of(context).analyzePages, '${a['pageCount'] ?? '—'}', Icons.description_outlined),
@@ -97,7 +91,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
           _Stat(L10n.of(context).analyzeImages, '${a['imageCount'] ?? 0}', Icons.image_outlined),
           _Stat(L10n.of(context).analyzeFonts, '${a['fontCount'] ?? 0}', Icons.font_download_outlined),
           _Stat(L10n.of(context).analyzeAttachments, '${a['attachmentCount'] ?? 0}', Icons.attachment_outlined),
-          _Stat(L10n.of(context).analyzeEncrypted, (a['encrypted'] == true) ? 'Yes' : 'No', Icons.lock_outline),
+          _Stat(L10n.of(context).analyzeEncrypted, (a['encrypted'] == true) ? L10n.of(context).yes : L10n.of(context).no, Icons.lock_outline),
         ]),
         const SizedBox(height: 16),
         _listCard(theme, L10n.of(context).blankPagesLabel, blank.isEmpty ? L10n.of(context).none : blank.join(', '), Icons.crop_din),
@@ -106,7 +100,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
           theme,
           L10n.of(context).duplicatePageGroups,
           dupGroups.isEmpty
-              ? 'None'
+              ? L10n.of(context).none
               : dupGroups.map((g) => '[${(g as List).join(', ')}]').join('  '),
           Icons.content_copy,
         ),

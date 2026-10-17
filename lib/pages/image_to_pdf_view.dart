@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -54,7 +55,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
   Widget build(BuildContext context) {
 
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'image-to-pdf')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'image-to-pdf'))),
       body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
@@ -66,7 +67,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
               mainAxisSize: MainAxisSize.max,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: AppSpacing.screenPadding,
                   child: TextFormField(keyboardType: TextInputType.text,
                     decoration: InputDecoration(labelText: L10n.of(context).outputFileName,border: const OutlineInputBorder()),
                     controller: outFileNameC),

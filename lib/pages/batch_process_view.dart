@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -234,7 +237,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       final err = _items.where((i) => i.status == _FileStatus.error).length;
       NotificationService.showSnackbar(
         text: L10n.current.batchComplete(done, err),
-        color: done == _items.length ? Colors.green : Colors.orange,
+        kind: done == _items.length ? SnackKind.success : SnackKind.warning,
       );
       return;
     }
@@ -359,10 +362,10 @@ class _BatchProcessViewState extends State<BatchProcessView> {
           title: Text(L10n.of(context)
               .batchAppBarTitle(ToolStrings.name(context, 'batch'), _items.length)),
         ),
-        body: Column(
+        body: ToolPane(child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.screenPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -401,14 +404,15 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                   final item = _items[i];
                   return ListTile(
                     dense: true,
-                    leading: _statusIcon(item.status, primary),
+                    leading: _statusIcon(context, item.status, primary),
                     title: Text(
                       item.file.path.split('/').last,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 13),
                     ),
                     subtitle: item.errorMsg != null
-                        ? Text(item.errorMsg!, style: const TextStyle(color: Colors.red, fontSize: 11))
+                        ? Text(item.errorMsg!,
+                            style: TextStyle(color: theme.colorScheme.error, fontSize: 11))
                         : Text(
                             _fileSizes[item.file.path] == null
                                 ? ''
@@ -450,21 +454,28 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                         ),
             ),
           ],
-        ),
+        )),
       ),
     );
   }
 
-  Widget _statusIcon(_FileStatus status, Color primary) {
+  /// Row status, in scheme roles.
+  ///
+  /// `grey.shade400` on the white card measured 1.88:1, so a row waiting to be processed looked
+  /// like a row with no status at all — and the done/error glyphs used raw palette colours that
+  /// do not respond to the theme.
+  Widget _statusIcon(BuildContext context, _FileStatus status, Color primary) {
+    final theme = Theme.of(context);
     switch (status) {
       case _FileStatus.pending:
-        return Icon(Icons.schedule_outlined, size: 20, color: Colors.grey.shade400);
+        return Icon(Icons.schedule_outlined, size: 20, color: theme.colorScheme.onSurfaceVariant);
       case _FileStatus.processing:
         return SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: primary));
       case _FileStatus.done:
-        return const Icon(Icons.check_circle_outline, size: 20, color: Colors.green);
+        return Icon(Icons.check_circle_outline,
+            size: 20, color: AppSemanticColors.of(context).success);
       case _FileStatus.error:
-        return const Icon(Icons.error_outline, size: 20, color: Colors.red);
+        return Icon(Icons.error_outline, size: 20, color: theme.colorScheme.error);
     }
   }
 }

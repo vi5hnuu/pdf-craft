@@ -2,6 +2,7 @@ import '../model/field_ref.dart';
 import '../model/field_rules.dart';
 import '../model/form_field.dart';
 import '../model/form_schema.dart';
+import '../registry/field_type_registry.dart';
 
 /// A structural problem with the form's own wiring.
 class SchemaIssue {
@@ -67,7 +68,10 @@ class FormRuntime {
   ///
   /// Rules reference ids, so a reference can only dangle if the target was deleted — which is
   /// worth telling the author about rather than silently ignoring at fill time.
-  List<SchemaIssue> integrityIssues() {
+  ///
+  /// [registry] is required rather than optional because the duplicate-name check needs to know
+  /// which types are grouped, and defaulting that would quietly reinstate the bug it fixes.
+  List<SchemaIssue> integrityIssues(FieldTypeRegistry registry) {
     final ids = schema.fields.map((f) => f.id).toSet();
     final issues = <SchemaIssue>[];
     final seenNames = <String, String>{}; // name -> first id using it
@@ -85,13 +89,22 @@ class FormRuntime {
       if (field.calculation?.fields.any((r) => r.id == field.id) ?? false) {
         issues.add(SchemaIssue(field.id, SchemaProblem.selfReference, field.id));
       }
-      // Two fields sharing a name collapse into one field in the PDF, so the second one's
-      // value silently overwrites the first.
-      final clash = seenNames[field.name];
-      if (field.name.isNotEmpty && clash != null) {
-        issues.add(SchemaIssue(field.id, SchemaProblem.duplicateName, field.name));
-      } else if (field.name.isNotEmpty) {
-        seenNames[field.name] = field.id;
+      // Two fields that resolve to the same PDF name collapse into one field, so the second
+      // one's value silently overwrites the first.
+      //
+      // Resolved through the same rule the wire uses (AcroFormSpec: a grouped field's PDF name
+      // is its group, not its own name). Comparing `name` alone could not see the case that
+      // matters most — a text field and a radio group both called "account_type" become one
+      // field and were never flagged — and it also reported every option in a healthy radio
+      // group as a duplicate of its siblings, which is exactly how a group is meant to work.
+      final pdfName = registry[field.typeId].isGrouped ? field.group : field.name;
+      final clash = seenNames[pdfName];
+      if (pdfName.isNotEmpty && clash != null && clash != pdfName) {
+        issues.add(SchemaIssue(field.id, SchemaProblem.duplicateName, pdfName));
+      } else if (pdfName.isNotEmpty) {
+        // Grouped fields key on the group so siblings do not report each other.
+        seenNames[pdfName] =
+            registry[field.typeId].isGrouped ? pdfName : field.id;
       }
     }
     return issues;

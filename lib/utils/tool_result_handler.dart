@@ -24,7 +24,7 @@ mixin ToolResultHandler<T extends StatefulWidget> on State<T> {
   void onToolSuccess(String message, {File? output, bool offerNextTool = false}) {
     NotificationService.showSnackbar(
       text: message,
-      color: Colors.green,
+      kind: SnackKind.success,
       action: (output == null || !offerNextTool)
           ? null
           : SnackBarAction(

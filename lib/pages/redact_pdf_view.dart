@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -90,6 +91,21 @@ class _RedactPdfViewState extends State<RedactPdfView>
     }
   }
 
+  Future<void> _confirmClearPage() async {
+    final result = await ConfirmDialog.show(
+      context,
+      title: L10n.current.redactClearPageTitle,
+      message: L10n.current.redactClearPageMessage,
+      confirmLabel: L10n.current.clear,
+      destructive: true,
+    );
+    if (!result.confirmed || !mounted) return;
+    setState(() {
+      _rects.clear();
+      _selectedId = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -109,16 +125,13 @@ class _RedactPdfViewState extends State<RedactPdfView>
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: L10n.of(context).clearPage,
-            onPressed: _rects.isEmpty
-                ? null
-                : () => setState(() {
-                      _rects.clear();
-                      _selectedId = null;
-                    }),
+            // Confirmed: this wipes every box on the page, and the undo beside it is
+            // removeLast(), which cannot restore a clear().
+            onPressed: _rects.isEmpty ? null : _confirmClearPage,
           ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listener: (context, state) => handleToolState(
@@ -367,7 +380,7 @@ class _RedactBox extends StatelessWidget {
             height: r.height,
             decoration: BoxDecoration(
               color: Colors.black,
-              border: selected ? Border.all(color: Colors.blueAccent, width: 2) : null,
+              border: selected ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2) : null,
             ),
           ),
           if (selected) ...[
@@ -385,7 +398,7 @@ class _RedactBox extends StatelessWidget {
                 child: Container(
                   width: 24,
                   height: 24,
-                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.error, shape: BoxShape.circle),
                   child: const Icon(Icons.close, color: Colors.white, size: 14),
                 ),
               ),
@@ -406,7 +419,7 @@ class _RedactBox extends StatelessWidget {
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent,
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),

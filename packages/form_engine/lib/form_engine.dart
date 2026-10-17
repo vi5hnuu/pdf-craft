@@ -15,6 +15,7 @@ export 'src/logic/calculation.dart';
 export 'src/logic/condition.dart';
 export 'src/logic/form_runtime.dart';
 export 'src/model/field_ref.dart';
+export 'src/model/field_appearance.dart';
 export 'src/model/field_rules.dart';
 export 'src/model/recipient.dart';
 export 'src/model/form_field.dart';

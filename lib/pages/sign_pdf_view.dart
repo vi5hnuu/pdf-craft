@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/widgets/ink/drawing_pad.dart';
@@ -84,10 +86,10 @@ class _SignPdfViewState extends State<SignPdfView> {
           ),
         ],
       ),
-      body: Column(children: [
+      body: ToolPane(child: Column(children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screenPadding,
             child: Column(children: [
               Text(
                 L10n.of(context).signHint,
@@ -110,20 +112,29 @@ class _SignPdfViewState extends State<SignPdfView> {
                   clipBehavior: Clip.antiAlias,
                   child: Stack(children: [
                     // Signature guide line.
+                    //
+                    // The pad is deliberately white in both themes, so these are fixed greys
+                    // rather than scheme roles. They were shade300/shade400 — 1.32:1 against
+                    // that white, which made the one piece of copy saying the box is
+                    // interactive unreadable. #8A8A8A clears 3:1, the floor for large text and
+                    // for a graphical object like the rule.
                     Positioned(
                       left: 24,
                       right: 24,
                       bottom: 48,
                       child: Row(children: [
-                        Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+                        const Icon(Icons.close, size: 16, color: Color(0xFF757575)),
                         const SizedBox(width: 8),
-                        Expanded(child: Container(height: 1.5, color: Colors.grey.shade300)),
+                        Expanded(child: Container(height: 1.5, color: const Color(0xFF8A8A8A))),
                       ]),
                     ),
                     if (!_hasStrokes)
                       Center(
                         child: Text(L10n.of(context).signHere,
-                            style: TextStyle(color: Colors.grey.shade300, fontSize: 28, fontStyle: FontStyle.italic)),
+                            style: const TextStyle(
+                                color: Color(0xFF8A8A8A),
+                                fontSize: 28,
+                                fontStyle: FontStyle.italic)),
                       ),
                     DrawingPad(
                       controller: _pad,
@@ -199,7 +210,7 @@ class _SignPdfViewState extends State<SignPdfView> {
             ]),
           ),
         ),
-      ]),
+      ])),
     );
   }
 
@@ -208,7 +219,7 @@ class _SignPdfViewState extends State<SignPdfView> {
     try {
       final bytes = await _exportCroppedSignature();
       if (bytes == null) {
-        NotificationService.showSnackbar(text: L10n.current.signatureCaptureFailed, color: Colors.red);
+        NotificationService.showSnackbar(text: L10n.current.signatureCaptureFailed, kind: SnackKind.error);
         return;
       }
       if (!mounted) return;

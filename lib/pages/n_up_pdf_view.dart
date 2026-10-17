@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -56,7 +57,7 @@ class _NUpPdfViewState extends State<NUpPdfView>
           final loading = state.httpStates[HttpStates.nUpPdf]?.loading == true;
           return Stack(children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.screenPadding,
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Card(
                   child: ListTile(

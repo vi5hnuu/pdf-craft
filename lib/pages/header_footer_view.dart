@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -118,7 +119,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
         listenWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
@@ -128,7 +129,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(
@@ -201,7 +202,9 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
                             // Color picker
                             Row(
                               children: [
-                                Text(L10n.of(context).textColorColon, style: const TextStyle(fontSize: 14)),
+                                Expanded(
+                                    child: Text(L10n.of(context).textColorColon,
+                                        style: const TextStyle(fontSize: 14))),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,
@@ -335,7 +338,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
     // it. Proven on device: balance 3 -> 2 for a run that produced a copy of the input.
     if (_headerTextC.text.trim().isEmpty && _footerTextC.text.trim().isEmpty) {
       NotificationService.showSnackbar(
-          text: L10n.current.errHeaderFooterEmpty, color: Colors.orange);
+          text: L10n.current.errHeaderFooterEmpty, kind: SnackKind.warning);
       return;
     }
     // Checked before anything is spent. "From 99, To 2" on a three-page document used to be
@@ -347,7 +350,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
       _pageCount ?? 0,
     );
     if (rangeError != null) {
-      NotificationService.showSnackbar(text: rangeError, color: Colors.orange);
+      NotificationService.showSnackbar(text: rangeError, kind: SnackKind.warning);
       return;
     }
     // Saved on use rather than on every keystroke: what the user actually ran with is the

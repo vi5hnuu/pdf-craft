@@ -1,5 +1,6 @@
 import '../logic/calculation.dart';
 import '../logic/condition.dart';
+import 'field_appearance.dart';
 import 'field_rules.dart';
 import 'geometry.dart';
 
@@ -107,6 +108,27 @@ class FormFieldModel {
   /// Derives this field's value from other fields.
   Calculation? calculation;
 
+  /// Border, background, text colour, font and rotation. Nested rather than loose on this
+  /// class so eighteen appearance and behaviour properties do not join the fifteen already
+  /// here; both omit themselves from storage when they hold only defaults.
+  FieldAppearance appearance;
+
+  /// Flags that change how the field behaves without changing its value.
+  FieldBehaviour behaviour;
+
+  /// What each option exports, where that differs from what it displays — "GB" shown as
+  /// "United Kingdom". Ignored unless it has exactly as many entries as [options].
+  List<String> optionValues;
+
+  /// What a push button does: submit, reset, print or uri.
+  String buttonAction;
+
+  /// The submit or link target for [buttonAction].
+  String buttonTarget;
+
+  /// Text on a push button's face. Falls back to [label].
+  String caption;
+
   /// Role this field belongs to. Single-device filling ignores it today; it
   /// exists from the start so multi-party sending is additive later rather than
   /// a schema migration.
@@ -147,8 +169,15 @@ class FormFieldModel {
     this.validation = const FieldValidation(),
     this.condition,
     this.calculation,
+    this.appearance = const FieldAppearance(),
+    this.behaviour = const FieldBehaviour(),
+    List<String>? optionValues,
+    this.buttonAction = '',
+    this.buttonTarget = '',
+    this.caption = '',
     Map<String, Object?>? extras,
   })  : options = options ?? <String>[],
+        optionValues = optionValues ?? <String>[],
         extras = extras ?? <String, Object?>{};
 
   FormFieldModel copyWith({
@@ -180,6 +209,12 @@ class FormFieldModel {
     FieldValidation? validation,
     VisibilityCondition? condition,
     Calculation? calculation,
+    FieldAppearance? appearance,
+    FieldBehaviour? behaviour,
+    List<String>? optionValues,
+    String? buttonAction,
+    String? buttonTarget,
+    String? caption,
   }) =>
       FormFieldModel(
         id: id,
@@ -211,6 +246,12 @@ class FormFieldModel {
         validation: validation ?? this.validation,
         condition: condition ?? this.condition,
         calculation: calculation ?? this.calculation,
+        appearance: appearance ?? this.appearance,
+        behaviour: behaviour ?? this.behaviour,
+        optionValues: optionValues ?? List<String>.from(this.optionValues),
+        buttonAction: buttonAction ?? this.buttonAction,
+        buttonTarget: buttonTarget ?? this.buttonTarget,
+        caption: caption ?? this.caption,
         extras: Map<String, Object?>.from(extras),
       );
 }

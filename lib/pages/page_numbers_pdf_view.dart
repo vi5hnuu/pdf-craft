@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -78,7 +79,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
                 children: [
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
+                      padding: AppSpacing.screenPadding,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -360,7 +361,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
   void _onSubmit() async {
     final fontSize = int.tryParse(_fontSizeC.text);
     if (fontSize == null || fontSize < 4) {
-      NotificationService.showSnackbar(text: L10n.current.invalidFontSize, color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.invalidFontSize, kind: SnackKind.error);
       return;
     }
     final uploadFile = await readForUpload(widget.file);

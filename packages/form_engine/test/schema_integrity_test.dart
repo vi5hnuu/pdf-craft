@@ -57,7 +57,7 @@ void main() {
       final schema = FormSchema(fields: [
         num_('f3', 'total', calc: const Calculation(fields: [FieldRef('gone')])),
       ]);
-      final issues = FormRuntime(schema).integrityIssues();
+      final issues = FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes));
       expect(issues.single.problem, SchemaProblem.danglingCalculation);
       expect(issues.single.target, 'gone');
     });
@@ -73,7 +73,7 @@ void main() {
           condition: const VisibilityCondition(parent: FieldRef('missing')),
         ),
       ]);
-      expect(FormRuntime(schema).integrityIssues().single.problem,
+      expect(FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes)).single.problem,
           SchemaProblem.danglingCondition);
     });
 
@@ -81,16 +81,49 @@ void main() {
       final schema = FormSchema(fields: [
         num_('f1', 'loop', calc: const Calculation(fields: [FieldRef('f1')])),
       ]);
-      expect(FormRuntime(schema).integrityIssues().any((i) => i.problem == SchemaProblem.selfReference),
+      expect(FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes)).any((i) => i.problem == SchemaProblem.selfReference),
           isTrue);
     });
 
     test('two fields sharing a name are reported', () {
       // They would collapse into one field in the PDF, so one value silently wins.
       final schema = FormSchema(fields: [num_('f1', 'amount'), num_('f2', 'amount')]);
-      final issues = FormRuntime(schema).integrityIssues();
+      final issues = FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes));
       expect(issues.single.problem, SchemaProblem.duplicateName);
       expect(issues.single.target, 'amount');
+    });
+
+    test('a radio group and a text field sharing a name are reported', () {
+      // The radio's PDF name is its group, so comparing `name` could not see this: two root
+      // fields called "account_type", one value overwriting the other, never flagged.
+      final schema = FormSchema(fields: [
+        num_('f1', 'account_type'),
+        FormFieldModel(
+          id: 'f2',
+          typeId: FieldTypes.radio,
+          page: 1,
+          rect: const FractionalRect(0, 0.1, 0.02, 0.02),
+          name: 'opt_1',
+          group: 'account_type',
+        ),
+      ]);
+      final issues = FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes));
+      expect(issues.single.problem, SchemaProblem.duplicateName);
+      expect(issues.single.target, 'account_type');
+    });
+
+    test('options in one radio group do not report each other', () {
+      FormFieldModel option(String id, String name) => FormFieldModel(
+            id: id,
+            typeId: FieldTypes.radio,
+            page: 1,
+            rect: const FractionalRect(0, 0, 0.02, 0.02),
+            name: name,
+            group: 'gender',
+          );
+      final schema =
+          FormSchema(fields: [option('f1', 'opt_1'), option('f2', 'opt_2')]);
+      expect(FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes)), isEmpty);
     });
 
     test('a healthy form reports nothing', () {
@@ -98,7 +131,7 @@ void main() {
         num_('f1', 'a'),
         num_('f2', 'total', calc: const Calculation(fields: [FieldRef('f1')])),
       ]);
-      expect(FormRuntime(schema).integrityIssues(), isEmpty);
+      expect(FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes)), isEmpty);
     });
   });
 
@@ -150,7 +183,7 @@ void main() {
       };
       final schema = codec.decode(draft);
       expect(schema.fields[1].calculation!.fields.single.id, 'ghost');
-      expect(FormRuntime(schema).integrityIssues().single.problem,
+      expect(FormRuntime(schema).integrityIssues(FieldTypeRegistry(builtinFieldTypes)).single.problem,
           SchemaProblem.danglingCalculation,
           reason: 'it was already broken; surfacing it beats hiding it');
     });

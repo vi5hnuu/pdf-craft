@@ -72,7 +72,7 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
     } catch (e) {
       LoggerSingleton().logger.w('Upload source unreadable: ${source.path} ($e)');
       if (mounted) {
-        NotificationService.showSnackbar(text: L10n.current.errFileGone, color: Colors.red);
+        NotificationService.showSnackbar(text: L10n.current.errFileGone, kind: SnackKind.error);
       }
       return null;
     }
@@ -154,7 +154,7 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
       final isCredit = s.isOutOfCredits;
       NotificationService.showSnackbar(
         text: s.error!,
-        color: Colors.red,
+        kind: SnackKind.error,
         action: isCredit
             ? SnackBarAction(
                 label: L10n.current.gateGetCredits,

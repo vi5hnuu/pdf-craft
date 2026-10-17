@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -88,7 +89,7 @@ class _CropPdfViewState extends State<CropPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'crop'))),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.cropPdf] != c.httpStates[HttpStates.cropPdf],
         listenWhen: (p, c) =>
@@ -325,15 +326,20 @@ class _CropPdfViewState extends State<CropPdfView>
     });
   }
 
-  Widget _handleKnob() => Container(
-        width: 28, height: 28,
-        decoration: const BoxDecoration(
-          color: Colors.blue,
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-        ),
-        child: const Icon(Icons.drag_handle, color: Colors.white, size: 14),
-      );
+  Widget _handleKnob() {
+    final accent = Theme.of(context).colorScheme.primary;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: accent,
+        shape: BoxShape.circle,
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+      ),
+      child: Icon(Icons.drag_handle,
+          color: AppSemanticColors.onFilled(accent), size: 14),
+    );
+  }
 
   Widget _buildMarginReadout(ThemeData theme) {
     return Card(
@@ -355,8 +361,10 @@ class _CropPdfViewState extends State<CropPdfView>
 
   Widget _margin(String label, double pt) => Column(
         children: [
+          // Colors.grey at 11px measures 2.68:1 on the white card.
           Text(label,
-              style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           Text('${pt.toStringAsFixed(0)} pt',
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
         ],
@@ -394,7 +402,7 @@ class _CropPdfViewState extends State<CropPdfView>
         _cropLeft < noTrim &&
         _cropRight < noTrim) {
       NotificationService.showSnackbar(
-          text: L10n.current.errCropNothingToTrim, color: Colors.orange);
+          text: L10n.current.errCropNothingToTrim, kind: SnackKind.warning);
       return;
     }
     final uploadFile = await readForUpload(widget.file);

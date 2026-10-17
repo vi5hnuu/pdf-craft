@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -35,7 +36,7 @@ class _RepairPdfViewState extends State<RepairPdfView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'repair')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'repair'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.repairPdf] != c.httpStates[HttpStates.repairPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.repairPdf] != c.httpStates[HttpStates.repairPdf],
@@ -45,7 +46,7 @@ class _RepairPdfViewState extends State<RepairPdfView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(

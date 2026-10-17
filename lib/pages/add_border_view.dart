@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:open_file/open_file.dart';
@@ -57,7 +58,7 @@ class _AddBorderViewState extends State<AddBorderView>
             Column(children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.screenPadding,
                   child: Column(children: [
                     Expanded(
                       child: Center(
@@ -93,7 +94,7 @@ class _AddBorderViewState extends State<AddBorderView>
                       Text('${_width.round()} px'),
                     ]),
                     Row(children: [
-                      Text(L10n.of(context).colorPlain),
+                      Expanded(child: Text(L10n.of(context).colorPlain)),
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _pickColor,

@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -50,6 +52,18 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
     }
   }
 
+  Future<void> _confirmClear() async {
+    final result = await ConfirmDialog.show(
+      context,
+      title: L10n.current.duplicateClearTitle,
+      message: L10n.current.duplicateClearMessage,
+      confirmLabel: L10n.current.clear,
+      destructive: true,
+    );
+    if (!result.confirmed || !mounted) return;
+    setState(() => _pageCounts.clear());
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -58,8 +72,10 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
         title: Text(ToolStrings.name(context, 'duplicate-pages')),
         actions: [
           if (_pageCounts.isNotEmpty)
+            // Confirmed: a plain TextButton in the app bar discarded every count the user
+            // had set, with no undo.
             TextButton(
-              onPressed: () => setState(() => _pageCounts.clear()),
+              onPressed: _confirmClear,
               child: Text(L10n.of(context).clear),
             ),
         ],
@@ -91,7 +107,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
                 child: _doc == null
                     ? const Center(child: CircularProgressIndicator())
                     : GridView.builder(
-                        padding: const EdgeInsets.all(12),
+                        padding: AppSpacing.screenPadding,
                         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 120,
                           crossAxisSpacing: 8,
@@ -143,9 +159,9 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.30),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.30),
                 borderRadius: BorderRadius.circular(AppRadius.surface),
-                border: Border.all(color: Colors.blue, width: 2),
+                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
               ),
               child: Center(
                 child: Container(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 
 class AppTheme {
   AppTheme._();
@@ -100,6 +101,7 @@ class AppTheme {
         appBarTheme: AppBarTheme(
           backgroundColor: const Color(0xFF0D0D0D),
           elevation: 0,
+          scrolledUnderElevation: 0,
           centerTitle: false,
           titleTextStyle: _appBarTitle(hindi, Colors.white),
           iconTheme: const IconThemeData(color: Colors.white),
@@ -185,6 +187,7 @@ class AppTheme {
             side: const BorderSide(color: Color(0xFF888888))),
         dividerColor: const Color(0xFF2A2A2A),
         cardColor: const Color(0xFF1A1A1A),
+        extensions: const [AppSemanticColors.dark],
       );
 
   static ThemeData light({bool hindi = false}) => ThemeData(
@@ -290,5 +293,6 @@ class AppTheme {
             side: const BorderSide(color: Color(0xFF888888))),
         dividerColor: const Color(0xFFE0E0E0),
         cardColor: Colors.white,
+        extensions: const [AppSemanticColors.light],
       );
 }

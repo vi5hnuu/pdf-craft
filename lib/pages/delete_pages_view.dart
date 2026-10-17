@@ -99,7 +99,6 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
                   document: _doc!,
                   totalPages: _totalPages,
                   selected: _selected,
-                  accent: Colors.red,
                   onToggle: (i) => setState(
                       () => _selected.contains(i) ? _selected.remove(i) : _selected.add(i)),
                 ),
@@ -119,7 +118,6 @@ class _DeletePagesViewState extends State<DeletePagesView> with ToolResultHandle
                       : _remaining < 1
                           ? L10n.of(context).keepAtLeastOnePage
                           : L10n.of(context).deletePagesAction(_selected.length, _remaining)),
-                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
                 ),
               ),
             ]),

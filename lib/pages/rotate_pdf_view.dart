@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -104,14 +106,15 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'rotate'))),
-      body: ToolPane(child: FutureBuilder(
+      body: ToolPane(canvas: true, child: FutureBuilder(
         future: _pdfController.document,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || snapshot.data == null) {
-            return const Center(child: Icon(Icons.error, color: Colors.red));
+            return ToolErrorState(
+                message: snapshot.error?.toString(), onRetry: () => setState(() {}));
           }
           return BlocConsumer<PdfBloc, PdfState>(
             buildWhen: (previous, current) =>
@@ -210,7 +213,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
                             Text(
                               L10n.of(context).previewApproximate,
                               style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: Colors.amber),
+                                  ?.copyWith(color: AppSemanticColors.of(context).warning),
                             ),
                             const SizedBox(height: 16),
 
@@ -388,12 +391,12 @@ class _RotatePdfViewState extends State<RotatePdfView>
     final angle = int.tryParse(pageAngleC.text);
     if (pNo == null || pNo < 1 || pNo > (document?.pagesCount ?? 0)) {
       NotificationService.showSnackbar(
-          text: L10n.current.invalidPageNumber, color: Colors.red);
+          text: L10n.current.invalidPageNumber, kind: SnackKind.error);
       return;
     }
     if (angle == null) {
       NotificationService.showSnackbar(
-          text: L10n.current.invalidAngle, color: Colors.red);
+          text: L10n.current.invalidAngle, kind: SnackKind.error);
       return;
     }
     setState(() => pageAngles.put(pNo, angle));

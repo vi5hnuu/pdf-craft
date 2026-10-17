@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -61,7 +62,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'add-blank')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'add-blank'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
         listenWhen: (p, c) => p.httpStates[HttpStates.addBlankPages] != c.httpStates[HttpStates.addBlankPages],
@@ -71,7 +72,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(
@@ -152,7 +153,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
   void _onAdd() async {
     final positions = _parsePositions();
     if (positions.isEmpty) {
-      NotificationService.showSnackbar(text: L10n.current.enterPagePosition, color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.enterPagePosition, kind: SnackKind.warning);
       return;
     }
     // "2, abc, 99" on a three-page document used to insert a single blank and drop the other two
@@ -163,7 +164,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
       _pageCount,
     );
     if (positionError != null) {
-      NotificationService.showSnackbar(text: positionError, color: Colors.orange);
+      NotificationService.showSnackbar(text: positionError, kind: SnackKind.warning);
       return;
     }
     final uploadFile = await readForUpload(widget.file);

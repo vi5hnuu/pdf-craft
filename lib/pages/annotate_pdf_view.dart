@@ -26,6 +26,7 @@ import 'dart:ui' as ui;
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -396,7 +397,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
       } else {
         final a = StickyAnnotation(
           page: _currentPage - 1,
-          color: Colors.amber,
+          color: AppSemanticColors.of(context).warning,
           bounds: Rect.fromLTWH(at.dx, at.dy, 0.05, 0.035),
           text: text,
           opacity: _opacity,
@@ -451,7 +452,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
   Future<void> _onSave() async {
     if (_annotations.isEmpty) {
       NotificationService.showSnackbar(
-          text: L10n.current.annotateNothingToSave, color: Colors.orange);
+          text: L10n.current.annotateNothingToSave, kind: SnackKind.warning);
       return;
     }
 
@@ -580,7 +581,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
           ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.annotatePdf] != c.httpStates[HttpStates.annotatePdf],
         listenWhen: (p, c) =>
@@ -632,7 +633,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
     } catch (e) {
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.saveFailedWith('$e'), color: Colors.red);
+            text: L10n.current.saveFailedWith('$e'), kind: SnackKind.error);
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -838,7 +839,9 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
                       Text('$n',
                           style: TextStyle(
                               fontSize: 12,
-                              color: isCurrent ? Colors.white : theme.colorScheme.onSurface)),
+                              color: isCurrent
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurface)),
                       if (marked.contains(i))
                         Positioned(
                           right: 4,
@@ -847,7 +850,9 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                                color: isCurrent ? Colors.white : theme.colorScheme.primary,
+                                color: isCurrent
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.primary,
                                 shape: BoxShape.circle),
                           ),
                         ),
@@ -1176,7 +1181,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+              icon: Icon(Icons.delete_outline, size: 20, color: Theme.of(context).colorScheme.error),
               tooltip: l.annotateDeleteMark,
               onPressed: () {
                 _pushUndo();

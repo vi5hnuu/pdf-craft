@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/extensions/map_entensions.dart';
@@ -89,15 +90,16 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
             );
           }
           if (snapshot.hasError || snapshot.data == null) {
-            return const Center(
-              child: Center(child: Icon(Icons.error, color: Colors.red)),
-            );
+            return ToolErrorState(
+                message: snapshot.error?.toString(), onRetry: () => setState(() {}));
           }
           // No BlocListener on HttpStates.reorderPdf here. This screen dispatches nothing, so
           // that listener only ever fired on *another* screen's reorder result — announcing it
           // and opening its file while the user sat here. Now that delete, extract, reverse and
           // organize each report under their own key, nothing emits it at all.
-          return Column(
+          return Form(
+            key: _formKey,
+            child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
               if(widget.type==SplitType.FIXED_RANGE) Padding(
@@ -105,9 +107,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                 child: TextFormField(keyboardType: TextInputType.number,
                     decoration: InputDecoration(labelText: L10n.of(context).rangeLabel,border: const OutlineInputBorder()),
                     onChanged: _onFixedRangeChange,
-                    validator: (value){
-                      return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
-                    }),
+                    validator: _positivePage),
               )
               else Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -118,25 +118,24 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                       children: [
                         Flexible(
                           child: TextFormField(keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(label: Text("from"),border: OutlineInputBorder()),
+                              decoration: InputDecoration(
+                                  label: Text(L10n.of(context).fromLabel),
+                                  border: const OutlineInputBorder()),
                               controller: rangeStart,
-                              validator: (value){
-                                return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
-                              }),
+                              validator: _positivePage),
                         ),
                         const SizedBox(width: 12,),
                         Flexible(
                           child: TextFormField(keyboardType: TextInputType.number,
                               decoration: InputDecoration(label: Text(L10n.of(context).toLabel),border: const OutlineInputBorder()),
                               controller: rangeEnd,
-                              validator: (value){
-                                return value!=null && (int.parse(value)>0) ? null : L10n.of(context).invalidFixedRange;
-                              }),
+                              validator: _positivePage),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12,),
                     FilledButton(onPressed: document==null ? null : (){
+                      if (_formKey.currentState?.validate() != true) return;
                       final from= min(int.tryParse(rangeStart.text) ?? 1, document!.pagesCount)-1;
                       final to=min(int.tryParse(rangeEnd.text) ?? 1, document!.pagesCount)-1;
                       if(from<0 || to<0) return;
@@ -153,18 +152,45 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                 itemBuilder: (context, index){
                   final range=_pageRanges[index];
 
-                  if(_thumbnailsCache[range.from+1]==null) return const SizedBox.shrink();
+                  final start = _thumbnailsCache[range.from+1];
+                  if (start == null) return _pendingRange(range);
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: SplitItem(onDelete: widget.type!=SplitType.FIXED_RANGE ? ()=>_removeRange(range):null,range:range,startThumbnail: _thumbnailsCache[range.from+1]!,endThumbnail: range.from==range.to ? null : _thumbnailsCache[range.to+1],),
+                    child: SplitItem(onDelete: widget.type!=SplitType.FIXED_RANGE ? ()=>_removeRange(range):null,range:range,startThumbnail: start,endThumbnail: range.from==range.to ? null : _thumbnailsCache[range.to+1],),
                   );
                 })),
             ],
+          ),
           );
         }
       ),
     );
   }
+
+  final _formKey = GlobalKey<FormState>();
+
+  /// A page number must be a positive integer. Empty is rejected here because, unlike the
+  /// image gap, there is no sensible default for "which page".
+  String? _positivePage(String? value) {
+    final page = int.tryParse((value ?? '').trim());
+    return page != null && page > 0 ? null : L10n.current.invalidFixedRange;
+  }
+
+  /// Placeholder for a range whose first thumbnail has not arrived yet, so the list length
+  /// matches the number of ranges the user actually has.
+  Widget _pendingRange(RangeModel range) => Padding(
+        padding: const EdgeInsets.all(8),
+        child: SizedBox(
+          height: 210,
+          child: Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 8),
+              Text('${range.from + 1}-${range.to + 1}'),
+            ]),
+          ),
+        ),
+      );
 
   initNextRanges() async {
     if(document==null) throw Exception("Document is not initialized");

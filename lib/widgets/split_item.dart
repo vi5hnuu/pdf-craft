@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/models/request/split_pdf.dart';
 import 'package:pdf_craft/models/thumbnail.dart';
@@ -35,7 +36,7 @@ class SplitItem extends StatelessWidget {
             height: pageWidth*1.4,
             width: pageWidth,
             decoration: BoxDecoration(border: Border.all(color: theme.dividerColor),borderRadius: BorderRadius.circular(AppRadius.surface)),
-            child: (startThumbnail.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,cacheWidth: _thumbPx(context),)),
+            child: (startThumbnail.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (startThumbnail.error!=null ? const ToolErrorState(compact: true) : Image.memory(startThumbnail.image!.bytes,fit: BoxFit.fitWidth,cacheWidth: _thumbPx(context),)),
           ),
           if(endThumbnail!=null) Column(
             children: [
@@ -49,11 +50,11 @@ class SplitItem extends StatelessWidget {
             height: pageWidth*1.4,
             width: pageWidth,
             decoration: BoxDecoration(border: Border.all(color: theme.dividerColor),borderRadius: BorderRadius.circular(AppRadius.surface)),
-            child: (endThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (endThumbnail!.error!=null ? const Center(child: Icon(Icons.error),) : Image.memory(endThumbnail!.image!.bytes,fit: BoxFit.fitWidth,cacheWidth: _thumbPx(context),)),
+            child: (endThumbnail!.isLoading==true) ? const Center(child: CircularProgressIndicator(),) : (endThumbnail!.error!=null ? const ToolErrorState(compact: true) : Image.memory(endThumbnail!.image!.bytes,fit: BoxFit.fitWidth,cacheWidth: _thumbPx(context),)),
           )
         ],
       ),
-      if(onDelete!=null) Positioned(top: 0,right: 30,child: IconButton(onPressed: onDelete, tooltip: L10n.of(context).delete, icon: const Icon(Icons.delete,color: Colors.red,),))
+      if(onDelete!=null) Positioned(top: 0,right: 30,child: IconButton(onPressed: onDelete, tooltip: L10n.of(context).delete, icon: Icon(Icons.delete,color: Theme.of(context).colorScheme.error,),))
     ],);
   }
 }

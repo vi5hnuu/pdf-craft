@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/confirm_dialog.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -37,6 +39,13 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
   late File _file = widget.file;
   bool _loadedOnce = false;
 
+  /// Why the outline would not load.
+  ///
+  /// A failed load used to set _loadedOnce and show a 2-second snackbar, after which the body
+  /// fell through to the empty state — so the screen settled on "this PDF has no bookmarks",
+  /// a confident and wrong statement about the user's file, with no way to retry.
+  String? _loadError;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +64,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
   }
 
   void _loadBookmarks() {
+    _loadError = null;
     Future.microtask(() async {
       final file = await readForUpload(_file);
       if (file == null) return;
@@ -103,9 +113,12 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               });
             }
           } else if (getState?.error != null) {
-            setState(() => _loadedOnce = true);
-            NotificationService.showSnackbar(
-                text: L10n.current.bookmarksLoadFailed, color: Colors.red);
+            // No snackbar: the body now gives the error its own message and a Retry, and the
+            // snackbar covered the retry button while repeating it.
+            setState(() {
+              _loadedOnce = true;
+              _loadError = getState?.error;
+            });
           }
 
           final editState = state.httpStates[HttpStates.editBookmarks];
@@ -120,7 +133,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               _loadBookmarks();
               NotificationService.showSnackbar(
                 text: L10n.current.bookmarksSaved,
-                color: Colors.green,
+                kind: SnackKind.success,
                 action: SnackBarAction(
                   label: L10n.current.viewPdf,
                   textColor: Colors.white,
@@ -132,7 +145,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               );
             }
           } else if (editState?.error != null) {
-            NotificationService.showSnackbar(text: editState!.error!, color: Colors.red);
+            NotificationService.showSnackbar(text: editState!.error!, kind: SnackKind.error);
           }
         },
         builder: (context, state) {
@@ -144,9 +157,11 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               Expanded(
                 child: (getLoading && !_loadedOnce)
                     ? const Center(child: CircularProgressIndicator())
-                    : _bookmarks.isEmpty
-                        ? _buildEmptyState(theme)
-                        : _buildList(theme),
+                    : _loadError != null
+                        ? ToolErrorState(message: _loadError, onRetry: _loadBookmarks)
+                        : _bookmarks.isEmpty
+                            ? _buildEmptyState(theme)
+                            : _buildList(theme),
               ),
               _buildSaveBar(theme, saving),
             ]),
@@ -219,14 +234,28 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               onPressed: () => _showEditDialog(i),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+              icon: Icon(Icons.delete_outline, size: 20, color: Theme.of(context).colorScheme.error),
               tooltip: L10n.of(context).delete,
-              onPressed: () => setState(() => _bookmarks.removeAt(i)),
+              onPressed: () => _confirmDelete(i),
             ),
           ]),
         );
       },
     );
+  }
+
+  /// Deletion is confirmed because it cannot be undone: there is no undo stack on this screen,
+  /// and a mis-tap on a 48dp row loses the entry's title, page and indent.
+  Future<void> _confirmDelete(int i) async {
+    final result = await ConfirmDialog.show(
+      context,
+      title: L10n.current.deleteBookmarkTitle,
+      message: L10n.current.deleteBookmarkMessage(_bookmarks[i].title),
+      confirmLabel: L10n.current.delete,
+      destructive: true,
+    );
+    if (!result.confirmed || !mounted) return;
+    setState(() => _bookmarks.removeAt(i));
   }
 
   Widget _buildSaveBar(ThemeData theme, bool loading) {

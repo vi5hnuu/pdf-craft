@@ -138,5 +138,5 @@ const List<List<FieldType>> typeChangeGroups = [
   [FieldType.text, FieldType.multiline, FieldType.number, FieldType.email, FieldType.phone, FieldType.date],
   [FieldType.checkbox, FieldType.radio],
   [FieldType.dropdown, FieldType.listbox],
-  [FieldType.signature],
+  [FieldType.signature, FieldType.pushbutton],
 ];

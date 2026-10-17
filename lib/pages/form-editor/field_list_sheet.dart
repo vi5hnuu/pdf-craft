@@ -68,41 +68,52 @@ class FieldListSheet extends StatelessWidget {
                 onReorderItem: onReorder,
                 itemBuilder: (context, i) {
                   final f = fields[i];
-                  final grouped = f.type.isGrouped && f.group.isNotEmpty;
+                  // groupable, not isGrouped: a checkbox group is a group to the author even
+                  // though it is not one field in the PDF, and the canvas already colours it.
+                  final grouped = f.type.groupable && f.group.isNotEmpty;
                   final accent = grouped ? groupColor(f.group) : theme.colorScheme.primary;
-                  return ListTile(
+                  // A continuous rail in the group's colour, so consecutive members read as
+                  // one band rather than as rows that happen to share a tint. A header row
+                  // would have to be interleaved into the reorder indices, and reordering here
+                  // sets tab order, which is not the group's business.
+                  return Container(
                     key: ValueKey(f.id),
-                    dense: true,
-                    selected: f.id == selectedId,
-                    selectedTileColor: accent.withValues(alpha: 0.10),
-                    leading: CircleAvatar(
-                      radius: 14,
-                      backgroundColor: accent.withValues(alpha: 0.15),
-                      child: Icon(f.type.icon, size: 15, color: accent),
-                    ),
-                    title: Text(f.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(
-                      grouped
-                          ? '${f.type.localizedLabel(context)} · ${L10n.of(context).groupLabel} ${groupLetter(f.group)}'
-                          : f.type.localizedLabel(context),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    trailing: ReorderableDragStartListener(
-                      index: i,
-                      child: Padding(
-                        // A 48dp target: the bare handle icon was too small to grab reliably.
-                        padding: const EdgeInsets.all(12),
-                        child: Icon(Icons.drag_handle,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                    decoration: grouped
+                        ? BoxDecoration(
+                            border: Border(left: BorderSide(color: accent, width: 3)))
+                        : null,
+                    child: ListTile(
+                      dense: true,
+                      selected: f.id == selectedId,
+                      selectedTileColor: accent.withValues(alpha: 0.10),
+                      leading: CircleAvatar(
+                        radius: 14,
+                        backgroundColor: accent.withValues(alpha: 0.15),
+                        child: Icon(f.type.icon, size: 15, color: accent),
                       ),
-                    ),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.surface)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      onSelect(f);
-                    },
-                  );
+                      title: Text(f.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(
+                        grouped
+                            ? '${f.type.localizedLabel(context)} · ${groupLetter(f.group)} · ${f.group}'
+                            : f.type.localizedLabel(context),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      trailing: ReorderableDragStartListener(
+                        index: i,
+                        child: Padding(
+                          // A 48dp target: the bare handle icon was too small to grab reliably.
+                          padding: const EdgeInsets.all(12),
+                          child: Icon(Icons.drag_handle,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                        ),
+                      ),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.surface)),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onSelect(f);
+                      },
+                  ));
                 },
               ),
             ),

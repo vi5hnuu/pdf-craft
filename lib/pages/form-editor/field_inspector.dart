@@ -45,6 +45,16 @@ class FieldInspector extends StatefulWidget {
   /// Told after a type change so the host can rebuild the canvas and its group colours.
   final VoidCallback onTypeChanged;
 
+  /// Dismisses the editor.
+  ///
+  /// The inspector no longer assumes it is in a modal sheet: on a tablet it is a docked panel
+  /// beside the canvas, where there is nothing to pop.
+  final VoidCallback onClose;
+
+  /// Whether the editor is docked rather than presented as a sheet. A docked panel supplies its
+  /// own header and needs no Done button at the foot of a long scroll.
+  final bool docked;
+
   /// Turns a field name typed by the author into a stable reference, resolved against the
   /// layout as it stands *now*. Doing this on entry rather than on save is what makes a
   /// later rename harmless.
@@ -62,6 +72,8 @@ class FieldInspector extends StatefulWidget {
     required this.pagePoints,
     required this.groupSiblings,
     required this.onTypeChanged,
+    required this.onClose,
+    this.docked = false,
   });
 
   @override
@@ -86,6 +98,12 @@ class _FieldInspectorState extends State<FieldInspector> {
   late final _condField = TextEditingController(text: widget.field.conditionField);
   late final _condValue = TextEditingController(text: widget.field.conditionValue);
   late final _calcFields = TextEditingController(text: widget.field.calcFields);
+  late final _borderWidth = TextEditingController(
+      text: widget.field.appearance.borderWidth?.toStringAsFixed(1) ?? '');
+  late final _optionValues =
+      TextEditingController(text: widget.field.optionValues.join(', '));
+  late final _buttonTarget = TextEditingController(text: widget.field.buttonTarget);
+  late final _caption = TextEditingController(text: widget.field.caption);
 
   @override
   void dispose() {
@@ -105,6 +123,10 @@ class _FieldInspectorState extends State<FieldInspector> {
     _condField.dispose();
     _condValue.dispose();
     _calcFields.dispose();
+    _borderWidth.dispose();
+    _optionValues.dispose();
+    _buttonTarget.dispose();
+    _caption.dispose();
     super.dispose();
   }
 
@@ -113,9 +135,10 @@ class _FieldInspectorState extends State<FieldInspector> {
     final theme = Theme.of(context);
     final f = widget.field;
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
       // The sheet grew well past a phone screen once rules and logic moved in, so it scrolls
-      // rather than overflowing.
+      // rather than overflowing. Everything below Basics is also collapsed, because a capped
+      // sheet full of one long scroll is no easier to use than an uncapped one.
       child: SingleChildScrollView(
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         // The type was read-only text, so "I meant a checkbox, not a radio" meant deleting the
@@ -152,11 +175,13 @@ class _FieldInspectorState extends State<FieldInspector> {
         _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
         if (f.type.groupable) ...[
           _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
-          // Only a radio has a meaningful export value — it is the widget's on-state, and one
-          // of them becomes the field's value. A checkbox's is fixed at "Yes" by the backend,
-          // so offering a box for it would be another control that does nothing.
-          if (f.type.isGrouped)
-            _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
+          // The widget's on-state: for a radio, one option's value becomes the field's
+          // value; for a checkbox it is what the box exports when ticked. The API has always
+          // read it for both — only the editor was withholding it, leaving every box
+          // hardcoded to "Yes".
+          if (f.type.isGrouped || f.type.isToggle)
+            _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v,
+                hint: L10n.of(context).optionValueHint),
           Row(children: [
             Expanded(
               child: Text(
@@ -168,18 +193,22 @@ class _FieldInspectorState extends State<FieldInspector> {
             TextButton.icon(
               icon: const Icon(Icons.add, size: 18),
               label: Text(L10n.of(context).addOptionToGroup),
-              onPressed: () {
-                Navigator.pop(context);
-                widget.onAddOption(f);
-              },
+              onPressed: () => widget.onAddOption(f),
             ),
           ]),
         ],
-        if (f.type.hasOptions)
+        if (f.type.hasOptions) ...[
           OptionsEditor(
             options: f.options,
             onChanged: (v) => f.options = v,
           ),
+          // Only the display list was ever sent, so the value the PDF recorded was forced to be
+          // the text shown — "United Kingdom" where the form wanted "GB".
+          _field(_optionValues, L10n.of(context).optionExportValues, (v) {
+            final parts = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+            f.optionValues = parts.length == f.options.length ? parts : <String>[];
+          }, hint: L10n.of(context).optionExportValuesHint),
+        ],
         // A choice field's default has to be one of its own options. As a free-text box a typo
         // failed silently inside the backend's `catch (Exception ignore)`, so the form simply
         // opened with nothing selected and no explanation.
@@ -204,90 +233,6 @@ class _FieldInspectorState extends State<FieldInspector> {
           )
         else if (f.type.hasValue)
           _field(_value, L10n.of(context).defaultValue, (v) => f.value = v),
-        if (f.type.hasValue) ...[
-          // Presets for the sizes a form actually uses; the box stays for anything else. A bare
-          // "0 = auto" number field gave no clue what a sensible value looked like.
-          Wrap(spacing: 6, children: [
-            for (final size in <double>[0, 8, 10, 12, 14])
-              ChoiceChip(
-                label: Text(size == 0
-                    ? L10n.of(context).fontSizeAutoPreset
-                    : size.toStringAsFixed(0)),
-                selected: f.fontSize == size,
-                onSelected: (_) => setState(() {
-                  f.fontSize = size;
-                  _fontSize.text = size > 0 ? size.toStringAsFixed(0) : '';
-                }),
-              ),
-          ]),
-          const SizedBox(height: 8),
-          _field(_fontSize, L10n.of(context).fontSizeAuto, (v) => f.fontSize = double.tryParse(v) ?? 0,
-              keyboard: TextInputType.number),
-        ],
-        if (f.type == FieldType.date)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: DropdownButtonFormField<String>(
-              initialValue: f.dateFormat,
-              decoration: InputDecoration(
-                  isDense: true,
-                  labelText: L10n.of(context).dateFormatLabel,
-                  border: const OutlineInputBorder()),
-              items: const [
-                DropdownMenuItem(value: 'dd/mm/yyyy', child: Text('dd/mm/yyyy')),
-                DropdownMenuItem(value: 'mm/dd/yyyy', child: Text('mm/dd/yyyy')),
-                DropdownMenuItem(value: 'yyyy-mm-dd', child: Text('yyyy-mm-dd')),
-              ],
-              onChanged: (v) => setState(() => f.dateFormat = v ?? 'dd/mm/yyyy'),
-            ),
-          ),
-        // A caption drawn on the page, unlike the tooltip below it, which is /TU: hover help
-        // that never reaches paper and that most mobile readers do not show at all. A radio
-        // group is the case that needs it — three identical circles say nothing about which is
-        // "Savings" and which is "Current".
-        _field(_label, L10n.of(context).fieldLabel, (v) => setState(() => f.label = v),
-            hint: L10n.of(context).fieldLabelHint),
-        // Position and size only matter once there is something to draw, so they appear with
-        // the text rather than sitting empty above it.
-        if (f.label.isNotEmpty) ...[
-          Text(L10n.of(context).fieldLabelPosition, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 4),
-          SegmentedButton<engine.LabelPosition>(
-            style: const ButtonStyle(visualDensity: VisualDensity.compact),
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                  value: engine.LabelPosition.right, label: Text(L10n.of(context).labelRight)),
-              ButtonSegment(
-                  value: engine.LabelPosition.left, label: Text(L10n.of(context).labelLeft)),
-              ButtonSegment(
-                  value: engine.LabelPosition.above, label: Text(L10n.of(context).labelAbove)),
-              ButtonSegment(
-                  value: engine.LabelPosition.below, label: Text(L10n.of(context).labelBelow)),
-            ],
-            selected: {f.labelPosition},
-            onSelectionChanged: (sel) => setState(() => f.labelPosition = sel.first),
-          ),
-          const SizedBox(height: 10),
-          // Presets for the sizes a form actually uses, with the box for anything else — the
-          // same pattern as font size, so a bare number field is never the only way in.
-          Wrap(spacing: 6, children: [
-            for (final size in <double>[7, 8, 9, 10, 12])
-              ChoiceChip(
-                label: Text(size.toStringAsFixed(0)),
-                selected: (f.labelSize == 0 ? 9 : f.labelSize) == size,
-                onSelected: (_) => setState(() {
-                  f.labelSize = size;
-                  _labelSize.text = size.toStringAsFixed(0);
-                }),
-              ),
-          ]),
-          const SizedBox(height: 8),
-          _field(_labelSize, L10n.of(context).fieldLabelSize,
-              (v) => setState(() => f.labelSize = double.tryParse(v) ?? 0),
-              keyboard: TextInputType.number),
-        ],
-        _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
         if (f.type.isToggle)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -316,49 +261,217 @@ class _FieldInspectorState extends State<FieldInspector> {
             onChanged: (v) => setState(() => f.multiSelect = v),
           ),
 
-        // Position & size ─────────────────────────────────────────────────────────
-        // Ungated: a checkbox has hasValue == false and so used to get nothing at all between
-        // the tooltip switches and the Logic section — which is exactly the field whose size
-        // matters most.
-        _sectionTitle(theme, L10n.of(context).sectionPositionSize),
-        GeometryEditor(
-          rectInPoints: widget.rectInPoints,
-          lockAspect: f.type.lockAspect,
-          sizesOfOtherFields: widget.sizesOfOtherFields,
-          onChanged: widget.onRectChanged,
-        ),
-
-        // ── Appearance ────────────────────────────────────────────────────────────
-        // Text fields only. A list box has `acceptsValue` too, but the backend's choice-field
-        // branch applies none of these — max length, comb, alignment, pattern, min length and
-        // the calculation were six controls an author could set on a list box that did nothing
-        // whatsoever to the produced PDF.
-        if (f.type.hasValue && !f.type.hasOptions) ...[
-          _sectionTitle(theme, L10n.of(context).sectionAppearance),
-          _field(_maxLength, L10n.of(context).fieldMaxLength,
-              (v) => f.maxLength = int.tryParse(v) ?? 0, keyboard: TextInputType.number),
-          // Comb needs a character cap and a single line — offering it otherwise would let the
-          // user set a flag the PDF spec makes the backend drop.
-          if (f.maxLength > 0 && f.type != FieldType.multiline)
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(L10n.of(context).fieldComb),
-              value: f.comb,
-              onChanged: (v) => setState(() => f.comb = v),
+        _section(theme, 'appearance', L10n.of(context).sectionAppearance, [
+          if (f.type.hasValue) ...[
+            // Presets for the sizes a form actually uses; the box stays for anything else. A bare
+            // "0 = auto" number field gave no clue what a sensible value looked like.
+            Wrap(spacing: 6, children: [
+              for (final size in <double>[0, 8, 10, 12, 14])
+                ChoiceChip(
+                  label: Text(size == 0
+                      ? L10n.of(context).fontSizeAutoPreset
+                      : size.toStringAsFixed(0)),
+                  selected: f.fontSize == size,
+                  onSelected: (_) => setState(() {
+                    f.fontSize = size;
+                    _fontSize.text = size > 0 ? size.toStringAsFixed(0) : '';
+                  }),
+                ),
+            ]),
+            const SizedBox(height: 8),
+            _field(_fontSize, L10n.of(context).fontSizeAuto, (v) => f.fontSize = double.tryParse(v) ?? 0,
+                keyboard: TextInputType.number),
+          ],
+          if (f.type == FieldType.date)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: DropdownButtonFormField<String>(
+                initialValue: f.dateFormat,
+                decoration: InputDecoration(
+                    isDense: true,
+                    labelText: L10n.of(context).dateFormatLabel,
+                    border: const OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'dd/mm/yyyy', child: Text('dd/mm/yyyy')),
+                  DropdownMenuItem(value: 'mm/dd/yyyy', child: Text('mm/dd/yyyy')),
+                  DropdownMenuItem(value: 'yyyy-mm-dd', child: Text('yyyy-mm-dd')),
+                ],
+                onChanged: (v) => setState(() => f.dateFormat = v ?? 'dd/mm/yyyy'),
+              ),
             ),
-          const SizedBox(height: 4),
-          Text(L10n.of(context).fieldAlignment, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 4),
-          SegmentedButton<engine.TextAlignment>(
-            segments: [
-              ButtonSegment(value: engine.TextAlignment.left, label: Text(L10n.of(context).alignLeft)),
-              ButtonSegment(value: engine.TextAlignment.center, label: Text(L10n.of(context).alignCenter)),
-              ButtonSegment(value: engine.TextAlignment.right, label: Text(L10n.of(context).alignRight)),
-            ],
-            selected: {f.alignment},
-            onSelectionChanged: (sel) => setState(() => f.alignment = sel.first),
-          ),
-          _sectionTitle(theme, L10n.of(context).sectionRules),
+          // A caption drawn on the page, unlike the tooltip below it, which is /TU: hover help
+          // that never reaches paper and that most mobile readers do not show at all. A radio
+          // group is the case that needs it — three identical circles say nothing about which is
+          // "Savings" and which is "Current".
+          _field(_label, L10n.of(context).fieldLabel, (v) => setState(() => f.label = v),
+              hint: L10n.of(context).fieldLabelHint),
+          // Position and size only matter once there is something to draw, so they appear with
+          // the text rather than sitting empty above it.
+          if (f.label.isNotEmpty) ...[
+            Text(L10n.of(context).fieldLabelPosition, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+            SegmentedButton<engine.LabelPosition>(
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(
+                    value: engine.LabelPosition.right, label: Text(L10n.of(context).labelRight)),
+                ButtonSegment(
+                    value: engine.LabelPosition.left, label: Text(L10n.of(context).labelLeft)),
+                ButtonSegment(
+                    value: engine.LabelPosition.above, label: Text(L10n.of(context).labelAbove)),
+                ButtonSegment(
+                    value: engine.LabelPosition.below, label: Text(L10n.of(context).labelBelow)),
+              ],
+              selected: {f.labelPosition},
+              onSelectionChanged: (sel) => setState(() => f.labelPosition = sel.first),
+            ),
+            const SizedBox(height: 10),
+            // Presets for the sizes a form actually uses, with the box for anything else — the
+            // same pattern as font size, so a bare number field is never the only way in.
+            Wrap(spacing: 6, children: [
+              for (final size in <double>[7, 8, 9, 10, 12])
+                ChoiceChip(
+                  label: Text(size.toStringAsFixed(0)),
+                  selected: (f.labelSize == 0 ? 9 : f.labelSize) == size,
+                  onSelected: (_) => setState(() {
+                    f.labelSize = size;
+                    _labelSize.text = size.toStringAsFixed(0);
+                  }),
+                ),
+            ]),
+            const SizedBox(height: 8),
+            _field(_labelSize, L10n.of(context).fieldLabelSize,
+                (v) => setState(() => f.labelSize = double.tryParse(v) ?? 0),
+                keyboard: TextInputType.number),
+          ],
+          _field(_tooltip, L10n.of(context).fieldTooltip, (v) => f.tooltip = v),
+          // Text fields only: /MaxLen and the comb flag exist on PDTextField and have no
+          // equivalent on a choice or button field.
+          if (f.type.hasValue && !f.type.hasOptions) ...[
+            _field(_maxLength, L10n.of(context).fieldMaxLength,
+                (v) => f.maxLength = int.tryParse(v) ?? 0, keyboard: TextInputType.number),
+            // Comb needs a character cap and a single line — offering it otherwise would let the
+            // user set a flag the PDF spec makes the backend drop.
+            if (f.maxLength > 0 && f.type != FieldType.multiline)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(L10n.of(context).fieldComb),
+                value: f.comb,
+                onChanged: (v) => setState(() => f.comb = v),
+              ),
+          ],
+          // Alignment, unlike max length, *does* apply to a dropdown or list box: PDChoice
+          // extends PDVariableText, so /Q and /DA are both honoured. It used to be hidden for
+          // them only because the API's choice branch never applied it.
+          if (f.type.hasValue) ...[
+            const SizedBox(height: 4),
+            Text(L10n.of(context).fieldAlignment, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+            SegmentedButton<engine.TextAlignment>(
+              segments: [
+                ButtonSegment(value: engine.TextAlignment.left, label: Text(L10n.of(context).alignLeft)),
+                ButtonSegment(value: engine.TextAlignment.center, label: Text(L10n.of(context).alignCenter)),
+                ButtonSegment(value: engine.TextAlignment.right, label: Text(L10n.of(context).alignRight)),
+              ],
+              selected: {f.alignment},
+              onSelectionChanged: (sel) => setState(() => f.alignment = sel.first),
+            ),
+          ],
+        ]),
+
+        // Colours and the border, all of which the API hardcoded until now while the canvas
+        // painter previewed styling the output could not carry.
+        _section(theme, 'style', L10n.of(context).sectionStyle, [
+          _colorRow(theme, L10n.of(context).fieldBorderColor, f.appearance.borderColor,
+              (v) => setState(() => f.appearance = f.appearance.copyWith(borderColor: v))),
+          _colorRow(theme, L10n.of(context).fieldBackgroundColor, f.appearance.backgroundColor,
+              (v) => setState(() => f.appearance = f.appearance.copyWith(backgroundColor: v)),
+              allowTransparent: true),
+          if (f.type.hasValue)
+            _colorRow(theme, L10n.of(context).fieldTextColor, f.appearance.textColor,
+                (v) => setState(() => f.appearance = f.appearance.copyWith(textColor: v))),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(
+              child: DropdownButtonFormField<engine.BorderStyleName>(
+                isExpanded: true,
+                initialValue: f.appearance.borderStyle,
+                decoration: InputDecoration(
+                    isDense: true,
+                    labelText: L10n.of(context).fieldBorderStyle,
+                    border: const OutlineInputBorder()),
+                items: [
+                  for (final style in engine.BorderStyleName.values)
+                    DropdownMenuItem(value: style, child: Text(_borderStyleLabel(context, style))),
+                ],
+                onChanged: (v) => setState(() => f.appearance =
+                    f.appearance.copyWith(borderStyle: v ?? engine.BorderStyleName.solid)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _field(_borderWidth, L10n.of(context).fieldBorderWidth,
+                  (v) => setState(() => f.appearance =
+                      f.appearance.copyWith(borderWidth: double.tryParse(v))),
+                  keyboard: TextInputType.number),
+            ),
+          ]),
+        ]),
+
+        // Flags that change behaviour without changing the value. None of these could be
+        // expressed before: setPrinted(true) was forced on every widget, so a screen-only
+        // field was impossible.
+        _section(theme, 'behaviour', L10n.of(context).sectionBehaviour, [
+          _flag(L10n.of(context).fieldNoExport, f.behaviour.noExport,
+              (v) => f.behaviour = f.behaviour.copyWith(noExport: v)),
+          if (f.type.hasValue && !f.type.hasOptions) ...[
+            _flag(L10n.of(context).fieldPassword, f.behaviour.password,
+                (v) => f.behaviour = f.behaviour.copyWith(password: v)),
+            _flag(L10n.of(context).fieldNoScroll, f.behaviour.doNotScroll,
+                (v) => f.behaviour = f.behaviour.copyWith(doNotScroll: v)),
+          ],
+          if (f.type.hasValue)
+            _flag(L10n.of(context).fieldNoSpellCheck, f.behaviour.doNotSpellCheck,
+                (v) => f.behaviour = f.behaviour.copyWith(doNotSpellCheck: v)),
+          if (f.type == FieldType.dropdown)
+            _flag(L10n.of(context).fieldEditableCombo, f.behaviour.editable,
+                (v) => f.behaviour = f.behaviour.copyWith(editable: v)),
+          if (f.type.hasOptions)
+            _flag(L10n.of(context).fieldSortOptions, f.behaviour.sortOptions,
+                (v) => f.behaviour = f.behaviour.copyWith(sortOptions: v)),
+          _flag(L10n.of(context).fieldNoPrint, f.behaviour.noPrint,
+              (v) => f.behaviour = f.behaviour.copyWith(noPrint: v)),
+          _flag(L10n.of(context).fieldHidden, f.behaviour.hidden,
+              (v) => f.behaviour = f.behaviour.copyWith(hidden: v)),
+        ]),
+
+        if (f.type == FieldType.pushbutton)
+          _section(theme, 'button', L10n.of(context).sectionButton, [
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: f.buttonAction.isEmpty ? 'reset' : f.buttonAction,
+              decoration: InputDecoration(
+                  isDense: true,
+                  labelText: L10n.of(context).buttonActionLabel,
+                  border: const OutlineInputBorder()),
+              items: [
+                DropdownMenuItem(value: 'reset', child: Text(L10n.of(context).buttonActionReset)),
+                DropdownMenuItem(value: 'print', child: Text(L10n.of(context).buttonActionPrint)),
+                DropdownMenuItem(value: 'submit', child: Text(L10n.of(context).buttonActionSubmit)),
+                DropdownMenuItem(value: 'uri', child: Text(L10n.of(context).buttonActionUri)),
+              ],
+              onChanged: (v) => setState(() => f.buttonAction = v ?? 'reset'),
+            ),
+            const SizedBox(height: 10),
+            // Only submit and uri need somewhere to go; print and reset act on the document.
+            if (f.buttonAction == 'submit' || f.buttonAction == 'uri')
+              _field(_buttonTarget, L10n.of(context).buttonTargetLabel,
+                  (v) => f.buttonTarget = v, keyboard: TextInputType.url),
+            _field(_caption, L10n.of(context).buttonCaptionLabel, (v) => f.caption = v),
+          ]),
+
+        _section(theme, 'rules', L10n.of(context).sectionRules, [
           // A number field could not be bounded from the UI at all, even though the runtime has
           // always enforced min/max. Shown only for numbers, where a bound means something.
           if (f.type == FieldType.number) ...[
@@ -400,10 +513,11 @@ class _FieldInspectorState extends State<FieldInspector> {
                   child: _field(_maxValue, L10n.of(context).fieldMaxValue,
                       (v) => f.maxValue = v, keyboard: TextInputType.number)),
             ]),
-          ] else
+          ] else if (f.type.hasValue && !f.type.hasOptions)
             _field(_minLength, L10n.of(context).fieldMinLength,
                 (v) => f.minLength = v, keyboard: TextInputType.number),
-          _field(_pattern, L10n.of(context).fieldPattern, (v) => f.validationPattern = v),
+          if (f.type.hasValue && !f.type.hasOptions)
+            _field(_pattern, L10n.of(context).fieldPattern, (v) => f.validationPattern = v),
           // Email and phone validate by type, which was invisible — the author could not tell
           // them apart from a plain Text field in the inspector.
           if (f.type == FieldType.email || f.type == FieldType.phone)
@@ -421,10 +535,24 @@ class _FieldInspectorState extends State<FieldInspector> {
                 ),
               ]),
             ),
-        ],
+        ]),
 
-        // ── Logic ─────────────────────────────────────────────────────────────────
-        _sectionTitle(theme, L10n.of(context).sectionLogic),
+        _section(theme, 'position', L10n.of(context).sectionPositionSize, [
+          GeometryEditor(
+            rectInPoints: widget.rectInPoints,
+            lockAspect: f.type.lockAspect,
+            sizesOfOtherFields: widget.sizesOfOtherFields,
+            onChanged: widget.onRectChanged,
+          ),
+
+          // ── Appearance ────────────────────────────────────────────────────────────
+          // Text fields only. A list box has `acceptsValue` too, but the backend's choice-field
+          // branch applies none of these — max length, comb, alignment, pattern, min length and
+          // the calculation were six controls an author could set on a list box that did nothing
+          // whatsoever to the produced PDF.
+        ]),
+
+        _section(theme, 'logic', L10n.of(context).sectionLogic, [
         Text(L10n.of(context).conditionShowWhen, style: theme.textTheme.bodySmall),
         const SizedBox(height: 4),
         _field(_condField, L10n.of(context).conditionFieldName, (v) {
@@ -468,12 +596,15 @@ class _FieldInspectorState extends State<FieldInspector> {
                 .toList();
           }),
         ],
+        ]),
 
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(onPressed: () => Navigator.pop(context), child: Text(L10n.of(context).done)),
-        ),
+        if (!widget.docked) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(onPressed: widget.onClose, child: Text(L10n.of(context).done)),
+          ),
+        ],
       ]),
       ),
     );
@@ -514,12 +645,40 @@ class _FieldInspectorState extends State<FieldInspector> {
     widget.onTypeChanged();
   }
 
-  Widget _sectionTitle(ThemeData theme, String text) => Padding(
-        padding: const EdgeInsets.only(top: 14, bottom: 6),
-        child: Text(text,
-            style: theme.textTheme.labelLarge
-                ?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.w700)),
-      );
+  /// Which sections are open. Only Basics starts expanded: the whole inspector is longer than
+  /// a phone screen, so capping the sheet without collapsing its sections would just move the
+  /// scroll rather than remove it.
+  final Set<String> _openSections = {};
+
+  /// A titled, collapsible group of properties.
+  ///
+  /// Skipped entirely when [children] comes back empty — the gates that used to wrap whole
+  /// blocks (a list box gets none of the text-field properties, for instance) now sit on the
+  /// individual controls, and an empty header would be a row that does nothing.
+  Widget _section(ThemeData theme, String key, String title, List<Widget> children) {
+    if (children.isEmpty) return const SizedBox.shrink();
+    final open = _openSections.contains(key);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      InkWell(
+        onTap: () => setState(
+            () => open ? _openSections.remove(key) : _openSections.add(key)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(children: [
+            Expanded(
+              child: Text(title,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary, fontWeight: FontWeight.w700)),
+            ),
+            Icon(open ? Icons.expand_less : Icons.expand_more,
+                size: 20, color: theme.colorScheme.primary),
+          ]),
+        ),
+      ),
+      if (open) ...children,
+      Divider(height: 1, color: theme.dividerColor),
+    ]);
+  }
 
   String _operatorLabel(BuildContext context, engine.ConditionOperator o) => switch (o) {
         engine.ConditionOperator.equals => L10n.of(context).opEquals,
@@ -537,6 +696,70 @@ class _FieldInspectorState extends State<FieldInspector> {
         engine.CalculationFunction.product => L10n.of(context).calcProduct,
         engine.CalculationFunction.min => L10n.of(context).calcMin,
         engine.CalculationFunction.max => L10n.of(context).calcMax,
+      };
+
+  /// A switch row, for the behaviour flags.
+  Widget _flag(String label, bool value, ValueChanged<bool> onChanged) => SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        title: Text(label, style: const TextStyle(fontSize: 14)),
+        value: value,
+        onChanged: (v) => setState(() => onChanged(v)),
+      );
+
+  /// A colour swatch row. Null is the API's own readable default rather than a colour, which
+  /// is why "Default" is a choice and not simply white.
+  Widget _colorRow(ThemeData theme, String label, String? hex, ValueChanged<String?> onPicked,
+      {bool allowTransparent = false}) {
+    const swatches = [
+      '#000000', '#444444', '#FFFFFF', '#C62828',
+      '#1565C0', '#2E7D32', '#EF6C00', '#6A1B9A',
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: theme.textTheme.bodySmall),
+        const SizedBox(height: 4),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          ChoiceChip(
+            label: Text(L10n.of(context).colorDefault),
+            selected: hex == null,
+            onSelected: (_) => onPicked(null),
+          ),
+          if (allowTransparent)
+            ChoiceChip(
+              label: Text(L10n.of(context).colorTransparent),
+              selected: hex == '',
+              onSelected: (_) => onPicked(''),
+            ),
+          for (final swatch in swatches)
+            GestureDetector(
+              onTap: () => onPicked(swatch),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Color(0xFF000000 | int.parse(swatch.substring(1), radix: 16)),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: hex == swatch
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant,
+                      width: hex == swatch ? 2.5 : 1),
+                ),
+              ),
+            ),
+        ]),
+      ]),
+    );
+  }
+
+  String _borderStyleLabel(BuildContext context, engine.BorderStyleName style) => switch (style) {
+        engine.BorderStyleName.solid => L10n.of(context).borderSolid,
+        engine.BorderStyleName.dashed => L10n.of(context).borderDashed,
+        engine.BorderStyleName.beveled => L10n.of(context).borderBeveled,
+        engine.BorderStyleName.inset => L10n.of(context).borderInset,
+        engine.BorderStyleName.underline => L10n.of(context).borderUnderline,
       };
 
   Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged,

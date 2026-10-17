@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/routes.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
@@ -212,7 +213,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     onTap: () => GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
                     trailing: TextButton(
                       onPressed: _processedFileCount == 0 ? null : _clearCache,
-                      child: Text(L10n.of(context).clear, style: const TextStyle(color: Colors.red)),
+                      child: Text(L10n.of(context).clear, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   ),
                 ]),
@@ -229,7 +230,7 @@ class _SettingScreenState extends State<SettingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: AppSpacing.screenPadding,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

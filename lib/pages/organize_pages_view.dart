@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -38,7 +40,9 @@ class OrganizePagesView extends StatefulWidget {
 class _OrganizePagesViewState extends State<OrganizePagesView>
     with ToolResultHandler, ToolViewMixin {
   PdfDocument? _doc;
-  bool _loadError = false;
+  /// Why the document would not open, so the error state can say rather than just show a
+  /// red glyph. A bool told the user nothing and offered no way back.
+  String? _loadError;
 
   /// Current arrangement as original 0-indexed page numbers. Deleting removes an
   /// entry; reordering permutes it. This list is exactly the reorder `order`.
@@ -58,6 +62,9 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
   }
 
   Future<void> _open() async {
+    // Plain assignment, not setState: this also runs from initState, and either branch below
+    // rebuilds anyway.
+    _loadError = null;
     try {
       final doc = await PdfDocument.openFile(widget.file.path);
       if (!mounted) return;
@@ -66,14 +73,14 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
         _totalPages = doc.pagesCount;
         _order = List.generate(doc.pagesCount, (i) => i);
       });
-    } catch (_) {
-      if (mounted) setState(() => _loadError = true);
+    } catch (e) {
+      if (mounted) setState(() => _loadError = e.toString());
     }
   }
 
   void _deleteAt(int i) {
     if (_order.length <= 1) {
-      NotificationService.showSnackbar(text: L10n.current.needAtLeastOnePage, color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.needAtLeastOnePage, kind: SnackKind.warning);
       return;
     }
     setState(() => _order.removeAt(i));
@@ -125,7 +132,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
             ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.organizePages] != c.httpStates[HttpStates.organizePages],
         buildWhen: (p, c) =>
@@ -133,8 +140,8 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
         listener: (context, state) =>
             handleToolState(state.httpStates[HttpStates.organizePages], successMessage: L10n.of(context).pagesOrganized),
         builder: (context, state) {
-          if (_loadError) {
-            return const Center(child: Icon(Icons.error_outline, color: Colors.red, size: 40));
+          if (_loadError != null) {
+            return ToolErrorState(message: _loadError, onRetry: _open);
           }
           if (_doc == null) {
             return const Center(child: CircularProgressIndicator());
@@ -175,7 +182,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
             elevation: 1,
             borderRadius: BorderRadius.circular(AppRadius.surface),
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: AppSpacing.screenPadding,
               child: Row(children: [
                 // Thumbnail (cached after first render).
                 ClipRRect(
@@ -200,7 +207,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
                   tooltip: L10n.of(context).removePage,
                   onPressed: () => _deleteAt(i),
                 ),

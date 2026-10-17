@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
@@ -121,7 +122,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'watermark')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'watermark'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.watermarkPdf] != c.httpStates[HttpStates.watermarkPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.watermarkPdf] != c.httpStates[HttpStates.watermarkPdf],
@@ -131,7 +132,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(
@@ -194,7 +195,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                Text(L10n.of(context).colorColon),
+                                Expanded(child: Text(L10n.of(context).colorColon)),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,

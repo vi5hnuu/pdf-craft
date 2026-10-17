@@ -5,8 +5,11 @@ import 'package:pdf_craft/pages/form-editor/field_inspector.dart';
 import 'package:pdf_craft/pages/form-editor/field_list_sheet.dart';
 import 'package:pdf_craft/pages/form-editor/field_appearance_painter.dart';
 import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
+import 'package:pdf_craft/pages/form-editor/field_type_change.dart' show typeChangeGroups;
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -188,7 +191,13 @@ class _FormEditorViewState extends State<FormEditorView>
                     f.calculation?.fields ?? const <engine.FieldRef>[])
                 ..calcFields = (f.calculation?.fields ?? const <engine.FieldRef>[])
                     .map((r) => _nameForId(schema, r))
-                    .join(', '),
+                    .join(', ')
+                ..appearance = f.appearance
+                ..behaviour = f.behaviour
+                ..optionValues = List<String>.from(f.optionValues)
+                ..buttonAction = f.buttonAction.isEmpty ? 'reset' : f.buttonAction
+                ..buttonTarget = f.buttonTarget
+                ..caption = f.caption,
             );
       }
       // Restart auto-naming past anything the draft already used, so the next placed field
@@ -568,7 +577,10 @@ class _FormEditorViewState extends State<FormEditorView>
           f.group = groupName;
           // What the author typed is the caption too — that is what they meant by it.
           f.label = labels[i];
-          if (type.isGrouped) f.exportValue = labels[i];
+          // The export value is an ASCII on-state name, not the caption. The API sanitises it
+          // with [^A-Za-z0-9_] -> _, so Hindi labels such as "पुरुष" and "महिला" both collapsed
+          // to "___": the kids shared one on-state and picking either selected the whole group.
+          if (type.isGrouped) f.exportValue = 'option_${i + 1}';
         }
         _fields.add(f);
         if (i == labels.length - 1) _selectedId = f.id;
@@ -577,8 +589,8 @@ class _FormEditorViewState extends State<FormEditorView>
   }
 
   Future<void> _promptGroup(FieldType type) async {
-    // Localized: these are used verbatim as the group's export values, so leaving them English
-    // put English option values inside a Hindi author's PDF.
+    // Localized because they become the captions drawn on the page. They are no longer used as
+    // export values — see _addGroup.
     //
     // Through the shared prompt, which owns its controller. The version here created one in this
     // method and never released it — a leak per prompt — and the obvious fix, disposing after
@@ -693,21 +705,49 @@ class _FormEditorViewState extends State<FormEditorView>
           ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
         listenWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
         listener: (context, state) => handleToolState(
             state.httpStates[HttpStates.createForm], successMessage: L10n.current.formCreated),
         builder: (context, state) {
           return Stack(children: [
-            Column(children: [
-              Expanded(
-                child: _loadingPage
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildCanvasArea(theme),
-              ),
-              _buildPalette(theme),
-            ]),
+            // The pane's own width, not the window's: the properties panel and the palette both
+            // live inside it.
+            LayoutBuilder(builder: (context, constraints) {
+              final docked =
+                  windowSizeFor(constraints.maxWidth) == WindowSize.expanded;
+              if (_docked != docked) {
+                // After the frame: this runs during layout, and the only thing the flag gates
+                // is whether a *future* tap opens a sheet or fills the panel.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() => _docked = docked);
+                });
+              }
+              final canvas = Column(children: [
+                Expanded(
+                  child: _loadingPage
+                      ? const Center(child: CircularProgressIndicator())
+                      : _buildCanvasArea(theme),
+                ),
+                // Horizontal strip on a phone; a grouped column in the gutter when docked,
+                // where a scroller of eleven items is the wrong shape for 1280dp.
+                if (!docked) _buildPalette(theme),
+              ]);
+              if (!docked) return canvas;
+              final selected = _fields.where((f) => f.id == _selectedId).firstOrNull;
+              return Row(children: [
+                _buildPaletteColumn(theme),
+                VerticalDivider(width: 1, thickness: 1, color: theme.dividerColor),
+                Expanded(child: canvas),
+                if (selected != null) ...[
+                  VerticalDivider(width: 1, thickness: 1, color: theme.dividerColor),
+                  SizedBox(
+                      width: _propertiesPanelWidth,
+                      child: _buildPropertiesPanel(theme, selected)),
+                ],
+              ]);
+            }),
             processingOverlay(state.httpStates[HttpStates.createForm],
                 label: L10n.of(context).creatingForm),
           ]);
@@ -941,6 +981,11 @@ class _FormEditorViewState extends State<FormEditorView>
                     child: Stack(clipBehavior: Clip.none, children: [
                       if (_pageImage != null)
                         Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill)),
+                      // Under the fields: a group's boundary, so membership does not rest on
+                      // colour alone (WCAG 1.4.1) and a mistakenly shared name is visible as
+                      // one box drawn around fields that were never meant to be linked.
+                      if (!_previewMode)
+                        ..._groupOrder.map((g) => _groupOutline(g, dispW, dispH, theme)),
                       ..._fields.map((f) => _fieldVisual(f, dispW, dispH, theme)),
                     ]),
                   ),
@@ -1014,6 +1059,54 @@ class _FormEditorViewState extends State<FormEditorView>
     final letter = String.fromCharCode(65 + (index % 26));
     final cycle = index ~/ 26;
     return cycle == 0 ? letter : '$letter$cycle';
+  }
+
+  /// A dashed boundary around every field in [group], with the group's name at its corner.
+  Widget _groupOutline(String group, double dispW, double dispH, ThemeData theme) {
+    final members =
+        _fields.where((f) => f.type.groupable && f.group == group).toList();
+    if (members.length < 2) return const SizedBox.shrink();
+
+    var box = members.first.rect;
+    for (final f in members.skip(1)) {
+      box = box.expandToInclude(f.rect);
+    }
+    const pad = 0.012;
+    final r = Rect.fromLTRB(
+      (box.left - pad) * dispW,
+      (box.top - pad) * dispH,
+      (box.right + pad) * dispW,
+      (box.bottom + pad) * dispH,
+    );
+    final color = _groupColor(group);
+    return Positioned(
+      left: r.left,
+      top: r.top,
+      width: r.width,
+      height: r.height,
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: GroupOutlinePainter(color: color),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Transform.translate(
+              offset: const Offset(2, -14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                color: color,
+                child: Text(
+                  '${_groupLetter(group)} · ${members.length}',
+                  style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppSemanticColors.onFilled(color)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _fieldVisual(EditorField f, double dispW, double dispH, ThemeData theme) {
@@ -1416,7 +1509,55 @@ class _FormEditorViewState extends State<FormEditorView>
 
   // ── Properties (modal sheet, rebuilt per open) ───────────────────────────────
 
+  /// Width of the docked properties panel. Wide enough for a labelled text field and the
+  /// four-up geometry row without wrapping.
+  static const double _propertiesPanelWidth = 360;
+
+  /// Whether the properties are docked beside the canvas rather than opened as a sheet.
+  bool _docked = false;
+
+  /// The docked properties panel: the same inspector, with a header instead of a drag handle.
+  ///
+  /// Docking is not cosmetic. The sheet covered the whole screen, so the field whose X, Y,
+  /// width and height you were typing was behind it — and on a tablet the canvas was a 720dp
+  /// column with most of the display unused.
+  Widget _buildPropertiesPanel(ThemeData theme, EditorField f) {
+    return Material(
+      color: theme.colorScheme.surface,
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+          child: Row(children: [
+            Icon(f.type.icon, size: 18, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                f.name.isEmpty ? f.type.localizedLabel(context) : f.name,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, size: 20),
+              tooltip: L10n.of(context).done,
+              onPressed: () => setState(() => _selectedId = null),
+            ),
+          ]),
+        ),
+        Divider(height: 1, color: theme.dividerColor),
+        // Keyed on the field so selecting another one builds fresh controllers rather than
+        // showing the previous field's text.
+        Expanded(child: _inspectorFor(f, key: ValueKey('panel_${f.id}'), docked: true)),
+      ]),
+    );
+  }
+
   void _showProperties(EditorField f) {
+    // Docked: the panel is already showing this field, so there is nothing to open.
+    if (_docked) {
+      setState(() => _selectedId = f.id);
+      return;
+    }
     showModalBottomSheet(
       context: context,
       // Without this the sheet runs under the status bar and the display cutout —
@@ -1424,39 +1565,72 @@ class _FormEditorViewState extends State<FormEditorView>
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
+      // Capped. isScrollControlled with an unbounded SingleChildScrollView sizes the sheet to
+      // min(content, screen), and the inspector's content is longer than any phone screen, so
+      // in practice it was always full height — covering the canvas the user is positioning
+      // fields on, with the first label clipped under the drag handle.
+      constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.75),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.surface))),
       // StatefulBuilder so typing a new size redraws the sheet's own boxes as well as the
       // canvas; without it the numbers would only catch up when the sheet was reopened.
-      builder: (_) => StatefulBuilder(
-        builder: (context, setSheetState) => FieldInspector(
-          field: f,
-          rectInPoints: _rectInPoints(f),
-          onRectChanged: (points) {
-            _pushUndo();
-            _setRectFromPoints(f, points);
-            setSheetState(() {});
-          },
-          sizesOfOtherFields: _sizesOfFieldsOtherThan(f),
-          resolve: (name) => engine.FieldRef(_idForName(name), name),
-          onAddOption: _addOptionToGroup,
-          optionsInGroup: (g) =>
-              _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
-          groupLetter: _groupLetter,
-          pagePoints: _pagePoints[_currentPage],
-          groupSiblings: (g) => g.isEmpty
-              ? const <EditorField>[]
-              : _fields.where((x) => x.group == g),
-          // A type change alters grouping, colours and the canvas painter, none of which the
-          // sheet owns — so the host rebuilds too, not just the sheet.
-          onTypeChanged: () {
-            setSheetState(() {});
-            setState(() {});
-          },
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => _inspectorFor(
+          f,
+          onRectRedraw: () => setSheetState(() {}),
+          onTypeRedraw: () => setSheetState(() {}),
+          onClose: () => Navigator.pop(sheetContext),
+          closeBeforeAddOption: () => Navigator.pop(sheetContext),
         ),
       ),
     ).whenComplete(() {
       if (mounted) setState(() {}); // refresh badges/state after edits
     });
+  }
+
+  /// The inspector, wired to this editor. One place, two hosts.
+  Widget _inspectorFor(
+    EditorField f, {
+    Key? key,
+    bool docked = false,
+    VoidCallback? onRectRedraw,
+    VoidCallback? onTypeRedraw,
+    VoidCallback? onClose,
+    VoidCallback? closeBeforeAddOption,
+  }) {
+    return FieldInspector(
+      key: key,
+      docked: docked,
+      field: f,
+      rectInPoints: _rectInPoints(f),
+      onRectChanged: (points) {
+        _pushUndo();
+        _setRectFromPoints(f, points);
+        setState(() {});
+        onRectRedraw?.call();
+      },
+      sizesOfOtherFields: _sizesOfFieldsOtherThan(f),
+      resolve: (name) => engine.FieldRef(_idForName(name), name),
+      // The sheet has to close before the new sibling can be dragged into place; the docked
+      // panel stays open and simply follows the selection.
+      onAddOption: (source) {
+        closeBeforeAddOption?.call();
+        _addOptionToGroup(source);
+      },
+      optionsInGroup: (g) =>
+          _pageFields.values.expand((l) => l).where((x) => x.group == g).length,
+      groupLetter: _groupLetter,
+      pagePoints: _pagePoints[_currentPage],
+      groupSiblings: (g) =>
+          g.isEmpty ? const <EditorField>[] : _fields.where((x) => x.group == g),
+      // A type change alters grouping, colours and the canvas painter, none of which the
+      // inspector owns — so the host rebuilds too.
+      onTypeChanged: () {
+        setState(() {});
+        onTypeRedraw?.call();
+      },
+      onClose: onClose ?? () => setState(() => _selectedId = null),
+    );
   }
 
   /// The placed layout as an engine schema.
@@ -1517,6 +1691,12 @@ class _FormEditorViewState extends State<FormEditorView>
           calculation: f.calcRefs.isEmpty
               ? null
               : engine.Calculation(function: f.calcFunction, fields: f.calcRefs),
+          appearance: f.appearance,
+          behaviour: f.behaviour,
+          optionValues: List<String>.from(f.optionValues),
+          buttonAction: f.type == FieldType.pushbutton ? f.buttonAction : '',
+          buttonTarget: f.type == FieldType.pushbutton ? f.buttonTarget : '',
+          caption: f.type == FieldType.pushbutton ? f.caption : '',
         ));
       }
     });
@@ -1531,11 +1711,12 @@ class _FormEditorViewState extends State<FormEditorView>
 
   /// Shows anything structurally wrong with the form before it is built.
   ///
-  /// The engine has detected these all along; nothing surfaced them, so a form with two
-  /// fields sharing a name silently produced a PDF where one value overwrote the other.
-  /// Reported rather than blocked: the author may be mid-edit and know better.
+  /// Dangling and self-referencing rules are reported but not blocked — the author may be
+  /// mid-edit and know better. A duplicate PDF name is blocked: two fields collapse into one in
+  /// the document and one value overwrites the other, which is silent data loss rather than a
+  /// judgement call.
   Future<bool> _confirmIssues() async {
-    final issues = engine.FormRuntime(_toSchema()).integrityIssues();
+    final issues = engine.FormRuntime(_toSchema()).integrityIssues(formFieldTypes);
     if (issues.isEmpty) return true;
 
     final names = {for (final f in _pageFields.values.expand((l) => l)) f.id: f.name};
@@ -1552,6 +1733,8 @@ class _FormEditorViewState extends State<FormEditorView>
 
     // The same problem on several fields reads as one problem to the author.
     final lines = issues.map(describe).toSet().toList();
+    final blocking =
+        issues.any((i) => i.problem == engine.SchemaProblem.duplicateName);
     if (!mounted) return false;
     final proceed = await showDialog<bool>(
       context: context,
@@ -1575,9 +1758,10 @@ class _FormEditorViewState extends State<FormEditorView>
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(L10n.of(ctx).goBackAndFix)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(L10n.of(ctx).createAnyway)),
+          if (!blocking)
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(L10n.of(ctx).createAnyway)),
         ],
       ),
     );
@@ -1606,7 +1790,18 @@ class _FormEditorViewState extends State<FormEditorView>
 
   // ── Bottom palette ───────────────────────────────────────────────────────────
 
+  /// The palette shortcuts that place a whole linked group rather than one field.
+  List<_GroupPaletteEntry> get _groupPaletteEntries => const [
+        _GroupPaletteEntry(FieldType.radio, Icons.radio_button_checked, _groupLabelRadio),
+        _GroupPaletteEntry(FieldType.checkbox, Icons.checklist, _groupLabelCheck),
+      ];
+
+  static String _groupLabelRadio(BuildContext c) => L10n.of(c).radioGroup;
+
+  static String _groupLabelCheck(BuildContext c) => L10n.of(c).checkGroup;
+
   Widget _buildPalette(ThemeData theme) {
+    final metrics = _PaletteMetrics.of(context);
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -1616,14 +1811,17 @@ class _FormEditorViewState extends State<FormEditorView>
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 78,
+          height: metrics.stripHeight,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             children: [
-              for (final t in FieldType.values) _paletteItem(theme, t),
-              _paletteGroupItem(theme, FieldType.radio, L10n.of(context).radioGroup, Icons.radio_button_checked),
-              _paletteGroupItem(theme, FieldType.checkbox, L10n.of(context).checkGroup, Icons.checklist),
+              for (final t in FieldType.values)
+                _paletteTile(theme, t.icon, t.localizedLabel(context), () => _addField(t),
+                    metrics: metrics),
+              for (final g in _groupPaletteEntries)
+                _paletteTile(theme, g.icon, g.label(context), () => _promptGroup(g.type),
+                    metrics: metrics, secondary: true),
             ],
           ),
         ),
@@ -1631,53 +1829,95 @@ class _FormEditorViewState extends State<FormEditorView>
     );
   }
 
-  Widget _paletteGroupItem(ThemeData theme, FieldType t, String label, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.surface),
-        onTap: () => _promptGroup(t),
-        child: Container(
-          width: 66,
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(AppRadius.surface),
-            border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 22, color: theme.colorScheme.secondary),
-              const SizedBox(height: 4),
-              Text(label, style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+  /// The palette as a grouped column, for when the editor is docked.
+  ///
+  /// A horizontal scroller of thirteen items is the wrong shape for a 1280dp window, and it
+  /// hides everything past the fifth entry behind a swipe.
+  Widget _buildPaletteColumn(ThemeData theme) {
+    final metrics = _PaletteMetrics.of(context);
+    final headings = [
+      L10n.of(context).paletteGroupText,
+      L10n.of(context).paletteGroupToggles,
+      L10n.of(context).paletteGroupLists,
+      L10n.of(context).paletteGroupOther,
+    ];
+    return Material(
+      color: theme.colorScheme.surface,
+      child: SizedBox(
+        width: metrics.tileWidth + 28,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          children: [
+            for (var i = 0; i < typeChangeGroups.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 2, bottom: 6),
+                child: Text(headings[i],
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              ),
+              for (final t in typeChangeGroups[i])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _paletteTile(
+                      theme, t.icon, t.localizedLabel(context), () => _addField(t),
+                      metrics: metrics, trailingGap: false),
+                ),
+              // The group shortcuts belong with the toggles they create.
+              if (i == 1)
+                for (final g in _groupPaletteEntries)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _paletteTile(
+                        theme, g.icon, g.label(context), () => _promptGroup(g.type),
+                        metrics: metrics, secondary: true, trailingGap: false),
+                  ),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _paletteItem(ThemeData theme, FieldType t) {
+  /// One palette entry. [secondary] marks the two shortcuts that create a whole group.
+  Widget _paletteTile(
+    ThemeData theme,
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    required _PaletteMetrics metrics,
+    bool secondary = false,
+    bool trailingGap = true,
+  }) {
+    final accent = secondary ? theme.colorScheme.secondary : theme.colorScheme.primary;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: EdgeInsets.only(right: trailingGap ? 8 : 0),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.surface),
-        onTap: () => _addField(t),
+        onTap: onTap,
         child: Container(
-          width: 66,
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          width: metrics.tileWidth,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.06),
+            color: accent.withValues(alpha: secondary ? 0.10 : 0.06),
             borderRadius: BorderRadius.circular(AppRadius.surface),
-            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.18)),
+            border: Border.all(color: accent.withValues(alpha: secondary ? 0.3 : 0.18)),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(t.icon, size: 22, color: theme.colorScheme.primary),
+              Icon(icon, size: 22, color: accent),
               const SizedBox(height: 4),
-              Text(t.localizedLabel(context), style: TextStyle(fontSize: 10.5, color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: _PaletteMetrics.labelSize,
+                    height: _PaletteMetrics.labelLineHeight,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
+              ),
             ],
           ),
         ),
@@ -1694,5 +1934,56 @@ class _FormEditorViewState extends State<FormEditorView>
     _tc.dispose();
     _doc?.close();
     super.dispose();
+  }
+}
+
+/// A palette shortcut that places a linked group of toggles.
+class _GroupPaletteEntry {
+  final FieldType type;
+  final IconData icon;
+  final String Function(BuildContext) label;
+
+  const _GroupPaletteEntry(this.type, this.icon, this.label);
+}
+
+/// Palette tile sizing, measured against the user's text size.
+///
+/// The tile was a fixed 66x78 box with an unbounded 10.5px Text inside it, so "रेडियो समूह"
+/// wrapped to two lines and overflowed vertically while "Date" clipped horizontally.
+///
+/// The height is measured with a [TextPainter] rather than computed from the font size.
+/// Arithmetic was off by about two pixels — line height, ascent and descent do not add up the
+/// way the numbers suggest — which is small enough to look like nothing and still enough to
+/// trip a RenderFlex overflow.
+class _PaletteMetrics {
+  static const double labelSize = 10.5;
+  static const double labelLineHeight = 1.25;
+
+  /// Icon, the gap under it, and the tile's own vertical padding.
+  static const double _chrome = 22 + 4 + 12;
+
+  final double tileWidth;
+  final double stripHeight;
+
+  const _PaletteMetrics(this.tileWidth, this.stripHeight);
+
+  factory _PaletteMetrics.of(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final style = DefaultTextStyle.of(context)
+        .style
+        .copyWith(fontSize: labelSize, height: labelLineHeight);
+    // Two lines of the real face at the real scale, which is what a tile has to hold.
+    final painter = TextPainter(
+      text: TextSpan(text: 'Ag\nAg', style: style),
+      textDirection: Directionality.of(context),
+      textScaler: scaler,
+      maxLines: 2,
+    )..layout();
+    final scaled = scaler.scale(labelSize);
+    return _PaletteMetrics(
+      (66 * scaled / labelSize).clamp(66.0, 132.0),
+      // Plus the strip's own vertical padding.
+      _chrome + painter.height + 16,
+    );
   }
 }

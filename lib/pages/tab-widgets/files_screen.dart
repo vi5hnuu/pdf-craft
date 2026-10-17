@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/file_selection_config.dart';
@@ -185,10 +186,11 @@ class _FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
                           onChanged: _loadStats),
                       badge: Container(
                         padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
-                        child: const Icon(Icons.star,
-                            color: Colors.amber, size: 16),
+                        decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            shape: BoxShape.circle),
+                        child: Icon(Icons.star,
+                            color: AppSemanticColors.of(context).warning, size: 16),
                       ),
                     );
                   },
@@ -297,12 +299,12 @@ class _FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
         } else {
           NotificationService.showSnackbar(
               text: L10n.current.errStoragePermissionNeeded,
-              color: Colors.red);
+              kind: SnackKind.error);
         }
       }
     } catch (e) {
       NotificationService.showSnackbar(
-          text: L10n.current.errSomethingWrong, color: Colors.red);
+          text: L10n.current.errSomethingWrong, kind: SnackKind.error);
     }
   }
 

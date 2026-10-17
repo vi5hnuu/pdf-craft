@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -50,7 +51,7 @@ class _ExtractFontsViewState extends State<ExtractFontsView>
             Column(children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: AppSpacing.screenPadding,
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.font_download_outlined, size: 64, color: theme.colorScheme.primary),
                     const SizedBox(height: 16),
