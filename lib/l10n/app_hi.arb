@@ -1251,5 +1251,6 @@
   "paletteGroupToggles": "विकल्प",
   "paletteGroupLists": "सूचियाँ",
   "paletteGroupOther": "अन्य",
-  "paletteAddField": "फ़ील्ड जोड़ें"
+  "paletteAddField": "फ़ील्ड जोड़ें",
+  "optionValueHint": "टिक करने पर PDF में क्या दर्ज हो। डिफ़ॉल्ट Yes है।"
 }

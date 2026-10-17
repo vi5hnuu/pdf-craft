@@ -2056,5 +2056,6 @@
   "paletteGroupToggles": "Choices",
   "paletteGroupLists": "Lists",
   "paletteGroupOther": "Other",
-  "paletteAddField": "Add a field"
+  "paletteAddField": "Add a field",
+  "optionValueHint": "What the PDF records when this is ticked. Defaults to Yes."
 }

@@ -47,11 +47,14 @@ class AcroFormSpecMapper {
     // group name — not the per-widget name — is what the PDF must carry.
     final name = type.isGrouped ? f.group : f.name;
 
-    // An export value is what the PDF records when this radio option is on.
-    // Falling back to the field name matches the old behaviour and keeps every
-    // option in a group distinct.
-    final exportValue =
-        type.isGrouped ? (f.exportValue.isEmpty ? f.name : f.exportValue) : null;
+    // An export value is what the PDF records when this widget is on.
+    //
+    // Sent for a checkbox too, not only a radio. The API has always read it, so a box could
+    // have exported "Y", "1" or "Male" all along; the editor simply never offered it and the
+    // on-state stayed hardcoded to "Yes".
+    final exportValue = type.isGrouped
+        ? (f.exportValue.isEmpty ? f.name : f.exportValue)
+        : (type.isToggle && f.exportValue.isNotEmpty ? f.exportValue : null);
 
     return {
       'type': f.typeId,
@@ -96,6 +99,10 @@ class AcroFormSpecMapper {
       if (f.typeId == FieldTypes.number && f.groupDigits) 'group_digits': true,
       if (f.validation.pattern != null && f.validation.pattern!.isNotEmpty)
         'validation_pattern': f.validation.pattern,
+      // The editor has always offered this and the runtime has always enforced it, but it was
+      // never put on the wire, so a form filled in any other reader ignored it.
+      if (f.validation.minLength != null && f.validation.minLength! > 0)
+        'min_length': f.validation.minLength,
       // Rules travel as ids, but the PDF's own scripts address fields by NAME, so the
       // resolved names are sent alongside. Resolution happens here, where the whole schema
       // is in hand, rather than leaving the backend to guess.

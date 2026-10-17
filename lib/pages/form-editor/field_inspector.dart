@@ -165,11 +165,13 @@ class _FieldInspectorState extends State<FieldInspector> {
         _field(_name, L10n.of(context).fieldName, (v) => f.name = v),
         if (f.type.groupable) ...[
           _field(_group, L10n.of(context).radioGroup, (v) => f.group = v),
-          // Only a radio has a meaningful export value — it is the widget's on-state, and one
-          // of them becomes the field's value. A checkbox's is fixed at "Yes" by the backend,
-          // so offering a box for it would be another control that does nothing.
-          if (f.type.isGrouped)
-            _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v),
+          // The widget's on-state: for a radio, one option's value becomes the field's
+          // value; for a checkbox it is what the box exports when ticked. The API has always
+          // read it for both — only the editor was withholding it, leaving every box
+          // hardcoded to "Yes".
+          if (f.type.isGrouped || f.type.isToggle)
+            _field(_export, L10n.of(context).optionValue, (v) => f.exportValue = v,
+                hint: L10n.of(context).optionValueHint),
           Row(children: [
             Expanded(
               child: Text(
