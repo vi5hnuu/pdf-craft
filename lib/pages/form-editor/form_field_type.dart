@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:form_engine/form_engine.dart' as engine;
 
-enum FieldType { text, multiline, number, email, phone, checkbox, radio, dropdown, listbox, date, signature }
+enum FieldType { text, multiline, number, email, phone, checkbox, radio, dropdown, listbox, date, signature, pushbutton }
 
 extension FieldTypeX on FieldType {
   String get label => switch (this) {
@@ -23,6 +23,7 @@ extension FieldTypeX on FieldType {
         FieldType.dropdown => 'Dropdown',
         FieldType.date => 'Date',
         FieldType.signature => 'Signature',
+        FieldType.pushbutton => 'Button',
       };
   /// Localized label for the UI; `label` above stays English for logs and wire use.
   String localizedLabel(BuildContext context) => switch (this) {
@@ -37,6 +38,7 @@ extension FieldTypeX on FieldType {
         FieldType.dropdown => L10n.of(context).fieldDropdown,
         FieldType.date => L10n.of(context).fieldDate,
         FieldType.signature => L10n.of(context).fieldSignature,
+        FieldType.pushbutton => L10n.of(context).fieldButton,
       };
   IconData get icon => switch (this) {
         FieldType.text => Icons.text_fields,
@@ -50,6 +52,7 @@ extension FieldTypeX on FieldType {
         FieldType.dropdown => Icons.arrow_drop_down_circle_outlined,
         FieldType.date => Icons.calendar_today_outlined,
         FieldType.signature => Icons.draw_outlined,
+        FieldType.pushbutton => Icons.smart_button_outlined,
       };
   String get wire => switch (this) {
         FieldType.text => 'text',
@@ -63,6 +66,7 @@ extension FieldTypeX on FieldType {
         FieldType.dropdown => 'dropdown',
         FieldType.date => 'date',
         FieldType.signature => 'signature',
+        FieldType.pushbutton => 'pushbutton',
       };
 
   // ── Per-type behaviour comes from the engine's registry ──────────────────────

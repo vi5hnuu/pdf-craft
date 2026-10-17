@@ -107,4 +107,75 @@ void main() {
     expect(field.containsKey('options'), isFalse);
     expect(field.containsKey('required'), isFalse);
   });
+
+  test('appearance and behaviour are omitted while they hold only defaults', () {
+    // A draft of ordinary fields has to stay what it was before these existed, or every stored
+    // form grows for properties nobody set.
+    final schema = FormSchema(fields: [
+      FormFieldModel(
+        id: 'f1',
+        typeId: FieldTypes.text,
+        page: 1,
+        rect: const FractionalRect(0, 0, 0.3, 0.05),
+        name: 'full_name',
+      ),
+    ]);
+    final field = (codec.encode(schema)['fields'] as List).single as Map<String, Object?>;
+    expect(field.containsKey('appearance'), isFalse);
+    expect(field.containsKey('behaviour'), isFalse);
+  });
+
+  test('appearance, behaviour and the button properties survive a round trip', () {
+    final schema = FormSchema(fields: [
+      FormFieldModel(
+        id: 'f1',
+        typeId: FieldTypes.pushbutton,
+        page: 1,
+        rect: const FractionalRect(0, 0, 0.2, 0.04),
+        name: 'submit_it',
+        appearance: const FieldAppearance(
+          borderColor: '#C62828',
+          backgroundColor: '',
+          borderWidth: 2,
+          borderStyle: BorderStyleName.dashed,
+          rotation: 90,
+        ),
+        behaviour: const FieldBehaviour(noExport: true, noPrint: true),
+        buttonAction: 'submit',
+        buttonTarget: 'https://example.com/f',
+        caption: 'Send',
+      ),
+    ]);
+    final back = codec.decode(codec.encode(schema)).fields.single;
+    expect(back.appearance.borderColor, '#C62828');
+    // Empty, not null: a transparent box is a choice, distinct from "use the default tint".
+    expect(back.appearance.backgroundColor, '');
+    expect(back.appearance.borderStyle, BorderStyleName.dashed);
+    expect(back.appearance.rotation, 90);
+    expect(back.behaviour.noExport, isTrue);
+    expect(back.behaviour.noPrint, isTrue);
+    expect(back.buttonAction, 'submit');
+    expect(back.caption, 'Send');
+  });
+
+  test('a v2 draft decodes with the new objects at their defaults', () {
+    // v2 -> v3 is additive, so an existing draft must open untouched rather than being
+    // refused or silently rewritten.
+    final v2 = {
+      'version': 2,
+      'fields': [
+        {
+          'id': 'f1',
+          'type': FieldTypes.text,
+          'page': 1,
+          'rect': {'left': 0.0, 'top': 0.0, 'width': 0.3, 'height': 0.05},
+          'name': 'full_name',
+        },
+      ],
+    };
+    final decoded = codec.decode(v2);
+    expect(decoded.version, FormSchema.currentVersion);
+    expect(decoded.fields.single.appearance.isDefault, isTrue);
+    expect(decoded.fields.single.behaviour.isDefault, isTrue);
+  });
 }

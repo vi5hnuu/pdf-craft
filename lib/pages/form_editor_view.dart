@@ -191,7 +191,13 @@ class _FormEditorViewState extends State<FormEditorView>
                     f.calculation?.fields ?? const <engine.FieldRef>[])
                 ..calcFields = (f.calculation?.fields ?? const <engine.FieldRef>[])
                     .map((r) => _nameForId(schema, r))
-                    .join(', '),
+                    .join(', ')
+                ..appearance = f.appearance
+                ..behaviour = f.behaviour
+                ..optionValues = List<String>.from(f.optionValues)
+                ..buttonAction = f.buttonAction.isEmpty ? 'reset' : f.buttonAction
+                ..buttonTarget = f.buttonTarget
+                ..caption = f.caption,
             );
       }
       // Restart auto-naming past anything the draft already used, so the next placed field
@@ -1685,6 +1691,12 @@ class _FormEditorViewState extends State<FormEditorView>
           calculation: f.calcRefs.isEmpty
               ? null
               : engine.Calculation(function: f.calcFunction, fields: f.calcRefs),
+          appearance: f.appearance,
+          behaviour: f.behaviour,
+          optionValues: List<String>.from(f.optionValues),
+          buttonAction: f.type == FieldType.pushbutton ? f.buttonAction : '',
+          buttonTarget: f.type == FieldType.pushbutton ? f.buttonTarget : '',
+          caption: f.type == FieldType.pushbutton ? f.caption : '',
         ));
       }
     });

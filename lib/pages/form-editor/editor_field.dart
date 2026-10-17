@@ -94,5 +94,28 @@ class EditorField {
   /// Resolved references for [calcFields], captured when they were entered.
   List<engine.FieldRef> calcRefs = const [];
 
+  // ── Appearance and behaviour ────────────────────────────────────────────────────
+  // Nested value objects, matching how they are stored and how the engine models them, so
+  // eighteen more loose fields do not join the thirty already on this class.
+
+  /// Border, background, text colour, font and rotation. Previously hardcoded in the API.
+  engine.FieldAppearance appearance = const engine.FieldAppearance();
+
+  /// Flags that change behaviour without changing the value.
+  engine.FieldBehaviour behaviour = const engine.FieldBehaviour();
+
+  /// What each option exports where that differs from what it shows — "GB" for
+  /// "United Kingdom". Only sent when it lines up with [options].
+  List<String> optionValues = [];
+
+  /// What a push button does: submit, reset, print or uri.
+  String buttonAction = 'reset';
+
+  /// Submit or link target for [buttonAction].
+  String buttonTarget = '';
+
+  /// Text on a button's face; falls back to [label].
+  String caption = '';
+
   EditorField({required this.type, required this.rect, required this.name}) : id = UniqueKey().toString();
 }

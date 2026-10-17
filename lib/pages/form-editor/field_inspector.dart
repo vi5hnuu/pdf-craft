@@ -98,6 +98,12 @@ class _FieldInspectorState extends State<FieldInspector> {
   late final _condField = TextEditingController(text: widget.field.conditionField);
   late final _condValue = TextEditingController(text: widget.field.conditionValue);
   late final _calcFields = TextEditingController(text: widget.field.calcFields);
+  late final _borderWidth = TextEditingController(
+      text: widget.field.appearance.borderWidth?.toStringAsFixed(1) ?? '');
+  late final _optionValues =
+      TextEditingController(text: widget.field.optionValues.join(', '));
+  late final _buttonTarget = TextEditingController(text: widget.field.buttonTarget);
+  late final _caption = TextEditingController(text: widget.field.caption);
 
   @override
   void dispose() {
@@ -117,6 +123,10 @@ class _FieldInspectorState extends State<FieldInspector> {
     _condField.dispose();
     _condValue.dispose();
     _calcFields.dispose();
+    _borderWidth.dispose();
+    _optionValues.dispose();
+    _buttonTarget.dispose();
+    _caption.dispose();
     super.dispose();
   }
 
@@ -187,11 +197,18 @@ class _FieldInspectorState extends State<FieldInspector> {
             ),
           ]),
         ],
-        if (f.type.hasOptions)
+        if (f.type.hasOptions) ...[
           OptionsEditor(
             options: f.options,
             onChanged: (v) => f.options = v,
           ),
+          // Only the display list was ever sent, so the value the PDF recorded was forced to be
+          // the text shown — "United Kingdom" where the form wanted "GB".
+          _field(_optionValues, L10n.of(context).optionExportValues, (v) {
+            final parts = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+            f.optionValues = parts.length == f.options.length ? parts : <String>[];
+          }, hint: L10n.of(context).optionExportValuesHint),
+        ],
         // A choice field's default has to be one of its own options. As a free-text box a typo
         // failed silently inside the backend's `catch (Exception ignore)`, so the form simply
         // opened with nothing selected and no explanation.
@@ -362,6 +379,97 @@ class _FieldInspectorState extends State<FieldInspector> {
             ),
           ],
         ]),
+
+        // Colours and the border, all of which the API hardcoded until now while the canvas
+        // painter previewed styling the output could not carry.
+        _section(theme, 'style', L10n.of(context).sectionStyle, [
+          _colorRow(theme, L10n.of(context).fieldBorderColor, f.appearance.borderColor,
+              (v) => setState(() => f.appearance = f.appearance.copyWith(borderColor: v))),
+          _colorRow(theme, L10n.of(context).fieldBackgroundColor, f.appearance.backgroundColor,
+              (v) => setState(() => f.appearance = f.appearance.copyWith(backgroundColor: v)),
+              allowTransparent: true),
+          if (f.type.hasValue)
+            _colorRow(theme, L10n.of(context).fieldTextColor, f.appearance.textColor,
+                (v) => setState(() => f.appearance = f.appearance.copyWith(textColor: v))),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(
+              child: DropdownButtonFormField<engine.BorderStyleName>(
+                isExpanded: true,
+                initialValue: f.appearance.borderStyle,
+                decoration: InputDecoration(
+                    isDense: true,
+                    labelText: L10n.of(context).fieldBorderStyle,
+                    border: const OutlineInputBorder()),
+                items: [
+                  for (final style in engine.BorderStyleName.values)
+                    DropdownMenuItem(value: style, child: Text(_borderStyleLabel(context, style))),
+                ],
+                onChanged: (v) => setState(() => f.appearance =
+                    f.appearance.copyWith(borderStyle: v ?? engine.BorderStyleName.solid)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _field(_borderWidth, L10n.of(context).fieldBorderWidth,
+                  (v) => setState(() => f.appearance =
+                      f.appearance.copyWith(borderWidth: double.tryParse(v))),
+                  keyboard: TextInputType.number),
+            ),
+          ]),
+        ]),
+
+        // Flags that change behaviour without changing the value. None of these could be
+        // expressed before: setPrinted(true) was forced on every widget, so a screen-only
+        // field was impossible.
+        _section(theme, 'behaviour', L10n.of(context).sectionBehaviour, [
+          _flag(L10n.of(context).fieldNoExport, f.behaviour.noExport,
+              (v) => f.behaviour = f.behaviour.copyWith(noExport: v)),
+          if (f.type.hasValue && !f.type.hasOptions) ...[
+            _flag(L10n.of(context).fieldPassword, f.behaviour.password,
+                (v) => f.behaviour = f.behaviour.copyWith(password: v)),
+            _flag(L10n.of(context).fieldNoScroll, f.behaviour.doNotScroll,
+                (v) => f.behaviour = f.behaviour.copyWith(doNotScroll: v)),
+          ],
+          if (f.type.hasValue)
+            _flag(L10n.of(context).fieldNoSpellCheck, f.behaviour.doNotSpellCheck,
+                (v) => f.behaviour = f.behaviour.copyWith(doNotSpellCheck: v)),
+          if (f.type == FieldType.dropdown)
+            _flag(L10n.of(context).fieldEditableCombo, f.behaviour.editable,
+                (v) => f.behaviour = f.behaviour.copyWith(editable: v)),
+          if (f.type.hasOptions)
+            _flag(L10n.of(context).fieldSortOptions, f.behaviour.sortOptions,
+                (v) => f.behaviour = f.behaviour.copyWith(sortOptions: v)),
+          _flag(L10n.of(context).fieldNoPrint, f.behaviour.noPrint,
+              (v) => f.behaviour = f.behaviour.copyWith(noPrint: v)),
+          _flag(L10n.of(context).fieldHidden, f.behaviour.hidden,
+              (v) => f.behaviour = f.behaviour.copyWith(hidden: v)),
+        ]),
+
+        if (f.type == FieldType.pushbutton)
+          _section(theme, 'button', L10n.of(context).sectionButton, [
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: f.buttonAction.isEmpty ? 'reset' : f.buttonAction,
+              decoration: InputDecoration(
+                  isDense: true,
+                  labelText: L10n.of(context).buttonActionLabel,
+                  border: const OutlineInputBorder()),
+              items: [
+                DropdownMenuItem(value: 'reset', child: Text(L10n.of(context).buttonActionReset)),
+                DropdownMenuItem(value: 'print', child: Text(L10n.of(context).buttonActionPrint)),
+                DropdownMenuItem(value: 'submit', child: Text(L10n.of(context).buttonActionSubmit)),
+                DropdownMenuItem(value: 'uri', child: Text(L10n.of(context).buttonActionUri)),
+              ],
+              onChanged: (v) => setState(() => f.buttonAction = v ?? 'reset'),
+            ),
+            const SizedBox(height: 10),
+            // Only submit and uri need somewhere to go; print and reset act on the document.
+            if (f.buttonAction == 'submit' || f.buttonAction == 'uri')
+              _field(_buttonTarget, L10n.of(context).buttonTargetLabel,
+                  (v) => f.buttonTarget = v, keyboard: TextInputType.url),
+            _field(_caption, L10n.of(context).buttonCaptionLabel, (v) => f.caption = v),
+          ]),
 
         _section(theme, 'rules', L10n.of(context).sectionRules, [
           // A number field could not be bounded from the UI at all, even though the runtime has
@@ -588,6 +696,70 @@ class _FieldInspectorState extends State<FieldInspector> {
         engine.CalculationFunction.product => L10n.of(context).calcProduct,
         engine.CalculationFunction.min => L10n.of(context).calcMin,
         engine.CalculationFunction.max => L10n.of(context).calcMax,
+      };
+
+  /// A switch row, for the behaviour flags.
+  Widget _flag(String label, bool value, ValueChanged<bool> onChanged) => SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        title: Text(label, style: const TextStyle(fontSize: 14)),
+        value: value,
+        onChanged: (v) => setState(() => onChanged(v)),
+      );
+
+  /// A colour swatch row. Null is the API's own readable default rather than a colour, which
+  /// is why "Default" is a choice and not simply white.
+  Widget _colorRow(ThemeData theme, String label, String? hex, ValueChanged<String?> onPicked,
+      {bool allowTransparent = false}) {
+    const swatches = [
+      '#000000', '#444444', '#FFFFFF', '#C62828',
+      '#1565C0', '#2E7D32', '#EF6C00', '#6A1B9A',
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: theme.textTheme.bodySmall),
+        const SizedBox(height: 4),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          ChoiceChip(
+            label: Text(L10n.of(context).colorDefault),
+            selected: hex == null,
+            onSelected: (_) => onPicked(null),
+          ),
+          if (allowTransparent)
+            ChoiceChip(
+              label: Text(L10n.of(context).colorTransparent),
+              selected: hex == '',
+              onSelected: (_) => onPicked(''),
+            ),
+          for (final swatch in swatches)
+            GestureDetector(
+              onTap: () => onPicked(swatch),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Color(0xFF000000 | int.parse(swatch.substring(1), radix: 16)),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: hex == swatch
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant,
+                      width: hex == swatch ? 2.5 : 1),
+                ),
+              ),
+            ),
+        ]),
+      ]),
+    );
+  }
+
+  String _borderStyleLabel(BuildContext context, engine.BorderStyleName style) => switch (style) {
+        engine.BorderStyleName.solid => L10n.of(context).borderSolid,
+        engine.BorderStyleName.dashed => L10n.of(context).borderDashed,
+        engine.BorderStyleName.beveled => L10n.of(context).borderBeveled,
+        engine.BorderStyleName.inset => L10n.of(context).borderInset,
+        engine.BorderStyleName.underline => L10n.of(context).borderUnderline,
       };
 
   Widget _field(TextEditingController c, String label, ValueChanged<String> onChanged,

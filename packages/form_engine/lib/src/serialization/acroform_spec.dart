@@ -117,6 +117,20 @@ class AcroFormSpecMapper {
           'function': f.calculation!.function.acrobatName,
           'fields': f.calculation!.fields.map((r) => nameFor(r.id)).toList(),
         },
+      // Appearance and behaviour are flattened onto the spec rather than nested, because that
+      // is the shape FormFieldSpec already has. They are stored nested; the wire is the
+      // backend's contract, not the draft's.
+      ...f.appearance.toJson(),
+      ...f.behaviour.toJson(),
+      // Only honoured when it lines up with the options, so sending a mismatched list would
+      // just be ignored — better to leave it out and keep the request small.
+      if (type.acceptsOptions &&
+          f.optionValues.length == f.options.length &&
+          f.optionValues.isNotEmpty)
+        'option_values': List<String>.from(f.optionValues),
+      if (f.buttonAction.isNotEmpty) 'action': f.buttonAction,
+      if (f.buttonTarget.isNotEmpty) 'action_target': f.buttonTarget,
+      if (f.caption.isNotEmpty) 'caption': f.caption,
     };
   }
 }
