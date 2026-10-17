@@ -161,7 +161,7 @@ class GroupOutlinePainter extends CustomPainter {
       }
     }
 
-    final tl = Offset.zero;
+    const tl = Offset.zero;
     final tr = Offset(size.width, 0);
     final br = Offset(size.width, size.height);
     final bl = Offset(0, size.height);
