@@ -370,7 +370,7 @@ class _PdfPreviewState extends State<PdfPreview> {
     final dir = File(_path).parent.path;
     final newPath = '$dir/${newBase.trim()}$ext';
     if (File(newPath).existsSync()) {
-      NotificationService.showSnackbar(text: L10n.current.fileExists, color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.fileExists, kind: SnackKind.error);
       return;
     }
     try {
@@ -378,9 +378,9 @@ class _PdfPreviewState extends State<PdfPreview> {
       FileStore().changed();
       if (!mounted) return;
       setState(() => _path = newPath);
-      NotificationService.showSnackbar(text: L10n.current.renamedSuccessfully, color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.renamedSuccessfully, kind: SnackKind.success);
     } catch (_) {
-      NotificationService.showSnackbar(text: L10n.current.renameFailed, color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.renameFailed, kind: SnackKind.error);
     }
   }
 
@@ -400,9 +400,9 @@ class _PdfPreviewState extends State<PdfPreview> {
       }
       await File(_path).copy(dest);
       FileStore().changed();
-      NotificationService.showSnackbar(text: L10n.current.savedToDownloads, color: Colors.green);
+      NotificationService.showSnackbar(text: L10n.current.savedToDownloads, kind: SnackKind.success);
     } catch (_) {
-      NotificationService.showSnackbar(text: L10n.current.saveToDownloadsFailed, color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.saveToDownloadsFailed, kind: SnackKind.error);
     }
   }
 

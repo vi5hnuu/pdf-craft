@@ -316,9 +316,9 @@ class _AccountScreenState extends State<AccountScreen> {
       try {
         await AuthService().reVerify(email);
         NotificationService.showSnackbar(
-            text: L10n.current.accountVerificationSent(email), color: Colors.green);
+            text: L10n.current.accountVerificationSent(email), kind: SnackKind.success);
       } on AuthException catch (e) {
-        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+        NotificationService.showSnackbar(text: e.message, kind: SnackKind.error);
       }
     });
   }
@@ -329,7 +329,7 @@ class _AccountScreenState extends State<AccountScreen> {
       text: verified
           ? L10n.current.accountVerifiedAllSet
           : L10n.current.accountNotVerifiedYet,
-      color: verified ? Colors.green : Colors.orange,
+      kind: verified ? SnackKind.success : SnackKind.warning,
     );
   });
 
@@ -348,9 +348,9 @@ class _AccountScreenState extends State<AccountScreen> {
         await AuthService()
             .updateProfile(firstName: name.first, lastName: name.last);
         NotificationService.showSnackbar(
-            text: L10n.current.accountProfileUpdated, color: Colors.green);
+            text: L10n.current.accountProfileUpdated, kind: SnackKind.success);
       } on AuthException catch (e) {
-        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+        NotificationService.showSnackbar(text: e.message, kind: SnackKind.error);
       }
     });
   }
@@ -365,9 +365,9 @@ class _AccountScreenState extends State<AccountScreen> {
       try {
         await AuthService().changePassword(pair.current, pair.next);
         NotificationService.showSnackbar(
-            text: L10n.current.accountPasswordUpdated, color: Colors.green);
+            text: L10n.current.accountPasswordUpdated, kind: SnackKind.success);
       } on AuthException catch (e) {
-        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+        NotificationService.showSnackbar(text: e.message, kind: SnackKind.error);
       }
     });
   }
@@ -375,7 +375,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _signOut() => _run(_actionSignOut, () async {
     await AuthService().logout();
     await CreditService().load();
-    NotificationService.showSnackbar(text: L10n.current.accountSignedOut, color: Colors.orange);
+    NotificationService.showSnackbar(text: L10n.current.accountSignedOut, kind: SnackKind.warning);
   });
 
   Future<void> _deleteAccount() async {
@@ -391,9 +391,9 @@ class _AccountScreenState extends State<AccountScreen> {
       try {
         await AuthService().deleteAccount();
         await CreditService().load();
-        NotificationService.showSnackbar(text: L10n.current.accountDeleted, color: Colors.orange);
+        NotificationService.showSnackbar(text: L10n.current.accountDeleted, kind: SnackKind.warning);
       } on AuthException catch (e) {
-        NotificationService.showSnackbar(text: e.message, color: Colors.red);
+        NotificationService.showSnackbar(text: e.message, kind: SnackKind.error);
       }
     });
   }

@@ -208,7 +208,7 @@ class _SignPdfViewState extends State<SignPdfView> {
     try {
       final bytes = await _exportCroppedSignature();
       if (bytes == null) {
-        NotificationService.showSnackbar(text: L10n.current.signatureCaptureFailed, color: Colors.red);
+        NotificationService.showSnackbar(text: L10n.current.signatureCaptureFailed, kind: SnackKind.error);
         return;
       }
       if (!mounted) return;

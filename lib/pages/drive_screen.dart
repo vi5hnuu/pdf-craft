@@ -133,7 +133,7 @@ class _DriveScreenState extends State<DriveScreen> {
       await FullScreenAdPolicy().runExternal(() => _drive.signIn());
       if (_drive.isSignedIn) await Future.wait([_loadFiles(), _loadStorage()]);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveSignInFailed, color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveSignInFailed, kind: SnackKind.error);
     } finally {
       if (mounted) setState(() => _signingIn = false);
     }
@@ -157,7 +157,7 @@ class _DriveScreenState extends State<DriveScreen> {
         });
       }
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveLoadFailed, color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveLoadFailed, kind: SnackKind.error);
     } finally {
       if (mounted) setState(() => _loadingFiles = false);
     }
@@ -227,10 +227,10 @@ class _DriveScreenState extends State<DriveScreen> {
       // Uploads land where the user is looking. They always went to the app's own folder before,
       // even when browsing somewhere else entirely.
       await _drive.uploadFile(file, parentId: _path.isEmpty ? null : _path.last.id);
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveUploaded, color: Colors.green);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveUploaded, kind: SnackKind.success);
       await Future.wait([_loadFiles(), _loadStorage()]);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveUploadFailed('$e'), color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveUploadFailed('$e'), kind: SnackKind.error);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -252,9 +252,9 @@ class _DriveScreenState extends State<DriveScreen> {
       final dest = File('${Constants.processedDirPath}/${tmpFile.path.split('/').last}');
       await tmpFile.copy(dest.path);
       FileStore().changed();
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloaded, color: Colors.green);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloaded, kind: SnackKind.success);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloadFailed('$e'), color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveDownloadFailed('$e'), kind: SnackKind.error);
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -270,7 +270,7 @@ class _DriveScreenState extends State<DriveScreen> {
         pathParameters: {'pdfFilePath': tmpFile.path},
       );
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveCouldNotOpen('$e'), color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveCouldNotOpen('$e'), kind: SnackKind.error);
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -295,14 +295,14 @@ class _DriveScreenState extends State<DriveScreen> {
     try {
       local = await _fetch(f);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveCouldNotFetch('$e'), color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveCouldNotFetch('$e'), kind: SnackKind.error);
       return;
     }
     if (!mounted) return;
 
     final tools = ToolRegistry.toolsForSelection([local]);
     if (tools.isEmpty) {
-      NotificationService.showSnackbar(text: L10n.current.driveNoToolsForType, color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.driveNoToolsForType, kind: SnackKind.warning);
       return;
     }
     ToolPickerSheet.show(
@@ -369,13 +369,13 @@ class _DriveScreenState extends State<DriveScreen> {
       await _drive.renameFile(f.id!, newName);
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.renamedSuccessfully, color: Colors.green);
+            text: L10n.current.renamedSuccessfully, kind: SnackKind.success);
       }
       await _loadFiles();
     } catch (e) {
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.renameFailed, color: Colors.red);
+            text: L10n.current.renameFailed, kind: SnackKind.error);
       }
     }
   }
@@ -405,13 +405,13 @@ class _DriveScreenState extends State<DriveScreen> {
       await _drive.deleteFile(f.id!);
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.driveDeleted, color: Colors.green);
+            text: L10n.current.driveDeleted, kind: SnackKind.success);
       }
       await Future.wait([_loadFiles(), _loadStorage()]);
     } catch (e) {
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.driveDeleteFailed('$e'), color: Colors.red);
+            text: L10n.current.driveDeleteFailed('$e'), kind: SnackKind.error);
       }
     }
   }
@@ -430,13 +430,13 @@ class _DriveScreenState extends State<DriveScreen> {
           parentId: _path.isEmpty ? null : _path.last.id);
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.driveFolderCreated, color: Colors.green);
+            text: L10n.current.driveFolderCreated, kind: SnackKind.success);
       }
       await _loadFiles();
     } catch (e) {
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.driveUploadFailed('$e'), color: Colors.red);
+            text: L10n.current.driveUploadFailed('$e'), kind: SnackKind.error);
       }
     }
   }
@@ -449,7 +449,7 @@ class _DriveScreenState extends State<DriveScreen> {
       if (!mounted) return;
       await Share.shareXFiles([XFile(local.path)]);
     } catch (e) {
-      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveShareFailed('$e'), color: Colors.red);
+      if (mounted) NotificationService.showSnackbar(text: L10n.current.driveShareFailed('$e'), kind: SnackKind.error);
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }

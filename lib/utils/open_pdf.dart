@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart' show BuildContext, Colors, Navigator;
+import 'package:flutter/material.dart' show BuildContext, Navigator;
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
@@ -23,7 +23,7 @@ Future<PdfDocument?> openPdfOrReport(File file) async {
       text: _isPasswordProtected(e)
           ? L10n.current.errPdfPasswordProtected
           : L10n.current.errPdfUnreadable,
-      color: Colors.red,
+      kind: SnackKind.error,
       // Longer than the 2s default: this one explains why the screen the user just opened is
       // about to close again, so they need time to actually read it.
       duration: const Duration(seconds: 5),

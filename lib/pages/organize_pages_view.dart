@@ -73,7 +73,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
 
   void _deleteAt(int i) {
     if (_order.length <= 1) {
-      NotificationService.showSnackbar(text: L10n.current.needAtLeastOnePage, color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.needAtLeastOnePage, kind: SnackKind.warning);
       return;
     }
     setState(() => _order.removeAt(i));

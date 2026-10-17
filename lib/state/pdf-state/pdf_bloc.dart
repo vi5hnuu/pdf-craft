@@ -69,7 +69,6 @@ import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/utils/output_filename.dart';
 import 'package:pdf_craft/utils/processed_dirs.dart';
-import 'package:flutter/material.dart' show Colors;
 import '../../models/http_state.dart';
 part 'pdf_event.dart';
 part 'pdf_state.dart';
@@ -588,7 +587,7 @@ class PdfBloc extends Bloc<PdfEvent, PdfState> {
     final saved = await _writeTo(await ProcessedDirs.appPrivate(), suggested, fileRes.data!);
     // Said plainly, because the file is somewhere the user did not choose and would not find.
     NotificationService.showSnackbar(
-        text: L10n.current.errSavedToAppStorage, color: Colors.orange);
+        text: L10n.current.errSavedToAppStorage, kind: SnackKind.warning);
     return saved;
   }
 

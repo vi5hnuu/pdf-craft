@@ -54,7 +54,7 @@ class _AnalyzePdfViewState extends State<AnalyzePdfView>
         listenWhen: (p, c) => p.httpStates[HttpStates.analyzePdf] != c.httpStates[HttpStates.analyzePdf],
         listener: (context, state) {
           final s = state.httpStates[HttpStates.analyzePdf];
-          if (s?.error != null) NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
+          if (s?.error != null) NotificationService.showSnackbar(text: s!.error!, kind: SnackKind.error);
         },
         builder: (context, state) {
           final s = state.httpStates[HttpStates.analyzePdf];

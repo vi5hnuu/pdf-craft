@@ -451,7 +451,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
   Future<void> _onSave() async {
     if (_annotations.isEmpty) {
       NotificationService.showSnackbar(
-          text: L10n.current.annotateNothingToSave, color: Colors.orange);
+          text: L10n.current.annotateNothingToSave, kind: SnackKind.warning);
       return;
     }
 
@@ -632,7 +632,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
     } catch (e) {
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.saveFailedWith('$e'), color: Colors.red);
+            text: L10n.current.saveFailedWith('$e'), kind: SnackKind.error);
       }
     } finally {
       if (mounted) setState(() => _saving = false);

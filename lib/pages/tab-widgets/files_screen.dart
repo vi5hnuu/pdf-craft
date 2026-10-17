@@ -297,12 +297,12 @@ class _FilesScreenState extends State<FilesScreen> with WidgetsBindingObserver {
         } else {
           NotificationService.showSnackbar(
               text: L10n.current.errStoragePermissionNeeded,
-              color: Colors.red);
+              kind: SnackKind.error);
         }
       }
     } catch (e) {
       NotificationService.showSnackbar(
-          text: L10n.current.errSomethingWrong, color: Colors.red);
+          text: L10n.current.errSomethingWrong, kind: SnackKind.error);
     }
   }
 

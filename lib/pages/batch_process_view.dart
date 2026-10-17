@@ -234,7 +234,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
       final err = _items.where((i) => i.status == _FileStatus.error).length;
       NotificationService.showSnackbar(
         text: L10n.current.batchComplete(done, err),
-        color: done == _items.length ? Colors.green : Colors.orange,
+        kind: done == _items.length ? SnackKind.success : SnackKind.warning,
       );
       return;
     }

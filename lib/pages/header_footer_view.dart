@@ -335,7 +335,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
     // it. Proven on device: balance 3 -> 2 for a run that produced a copy of the input.
     if (_headerTextC.text.trim().isEmpty && _footerTextC.text.trim().isEmpty) {
       NotificationService.showSnackbar(
-          text: L10n.current.errHeaderFooterEmpty, color: Colors.orange);
+          text: L10n.current.errHeaderFooterEmpty, kind: SnackKind.warning);
       return;
     }
     // Checked before anything is spent. "From 99, To 2" on a three-page document used to be
@@ -347,7 +347,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
       _pageCount ?? 0,
     );
     if (rangeError != null) {
-      NotificationService.showSnackbar(text: rangeError, color: Colors.orange);
+      NotificationService.showSnackbar(text: rangeError, kind: SnackKind.warning);
       return;
     }
     // Saved on use rather than on every keystroke: what the user actually ran with is the

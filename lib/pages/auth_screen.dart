@@ -337,7 +337,7 @@ class _AuthScreenState extends State<AuthScreen> {
         );
         if (!mounted) return;
         NotificationService.showSnackbar(
-            text: L10n.current.authAccountCreated, color: Colors.green);
+            text: L10n.current.authAccountCreated, kind: SnackKind.success);
         // Land on the account hub so the "verify your email" path is front and centre.
         context.pushReplacementNamed(AppRoutes.accountRoute.name);
       } else {
@@ -390,9 +390,9 @@ class _AuthScreenState extends State<AuthScreen> {
               Navigator.of(ctx).pop();
               try {
                 final msg = await AuthService().reVerify(email);
-                NotificationService.showSnackbar(text: msg, color: Colors.green);
+                NotificationService.showSnackbar(text: msg, kind: SnackKind.success);
               } on AuthException catch (e) {
-                NotificationService.showSnackbar(text: e.message, color: Colors.red);
+                NotificationService.showSnackbar(text: e.message, kind: SnackKind.error);
               }
             },
           ),
@@ -499,11 +499,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
   void _done(String message) {
     if (!mounted) return;
-    NotificationService.showSnackbar(text: message, color: Colors.green);
+    NotificationService.showSnackbar(text: message, kind: SnackKind.success);
     Navigator.of(context).pop();
   }
 
   void _fail(String message) {
-    NotificationService.showSnackbar(text: message, color: Colors.red);
+    NotificationService.showSnackbar(text: message, kind: SnackKind.error);
   }
 }

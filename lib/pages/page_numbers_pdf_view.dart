@@ -360,7 +360,7 @@ class _PageNumberPdfViewState extends State<PageNumberPdfView>
   void _onSubmit() async {
     final fontSize = int.tryParse(_fontSizeC.text);
     if (fontSize == null || fontSize < 4) {
-      NotificationService.showSnackbar(text: L10n.current.invalidFontSize, color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.invalidFontSize, kind: SnackKind.error);
       return;
     }
     final uploadFile = await readForUpload(widget.file);

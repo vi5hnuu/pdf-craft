@@ -135,10 +135,10 @@ class CreditGate {
                                 text: granted > 0
                                     ? L10n.current.gateAdReward
                                     : L10n.current.creditsRewardUnconfirmed,
-                                color: granted > 0 ? Colors.green : Colors.orange);
+                                kind: granted > 0 ? SnackKind.success : SnackKind.warning);
                           },
                           onUnavailable: () => NotificationService.showSnackbar(
-                              text: L10n.current.gateAdUnavailable, color: Colors.orange),
+                              text: L10n.current.gateAdUnavailable, kind: SnackKind.warning),
                         );
                       },
                       child: Text(L10n.of(ctx).gateWatchAd),

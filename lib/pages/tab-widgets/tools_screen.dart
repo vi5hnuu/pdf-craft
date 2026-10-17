@@ -423,7 +423,7 @@ class ToolCard extends StatelessWidget {
       text: nowFav
           ? L10n.current.toolAddedToFavorites(name)
           : L10n.current.toolRemovedFromFavorites(name),
-      color: nowFav ? Colors.amber : Colors.blueGrey,
+      kind: nowFav ? SnackKind.success : SnackKind.info,
       duration: const Duration(seconds: 2),
     );
   }

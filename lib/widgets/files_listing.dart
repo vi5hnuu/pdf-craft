@@ -48,13 +48,13 @@ class _FilesListingState extends State<FilesListing> {
         final httpState = state.httpStates[HttpStates.pageNumbers];
         if (httpState?.done == true) {
           NotificationService.showSnackbar(
-              text: L10n.current.fileDeleteSuccess, color: Colors.green);
+              text: L10n.current.fileDeleteSuccess, kind: SnackKind.success);
         } else if (httpState?.error != null) {
           NotificationService.showSnackbar(
-              text: httpState!.error!, color: Colors.red);
+              text: httpState!.error!, kind: SnackKind.error);
         } else if (httpState?.loading == true) {
           NotificationService.showSnackbar(
-              text: L10n.current.deletingFile, color: Colors.lightBlue);
+              text: L10n.current.deletingFile, kind: SnackKind.info);
         }
       },
       // PopScope so back closes the preview before it leaves the screen. In two pane nothing

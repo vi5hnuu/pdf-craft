@@ -129,7 +129,7 @@ class _NestedTabNavigationExampleAppState
     // screen, with no way to tell whether the share had even arrived.
     if (incoming.allFailed) {
       NotificationService.showSnackbar(
-          text: L10n.current.errSharedFileUnreadable, color: Colors.red);
+          text: L10n.current.errSharedFileUnreadable, kind: SnackKind.error);
       return;
     }
     if (incoming.isEmpty) return;

@@ -385,7 +385,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
     final w = int.tryParse(_widthC.text.trim());
     final h = int.tryParse(_heightC.text.trim());
     if (w == null && h == null) {
-      NotificationService.showSnackbar(text: L10n.current.enterDimension, color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.enterDimension, kind: SnackKind.warning);
       return;
     }
     final uploadFile = await readForUpload(widget.file);

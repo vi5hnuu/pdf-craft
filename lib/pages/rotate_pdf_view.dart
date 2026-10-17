@@ -388,12 +388,12 @@ class _RotatePdfViewState extends State<RotatePdfView>
     final angle = int.tryParse(pageAngleC.text);
     if (pNo == null || pNo < 1 || pNo > (document?.pagesCount ?? 0)) {
       NotificationService.showSnackbar(
-          text: L10n.current.invalidPageNumber, color: Colors.red);
+          text: L10n.current.invalidPageNumber, kind: SnackKind.error);
       return;
     }
     if (angle == null) {
       NotificationService.showSnackbar(
-          text: L10n.current.invalidAngle, color: Colors.red);
+          text: L10n.current.invalidAngle, kind: SnackKind.error);
       return;
     }
     setState(() => pageAngles.put(pNo, angle));

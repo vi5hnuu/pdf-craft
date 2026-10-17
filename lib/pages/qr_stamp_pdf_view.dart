@@ -153,7 +153,7 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
         },
       );
     } catch (e) {
-      NotificationService.showSnackbar(text: L10n.current.failedWith('$e'), color: Colors.red);
+      NotificationService.showSnackbar(text: L10n.current.failedWith('$e'), kind: SnackKind.error);
     } finally {
       if (mounted) setState(() => _capturing = false);
     }

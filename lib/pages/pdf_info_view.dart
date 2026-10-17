@@ -52,7 +52,7 @@ class _PdfInfoViewState extends State<PdfInfoView>
         listener: (context, state) {
           final s = state.httpStates[HttpStates.getMetadata];
           if (s?.error != null) {
-            NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
+            NotificationService.showSnackbar(text: s!.error!, kind: SnackKind.error);
           }
         },
         builder: (context, state) {

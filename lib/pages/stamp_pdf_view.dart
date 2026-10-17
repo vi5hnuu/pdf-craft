@@ -277,7 +277,7 @@ class _StampPdfViewState extends State<StampPdfView>
       _pageCount,
     );
     if (rangeError != null) {
-      NotificationService.showSnackbar(text: rangeError, color: Colors.orange);
+      NotificationService.showSnackbar(text: rangeError, kind: SnackKind.warning);
       return;
     }
     final range = resolvePageRange(

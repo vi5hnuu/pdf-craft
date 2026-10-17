@@ -105,7 +105,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
           } else if (getState?.error != null) {
             setState(() => _loadedOnce = true);
             NotificationService.showSnackbar(
-                text: L10n.current.bookmarksLoadFailed, color: Colors.red);
+                text: L10n.current.bookmarksLoadFailed, kind: SnackKind.error);
           }
 
           final editState = state.httpStates[HttpStates.editBookmarks];
@@ -120,7 +120,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               _loadBookmarks();
               NotificationService.showSnackbar(
                 text: L10n.current.bookmarksSaved,
-                color: Colors.green,
+                kind: SnackKind.success,
                 action: SnackBarAction(
                   label: L10n.current.viewPdf,
                   textColor: Colors.white,
@@ -132,7 +132,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               );
             }
           } else if (editState?.error != null) {
-            NotificationService.showSnackbar(text: editState!.error!, color: Colors.red);
+            NotificationService.showSnackbar(text: editState!.error!, kind: SnackKind.error);
           }
         },
         builder: (context, state) {

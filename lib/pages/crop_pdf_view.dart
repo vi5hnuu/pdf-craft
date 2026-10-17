@@ -394,7 +394,7 @@ class _CropPdfViewState extends State<CropPdfView>
         _cropLeft < noTrim &&
         _cropRight < noTrim) {
       NotificationService.showSnackbar(
-          text: L10n.current.errCropNothingToTrim, color: Colors.orange);
+          text: L10n.current.errCropNothingToTrim, kind: SnackKind.warning);
       return;
     }
     final uploadFile = await readForUpload(widget.file);

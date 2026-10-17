@@ -241,7 +241,7 @@ class _ErrorpageState extends State<Errorpage> {
         setState(() => _permanentlyDenied = permanentlyDenied);
         if (!permanentlyDenied) {
           NotificationService.showSnackbar(
-              text: L10n.current.permDenied, color: Colors.red);
+              text: L10n.current.permDenied, kind: SnackKind.error);
         }
       }
     } finally {

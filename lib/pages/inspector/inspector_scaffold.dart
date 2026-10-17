@@ -83,7 +83,7 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
     await Clipboard.setData(ClipboardData(text: _json));
     if (mounted) {
       NotificationService.showSnackbar(
-          text: L10n.current.copiedToClipboard, color: Colors.green);
+          text: L10n.current.copiedToClipboard, kind: SnackKind.success);
     }
   }
 
@@ -101,7 +101,7 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
     } catch (e) {
       if (mounted) {
         NotificationService.showSnackbar(
-            text: L10n.current.errToolFailed, color: Colors.red);
+            text: L10n.current.errToolFailed, kind: SnackKind.error);
       }
     }
   }

@@ -152,7 +152,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
   void _onAdd() async {
     final positions = _parsePositions();
     if (positions.isEmpty) {
-      NotificationService.showSnackbar(text: L10n.current.enterPagePosition, color: Colors.orange);
+      NotificationService.showSnackbar(text: L10n.current.enterPagePosition, kind: SnackKind.warning);
       return;
     }
     // "2, abc, 99" on a three-page document used to insert a single blank and drop the other two
@@ -163,7 +163,7 @@ class _AddBlankPagesViewState extends State<AddBlankPagesView>
       _pageCount,
     );
     if (positionError != null) {
-      NotificationService.showSnackbar(text: positionError, color: Colors.orange);
+      NotificationService.showSnackbar(text: positionError, kind: SnackKind.warning);
       return;
     }
     final uploadFile = await readForUpload(widget.file);

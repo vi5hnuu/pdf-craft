@@ -97,7 +97,7 @@ class _ObjectExplorerViewState extends State<ObjectExplorerView>
               final s = state.httpStates[HttpStates.exploreObjects];
               if (s?.done == true) _absorb(s?.extras?['report']);
               if (s?.error != null) {
-                NotificationService.showSnackbar(text: s!.error!, color: Colors.red);
+                NotificationService.showSnackbar(text: s!.error!, kind: SnackKind.error);
               }
             },
             builder: (context, state) {
