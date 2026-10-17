@@ -13,6 +13,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -269,8 +270,11 @@ class InspectorFlag extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(children: [
+        // Scheme roles rather than palette colours: Colors.green measured 2.78:1 on the
+        // light card, under the 3:1 a meaningful glyph needs.
         Icon(value ? Icons.check_circle : Icons.cancel,
-            size: 18, color: good ? Colors.green : Colors.red.shade400),
+            size: 18,
+            color: good ? AppSemanticColors.of(context).success : theme.colorScheme.error),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
       ]),
@@ -313,17 +317,24 @@ class SeverityChip extends StatelessWidget {
   final String label;
   const SeverityChip(this.severity, this.label, {super.key});
 
-  static Color colorFor(String severity) => switch (severity) {
-        'high' => Colors.red,
-        'medium' => Colors.orange,
-        'low' => Colors.amber.shade800,
-        'clean' => Colors.green,
-        _ => Colors.blueGrey,
-      };
+  /// The palette this used was picked against the dark card and never re-checked against
+  /// white, where it measured 1.97:1 for medium, 2.07 for low and 2.48 for clean — the
+  /// scanner's primary readout, illegible in light mode. These roles clear 4.5:1 in both.
+  static Color colorFor(BuildContext context, String severity) {
+    final theme = Theme.of(context);
+    final semantic = AppSemanticColors.of(context);
+    return switch (severity) {
+      'high' => theme.colorScheme.error,
+      'medium' => semantic.warning,
+      'low' => semantic.info,
+      'clean' => semantic.success,
+      _ => theme.colorScheme.onSurfaceVariant,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    final c = colorFor(severity);
+    final c = colorFor(context, severity);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

@@ -110,20 +110,29 @@ class _SignPdfViewState extends State<SignPdfView> {
                   clipBehavior: Clip.antiAlias,
                   child: Stack(children: [
                     // Signature guide line.
+                    //
+                    // The pad is deliberately white in both themes, so these are fixed greys
+                    // rather than scheme roles. They were shade300/shade400 — 1.32:1 against
+                    // that white, which made the one piece of copy saying the box is
+                    // interactive unreadable. #8A8A8A clears 3:1, the floor for large text and
+                    // for a graphical object like the rule.
                     Positioned(
                       left: 24,
                       right: 24,
                       bottom: 48,
                       child: Row(children: [
-                        Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+                        const Icon(Icons.close, size: 16, color: Color(0xFF757575)),
                         const SizedBox(width: 8),
-                        Expanded(child: Container(height: 1.5, color: Colors.grey.shade300)),
+                        Expanded(child: Container(height: 1.5, color: const Color(0xFF8A8A8A))),
                       ]),
                     ),
                     if (!_hasStrokes)
                       Center(
                         child: Text(L10n.of(context).signHere,
-                            style: TextStyle(color: Colors.grey.shade300, fontSize: 28, fontStyle: FontStyle.italic)),
+                            style: const TextStyle(
+                                color: Color(0xFF8A8A8A),
+                                fontSize: 28,
+                                fontStyle: FontStyle.italic)),
                       ),
                     DrawingPad(
                       controller: _pad,

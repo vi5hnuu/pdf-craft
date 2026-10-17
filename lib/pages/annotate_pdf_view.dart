@@ -26,6 +26,7 @@ import 'dart:ui' as ui;
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -396,7 +397,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
       } else {
         final a = StickyAnnotation(
           page: _currentPage - 1,
-          color: Colors.amber,
+          color: AppSemanticColors.of(context).warning,
           bounds: Rect.fromLTWH(at.dx, at.dy, 0.05, 0.035),
           text: text,
           opacity: _opacity,
@@ -1176,7 +1177,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+              icon: Icon(Icons.delete_outline, size: 20, color: Theme.of(context).colorScheme.error),
               tooltip: l.annotateDeleteMark,
               onPressed: () {
                 _pushUndo();

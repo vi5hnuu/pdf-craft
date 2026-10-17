@@ -21,7 +21,8 @@ class PageRangeSelector extends StatefulWidget {
   /// 0-indexed selected pages. Empty means every page.
   final Set<int> selected;
   final ValueChanged<Set<int>> onChanged;
-  final Color accent;
+  /// Selection colour, or null for the brand primary.
+  final Color? accent;
 
   /// Opens straight into the grid, skipping the collapsed summary row — used when the caller
   /// has already committed the screen space, as the modal form has.
@@ -32,7 +33,7 @@ class PageRangeSelector extends StatefulWidget {
     required this.file,
     required this.selected,
     required this.onChanged,
-    this.accent = Colors.blue,
+    this.accent,
     this.startExpanded = false,
   });
 
@@ -48,7 +49,7 @@ class PageRangeSelector extends StatefulWidget {
     BuildContext context, {
     required File file,
     required Set<int> selected,
-    Color accent = Colors.blue,
+    Color? accent,
   }) {
     return showModalBottomSheet<Set<int>>(
       context: context,
@@ -74,7 +75,7 @@ class PageRangeSelector extends StatefulWidget {
 class _PageRangeSheet extends StatefulWidget {
   final File file;
   final Set<int> initial;
-  final Color accent;
+  final Color? accent;
 
   const _PageRangeSheet({required this.file, required this.initial, required this.accent});
 

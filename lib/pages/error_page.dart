@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -105,11 +106,11 @@ class _ErrorpageState extends State<Errorpage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.10),
+                      color: AppSemanticColors.of(context).warning.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(AppRadius.surface),
                     ),
                     child: Row(children: [
-                      const Icon(Icons.info_outline, size: 18, color: Colors.orange),
+                      Icon(Icons.info_outline, size: 18, color: AppSemanticColors.of(context).warning),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(

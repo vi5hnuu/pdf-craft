@@ -200,7 +200,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
                   tooltip: L10n.of(context).removePage,
                   onPressed: () => _deleteAt(i),
                 ),

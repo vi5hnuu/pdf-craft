@@ -219,7 +219,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
               onPressed: () => _showEditDialog(i),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+              icon: Icon(Icons.delete_outline, size: 20, color: Theme.of(context).colorScheme.error),
               tooltip: L10n.of(context).delete,
               onPressed: () => setState(() => _bookmarks.removeAt(i)),
             ),

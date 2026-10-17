@@ -367,7 +367,7 @@ class _RedactBox extends StatelessWidget {
             height: r.height,
             decoration: BoxDecoration(
               color: Colors.black,
-              border: selected ? Border.all(color: Colors.blueAccent, width: 2) : null,
+              border: selected ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2) : null,
             ),
           ),
           if (selected) ...[
@@ -385,7 +385,7 @@ class _RedactBox extends StatelessWidget {
                 child: Container(
                   width: 24,
                   height: 24,
-                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.error, shape: BoxShape.circle),
                   child: const Icon(Icons.close, color: Colors.white, size: 14),
                 ),
               ),
@@ -406,7 +406,7 @@ class _RedactBox extends StatelessWidget {
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent,
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),

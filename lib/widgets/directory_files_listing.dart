@@ -570,18 +570,19 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
 
   Widget _infoRow(IconData icon, String label, String value,
       {bool copyable = false}) {
+    // Every label in this sheet was Colors.grey at 11px: 2.68:1 on the white card.
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.grey),
+        Icon(icon, size: 18, color: muted),
         const SizedBox(width: 10),
         // Expanded so long values (e.g. paths) wrap instead of overflowing.
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              Text(label, style: TextStyle(fontSize: 11, color: muted)),
               const SizedBox(height: 2),
               Text(value, style: const TextStyle(fontSize: 13)),
             ],

@@ -62,7 +62,7 @@ class SecurityScannerView extends StatelessWidget {
     final uris = (r['externalUris'] as List? ?? const []).map((e) => '$e').toList();
     final embedded = (r['embeddedFiles'] as List? ?? const []).map((e) => '$e').toList();
 
-    final riskColor = SeverityChip.colorFor(risk);
+    final riskColor = SeverityChip.colorFor(context, risk);
     final riskText = switch (risk) {
       'high' => l.inspRiskHigh,
       'medium' => l.inspRiskMedium,

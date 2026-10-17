@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -210,7 +211,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
                             Text(
                               L10n.of(context).previewApproximate,
                               style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: Colors.amber),
+                                  ?.copyWith(color: AppSemanticColors.of(context).warning),
                             ),
                             const SizedBox(height: 16),
 

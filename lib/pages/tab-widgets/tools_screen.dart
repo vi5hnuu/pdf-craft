@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/routes.dart';
@@ -254,7 +255,7 @@ class _FavoriteToolsRow extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(children: [
-            const Icon(Icons.star, size: 16, color: Colors.amber),
+            Icon(Icons.star, size: 16, color: AppSemanticColors.of(context).warning),
             const SizedBox(width: 6),
             Text(L10n.of(context).favorites,
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),

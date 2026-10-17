@@ -143,9 +143,9 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.30),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.30),
                 borderRadius: BorderRadius.circular(AppRadius.surface),
-                border: Border.all(color: Colors.blue, width: 2),
+                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
               ),
               child: Center(
                 child: Container(

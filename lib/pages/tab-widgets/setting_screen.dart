@@ -212,7 +212,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     onTap: () => GoRouter.of(context).pushNamed(AppRoutes.resultsRoute.name),
                     trailing: TextButton(
                       onPressed: _processedFileCount == 0 ? null : _clearCache,
-                      child: Text(L10n.of(context).clear, style: const TextStyle(color: Colors.red)),
+                      child: Text(L10n.of(context).clear, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   ),
                 ]),

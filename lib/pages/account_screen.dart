@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/auth/auth_user.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -260,7 +261,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _verifiedTile(ThemeData theme) {
     return Card(
       child: ListTile(
-        leading: Icon(Icons.verified_outlined, color: Colors.green.shade600),
+        leading: Icon(Icons.verified_outlined, color: AppSemanticColors.of(context).success),
         title: Text(L10n.of(context).accountEmailVerified),
         subtitle: Text(L10n.of(context).accountFullySetUp),
       ),

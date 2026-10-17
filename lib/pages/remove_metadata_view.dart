@@ -85,7 +85,7 @@ class _RemoveMetadataViewState extends State<RemoveMetadataView>
                               dense: true,
                               leading: Icon(stripped[i].$2, size: 20, color: theme.colorScheme.primary),
                               title: Text(stripped[i].$1),
-                              trailing: const Icon(Icons.close, size: 16, color: Colors.red),
+                              trailing: Icon(Icons.close, size: 16, color: Theme.of(context).colorScheme.error),
                             ),
                           ],
                         ],

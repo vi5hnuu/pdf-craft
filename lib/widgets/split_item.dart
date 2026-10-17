@@ -53,7 +53,7 @@ class SplitItem extends StatelessWidget {
           )
         ],
       ),
-      if(onDelete!=null) Positioned(top: 0,right: 30,child: IconButton(onPressed: onDelete, tooltip: L10n.of(context).delete, icon: const Icon(Icons.delete,color: Colors.red,),))
+      if(onDelete!=null) Positioned(top: 0,right: 30,child: IconButton(onPressed: onDelete, tooltip: L10n.of(context).delete, icon: Icon(Icons.delete,color: Theme.of(context).colorScheme.error,),))
     ],);
   }
 }

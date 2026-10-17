@@ -751,7 +751,7 @@ class _DriveScreenState extends State<DriveScreen> {
             child: ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                leading: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
                 title: Text(L10n.of(ctx).delete)),
           ),
         ],
@@ -841,7 +841,7 @@ class _DriveScreenState extends State<DriveScreen> {
   /// errorBuilder rather than a bare Image.network.
   Widget _thumbnail(drive.File f, String name) {
     final link = f.thumbnailLink;
-    if (link == null || link.isEmpty) return _fileIconBox(name, f.mimeType);
+    if (link == null || link.isEmpty) return _fileIconBox(context, name, f.mimeType);
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.surface),
       child: Image.network(
@@ -849,32 +849,50 @@ class _DriveScreenState extends State<DriveScreen> {
         width: 40,
         height: 40,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _fileIconBox(name, f.mimeType),
+        errorBuilder: (c, __, ___) => _fileIconBox(c, name, f.mimeType),
       ),
     );
   }
 
-  Widget _fileIconBox(String name, String? mimeType) {
+  /// The typed file-kind tile.
+  ///
+  /// The tile used to be a `shadeN` pastel with `Icon(color: null)`, which inherits
+  /// `IconTheme` — white in the dark theme. White on `red.shade100` measures 1.41:1, so in dark
+  /// mode every non-grey tile was a blank pastel square; the grey branch managed only 2.31:1 in
+  /// both. Each kind now carries a foreground that reads on its own theme, and the tile is a
+  /// wash of that same colour, so the two can never drift apart again.
+  Widget _fileIconBox(BuildContext context, String name, String? mimeType) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
     final mime = mimeType ?? '';
-    final Color bg;
+    final Color fg;
     final IconData icon;
     if (mime == 'application/pdf') {
-      bg = Colors.red.shade100; icon = Icons.picture_as_pdf_outlined;
+      fg = dark ? const Color(0xFFEF9A9A) : const Color(0xFFC62828);
+      icon = Icons.picture_as_pdf_outlined;
     } else if (mime.startsWith('image/')) {
-      bg = Colors.teal.shade100; icon = Icons.image_outlined;
+      fg = dark ? const Color(0xFF80CBC4) : const Color(0xFF00695C);
+      icon = Icons.image_outlined;
     } else if (mime.contains('word')) {
-      bg = Colors.blue.shade100; icon = Icons.description_outlined;
+      fg = dark ? const Color(0xFF90CAF9) : const Color(0xFF1565C0);
+      icon = Icons.description_outlined;
     } else if (mime.contains('excel') || mime.contains('spreadsheet')) {
-      bg = Colors.green.shade100; icon = Icons.table_chart_outlined;
+      fg = dark ? const Color(0xFFA5D6A7) : const Color(0xFF2E7D32);
+      icon = Icons.table_chart_outlined;
     } else if (mime.contains('presentation') || mime.contains('powerpoint')) {
-      bg = Colors.orange.shade100; icon = Icons.slideshow_outlined;
+      fg = dark ? const Color(0xFFFFCC80) : const Color(0xFFE65100);
+      icon = Icons.slideshow_outlined;
     } else {
-      bg = Colors.grey.shade200; icon = Icons.insert_drive_file_outlined;
+      fg = theme.colorScheme.onSurfaceVariant;
+      icon = Icons.insert_drive_file_outlined;
     }
     return Container(
-      width: 40, height: 40,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.surface)),
-      child: Icon(icon, color: bg == Colors.grey.shade200 ? Colors.grey : null),
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+          color: fg.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(AppRadius.surface)),
+      child: Icon(icon, color: fg),
     );
   }
 }
