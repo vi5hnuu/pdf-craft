@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -118,7 +119,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'header-footer'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
         listenWhen: (p, c) => p.httpStates[HttpStates.headerFooter] != c.httpStates[HttpStates.headerFooter],
@@ -128,7 +129,7 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(

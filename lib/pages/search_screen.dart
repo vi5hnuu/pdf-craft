@@ -141,7 +141,6 @@ class _SearchScreenState extends State<SearchScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          elevation: 5,
           leading: const Padding(
             padding: EdgeInsets.only(left: 16.0),
             child: AppLogo(width: 112, fit: BoxFit.fitWidth),

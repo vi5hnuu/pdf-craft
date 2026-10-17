@@ -106,7 +106,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'rotate'))),
-      body: ToolPane(child: FutureBuilder(
+      body: ToolPane(canvas: true, child: FutureBuilder(
         future: _pdfController.document,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {

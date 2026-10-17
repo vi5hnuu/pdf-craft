@@ -693,7 +693,7 @@ class _FormEditorViewState extends State<FormEditorView>
           ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
         listenWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
         listener: (context, state) => handleToolState(

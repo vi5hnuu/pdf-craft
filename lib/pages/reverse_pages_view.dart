@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -62,7 +63,7 @@ class _ReversePagesViewState extends State<ReversePagesView>
             Column(children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: AppSpacing.screenPadding,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

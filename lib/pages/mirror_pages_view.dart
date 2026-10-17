@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/enum_labels.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -50,7 +51,7 @@ class _MirrorPagesViewState extends State<MirrorPagesView>
             Column(children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.screenPadding,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(L10n.of(context).flipDirection, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),

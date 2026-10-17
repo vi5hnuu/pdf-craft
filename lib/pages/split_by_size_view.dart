@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -65,7 +66,7 @@ class _SplitBySizeViewState extends State<SplitBySizeView>
             Column(children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.screenPadding,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(L10n.of(context).maxSizePerPart,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),

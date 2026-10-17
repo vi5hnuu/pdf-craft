@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -131,7 +132,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
             ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) =>
             p.httpStates[HttpStates.organizePages] != c.httpStates[HttpStates.organizePages],
         buildWhen: (p, c) =>
@@ -181,7 +182,7 @@ class _OrganizePagesViewState extends State<OrganizePagesView>
             elevation: 1,
             borderRadius: BorderRadius.circular(AppRadius.surface),
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: AppSpacing.screenPadding,
               child: Row(children: [
                 // Thumbnail (cached after first render).
                 ClipRRect(

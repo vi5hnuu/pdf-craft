@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -40,7 +41,7 @@ class _EditMetadataViewState extends State<EditMetadataView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'edit-metadata')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'edit-metadata'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.editMetadata] != c.httpStates[HttpStates.editMetadata],
         listenWhen: (p, c) => p.httpStates[HttpStates.editMetadata] != c.httpStates[HttpStates.editMetadata],
@@ -50,7 +51,7 @@ class _EditMetadataViewState extends State<EditMetadataView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(

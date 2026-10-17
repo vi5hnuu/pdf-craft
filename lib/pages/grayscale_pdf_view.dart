@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -40,7 +41,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'grayscale')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'grayscale'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.grayscalePdf] != c.httpStates[HttpStates.grayscalePdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.grayscalePdf] != c.httpStates[HttpStates.grayscalePdf],
@@ -55,7 +56,7 @@ class _GrayscalePdfViewState extends State<GrayscalePdfView>
                   // selector's 260dp grid, about 530dp of content against the ~290dp left when
                   // the keyboard opens for the filename, and the Spacer could not absorb it.
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                    padding: AppSpacing.screenPadding,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

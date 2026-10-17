@@ -13,6 +13,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -147,19 +148,7 @@ class _InspectorScaffoldState extends State<InspectorScaffold>
                     child: SpinKitThreeBounce(color: theme.colorScheme.primary, size: 36));
               }
               if (s.error != null) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.error_outline, size: 56, color: Colors.red),
-                      const SizedBox(height: 12),
-                      Text(s.error!, textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      FilledButton(
-                          onPressed: _fetch, child: Text(L10n.of(context).retry)),
-                    ]),
-                  ),
-                );
+                return ToolErrorState(message: s.error, onRetry: _fetch);
               }
               final report = _report ?? s.extras?[widget.extrasKey];
               if (report == null) {

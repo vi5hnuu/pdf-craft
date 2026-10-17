@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -56,7 +57,6 @@ class _ProtectPdfViewState extends State<ProtectPdfView>
     return Scaffold(
       appBar: AppBar(
         title: Text(ToolStrings.name(context, 'protect')),
-        elevation: 5,
       ),
       body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
         buildWhen: (previous, current) => previous.httpStates[HttpStates.protectPdf]!=current.httpStates[HttpStates.protectPdf],
@@ -81,7 +81,7 @@ class _ProtectPdfViewState extends State<ProtectPdfView>
                 Form(
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: AppSpacing.screenPadding,
                   child: Flex(
                     direction: Axis.vertical,
                     mainAxisSize: MainAxisSize.max,

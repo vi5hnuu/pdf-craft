@@ -131,7 +131,7 @@ class _RedactPdfViewState extends State<RedactPdfView>
           ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.redactPdf] != c.httpStates[HttpStates.redactPdf],
         listener: (context, state) => handleToolState(

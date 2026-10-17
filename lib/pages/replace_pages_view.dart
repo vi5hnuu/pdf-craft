@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -83,7 +84,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
             Column(children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.screenPadding,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     _fileCard(theme, L10n.of(context).baseDocument, _base, Icons.picture_as_pdf),
                     Center(

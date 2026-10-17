@@ -172,7 +172,7 @@ class _PlaceImageViewState extends State<PlaceImageView>
             ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.placeImage] != c.httpStates[HttpStates.placeImage],
         listenWhen: (p, c) =>

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -360,10 +362,10 @@ class _BatchProcessViewState extends State<BatchProcessView> {
           title: Text(L10n.of(context)
               .batchAppBarTitle(ToolStrings.name(context, 'batch'), _items.length)),
         ),
-        body: Column(
+        body: ToolPane(child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.screenPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -452,7 +454,7 @@ class _BatchProcessViewState extends State<BatchProcessView> {
                         ),
             ),
           ],
-        ),
+        )),
       ),
     );
   }

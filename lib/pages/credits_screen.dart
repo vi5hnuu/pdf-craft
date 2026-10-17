@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:pdf_craft/models/http_state.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/purchase_service.dart';
@@ -88,7 +89,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
         child: AnimatedBuilder(
           animation: Listenable.merge([CreditService(), PurchaseService()]),
           builder: (context, _) => ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screenPadding,
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               _balanceCard(theme),

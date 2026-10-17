@@ -581,7 +581,7 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
           ),
         ],
       ),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.annotatePdf] != c.httpStates[HttpStates.annotatePdf],
         listenWhen: (p, c) =>
@@ -839,7 +839,9 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
                       Text('$n',
                           style: TextStyle(
                               fontSize: 12,
-                              color: isCurrent ? Colors.white : theme.colorScheme.onSurface)),
+                              color: isCurrent
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurface)),
                       if (marked.contains(i))
                         Positioned(
                           right: 4,
@@ -848,7 +850,9 @@ class _AnnotatePdfViewState extends State<AnnotatePdfView> with ToolResultHandle
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                                color: isCurrent ? Colors.white : theme.colorScheme.primary,
+                                color: isCurrent
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.primary,
                                 shape: BoxShape.circle),
                           ),
                         ),

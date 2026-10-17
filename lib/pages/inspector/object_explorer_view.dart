@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -108,15 +109,7 @@ class _ObjectExplorerViewState extends State<ObjectExplorerView>
                     child: SpinKitThreeBounce(color: theme.colorScheme.primary, size: 36));
               }
               if (_objects.isEmpty && s?.error != null) {
-                return Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.error_outline, size: 56, color: Colors.red),
-                    const SizedBox(height: 12),
-                    Text(s!.error!, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton(onPressed: _fetch, child: Text(l.retry)),
-                  ]),
-                );
+                return ToolErrorState(message: s!.error, onRetry: _fetch);
               }
               final hasMore = _objects.length < _total;
               return ListView.builder(

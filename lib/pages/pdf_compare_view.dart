@@ -5,6 +5,7 @@ import 'package:pdf_craft/utils/responsive.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Compares two PDF files side-by-side or as an overlay blend.
@@ -120,7 +121,7 @@ class _PdfCompareViewState extends State<PdfCompareView> {
           ),
         ),
       ),
-      body: Column(children: [
+      body: ToolPane(child: Column(children: [
         Expanded(
           child: _mode == _CompareMode.sideBySide
               ? _buildSideBySide(theme, name1, name2)
@@ -141,7 +142,7 @@ class _PdfCompareViewState extends State<PdfCompareView> {
             ]),
           ),
         _buildPageNav(theme),
-      ]),
+      ])),
     );
   }
 

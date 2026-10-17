@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -64,7 +65,6 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
     return Scaffold(
       appBar: AppBar(
         title: Text(ToolStrings.name(context, 'pdf-to-jpg')),
-        elevation: 5,
       ),
       body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.pdfToJpg]!=current.httpStates[HttpStates.pdfToJpg],
@@ -81,7 +81,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
             Form(
               key: _formKey,
               child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: AppSpacing.screenPadding,
               child: Flex(direction: Axis.vertical,
                 children: [
                   Padding(

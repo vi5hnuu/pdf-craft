@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
@@ -93,7 +94,7 @@ class _PdfToOfficeViewState extends State<PdfToOfficeView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/widgets/ink/drawing_pad.dart';
@@ -84,10 +86,10 @@ class _SignPdfViewState extends State<SignPdfView> {
           ),
         ],
       ),
-      body: Column(children: [
+      body: ToolPane(child: Column(children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screenPadding,
             child: Column(children: [
               Text(
                 L10n.of(context).signHint,
@@ -208,7 +210,7 @@ class _SignPdfViewState extends State<SignPdfView> {
             ]),
           ),
         ),
-      ]),
+      ])),
     );
   }
 

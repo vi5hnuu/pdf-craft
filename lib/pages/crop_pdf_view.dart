@@ -89,7 +89,7 @@ class _CropPdfViewState extends State<CropPdfView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'crop'))),
-      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(canvas: true, child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.cropPdf] != c.httpStates[HttpStates.cropPdf],
         listenWhen: (p, c) =>

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -45,7 +46,7 @@ class IncomingFilesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(L10n.of(context).incomingTitle)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.screenPadding,
         children: [
           Text(
             L10n.of(context).incomingReceived(files.length),

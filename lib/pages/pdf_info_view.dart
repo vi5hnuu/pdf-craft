@@ -1,9 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_error_state.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/models/request/get_metadata.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
@@ -45,7 +46,7 @@ class _PdfInfoViewState extends State<PdfInfoView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'pdf-info')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'pdf-info'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.getMetadata] != c.httpStates[HttpStates.getMetadata],
         listenWhen: (p, c) => p.httpStates[HttpStates.getMetadata] != c.httpStates[HttpStates.getMetadata],
@@ -61,25 +62,14 @@ class _PdfInfoViewState extends State<PdfInfoView>
             return Center(child: SpinKitThreeBounce(color: theme.colorScheme.primary, size: 36));
           }
           if (s?.error != null) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline, size: 56, color: Colors.red),
-                  const SizedBox(height: 12),
-                  Text(s!.error!, textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  FilledButton(onPressed: _fetch, child: Text(L10n.of(context).retry)),
-                ],
-              ),
-            );
+            return ToolErrorState(message: s!.error, onRetry: _fetch);
           }
           final meta = s?.extras?['metadata'] as Map<String, dynamic>?;
           if (meta == null) {
             return const SizedBox.shrink();
           }
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screenPadding,
             children: [
               // File name header
               Container(

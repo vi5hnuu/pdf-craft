@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/models/request/image_studio.dart' as img_studio;
 import 'package:pdf_craft/models/request/filter_image.dart' as fi;
@@ -146,7 +147,7 @@ class _ImageStudioViewState extends State<ImageStudioView>
 
   Widget _buildCompressTab(ThemeData theme, bool loading) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.screenPadding,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(L10n.of(context).jpegQuality(_compressQuality), style: theme.textTheme.bodyMedium),
         Slider(

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:pdf_craft/widgets/banner_add.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -78,7 +79,7 @@ class _StampPdfViewState extends State<StampPdfView>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(ToolStrings.name(context, 'stamp')), elevation: 5),
+      appBar: AppBar(title: Text(ToolStrings.name(context, 'stamp'))),
       body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.stampPdf] != c.httpStates[HttpStates.stampPdf],
@@ -88,7 +89,7 @@ class _StampPdfViewState extends State<StampPdfView>
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screenPadding,
                 child: Column(
                   children: [
                     Expanded(

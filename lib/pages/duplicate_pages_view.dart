@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:pdf_craft/widgets/confirm_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -106,7 +107,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
                 child: _doc == null
                     ? const Center(child: CircularProgressIndicator())
                     : GridView.builder(
-                        padding: const EdgeInsets.all(12),
+                        padding: AppSpacing.screenPadding,
                         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 120,
                           crossAxisSpacing: 8,

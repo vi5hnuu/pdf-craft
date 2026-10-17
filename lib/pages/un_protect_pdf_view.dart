@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/tool_strings.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -48,7 +49,6 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView>
     return Scaffold(
       appBar: AppBar(
         title: Text(ToolStrings.name(context, 'unprotect')),
-        elevation: 5,
       ),
       body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
         buildWhen: (previous, current) => previous.httpStates[HttpStates.unprotectPdf]!=current.httpStates[HttpStates.unprotectPdf],
@@ -59,7 +59,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView>
            return Stack(
              children:[
                Padding(
-                 padding: const EdgeInsets.all(12),
+                 padding: AppSpacing.screenPadding,
                  child: Column(
                    mainAxisSize: MainAxisSize.max,
                    children:[

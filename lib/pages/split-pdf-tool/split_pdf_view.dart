@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
@@ -58,7 +59,6 @@ class _SplitPdfViewState extends State<SplitPdfView>
     return Scaffold(
       appBar: AppBar(
         title: Text(ToolStrings.name(context, 'split')),
-        elevation: 5,
       ),
       body: ToolPane(child: PopScope(
         canPop: false,
@@ -84,7 +84,7 @@ class _SplitPdfViewState extends State<SplitPdfView>
               children: [
                 Flex(direction: Axis.vertical,children: [
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: AppSpacing.screenPadding,
                     child: TextFormField(keyboardType: TextInputType.text,
                         decoration: InputDecoration(labelText: L10n.of(context).outputFileName ,border: const OutlineInputBorder()),
                         controller: outFileNameC),
