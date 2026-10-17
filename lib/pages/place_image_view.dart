@@ -15,6 +15,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 enum _Mode { place, zoom }
 
@@ -171,7 +172,7 @@ class _PlaceImageViewState extends State<PlaceImageView>
             ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.placeImage] != c.httpStates[HttpStates.placeImage],
         listenWhen: (p, c) =>
@@ -231,7 +232,7 @@ class _PlaceImageViewState extends State<PlaceImageView>
             processingOverlay(state.httpStates[HttpStates.placeImage], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

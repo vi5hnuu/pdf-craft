@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class UnProtectPdfView extends StatefulWidget {
   final File file;
@@ -49,7 +50,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView>
         title: Text(ToolStrings.name(context, 'unprotect')),
         elevation: 5,
       ),
-      body:BlocConsumer<PdfBloc,PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
         buildWhen: (previous, current) => previous.httpStates[HttpStates.unprotectPdf]!=current.httpStates[HttpStates.unprotectPdf],
         listenWhen: (previous, current) => previous.httpStates[HttpStates.unprotectPdf]!=current.httpStates[HttpStates.unprotectPdf],
           listener: (context, state) => handleToolState(
@@ -89,7 +90,7 @@ class _UnProtectPdfViewState extends State<UnProtectPdfView>
                processingOverlay(state.httpStates[HttpStates.unprotectPdf], label: L10n.of(context).procWorking),
              ],
            );
-          },),
+          },)),
     );
   }
 

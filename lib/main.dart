@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:pdf_craft/utils/legacy_prefs.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 import 'package:pdf_craft/singletons/app_bloc_observer.dart';
 import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:flutter/services.dart';
@@ -72,10 +73,11 @@ Future<void> _bootstrap() async {
   // Start the IAP lifecycle app-wide: recovers unfinished purchases and processes any
   // purchase that completes while the credits screen isn't open.
   unawaited(PurchaseService().init());
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Tablets rotate; phones stay portrait. The 52 tool screens have never been laid out for a
+  // ~350dp-high phone landscape, so unlocking there would be a change without the work behind it.
+  SystemChrome.setPreferredOrientations(isTabletDevice
+      ? DeviceOrientation.values
+      : const [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   runApp(const NestedTabNavigationExampleApp());
 }
 

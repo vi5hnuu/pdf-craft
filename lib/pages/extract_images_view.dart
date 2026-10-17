@@ -11,6 +11,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Extract Images: pulls every embedded raster image out of the PDF and returns
 /// them as a ZIP of PNGs, which is opened in the device's default handler.
@@ -36,7 +37,7 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-images'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.extractImages] != c.httpStates[HttpStates.extractImages],
         listenWhen: (p, c) => p.httpStates[HttpStates.extractImages] != c.httpStates[HttpStates.extractImages],
         listener: (context, state) => handleToolState(
@@ -88,7 +89,7 @@ class _ExtractImagesViewState extends State<ExtractImagesView>
             processingOverlay(state.httpStates[HttpStates.extractImages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

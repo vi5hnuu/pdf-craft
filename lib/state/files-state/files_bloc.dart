@@ -141,24 +141,31 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
 
   /// Logs the technical error for debugging and returns the user-facing [message].
-  String _logged(Object error, String message) {
-    LoggerSingleton().logger.w('$message ($error)');
-    return message;
+  /// Logs [error] and returns what the user should see.
+  ///
+  /// A [FilesFailure] already carries a message written for the user, so it is passed through;
+  /// anything else falls back to [fallback], because a raw "Exception: Failed to..." is not
+  /// something to show. Without the distinction the specific causes — permission denied, not a
+  /// directory — were all flattened into the generic text, so the one thing the user could
+  /// actually fix was never named.
+  String _logged(Object error, String fallback) {
+    LoggerSingleton().logger.w('$fallback ($error)');
+    return error is FilesFailure ? error.message : fallback;
   }
 
   Future<List<FileSystemEntity>> _loadDirectoryFiles(String path) async {
     try {
       if (!await StoragePermissions.requestStoragePermissions()) {
-        throw Exception(L10n.current.filesPermissionDenied);
+        throw FilesFailure(L10n.current.filesPermissionDenied);
       }
       if (Constants.isHiddenFileOrDir(path) ||
           Constants.excludedPaths.any((pth) => pth.endsWith(path))) {
-        throw Exception(L10n.current.filesPermissionDenied);
+        throw FilesFailure(L10n.current.filesPermissionDenied);
       }
 
       Directory directory = Directory(path);
       if (directory.existsSync() == false) {
-        throw Exception(L10n.current.filesInvalidDirectory);
+        throw FilesFailure(L10n.current.filesInvalidDirectory);
       }
       // list(), not listSync(): this enumerates an arbitrary device folder — the storage root,
       // DCIM, Download — and blocking the UI thread on it is what made opening a large folder
@@ -167,13 +174,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       entities.removeWhere((fileEntity) =>
           (fileEntity is Directory) && Constants.excludedPaths.contains(fileEntity.path));
       return entities;
-    } on Exception catch (e) {
-      // Rethrown rather than flattened. The three throws above name a specific, actionable
-      // cause — permission denied, or not a directory — and the blanket catch replaced every
-      // one of them with "could not load files", so the user was never told it was a
-      // permission problem they could actually fix.
-      LoggerSingleton().logger.w('Listing ${Redact.path(path)} failed: $e');
-      rethrow;
+    } on FilesFailure {
+      rethrow; // already carries a message meant for the user
     } catch (e) {
       LoggerSingleton().logger.w('Listing ${Redact.path(path)} failed: $e');
       throw Exception(L10n.current.filesLoadFailed);
@@ -263,4 +265,13 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     await _searchController?.close();
     return super.close();
   }
+}
+
+/// A listing failure whose message is written for the user rather than for a log.
+class FilesFailure implements Exception {
+  final String message;
+  const FilesFailure(this.message);
+
+  @override
+  String toString() => message;
 }

@@ -17,6 +17,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class SplitPdfView extends StatefulWidget {
   final File file;
@@ -59,7 +60,7 @@ class _SplitPdfViewState extends State<SplitPdfView>
         title: Text(ToolStrings.name(context, 'split')),
         elevation: 5,
       ),
-      body: PopScope(
+      body: ToolPane(child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if(type!=null) {
@@ -105,7 +106,7 @@ class _SplitPdfViewState extends State<SplitPdfView>
             );
           },
             ),
-      ));
+      )));
   }
 
   _onExtractAllPages() async {

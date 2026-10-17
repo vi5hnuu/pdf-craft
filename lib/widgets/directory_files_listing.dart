@@ -32,10 +32,17 @@ class DirectoryFilesListing extends StatefulWidget {
   final Function(File)? onDelete;
   final List<String>? excludeShowingDirsPath;
 
+  /// Called instead of navigating when a PDF is tapped.
+  ///
+  /// Lets a two-pane host show the file beside the list rather than over it. Null everywhere
+  /// else, which keeps the push behaviour byte-for-byte unchanged.
+  final void Function(File)? onOpenPdf;
+
   DirectoryFilesListing(
       {super.key,
       required this.directoryPath,
       this.multiSelect,
+      this.onOpenPdf,
       this.limitSelectionToExtensions = const [],
       this.onDoneSelection,
       this.minSelection,
@@ -679,8 +686,13 @@ class _DirectoryFilesListingState extends State<DirectoryFilesListing> {
           return;
         }
         if (Utility.isPdf(file.path)) {
-          GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
-              pathParameters: {'pdfFilePath': file.path});
+          final openInPane = widget.onOpenPdf;
+          if (openInPane != null) {
+            openInPane(file as File);
+          } else {
+            GoRouter.of(context).pushNamed(AppRoutes.pdfFilePreviewRoute.name,
+                pathParameters: {'pdfFilePath': file.path});
+          }
         } else {
           OpenFile.open(file.path,
               type: Constants.extrnalOpenSupportedFiles[

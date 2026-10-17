@@ -14,6 +14,7 @@ import 'package:pdf_craft/widgets/pdf_page_thumbnail.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class DuplicatePagesView extends StatefulWidget {
   final File file;
@@ -63,7 +64,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
             ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) =>
             p.httpStates[HttpStates.duplicatePages] != c.httpStates[HttpStates.duplicatePages],
         listenWhen: (p, c) =>
@@ -91,8 +92,8 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
                     ? const Center(child: CircularProgressIndicator())
                     : GridView.builder(
                         padding: const EdgeInsets.all(12),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
+                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 120,
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
                           childAspectRatio: 0.7,
@@ -111,7 +112,7 @@ class _DuplicatePagesViewState extends State<DuplicatePagesView>
             ),
           ]);
         },
-      ),
+      )),
     );
   }
 

@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,6 +15,8 @@ import 'package:pdf_craft/widgets/rotatable_item.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/utils/debouncer.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class Thumbnail {
   bool? isLoading;
@@ -45,14 +46,14 @@ class _RotatePdfViewState extends State<RotatePdfView>
   final int pageSize = 10;
   final ScrollController controller = ScrollController();
   final Debouncer _scrollDebounce = Debouncer(milliseconds: 120);
-  /// Rendered page thumbnails, oldest first so the cap can evict from the front.
+  /// Rendered page thumbnails, keyed by 1-based page number.
   ///
-  /// Capped because these are full JPEGs and the list appends ten more on every scroll to the
-  /// end: nothing used to drop them, so scrolling a long PDF held every page it had rendered.
-  final LinkedHashMap<int, Thumbnail> thumbnails = LinkedHashMap();
-
-  /// How many rendered pages to keep — comfortably more than a screenful.
-  static const int _maxCachedThumbnails = 40;
+  /// Deliberately uncapped. An LRU here was wrong twice over: this map's *size* is the cursor
+  /// for what to load next and the count of rows to render, so evicting from it stalled loading
+  /// at the cap and blanked the rows that had been dropped. The memory it was defending against
+  /// is already gone — these render at the ~180dp they are drawn at rather than the page's
+  /// intrinsic size, which is roughly fifty times smaller per page.
+  final Map<int, Thumbnail> thumbnails = {};
 
   /// Width, in logical pixels, a thumbnail is painted at. Rendering at the page's intrinsic
   /// size produced bitmaps many times larger than the box they are drawn in.
@@ -98,13 +99,12 @@ class _RotatePdfViewState extends State<RotatePdfView>
 
   @override
   Widget build(BuildContext context) {
-    final md = MediaQuery.of(context);
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'rotate'))),
-      body: FutureBuilder(
+      body: ToolPane(child: FutureBuilder(
         future: _pdfController.document,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -281,7 +281,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
                             ...List.generate(thumbnails.length, (index) {
                               final pNo = _pageIndexes[index] + 1;
                               final thumbnail = thumbnails[pNo];
-                              final thumbW = md.size.width * 0.42;
+                              final thumbW = toolContentWidthOf(context) * 0.42;
                               final thumbH = thumbW * 1.37;
                               return Padding(
                                 key: ValueKey('page-$pNo'),
@@ -379,7 +379,7 @@ class _RotatePdfViewState extends State<RotatePdfView>
             },
           );
         },
-      ),
+      )),
     );
   }
 
@@ -477,17 +477,9 @@ class _RotatePdfViewState extends State<RotatePdfView>
     }
   }
 
-  /// Records a thumbnail, dropping the oldest once the cache is full.
   void _setThumbnail(int pageNo, Thumbnail thumbnail) {
     if (!mounted) return;
-    setState(() {
-      thumbnails.put(pageNo, thumbnail);
-      while (thumbnails.length > _maxCachedThumbnails) {
-        final oldest = thumbnails.keys.first;
-        if (oldest == pageNo) break;
-        thumbnails.remove(oldest);
-      }
-    });
+    setState(() => thumbnails.put(pageNo, thumbnail));
   }
 
   Future<PdfPageImage?> _loadPageImage(

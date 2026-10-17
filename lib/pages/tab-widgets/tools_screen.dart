@@ -201,8 +201,10 @@ class _ToolsScreenState extends State<ToolsScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        // Cells stay card-sized and the count follows the width, rather than three cells
+        // growing to a third of a tablet each.
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: _toolCardExtent,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
           childAspectRatio: 0.95,
@@ -221,13 +223,17 @@ class _ToolsScreenState extends State<ToolsScreen> {
 /// padding, 10px spacing, 0.95 aspect ratio). The horizontal Favorites / Recently used rows use
 /// the same size — they used a fixed 88px card, narrower than the grid, which clipped the
 /// credit-cost badge.
-Size _toolCellSize(BuildContext context) {
-  const columns = 3;
+Size _toolCellSize(double availableWidth) {
   const spacing = 10.0;
   const sidePadding = 16.0;
   const aspectRatio = 0.95;
-  final width =
-      (MediaQuery.sizeOf(context).width - sidePadding * 2 - spacing * (columns - 1)) / columns;
+  final gridWidth = availableWidth - sidePadding * 2;
+  // The same arithmetic SliverGridDelegateWithMaxCrossAxisExtent uses, so a row's cards are
+  // exactly the grid's below them at every width. Taking a width rather than a BuildContext is
+  // what lets the caller pass the space it actually has — beside a rail or inside a pane that is
+  // not the window.
+  final columns = (gridWidth / (_toolCardExtent + spacing)).ceil().clamp(1, 1 << 30);
+  final width = (gridWidth - spacing * (columns - 1)) / columns;
   return Size(width, width / aspectRatio);
 }
 
@@ -254,22 +260,29 @@ class _FavoriteToolsRow extends StatelessWidget {
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           ]),
         ),
-        SizedBox(
-          height: _toolCellSize(context).height,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: tools.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => SizedBox(
-                width: _toolCellSize(context).width,
-                child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
-          ),
-        ),
+        LayoutBuilder(builder: (context, constraints) {
+          final cell = _toolCellSize(constraints.maxWidth);
+          return SizedBox(
+            height: cell.height,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: tools.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) => SizedBox(
+                  width: cell.width,
+                  child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+            ),
+          );
+        }),
       ],
     );
   }
 }
+
+/// Widest a tool card may get. Both tool grids use it, so the search results and the category
+/// sections stay the same size as each other at every width.
+const double _toolCardExtent = 130;
 
 /// Horizontal row of the user's recently used tools (hidden when empty).
 ///
@@ -320,19 +333,22 @@ class _RecentToolsRowState extends State<_RecentToolsRow> {
               child: Text(L10n.of(context).toolsRecentlyUsed,
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
-            SizedBox(
-              // Same cell size as the grid below, so cards (and their cost badge) match exactly.
-              height: _toolCellSize(context).height,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: tools.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) => SizedBox(
-                    width: _toolCellSize(context).width,
-                    child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
-              ),
-            ),
+            // Same cell size as the grid below, so cards (and their cost badge) match exactly.
+            LayoutBuilder(builder: (context, constraints) {
+              final cell = _toolCellSize(constraints.maxWidth);
+              return SizedBox(
+                height: cell.height,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: tools.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, i) => SizedBox(
+                      width: cell.width,
+                      child: ToolCard(tool: tools[i], accentColor: tools[i].category.color)),
+                ),
+              );
+            }),
           ],
         );
       },
@@ -375,8 +391,8 @@ class _CategorySection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 3,
+          GridView.extent(
+            maxCrossAxisExtent: _toolCardExtent,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10,

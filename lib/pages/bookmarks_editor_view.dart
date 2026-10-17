@@ -17,6 +17,7 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
 import 'package:pdf_craft/utils/open_pdf.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class BookmarksEditorView extends StatefulWidget {
   final File file;
@@ -76,7 +77,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
           ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         listenWhen: (p, c) {
           final getChanged =
               p.httpStates[HttpStates.getBookmarks] != c.httpStates[HttpStates.getBookmarks];
@@ -152,7 +153,7 @@ class _BookmarksEditorViewState extends State<BookmarksEditorView>
             processingOverlay(editState, label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

@@ -30,11 +30,18 @@ class PdfPreview extends StatefulWidget {
   /// chaining is the likely next step after a tool finishes.
   final bool fromTool;
 
+  /// True when this is a pane beside a list rather than a pushed screen.
+  ///
+  /// Suppresses the AppBar's implied back button: nothing was pushed, so it would pop the shell
+  /// and leave the tab entirely.
+  final bool embedded;
+
   const PdfPreview({
     super.key,
     required this.pdfFilePath,
     this.password,
     this.fromTool = false,
+    this.embedded = false,
   });
 
   @override
@@ -129,6 +136,7 @@ class _PdfPreviewState extends State<PdfPreview> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: !widget.embedded,
         title: Text(_fileName, overflow: TextOverflow.ellipsis),
         actions: [
           // Page indicator — tapping it opens a jump-to-page dialog

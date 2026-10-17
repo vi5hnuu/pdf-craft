@@ -17,6 +17,8 @@ import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class PdfToJpgView extends StatefulWidget {
   final File file;
@@ -62,7 +64,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
         title: Text(ToolStrings.name(context, 'pdf-to-jpg')),
         elevation: 5,
       ),
-      body: BlocConsumer<PdfBloc,PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.pdfToJpg]!=current.httpStates[HttpStates.pdfToJpg],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.pdfToJpg]!=current.httpStates[HttpStates.pdfToJpg],
           // The output is an image (or a zip of them), so it opens externally.
@@ -177,7 +179,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
             processingOverlay(state.httpStates[HttpStates.pdfToJpg], label: L10n.of(context).procWorking),
           ],
         );
-      },),
+      },)),
     );
   }
 
@@ -189,7 +191,7 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
         asset,
         fit: BoxFit.fitWidth,
         cacheWidth:
-            (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
+            (toolContentWidthOf(context) * MediaQuery.devicePixelRatioOf(context)).round(),
       );
 
   void _onPdfToJpf() async {

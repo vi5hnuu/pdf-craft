@@ -12,6 +12,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/widgets/page_range_selector.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class ExtractTextView extends StatefulWidget {
   final File file;
@@ -41,7 +42,7 @@ class _ExtractTextViewState extends State<ExtractTextView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-text')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.extractText] != c.httpStates[HttpStates.extractText],
         listenWhen: (p, c) => p.httpStates[HttpStates.extractText] != c.httpStates[HttpStates.extractText],
         // The output is a .txt, not a PDF, so it opens externally instead of in our viewer.
@@ -89,7 +90,7 @@ class _ExtractTextViewState extends State<ExtractTextView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

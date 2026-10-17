@@ -11,6 +11,7 @@ import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class RepairPdfView extends StatefulWidget {
   final File file;
@@ -35,7 +36,7 @@ class _RepairPdfViewState extends State<RepairPdfView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'repair')), elevation: 5),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.repairPdf] != c.httpStates[HttpStates.repairPdf],
         listenWhen: (p, c) => p.httpStates[HttpStates.repairPdf] != c.httpStates[HttpStates.repairPdf],
         listener: (context, state) => handleToolState(
@@ -96,7 +97,7 @@ class _RepairPdfViewState extends State<RepairPdfView>
             ],
           );
         },
-      ),
+      )),
     );
   }
 

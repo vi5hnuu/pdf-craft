@@ -134,7 +134,12 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
     // before an unguarded expression that could throw, and the guard in the caller then read
     // "already loading" forever — one bad pixel calculation became a permanent spinner.
     try {
-      final cached = _cache[_key];
+      // Captured before anything awaits: _paintedWidth can change mid-flight if the cell is
+      // resized, and keying the result by the *new* width would file a bitmap rendered at the
+      // old size under it — poisoning that bucket for every thumbnail for the rest of the
+      // session.
+      final key = _key;
+      final cached = _cache[key];
       if (cached != null) {
         if (mounted) setState(() => _bytes = cached);
         return; // already have it — no spinner, no work
@@ -155,9 +160,11 @@ class _PdfPageThumbnailState extends State<PdfPageThumbnail> {
       );
       await page.close();
       if (image == null) throw Exception('render failed');
-      _cache[_key] = image.bytes;
+      _cache[key] = image.bytes;
       if (_cache.length > _maxCached) _cache.remove(_cache.keys.first);
-      if (mounted) setState(() => _bytes = image.bytes);
+      // Only adopt it if the size it was rendered for is still the size being drawn; otherwise
+      // the newer _resolveWidth has already scheduled the right one.
+      if (mounted && key == _key) setState(() => _bytes = image.bytes);
     } catch (_) {
       if (mounted) setState(() => _error = true);
     } finally {

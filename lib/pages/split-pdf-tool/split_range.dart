@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:open_file/open_file.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/extensions/map_entensions.dart';
 import 'package:pdf_craft/models/enums/split_type.dart';
@@ -12,11 +10,7 @@ import 'package:pdf_craft/models/request/split_pdf.dart';
 import 'package:pdf_craft/models/thumbnail_stats.dart';
 import 'package:pdf_craft/models/thumbnail.dart';
 import 'package:pdf_craft/utils/debouncer.dart';
-import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
-import 'package:pdf_craft/utils/constants.dart';
-import 'package:pdf_craft/utils/http_states.dart';
-import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/widgets/split_item.dart';
 import 'package:pdfx/pdfx.dart';
 
@@ -40,15 +34,14 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
   int fixedRange=10;
   final ScrollController controller=ScrollController();
   final Debouncer _scrollDebounce=Debouncer(milliseconds: 120);
-  /// Rendered page thumbnails, oldest first so the cap can evict from the front.
+  /// Rendered page thumbnails, keyed by 1-based page number.
   ///
-  /// Capped because these are full JPEGs for a document that may run to thousands of pages,
-  /// and nothing used to drop them: scrolling a long PDF held every page it had ever shown.
-  final LinkedHashMap<int,Thumbnail> _thumbnailsCache=LinkedHashMap();
-
-  /// How many rendered pages to keep. Each range shows at most two, so this covers a long
-  /// scroll-back without being unbounded.
-  static const int _maxCachedThumbnails=40;
+  /// Deliberately uncapped: nothing reloads an evicted entry here — loading is driven by
+  /// *new* ranges — so an LRU left scrolled-past rows permanently blank, and the zero-height
+  /// rows that produced kept the scroll pinned at the end, which appended batch after batch.
+  /// The memory it was defending against is already gone: these render at the 150dp they are
+  /// drawn at rather than the page's intrinsic size.
+  final Map<int,Thumbnail> _thumbnailsCache={};
 
   /// Width, in logical pixels, the thumbnails are actually painted at (see SplitItem).
   /// Rendering at the page's intrinsic size produced bitmaps many times larger than needed.
@@ -100,20 +93,11 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
               child: Center(child: Icon(Icons.error, color: Colors.red)),
             );
           }
-          return BlocListener<PdfBloc,PdfState>(
-              listenWhen: (previous, current) => previous.httpStates[HttpStates.reorderPdf]!=current.httpStates[HttpStates.reorderPdf],
-              listener: (context, state) {
-                final httpState=state.httpStates[HttpStates.reorderPdf];
-                if(httpState?.done==true){
-                  NotificationService.showSnackbar(text: L10n.current.toolDone,color: Colors.green);
-                  final file=httpState?.extras?['savedFile'];
-                  if(file is! File) return;
-                  OpenFile.open(file.path,type: Constants.extrnalOpenSupportedFiles[Utility.fileExtension(file)]??'*/*');
-                }else if(httpState?.error!=null){
-                  NotificationService.showSnackbar(text: httpState!.error!,color: Colors.red);
-                }
-              }
-              ,child: Column(
+          // No BlocListener on HttpStates.reorderPdf here. This screen dispatches nothing, so
+          // that listener only ever fired on *another* screen's reorder result — announcing it
+          // and opening its file while the user sat here. Now that delete, extract, reverse and
+          // organize each report under their own key, nothing emits it at all.
+          return Column(
             mainAxisSize: MainAxisSize.max,
             children: [
               if(widget.type==SplitType.FIXED_RANGE) Padding(
@@ -176,7 +160,7 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
                   );
                 })),
             ],
-          ));
+          );
         }
       ),
     );
@@ -278,20 +262,11 @@ class _SplitPdfRangeState extends State<SplitPdfRange> {
     }
   }
 
-  /// Records a thumbnail, dropping the oldest once the cache is full.
-  ///
   /// The mounted check belongs here rather than inside setState, which asserts on a defunct
   /// element before it ever runs the callback.
   void _setThumbnail(int pageNo, Thumbnail thumbnail){
     if(!mounted) return;
-    setState((){
-      _thumbnailsCache.put(pageNo, thumbnail);
-      while(_thumbnailsCache.length>_maxCachedThumbnails){
-        final oldest=_thumbnailsCache.keys.first;
-        if(oldest==pageNo) break;
-        _thumbnailsCache.remove(oldest);
-      }
-    });
+    setState(()=>_thumbnailsCache.put(pageNo, thumbnail));
   }
 
   Future<PdfPageImage?> _loadPageImage({required PdfDocument document,required int pageNumber}) async {

@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:pdfx/pdfx.dart';
 
 /// Replace Pages: swaps a page range in the base document for all pages of a
@@ -71,7 +72,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'replace-pages'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.replacePages] != c.httpStates[HttpStates.replacePages],
         listenWhen: (p, c) => p.httpStates[HttpStates.replacePages] != c.httpStates[HttpStates.replacePages],
         listener: (context, state) =>
@@ -138,7 +139,7 @@ class _ReplacePagesViewState extends State<ReplacePagesView>
             processingOverlay(state.httpStates[HttpStates.replacePages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

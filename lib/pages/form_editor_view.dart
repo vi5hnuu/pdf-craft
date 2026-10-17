@@ -23,6 +23,7 @@ import 'package:form_engine/form_engine.dart' as engine;
 import 'package:pdf_craft/services/forms/form_draft_store.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 
 
@@ -692,7 +693,7 @@ class _FormEditorViewState extends State<FormEditorView>
           ),
         ],
       ),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
         listenWhen: (p, c) => p.httpStates[HttpStates.createForm] != c.httpStates[HttpStates.createForm],
         listener: (context, state) => handleToolState(
@@ -711,7 +712,7 @@ class _FormEditorViewState extends State<FormEditorView>
                 label: L10n.of(context).creatingForm),
           ]);
         },
-      ),
+      )),
     );
   }
 

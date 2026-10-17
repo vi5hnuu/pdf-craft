@@ -10,6 +10,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 class RemoveBlankPagesView extends StatefulWidget {
   final File file;
@@ -49,7 +50,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView>
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'remove-blanks'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.removeBlankPages] != c.httpStates[HttpStates.removeBlankPages],
         listenWhen: (p, c) => p.httpStates[HttpStates.removeBlankPages] != c.httpStates[HttpStates.removeBlankPages],
         listener: (context, state) => handleToolState(
@@ -96,7 +97,7 @@ class _RemoveBlankPagesViewState extends State<RemoveBlankPagesView>
             processingOverlay(state.httpStates[HttpStates.removeBlankPages], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

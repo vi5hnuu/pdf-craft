@@ -11,6 +11,7 @@ import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/utils/tool_view_mixin.dart';
 import 'package:pdf_craft/utils/http_states.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 
 /// Extract Embedded Files: pulls file attachments out of the PDF into a ZIP.
 class ExtractEmbeddedFilesView extends StatefulWidget {
@@ -35,7 +36,7 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'extract-embedded'))),
-      body: BlocConsumer<PdfBloc, PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc, PdfState>(
         buildWhen: (p, c) => p.httpStates[HttpStates.extractEmbedded] != c.httpStates[HttpStates.extractEmbedded],
         listenWhen: (p, c) => p.httpStates[HttpStates.extractEmbedded] != c.httpStates[HttpStates.extractEmbedded],
         listener: (context, state) => handleToolState(
@@ -83,7 +84,7 @@ class _ExtractEmbeddedFilesViewState extends State<ExtractEmbeddedFilesView>
             processingOverlay(state.httpStates[HttpStates.extractEmbedded], label: L10n.of(context).procWorking),
           ]);
         },
-      ),
+      )),
     );
   }
 

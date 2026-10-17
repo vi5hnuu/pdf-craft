@@ -13,6 +13,8 @@ import 'package:pdf_craft/utils/http_states.dart';
 import 'package:pdf_craft/utils/utility.dart';
 import 'package:pdf_craft/utils/reorder_utils.dart';
 import 'package:pdf_craft/widgets/broken_image.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
+import 'package:pdf_craft/utils/responsive.dart';
 
 class ImageToPdfView extends StatefulWidget {
   final List<File> files;
@@ -50,11 +52,10 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
 
   @override
   Widget build(BuildContext context) {
-    final md=MediaQuery.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'image-to-pdf')), elevation: 5),
-      body: BlocConsumer<PdfBloc,PdfState>(
+      body: ToolPane(child: BlocConsumer<PdfBloc,PdfState>(
           buildWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
           listenWhen: (previous, current) => previous.httpStates[HttpStates.imageToPdf]!=current.httpStates[HttpStates.imageToPdf],
           listener: (context, state) => handleToolState(
@@ -100,7 +101,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
                           children: [
                             Image.file(
                               file,
-                              width: md.size.width * 0.25,
+                              width: toolContentWidthOf(context) * 0.25,
                               fit: BoxFit.fitWidth,
                               // Constrained here as well as on the Image: Flutter returns the
                               // errorBuilder's widget directly from build(), before the
@@ -108,12 +109,12 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
                               // unconstrained. Unbounded next to a Flexible in this Row, its
                               // message overflows.
                               errorBuilder: (c, e, st) => SizedBox(
-                                  width: md.size.width * 0.25,
+                                  width: toolContentWidthOf(context) * 0.25,
                                   child: BrokenImage.builder(c, e, st)),
                               // A reorderable list of full-resolution camera photos decoded at
                               // their native size is tens of megabytes each; bound the decode to
                               // the thumbnail actually drawn.
-                              cacheWidth: (md.size.width * 0.25 *
+                              cacheWidth: (toolContentWidthOf(context) * 0.25 *
                                       MediaQuery.devicePixelRatioOf(context))
                                   .round(),
                             ),
@@ -177,7 +178,7 @@ class _ImageToPdfViewState extends State<ImageToPdfView>
             processingOverlay(state.httpStates[HttpStates.imageToPdf], label: L10n.of(context).procWorking),
           ],
         );
-      },)
+      },))
     );
   }
 
