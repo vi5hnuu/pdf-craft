@@ -8,6 +8,7 @@ import 'package:pdf_craft/pages/form-editor/form_field_type.dart';
 import 'package:pdf_craft/pages/form-editor/field_type_change.dart' show typeChangeGroups;
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/theme/app_semantic_colors.dart';
 import 'package:pdf_craft/utils/responsive.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -570,7 +571,10 @@ class _FormEditorViewState extends State<FormEditorView>
           f.group = groupName;
           // What the author typed is the caption too — that is what they meant by it.
           f.label = labels[i];
-          if (type.isGrouped) f.exportValue = labels[i];
+          // The export value is an ASCII on-state name, not the caption. The API sanitises it
+          // with [^A-Za-z0-9_] -> _, so Hindi labels such as "पुरुष" and "महिला" both collapsed
+          // to "___": the kids shared one on-state and picking either selected the whole group.
+          if (type.isGrouped) f.exportValue = 'option_${i + 1}';
         }
         _fields.add(f);
         if (i == labels.length - 1) _selectedId = f.id;
@@ -579,8 +583,8 @@ class _FormEditorViewState extends State<FormEditorView>
   }
 
   Future<void> _promptGroup(FieldType type) async {
-    // Localized: these are used verbatim as the group's export values, so leaving them English
-    // put English option values inside a Hindi author's PDF.
+    // Localized because they become the captions drawn on the page. They are no longer used as
+    // export values — see _addGroup.
     //
     // Through the shared prompt, which owns its controller. The version here created one in this
     // method and never released it — a leak per prompt — and the obvious fix, disposing after
@@ -971,6 +975,11 @@ class _FormEditorViewState extends State<FormEditorView>
                     child: Stack(clipBehavior: Clip.none, children: [
                       if (_pageImage != null)
                         Positioned.fill(child: Image.memory(_pageImage!.bytes, fit: BoxFit.fill)),
+                      // Under the fields: a group's boundary, so membership does not rest on
+                      // colour alone (WCAG 1.4.1) and a mistakenly shared name is visible as
+                      // one box drawn around fields that were never meant to be linked.
+                      if (!_previewMode)
+                        ..._groupOrder.map((g) => _groupOutline(g, dispW, dispH, theme)),
                       ..._fields.map((f) => _fieldVisual(f, dispW, dispH, theme)),
                     ]),
                   ),
@@ -1044,6 +1053,54 @@ class _FormEditorViewState extends State<FormEditorView>
     final letter = String.fromCharCode(65 + (index % 26));
     final cycle = index ~/ 26;
     return cycle == 0 ? letter : '$letter$cycle';
+  }
+
+  /// A dashed boundary around every field in [group], with the group's name at its corner.
+  Widget _groupOutline(String group, double dispW, double dispH, ThemeData theme) {
+    final members =
+        _fields.where((f) => f.type.groupable && f.group == group).toList();
+    if (members.length < 2) return const SizedBox.shrink();
+
+    var box = members.first.rect;
+    for (final f in members.skip(1)) {
+      box = box.expandToInclude(f.rect);
+    }
+    const pad = 0.012;
+    final r = Rect.fromLTRB(
+      (box.left - pad) * dispW,
+      (box.top - pad) * dispH,
+      (box.right + pad) * dispW,
+      (box.bottom + pad) * dispH,
+    );
+    final color = _groupColor(group);
+    return Positioned(
+      left: r.left,
+      top: r.top,
+      width: r.width,
+      height: r.height,
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: GroupOutlinePainter(color: color),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Transform.translate(
+              offset: const Offset(2, -14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                color: color,
+                child: Text(
+                  '${_groupLetter(group)} · ${members.length}',
+                  style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppSemanticColors.onFilled(color)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _fieldVisual(EditorField f, double dispW, double dispH, ThemeData theme) {
@@ -1642,11 +1699,12 @@ class _FormEditorViewState extends State<FormEditorView>
 
   /// Shows anything structurally wrong with the form before it is built.
   ///
-  /// The engine has detected these all along; nothing surfaced them, so a form with two
-  /// fields sharing a name silently produced a PDF where one value overwrote the other.
-  /// Reported rather than blocked: the author may be mid-edit and know better.
+  /// Dangling and self-referencing rules are reported but not blocked — the author may be
+  /// mid-edit and know better. A duplicate PDF name is blocked: two fields collapse into one in
+  /// the document and one value overwrites the other, which is silent data loss rather than a
+  /// judgement call.
   Future<bool> _confirmIssues() async {
-    final issues = engine.FormRuntime(_toSchema()).integrityIssues();
+    final issues = engine.FormRuntime(_toSchema()).integrityIssues(formFieldTypes);
     if (issues.isEmpty) return true;
 
     final names = {for (final f in _pageFields.values.expand((l) => l)) f.id: f.name};
@@ -1663,6 +1721,8 @@ class _FormEditorViewState extends State<FormEditorView>
 
     // The same problem on several fields reads as one problem to the author.
     final lines = issues.map(describe).toSet().toList();
+    final blocking =
+        issues.any((i) => i.problem == engine.SchemaProblem.duplicateName);
     if (!mounted) return false;
     final proceed = await showDialog<bool>(
       context: context,
@@ -1686,9 +1746,10 @@ class _FormEditorViewState extends State<FormEditorView>
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(L10n.of(ctx).goBackAndFix)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(L10n.of(ctx).createAnyway)),
+          if (!blocking)
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(L10n.of(ctx).createAnyway)),
         ],
       ),
     );

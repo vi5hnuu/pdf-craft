@@ -132,3 +132,45 @@ class FieldAppearancePainter extends CustomPainter {
   bool shouldRepaint(FieldAppearancePainter old) =>
       old.type != type || old.checked != checked || old.pxPerPoint != pxPerPoint;
 }
+
+/// A dashed rectangle marking a group's extent on the canvas.
+///
+/// Group membership used to be carried by colour and a letter badge alone. A boundary makes it
+/// a shape as well, which is what the author needs to spot two fields accidentally linked by a
+/// shared name — they appear inside one box.
+class GroupOutlinePainter extends CustomPainter {
+  final Color color;
+
+  const GroupOutlinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = color.withValues(alpha: 0.75);
+    const dash = 5.0;
+    const gap = 4.0;
+    void line(Offset from, Offset to) {
+      final total = (to - from).distance;
+      if (total <= 0) return;
+      final step = (to - from) / total;
+      for (double at = 0; at < total; at += dash + gap) {
+        final end = (at + dash).clamp(0.0, total);
+        canvas.drawLine(from + step * at, from + step * end, paint);
+      }
+    }
+
+    final tl = Offset.zero;
+    final tr = Offset(size.width, 0);
+    final br = Offset(size.width, size.height);
+    final bl = Offset(0, size.height);
+    line(tl, tr);
+    line(tr, br);
+    line(br, bl);
+    line(bl, tl);
+  }
+
+  @override
+  bool shouldRepaint(GroupOutlinePainter old) => old.color != color;
+}
