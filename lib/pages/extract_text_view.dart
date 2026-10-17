@@ -54,38 +54,50 @@ class _ExtractTextViewState extends State<ExtractTextView>
         builder: (context, state) {
           return Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      L10n.of(context).extractTextHint,
-                      style: const TextStyle(fontSize: 14),
+              Column(children: [
+                Expanded(
+                  // Scrollable: this was a fixed Column holding a text field and the page
+                  // selector's 260dp grid, about 530dp of content against the ~290dp left when
+                  // the keyboard opens for the filename, and the Spacer could not absorb it.
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          L10n.of(context).extractTextHint,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _outFileNameC,
+                          decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: const OutlineInputBorder()),
+                        ),
+                        const SizedBox(height: 20),
+                        PageRangeSelector(
+                          file: widget.file,
+                          selected: _pages,
+                          onChanged: (pages) => setState(() {
+                            _pages
+                              ..clear()
+                              ..addAll(pages);
+                          }),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _outFileNameC,
-                      decoration: InputDecoration(labelText: L10n.of(context).outputFileName, border: const OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 20),
-                    PageRangeSelector(
-                      file: widget.file,
-                      selected: _pages,
-                      onChanged: (pages) => setState(() {
-                        _pages
-                          ..clear()
-                          ..addAll(pages);
-                      }),
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(onPressed: _onExtract, child: Text(ToolStrings.name(context, 'extract-text'))),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(
+                      16, 12, 16, 12 + MediaQuery.viewPaddingOf(context).bottom),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+                  ),
+                  child: FilledButton(onPressed: _onExtract, child: Text(ToolStrings.name(context, 'extract-text'))),
+                ),
+              ]),
               processingOverlay(state.httpStates[HttpStates.extractText], label: L10n.of(context).procWorking),
             ],
           );

@@ -194,7 +194,7 @@ class _WatermarkPdfViewState extends State<WatermarkPdfView>
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                Text(L10n.of(context).colorColon),
+                                Expanded(child: Text(L10n.of(context).colorColon)),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,

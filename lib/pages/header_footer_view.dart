@@ -201,7 +201,9 @@ class _HeaderFooterViewState extends State<HeaderFooterView>
                             // Color picker
                             Row(
                               children: [
-                                Text(L10n.of(context).textColorColon, style: const TextStyle(fontSize: 14)),
+                                Expanded(
+                                    child: Text(L10n.of(context).textColorColon,
+                                        style: const TextStyle(fontSize: 14))),
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: _pickColor,

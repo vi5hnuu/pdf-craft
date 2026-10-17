@@ -93,7 +93,7 @@ class _AddBorderViewState extends State<AddBorderView>
                       Text('${_width.round()} px'),
                     ]),
                     Row(children: [
-                      Text(L10n.of(context).colorPlain),
+                      Expanded(child: Text(L10n.of(context).colorPlain)),
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _pickColor,

@@ -130,7 +130,9 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
                             padding: const EdgeInsets.only(bottom: 16.0),
                             child: Row(
                               children: [
-                                Text(L10n.of(context).generateSingleImage, style: const TextStyle(fontSize: 20)),
+                                Expanded(
+                                    child: Text(L10n.of(context).generateSingleImage,
+                                        style: const TextStyle(fontSize: 20))),
                                 const SizedBox(width: 16,),
                                 Switch(value: isSingle, onChanged: (value)=>setState(() =>isSingle=value))
                               ],
@@ -139,7 +141,10 @@ class _PdfToJpgViewState extends State<PdfToJpgView>
                           AnimatedOpacity(opacity: isSingle ? 1 : 0, duration: const Duration(milliseconds: 300),child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(L10n.of(context).joinImages, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              Expanded(
+                                  child: Text(L10n.of(context).joinImages,
+                                      style: const TextStyle(
+                                          fontSize: 16, fontWeight: FontWeight.bold))),
                               const SizedBox(width: 16,),
                               Flexible(child: DropdownButtonFormField(
                                   

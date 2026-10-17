@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/widgets/tool_pane.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
@@ -44,82 +45,109 @@ class _QrStampPdfViewState extends State<QrStampPdfView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(ToolStrings.name(context, 'qr-stamp'))),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      // Scrolling content above a sticky action bar. This was a bare Padding > Column holding
+      // a text field, a 224dp preview and a Spacer that can only shrink to zero — about 400dp
+      // of fixed content against the ~290dp left once the keyboard is up, so focusing the URL
+      // field was a hard overflow on any phone.
+      body: ToolPane(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // QR data input
-            TextFormField(
-              controller: _qrDataC,
-              decoration: InputDecoration(
-                labelText: L10n.of(context).qrUrlLabel,
-                hintText: 'https://example.com',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.qr_code),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _qrDataC,
+                      decoration: InputDecoration(
+                        labelText: L10n.of(context).qrUrlLabel,
+                        hintText: 'https://example.com',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.qr_code),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (_qrPreview.isNotEmpty) ...[
+                      Text(L10n.of(context).preview,
+                          style: theme.textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: RepaintBoundary(
+                          key: _qrKey,
+                          // Deliberately white: a QR code needs its quiet zone, whatever the
+                          // theme.
+                          child: Container(
+                            color: Colors.white,
+                            padding: const EdgeInsets.all(12),
+                            child: QrImageView(
+                              data: _qrPreview,
+                              version: QrVersions.auto,
+                              size: 200,
+                              errorCorrectionLevel: QrErrorCorrectLevel.M,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          _qrPreview,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                    ] else
+                      // A fixed block rather than an Expanded, which a scroll view cannot
+                      // give an unbounded child.
+                      SizedBox(
+                        height: 220,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.qr_code_2,
+                                  size: 80, color: theme.colorScheme.onSurfaceVariant),
+                              const SizedBox(height: 12),
+                              // onSurfaceVariant, not outlineVariant: this text explains why
+                              // the button below is dead, so it was the lowest-emphasis role
+                              // in the scheme carrying the screen's most important sentence.
+                              Text(
+                                L10n.of(context).qrEmptyHint,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Live QR preview
-            if (_qrPreview.isNotEmpty) ...[
-              Text(L10n.of(context).preview, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Center(
-                child: RepaintBoundary(
-                  key: _qrKey,
-                  child: Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(12),
-                    child: QrImageView(
-                      data: _qrPreview,
-                      version: QrVersions.auto,
-                      size: 200,
-                      errorCorrectionLevel: QrErrorCorrectLevel.M,
-                    ),
-                  ),
-                ),
+            Container(
+              padding: EdgeInsets.fromLTRB(
+                  16, 12, 16, 12 + MediaQuery.viewPaddingOf(context).bottom),
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                border: Border(top: BorderSide(color: theme.dividerColor)),
               ),
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  _qrPreview,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _qrPreview.isNotEmpty && !_capturing ? _onPositionQr : null,
+                  icon: _capturing
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: theme.colorScheme.onPrimary))
+                      : const Icon(Icons.place),
+                  label: Text(L10n.of(context).positionQrOnPdf),
                 ),
-              ),
-            ] else
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.qr_code_2, size: 80, color: theme.colorScheme.outlineVariant),
-                      const SizedBox(height: 12),
-                      Text(
-                        L10n.of(context).qrEmptyHint,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: theme.colorScheme.outlineVariant),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            const Spacer(),
-
-            // Next step: position on PDF
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _qrPreview.isNotEmpty && !_capturing ? _onPositionQr : null,
-                icon: _capturing
-                    ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.place),
-                label: Text(L10n.of(context).positionQrOnPdf),
               ),
             ),
           ],

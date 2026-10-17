@@ -151,7 +151,8 @@ class _ProtectPdfViewState extends State<ProtectPdfView>
                                           });
                                         }),
                                         const SizedBox(width: 12,),
-                                        Text(permission.name.capitalize()),
+                                        Expanded(
+                                            child: Text(permission.name.capitalize())),
                                       ],
                                     )),
                                   ],

@@ -231,44 +231,59 @@ class _ImageStudioViewState extends State<ImageStudioView>
   // ── Resize tab ────────────────────────────────────────────────────────────────
 
   Widget _buildResizeTab(ThemeData theme, bool loading) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Expanded(
-            child: TextFormField(
-              controller: _widthC,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: L10n.of(context).widthPx, border: const OutlineInputBorder()),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextFormField(
-              controller: _heightC,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: L10n.of(context).heightPx, border: const OutlineInputBorder()),
-            ),
-          ),
-        ]),
-        const SizedBox(height: 16),
-        Row(children: [
-          Switch(value: _maintainAspect, onChanged: (v) => setState(() => _maintainAspect = v)),
-          const SizedBox(width: 8),
-          Text(L10n.of(context).maintainAspect),
-        ]),
-        if (_maintainAspect)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              L10n.of(context).resizeOneDimensionNote,
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outlineVariant),
-            ),
-          ),
-        const Spacer(),
-        _submitButton(loading, ToolStrings.name(context, 'img-resize'), Icons.photo_size_select_large, _onResize),
-      ]),
-    );
+    // The content scrolls and the button is pinned. This tab lives in a TabBarView whose height
+    // the parent Expanded fixes, so when the keyboard shrank the viewport the Column had nowhere
+    // to go and the submit button became unreachable. The other four tabs hold no text field.
+    return Column(children: [
+      Expanded(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _widthC,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                      labelText: L10n.of(context).widthPx, border: const OutlineInputBorder()),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _heightC,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                      labelText: L10n.of(context).heightPx, border: const OutlineInputBorder()),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            Row(children: [
+              Switch(value: _maintainAspect, onChanged: (v) => setState(() => _maintainAspect = v)),
+              const SizedBox(width: 8),
+              // Expanded: a bare Text next to a fixed-width Switch has no slack, and the Hindi
+              // string is materially longer than the English one.
+              Expanded(child: Text(L10n.of(context).maintainAspect)),
+            ]),
+            if (_maintainAspect)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  L10n.of(context).resizeOneDimensionNote,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ),
+          ]),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(16),
+        child: _submitButton(
+            loading, ToolStrings.name(context, 'img-resize'), Icons.photo_size_select_large, _onResize),
+      ),
+    ]);
   }
 
   // ── Filter tab ────────────────────────────────────────────────────────────────
