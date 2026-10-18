@@ -2090,5 +2090,7 @@
   "buttonCaptionLabel": "Button text",
   "optionExportValues": "Exported values",
   "optionExportValuesHint": "One per option, comma separated. Leave empty to export what is shown.",
-  "sectionStyle": "Colours & border"
+  "sectionStyle": "Colours & border",
+  "purchaseRestored": "Your credits have been restored.",
+  "purchaseOtherAccount": "This purchase belongs to a different account. Sign in to that account to use its credits."
 }

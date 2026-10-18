@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
@@ -43,6 +44,9 @@ class PurchaseService extends ChangeNotifier {
   bool _initialized = false;
   bool _purchasePending = false;
 
+  /// The account the last restore ran for, so an identity change can be noticed.
+  String? _restoredForUserId;
+
   bool get available => _available;
   bool get initialized => _initialized;
   bool get purchasePending => _purchasePending;
@@ -52,6 +56,11 @@ class PurchaseService extends ChangeNotifier {
   /// Safe to call once at startup (after auth is ready, since redeeming needs a token).
   Future<void> init() async {
     if (_sub != null) return; // already initialized
+    // A session can end mid-use: a rejected refresh replaces the identity without the app
+    // restarting. Any purchase bought by the old one is then owned by an account this device no
+    // longer holds, and nothing would re-offer it until the next launch. Asking Play to redeliver
+    // on an identity change is what lets it be recovered now rather than eventually.
+    AuthService().addListener(_onIdentityMaybeChanged);
     // Subscribe FIRST so we don't miss restored/redelivered purchases.
     _sub = _iap.purchaseStream.listen(
       _onPurchaseUpdates,
@@ -65,6 +74,7 @@ class PurchaseService extends ChangeNotifier {
           _products[d.id] = d;
         }
         // Recover any purchase left unfinished by a previous session.
+        _restoredForUserId = AuthService().user?.id;
         await _iap.restorePurchases();
       }
     } catch (e) {
@@ -140,12 +150,36 @@ class PurchaseService extends ChangeNotifier {
   Future<void> _deliverAndFinalize(PurchaseDetails p) async {
     // Breadcrumbs only — product id and status, never the purchase token.
     CrashReporter().log('purchase deliver ${p.productID} ${p.status.name}');
+    final token = p.verificationData.serverVerificationData;
     try {
-      final credited = await CreditService()
-          .redeemPurchase(p.verificationData.serverVerificationData, p.productID);
-      if (credited) {
+      final result = await CreditService().redeemPurchase(token, p.productID);
+      if (result.creditedToCaller) {
         await _consumeCredited(p);
         NotificationService.showSnackbar(text: L10n.current.creditsAdded, kind: SnackKind.success);
+        return;
+      }
+
+      // The purchase is owned by an account this session is not — the device lost the identity
+      // that bought it. Consuming here is what used to destroy it: Play never redelivers a
+      // consumed purchase, so the credits stayed on an account nobody could reach. Try to
+      // recover them first, and only finalize once their fate is settled.
+      try {
+        final moved = await CreditService().claimPurchase(token, p.productID);
+        await _consumeCredited(p);
+        NotificationService.showSnackbar(
+            text: moved > 0 ? L10n.current.purchaseRestored : L10n.current.creditsAdded,
+            kind: SnackKind.success);
+      } on DioException catch (claim) {
+        if (claim.response?.statusCode == 403) {
+          // Genuinely somebody else's: a registered account owns it, and nothing this device can
+          // present should move their credits. Finalizing is correct — the grant did happen, to
+          // them — and the user is told where it went rather than left wondering.
+          await _consumeCredited(p);
+          NotificationService.showSnackbar(
+              text: L10n.current.purchaseOtherAccount, kind: SnackKind.warning);
+        } else {
+          rethrow; // transient — leave it pending so Play redelivers and we retry
+        }
       }
     } catch (e) {
       // Transient/verification failure — DO NOT finalize. Play will redeliver it and we
@@ -211,8 +245,23 @@ class PurchaseService extends ChangeNotifier {
     }
   }
 
+  /// Re-offers past purchases when the signed-in account changes.
+  ///
+  /// Only on a real change, and only once per identity: AuthService notifies for plenty of
+  /// things that are not one, and restoring in a loop would re-run delivery for every purchase
+  /// each time.
+  void _onIdentityMaybeChanged() {
+    if (!_available) return;
+    final current = AuthService().user?.id;
+    if (current == null || current == _restoredForUserId) return;
+    _restoredForUserId = current;
+    _iap.restorePurchases().catchError(
+        (e) => LoggerSingleton().logger.w('Restore after identity change failed: $e'));
+  }
+
   @override
   void dispose() {
+    AuthService().removeListener(_onIdentityMaybeChanged);
     _sub?.cancel();
     super.dispose();
   }
