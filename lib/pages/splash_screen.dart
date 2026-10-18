@@ -129,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // Before anything else, because a build the server has withdrawn should not reach the app
     // at all. load() never throws and never blocks on the network answering: with no answer
     // the config is unrestricted, so a backend outage cannot gate anyone.
-    await AppConfigService().load();
+    await AppConfigService().load(force: true);
     if (!mounted) return;
     if (AppConfigService().config.updateRequired) {
       GoRouter.of(context).goNamed(AppRoutes.updateRequiredRoute.name);

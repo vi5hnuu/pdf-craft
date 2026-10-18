@@ -29,6 +29,14 @@ class AppConfigService extends ChangeNotifier {
 
   AppConfig _config = AppConfig.unrestricted;
   int _installedBuild = -1;
+  DateTime? _lastFetch;
+
+  /// How stale a config may be before the next [load] goes back to the server.
+  ///
+  /// The resume path calls load() on every foreground, and without this every app switch by
+  /// every install would be a request — for an answer that changes a few times a year. The
+  /// launch path passes [force] so a cold start is always current.
+  static const _minFetchInterval = Duration(minutes: 15);
 
   AppConfig get config => _config;
 
@@ -39,7 +47,11 @@ class AppConfigService extends ChangeNotifier {
   ///
   /// Safe to call more than once; the launch path calls it before navigating and the resume path
   /// calls it again.
-  Future<void> load() async {
+  Future<void> load({bool force = false}) async {
+    final since = _lastFetch;
+    if (!force && since != null && DateTime.now().difference(since) < _minFetchInterval) {
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     // Seed from cache first, so a slow or failed fetch still has the last known answer rather
     // than silently reverting to unrestricted.
@@ -74,6 +86,7 @@ class AppConfigService extends ChangeNotifier {
       );
       final data = (res.data['data'] as Map).cast<String, dynamic>();
       _config = AppConfig.fromJson(data);
+      _lastFetch = DateTime.now();
       await prefs.setString(_cacheKey, jsonEncode(data));
       notifyListeners();
     } catch (e) {

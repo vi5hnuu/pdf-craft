@@ -294,11 +294,8 @@ class AuthService extends ChangeNotifier {
     await _storage.clear();
     _accessToken = null;
     _user = null;
-    // Anything held per account has to go with the session. Clearing the token store alone
-    // left the previous account's ad-free entitlement in place until the server contradicted
-    // it, and left their handwritten signature one tap from being stamped onto the next
-    // person's document — it was only clearable from a button inside the signature sheet.
-    await _dropPerAccountState();
+    // Per-account state is dropped by _createGuest below, which every path that changes
+    // identity goes through — including the two inside _doRefresh that do not come past here.
     notifyListeners();
     try {
       await _createGuest();
