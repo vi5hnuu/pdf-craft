@@ -5,6 +5,7 @@
 /// and makes a route easy to find by name.
 library;
 
+import 'package:pdf_craft/singletons/app_config_service.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -175,6 +176,19 @@ final GoRouter appRouter = GoRouter(
         return AppRoutes.splashRoute.path;
       }
       final path = state.matchedLocation;
+
+      // A withdrawn build goes nowhere but the gate, whatever the destination. Splash and the
+      // resume hook both route here already; doing it in the redirect as well means the gate
+      // holds for any navigation at all rather than only the two entry points we thought of —
+      // and it takes precedence over the storage wall below, since asking a build that may not
+      // run for a permission it will not use is just a second dead end.
+      //
+      // No I/O: this reads the config already in memory, so it costs nothing per navigation.
+      if (AppConfigService().config.updateRequired &&
+          path != AppRoutes.updateRequiredRoute.path) {
+        return AppRoutes.updateRequiredRoute.path;
+      }
+
       if (storageNotRequiredPaths.contains(path)) return null;
       final granted=await StoragePermissions.isStoragePermissionGranted();
       if(granted) return null;
