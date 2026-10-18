@@ -64,6 +64,7 @@ import 'package:pdf_craft/pages/incoming_files_screen.dart';
 import 'package:pdf_craft/pages/batch_process_view.dart';
 import 'package:pdf_craft/pages/onboarding_screen.dart';
 import 'package:pdf_craft/pages/splash_screen.dart';
+import 'package:pdf_craft/pages/update_required_screen.dart';
 import 'package:pdf_craft/pages/stamp_pdf_view.dart';
 import 'package:pdf_craft/pages/qr_stamp_pdf_view.dart';
 import 'package:pdf_craft/pages/annotate_pdf_view.dart';
@@ -145,6 +146,7 @@ String? _requireSelectionConfig(BuildContext context, GoRouterState state) =>
 /// stale literal here and silently put Credits back behind the permission wall.
 final Set<String> storageNotRequiredPaths = {
   AppRoutes.splashRoute.path,
+  AppRoutes.updateRequiredRoute.path,
   AppRoutes.onboardingRoute.path,
   AppRoutes.errorRoute.path,
   AppRoutes.creditsRoute.path,
@@ -188,6 +190,14 @@ final GoRouter appRouter = GoRouter(
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      // Outside the shell and without the storage gate: a build the server has withdrawn must
+      // reach this and nothing else, including the permission wall.
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        name: AppRoutes.updateRequiredRoute.name,
+        path: AppRoutes.updateRequiredRoute.path,
+        builder: (context, state) => const UpdateRequiredScreen(),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,

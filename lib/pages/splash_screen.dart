@@ -9,6 +9,7 @@ import 'package:pdf_craft/singletons/app_open_ad_manager.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/rewarded_ad_manager.dart';
 import 'package:pdf_craft/singletons/rewarded_interstitial_ad_manager.dart';
+import 'package:pdf_craft/singletons/app_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdf_craft/theme/app_radius.dart';
 import 'package:pdf_craft/widgets/app_logo.dart';
@@ -125,6 +126,16 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> goToHome() async {
+    // Before anything else, because a build the server has withdrawn should not reach the app
+    // at all. load() never throws and never blocks on the network answering: with no answer
+    // the config is unrestricted, so a backend outage cannot gate anyone.
+    await AppConfigService().load();
+    if (!mounted) return;
+    if (AppConfigService().config.updateRequired) {
+      GoRouter.of(context).goNamed(AppRoutes.updateRequiredRoute.name);
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final onboardingDone = prefs.getBool('onboarding_complete') ?? false;
     if (!mounted) return;

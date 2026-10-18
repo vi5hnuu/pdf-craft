@@ -12,6 +12,7 @@ import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
 import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
+import 'package:pdf_craft/singletons/rate_app_service.dart';
 import 'package:pdf_craft/state/pdf-state/pdf_bloc.dart';
 import 'package:pdf_craft/utils/tool_result_handler.dart';
 import 'package:pdf_craft/widgets/processing_overlay.dart';
@@ -149,6 +150,9 @@ mixin ToolViewMixin<T extends StatefulWidget> on State<T>, ToolResultHandler<T> 
       // confirmation for most of its lifetime.
       if (showInterstitial) AdsSingleton().dispatch(ShowInterstitialAd());
     } else if (s.error != null) {
+      // Something of the user's just failed. Whatever else happens this session, it is not the
+      // moment to ask them to rate the app.
+      RateAppService().noteError();
       // Keyed off the 402 status rather than searching the message for "credit", which
       // broke as soon as the server reworded anything.
       final isCredit = s.isOutOfCredits;

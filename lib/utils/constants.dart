@@ -57,6 +57,10 @@ class Constants {
   static const int maxUploadRequestBytes = 100 * 1024 * 1024;
 
   // Legal pages (shown on the create-account screen), hosted on the legal site.
+  /// Android application id, for building the store listing URL when the server names none.
+  /// Must match applicationId in android/app/build.gradle.
+  static const String androidPackageName = "com.vi5hnu.pdf_craft";
+
   static const String termsUrl = "https://legal.laxmi.solutions/pdf-craft/terms-of-service";
   static const String privacyUrl = "https://legal.laxmi.solutions/pdf-craft/privacy-policy";
   static const String processedDirPath = "storage/emulated/0/ilvPdf";

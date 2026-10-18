@@ -2092,5 +2092,12 @@
   "optionExportValuesHint": "One per option, comma separated. Leave empty to export what is shown.",
   "sectionStyle": "Colours & border",
   "purchaseRestored": "Your credits have been restored.",
-  "purchaseOtherAccount": "This purchase belongs to a different account. Sign in to that account to use its credits."
+  "purchaseOtherAccount": "This purchase belongs to a different account. Sign in to that account to use its credits.",
+  "updateRequiredTitle": "Update required",
+  "updateRequiredBody": "This version is no longer supported. Update to the latest version to carry on.",
+  "updateNowAction": "Update now",
+  "updateAvailableTitle": "Update available",
+  "updateAvailableBody": "A newer version of PDF Craft is ready, with the latest fixes.",
+  "updateLater": "Later",
+  "rateAppTitle": "Rate PDF Craft"
 }
