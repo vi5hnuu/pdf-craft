@@ -104,6 +104,10 @@ class AppConfig {
   /// A newer build exists; worth a dismissible nudge.
   final bool updateRecommended;
 
+  /// The build the nudge is about, so its cool-off can be per release rather than global: a
+  /// genuinely newer version may ask again, the same one may not.
+  final int recommendedBuild;
+
   /// Copy for the gate, or null to use the app's own wording.
   final String? updateMessage;
 
@@ -117,6 +121,7 @@ class AppConfig {
   const AppConfig({
     required this.updateRequired,
     required this.updateRecommended,
+    this.recommendedBuild = 0,
     this.updateMessage,
     this.storeUrl,
     required this.ratingMinSuccesses,
@@ -139,6 +144,7 @@ class AppConfig {
         // never be the reason someone is locked out.
         updateRequired: json['updateRequired'] as bool? ?? false,
         updateRecommended: json['updateRecommended'] as bool? ?? false,
+        recommendedBuild: (json['recommendedBuild'] as num?)?.toInt() ?? 0,
         updateMessage: json['updateMessage'] as String?,
         storeUrl: json['storeUrl'] as String?,
         ratingMinSuccesses: (json['ratingMinSuccesses'] as num?)?.toInt() ?? 3,

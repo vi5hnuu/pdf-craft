@@ -8,6 +8,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/locale_manager.dart';
 import 'package:pdf_craft/utils/responsive.dart';
 import 'package:pdf_craft/widgets/app_logo.dart';
+import 'package:pdf_craft/widgets/update_nudge.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -44,6 +45,17 @@ String _scannerLabel(BuildContext c) => L10n.of(c).navScanner;
 String _cloudLabel(BuildContext c) => L10n.of(c).navCloud;
 
 class _MainScreenState extends State<MainScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    // After the first frame, so the nudge opens over a drawn screen rather than an empty one,
+    // and from here rather than from splash: by now the gate has had its say, so anything still
+    // running is a build that is merely behind, not one that has been withdrawn.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) UpdateNudge.maybeShow(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
