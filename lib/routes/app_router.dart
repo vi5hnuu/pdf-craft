@@ -5,6 +5,7 @@
 /// and makes a route easy to find by name.
 library;
 
+import 'package:pdf_craft/singletons/app_config_service.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -64,6 +65,7 @@ import 'package:pdf_craft/pages/incoming_files_screen.dart';
 import 'package:pdf_craft/pages/batch_process_view.dart';
 import 'package:pdf_craft/pages/onboarding_screen.dart';
 import 'package:pdf_craft/pages/splash_screen.dart';
+import 'package:pdf_craft/pages/update_required_screen.dart';
 import 'package:pdf_craft/pages/stamp_pdf_view.dart';
 import 'package:pdf_craft/pages/qr_stamp_pdf_view.dart';
 import 'package:pdf_craft/pages/annotate_pdf_view.dart';
@@ -145,6 +147,7 @@ String? _requireSelectionConfig(BuildContext context, GoRouterState state) =>
 /// stale literal here and silently put Credits back behind the permission wall.
 final Set<String> storageNotRequiredPaths = {
   AppRoutes.splashRoute.path,
+  AppRoutes.updateRequiredRoute.path,
   AppRoutes.onboardingRoute.path,
   AppRoutes.errorRoute.path,
   AppRoutes.creditsRoute.path,
@@ -173,6 +176,19 @@ final GoRouter appRouter = GoRouter(
         return AppRoutes.splashRoute.path;
       }
       final path = state.matchedLocation;
+
+      // A withdrawn build goes nowhere but the gate, whatever the destination. Splash and the
+      // resume hook both route here already; doing it in the redirect as well means the gate
+      // holds for any navigation at all rather than only the two entry points we thought of —
+      // and it takes precedence over the storage wall below, since asking a build that may not
+      // run for a permission it will not use is just a second dead end.
+      //
+      // No I/O: this reads the config already in memory, so it costs nothing per navigation.
+      if (AppConfigService().config.updateRequired &&
+          path != AppRoutes.updateRequiredRoute.path) {
+        return AppRoutes.updateRequiredRoute.path;
+      }
+
       if (storageNotRequiredPaths.contains(path)) return null;
       final granted=await StoragePermissions.isStoragePermissionGranted();
       if(granted) return null;
@@ -188,6 +204,14 @@ final GoRouter appRouter = GoRouter(
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      // Outside the shell and without the storage gate: a build the server has withdrawn must
+      // reach this and nothing else, including the permission wall.
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        name: AppRoutes.updateRequiredRoute.name,
+        path: AppRoutes.updateRequiredRoute.path,
+        builder: (context, state) => const UpdateRequiredScreen(),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,

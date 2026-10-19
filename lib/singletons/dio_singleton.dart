@@ -1,3 +1,4 @@
+import 'package:pdf_craft/singletons/rate_app_service.dart';
 import 'dart:math';
 import 'package:pdf_craft/singletons/crash_reporter.dart';
 
@@ -30,6 +31,13 @@ class DioSingleton {
         // Attach the current access token so pdf-studio can authenticate the request.
         // If none yet (cold start / first launch), establish one first so the request
         // never goes out unauthenticated.
+        // A request that opts out of auth is sent as-is. The app-config call does: it is public,
+        // and establishing a session for it at launch would race the very check that decides
+        // whether this build may run at all.
+        if (options.extra['skipAuth'] == true) {
+          LoggerSingleton().logger.i('REQUEST [${options.method}] => PATH: ${options.path}');
+          return handler.next(options);
+        }
         var token = AuthService().accessTokenSync;
         token ??= await AuthService().ensureSession();
         if (token != null) {
@@ -62,6 +70,9 @@ class DioSingleton {
             CreditService().setBalance(value);
             // The run that produced this response was paid for — no interstitial after it.
             FullScreenAdPolicy().recordCharge();
+            // The user has just been charged. "Please rate us" immediately after reads as
+            // "pay us, now praise us", so the rating prompt stands down for a while.
+            RateAppService().noteMonetisation();
           }
         }
         return handler.next(response);

@@ -8,6 +8,7 @@ import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/l10n/locale_manager.dart';
 import 'package:pdf_craft/utils/responsive.dart';
 import 'package:pdf_craft/widgets/app_logo.dart';
+import 'package:pdf_craft/widgets/update_nudge.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -46,6 +47,17 @@ String _cloudLabel(BuildContext c) => L10n.of(c).navCloud;
 class _MainScreenState extends State<MainScreen> {
 
   @override
+  void initState() {
+    super.initState();
+    // After the first frame, so the nudge opens over a drawn screen rather than an empty one,
+    // and from here rather than from splash: by now the gate has had its say, so anything still
+    // running is a build that is merely behind, not one that has been withdrawn.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) UpdateNudge.maybeShow(context);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -54,12 +66,9 @@ class _MainScreenState extends State<MainScreen> {
       listenWhen: (prev, curr) => curr.httpStates.entries.any(
         (e) => e.value.done == true && prev.httpStates[e.key]?.done != true,
       ),
-      listener: (context, state) async {
-        final should = await RateAppService().recordSuccess();
-        // The dialog is opened on the listener's own context, so that is what has to still be
-        // mounted; the State's `mounted` says nothing about it.
-        if (should && context.mounted) _showRateDialog(context);
-      },
+      // Google's own review flow decides whether to show anything, so there is no dialog of
+      // ours to open and nothing to keep a context alive for.
+      listener: (context, state) => RateAppService().recordSuccess(),
       child: Scaffold(
       // A rail once there is width for it; the bottom bar would otherwise spend scarce
       // landscape height and sit a long way from where the hands rest on a tablet.
@@ -171,37 +180,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _showRateDialog(BuildContext ctx) {
-    showDialog(
-      context: ctx,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: Text(L10n.of(ctx).rateTitle),
-        content: Text(
-          L10n.of(ctx).rateBody,
-          style: const TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              // "Later" asks again after more uses; it used to opt the user out permanently.
-              RateAppService().snooze();
-              Navigator.pop(ctx);
-            },
-            child: Text(L10n.of(ctx).rateLater),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await RateAppService().markRated();
-              await RateAppService().openPlayStore();
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: Text(L10n.of(ctx).rateNow),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _onTap(int index) {
     widget.navigationShell

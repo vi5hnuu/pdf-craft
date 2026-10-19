@@ -199,26 +199,76 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Redeems a Google Play purchase token for a credit pack (server verifies with Google).
   ///
-  /// Returns `true` when the purchase is credited **or was already credited** (HTTP 409) —
-  /// i.e. it is safe to *finalize/consume* the purchase. Throws on transient or
-  /// verification failures, where the purchase should be left pending and retried later
-  /// (never consumed, or the user would be charged with no credits).
-  Future<bool> redeemPurchase(String purchaseToken, String productId) async {
+  /// Throws on transient or verification failures, where the purchase must be left pending and
+  /// retried rather than consumed — consuming one the server has not credited charges the user
+  /// for nothing.
+  Future<RedeemResult> redeemPurchase(String purchaseToken, String productId) async {
     try {
       final res = await _dio.post('${Constants.baseUrl}/credits/purchase',
           data: {'purchaseToken': purchaseToken, 'productId': productId});
-      _balance = (res.data['data']['credits'] as num).toInt();
+      final data = (res.data['data'] as Map).cast<String, dynamic>();
+      _balance = (data['credits'] as num).toInt();
       notifyListeners();
-      return true;
+      // Both flags are absent on a server predating the ownership change, where a 200 only ever
+      // meant the caller itself had been credited.
+      return RedeemResult(
+        balance: _balance,
+        creditedToCaller: data['creditedToCaller'] as bool? ?? true,
+        alreadyGranted: data['alreadyGranted'] as bool? ?? false,
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) {
-        // Already redeemed (e.g. a redelivered purchase) — the credits exist; finalize it.
-        refreshBalance();
-        return true;
+        // An older server refusing a token it has already granted, without saying to whom. The
+        // caller must not assume it was itself: that assumption is what consumed purchases
+        // belonging to a session the device had lost, spending them for good.
+        return const RedeemResult(
+            balance: -1, creditedToCaller: false, alreadyGranted: true);
       }
       rethrow; // transient / verification failure → keep pending, retry
     }
   }
+
+  /// Recovers a purchase whose owning session this device no longer has.
+  ///
+  /// Only ever moves credits from an abandoned anonymous account; the server refuses anything
+  /// else with a 403. Returns the credits moved.
+  Future<int> claimPurchase(String purchaseToken, String productId) async {
+    final res = await _dio.post('${Constants.baseUrl}/credits/claim-purchase',
+        data: {'purchaseToken': purchaseToken, 'productId': productId});
+    final moved = ((res.data['data'] as Map)['creditsMoved'] as num).toInt();
+    if (moved > 0) await refreshBalance();
+    return moved;
+  }
+
+  /// Drops the cached balance when the signed-in identity changes.
+  ///
+  /// Without it the figure on screen stays the previous account's until something happens to
+  /// refetch — which is how a brand-new guest could be shown the credits of the account it had
+  /// just replaced.
+  void clearForIdentityChange() {
+    if (_balance == 0) return;
+    _balance = 0;
+    notifyListeners();
+  }
+}
+
+/// What redeeming a purchase did, from the caller's point of view.
+class RedeemResult {
+  /// The caller's balance afterwards, or -1 when the server did not say.
+  final int balance;
+
+  /// Whether the credits belong to the account that called. False means the purchase is owned by
+  /// another account: the caller's balance did not rise and it must not act as though it had.
+  final bool creditedToCaller;
+
+  /// The token had already been redeemed, so this call granted nothing.
+  final bool alreadyGranted;
+
+  const RedeemResult({
+    required this.balance,
+    required this.creditedToCaller,
+    required this.alreadyGranted,
+  });
 }
 
 

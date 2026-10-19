@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 4.0.0+20
+version: 4.0.0+21
 
 environment:
   sdk: ^3.5.4
@@ -74,6 +74,10 @@ dependencies:
   # cannot finalize a consumable.
   in_app_purchase_android: ^0.5.1
   package_info_plus: ^9.0.1
+  # Google's native In-App Review flow. Worth the dependency over sending people to the store
+  # listing with url_launcher: that leaves the app, which is both a worse experience and
+  # measurably worse at producing reviews. Small, and Play Core is already present for billing.
+  in_app_review: ^2.0.9
 
   # In-repo form engine: the field schema, type registry and the codecs that
   # turn a placed layout into the backend's create-form request. Pure Dart, so

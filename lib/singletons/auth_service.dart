@@ -1,3 +1,4 @@
+import 'package:pdf_craft/singletons/credit_service.dart';
 import 'dart:async';
 import 'package:pdf_craft/singletons/crash_reporter.dart';
 import 'dart:convert';
@@ -129,8 +130,23 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> _createGuest() async {
+    await _dropPerAccountState();
     final data = await _api.createGuest();
     await _applyTokens(data);
+  }
+
+  /// Forgets everything held for the account being left behind.
+  ///
+  /// One place, because the paths that change identity do not agree on which of them to call.
+  /// _resetToGuest cleared the entitlement and the signature, and the two _createGuest calls
+  /// inside _doRefresh bypassed it entirely — so a session that ended with a rejected refresh
+  /// handed the next identity the previous one's ad-free entitlement and their handwritten
+  /// signature. Nothing anywhere cleared the credit balance, which is why a brand-new guest
+  /// could be shown the credits of the account it had just replaced.
+  Future<void> _dropPerAccountState() async {
+    await ProService().clear();
+    await SignatureStore().clear();
+    CreditService().clearForIdentityChange();
   }
 
   // ── Full-account flows ────────────────────────────────────────────────────────
@@ -278,12 +294,8 @@ class AuthService extends ChangeNotifier {
     await _storage.clear();
     _accessToken = null;
     _user = null;
-    // Anything held per account has to go with the session. Clearing the token store alone
-    // left the previous account's ad-free entitlement in place until the server contradicted
-    // it, and left their handwritten signature one tap from being stamped onto the next
-    // person's document — it was only clearable from a button inside the signature sheet.
-    await ProService().clear();
-    await SignatureStore().clear();
+    // Per-account state is dropped by _createGuest below, which every path that changes
+    // identity goes through — including the two inside _doRefresh that do not come past here.
     notifyListeners();
     try {
       await _createGuest();

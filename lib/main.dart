@@ -1,3 +1,4 @@
+import 'package:pdf_craft/singletons/app_config_service.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -145,6 +146,18 @@ class _NestedTabNavigationExampleAppState
     });
   }
 
+  /// Re-reads the launch config and, if this build is no longer supported, routes to the gate.
+  ///
+  /// Fire and forget: load() never throws and an unreachable server leaves the config
+  /// unrestricted, so nothing here can strand a user on a failed network call.
+  Future<void> _recheckSupportedBuild() async {
+    await AppConfigService().load();
+    if (!AppConfigService().config.updateRequired) return;
+    final context = rootNavigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    GoRouter.of(context).goNamed(AppRoutes.updateRequiredRoute.name);
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
@@ -156,6 +169,9 @@ class _NestedTabNavigationExampleAppState
         FullScreenAdPolicy().onPaused();
         break;
       case AppLifecycleState.resumed:
+        // Re-check on the way back in, so a build that becomes unsupported while the app sits in
+        // the background is caught at the next foreground rather than the next cold start.
+        _recheckSupportedBuild();
         // The policy enforces minimum background time, cooldown, external flows and Pro.
         if (FullScreenAdPolicy().consumeResumeForAppOpen()) {
           AppOpenAdManager().showAdIfAvailable();
