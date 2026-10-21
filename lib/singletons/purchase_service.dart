@@ -13,6 +13,62 @@ import 'package:pdf_craft/singletons/logger_singleton.dart';
 import 'package:pdf_craft/singletons/notification_service.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
 
+/// What a redemption attempt amounted to, and therefore what happens to the purchase.
+enum PurchaseOutcomeKind {
+  /// The credits are on the caller's account.
+  credited,
+
+  /// This session is a guest, so the server will not credit it — but creating an account will,
+  /// because conversion keeps the same account id and the purchase then matches.
+  refusedNeedsAccount,
+
+  /// The purchase is bound to a different account. Signing in to that one is the way to it.
+  refusedOtherAccount,
+
+  /// No answer yet: a grant in flight, an unreachable dependency, a dropped connection.
+  deferred;
+
+  /// Whether the purchase may be finalized and consumed.
+  ///
+  /// Only one kind says yes, and that is the point. Consuming is irreversible — Play never
+  /// redelivers a consumed purchase — so **nothing but a confirmed credit may consume**. Every
+  /// other kind leaves the purchase pending, which either lets a retry succeed or lets Play
+  /// auto-refund it after three days. Breaking this rule is what destroyed purchases before: a
+  /// 409 was read as "already credited", the purchase was consumed, and the credits were
+  /// stranded on a session the device had lost.
+  bool get mayConsume => this == credited;
+}
+
+/// Classifies a redemption attempt, with no I/O so the rules can be tested directly.
+///
+/// [statusCode] is null when the call succeeded; [callerIsGuest] only distinguishes which
+/// refusal the user is told about, never whether the purchase is kept.
+PurchaseOutcomeKind outcomeFor({
+  required bool creditedToCaller,
+  int? statusCode,
+  required bool callerIsGuest,
+}) {
+  if (statusCode == null) {
+    // The server credits the caller by construction, so a 200 that says otherwise should not
+    // happen. If one ever does it is still not a credit, so it still must not be consumed.
+    return creditedToCaller
+        ? PurchaseOutcomeKind.credited
+        : PurchaseOutcomeKind.refusedOtherAccount;
+  }
+
+  // 403 is the one refusal that will not resolve by retrying — but it does resolve if the user
+  // converts or signs in, and failing that Play refunds it, so the purchase is still kept.
+  if (statusCode == 403) {
+    return callerIsGuest
+        ? PurchaseOutcomeKind.refusedNeedsAccount
+        : PurchaseOutcomeKind.refusedOtherAccount;
+  }
+
+  // 409 is a concurrent grant in flight, 503 the auth service being unreachable, 5xx/timeouts
+  // everything else. All transient, all retried on the next delivery.
+  return PurchaseOutcomeKind.deferred;
+}
+
 /// Owns the Google Play In-App Purchase lifecycle **app-wide** (not per-screen), so a
 /// purchase that completes after the user navigates away — or that Play redelivers on a
 /// later launch — is still processed.
@@ -86,10 +142,21 @@ class PurchaseService extends ChangeNotifier {
     }
   }
 
-  /// Starts buying a consumable credit pack. Returns false if the product isn't available.
+  /// Starts buying a consumable credit pack.
+  ///
+  /// Returns false when the product is unavailable, or when the session is a guest.
+  ///
+  /// The guest check is here as well as in the UI because this is the one that cannot be
+  /// bypassed. The server refuses to credit a guest, and Play would still take the money, so
+  /// opening the purchase sheet for one sells something that cannot be delivered. The UI asks
+  /// them to create an account instead; see CreditsScreen.
   Future<bool> buy(String productId) async {
     final details = _products[productId];
     if (details == null) return false;
+    if (AuthService().isGuest) {
+      LoggerSingleton().logger.w('Purchase refused: guests cannot be credited.');
+      return false;
+    }
     try {
       // Attach the userId as Play's obfuscated account id. It is the only way the server
       // can tell whose account to credit when it reconciles a purchase from an RTDN — the
@@ -146,49 +213,53 @@ class PurchaseService extends ChangeNotifier {
     }
   }
 
-  /// Verifies the purchase server-side and, only on success, finalizes (consumes) it.
+  /// Verifies the purchase server-side and consumes it only once the credits are confirmed.
   Future<void> _deliverAndFinalize(PurchaseDetails p) async {
     // Breadcrumbs only — product id and status, never the purchase token.
     CrashReporter().log('purchase deliver ${p.productID} ${p.status.name}');
     final token = p.verificationData.serverVerificationData;
+
+    PurchaseOutcomeKind outcome;
     try {
       final result = await CreditService().redeemPurchase(token, p.productID);
-      if (result.creditedToCaller) {
-        await _consumeCredited(p);
-        NotificationService.showSnackbar(text: L10n.current.creditsAdded, kind: SnackKind.success);
-        return;
-      }
-
-      // The purchase is owned by an account this session is not — the device lost the identity
-      // that bought it. Consuming here is what used to destroy it: Play never redelivers a
-      // consumed purchase, so the credits stayed on an account nobody could reach. Try to
-      // recover them first, and only finalize once their fate is settled.
-      try {
-        final moved = await CreditService().claimPurchase(token, p.productID);
-        await _consumeCredited(p);
-        NotificationService.showSnackbar(
-            text: moved > 0 ? L10n.current.purchaseRestored : L10n.current.creditsAdded,
-            kind: SnackKind.success);
-      } on DioException catch (claim) {
-        if (claim.response?.statusCode == 403) {
-          // Genuinely somebody else's: a registered account owns it, and nothing this device can
-          // present should move their credits. Finalizing is correct — the grant did happen, to
-          // them — and the user is told where it went rather than left wondering.
-          await _consumeCredited(p);
-          NotificationService.showSnackbar(
-              text: L10n.current.purchaseOtherAccount, kind: SnackKind.warning);
-        } else {
-          rethrow; // transient — leave it pending so Play redelivers and we retry
-        }
-      }
+      outcome = outcomeFor(
+          creditedToCaller: result.creditedToCaller,
+          callerIsGuest: AuthService().isGuest);
+    } on DioException catch (e) {
+      // A transport failure has no status; it is deferred either way, which is what
+      // outcomeFor returns for an unrecognised code.
+      outcome = outcomeFor(
+          creditedToCaller: false,
+          statusCode: e.response?.statusCode ?? 0,
+          callerIsGuest: AuthService().isGuest);
+      LoggerSingleton().logger.w('Purchase redemption failed (${e.response?.statusCode}): $e');
     } catch (e) {
-      // Transient/verification failure — DO NOT finalize. Play will redeliver it and we
-      // retry on the next update/launch, so the user isn't charged without credits.
-      LoggerSingleton().logger.w('Purchase verification deferred (will retry): $e');
-      CrashReporter().log('purchase deferred ${p.productID}');
-      NotificationService.showSnackbar(
-          text: L10n.current.purchaseVerifying, kind: SnackKind.warning);
+      outcome = outcomeFor(
+          creditedToCaller: false, statusCode: 0, callerIsGuest: AuthService().isGuest);
+      LoggerSingleton().logger.w('Purchase redemption failed: $e');
     }
+
+    // The single gate. Everything above decides what happened; only this consumes.
+    if (outcome.mayConsume) {
+      await _consumeCredited(p);
+      NotificationService.showSnackbar(
+          text: L10n.current.creditsAdded, kind: SnackKind.success);
+      return;
+    }
+
+    if (outcome != PurchaseOutcomeKind.deferred) {
+      CrashReporter().log('purchase refused ${p.productID} ${outcome.name}');
+    }
+    NotificationService.showSnackbar(
+      text: switch (outcome) {
+        PurchaseOutcomeKind.refusedNeedsAccount => L10n.current.purchaseNeedsAccount,
+        PurchaseOutcomeKind.refusedOtherAccount => L10n.current.purchaseOtherAccount,
+        // Says "verifying" because that is the truth: the purchase is held, not lost, and the
+        // next launch tries again.
+        _ => L10n.current.purchaseVerifying,
+      },
+      kind: SnackKind.warning,
+    );
   }
 
   Future<void> _finalizeIfPending(PurchaseDetails p) async {

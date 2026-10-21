@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pdf_craft/singletons/auth_service.dart';
 import 'package:pdf_craft/singletons/dio_singleton.dart';
@@ -202,42 +201,26 @@ class CreditService extends ChangeNotifier with WidgetsBindingObserver {
   /// Throws on transient or verification failures, where the purchase must be left pending and
   /// retried rather than consumed — consuming one the server has not credited charges the user
   /// for nothing.
+  /// Nothing is caught here: every failure reaches the caller, which decides whether to consume.
+  /// That includes a 409, which means a concurrent writer — the refund webhook, or another
+  /// delivery of the same purchase — is mid-grant. It is transient, so leaving the purchase
+  /// pending lets the next delivery take the server's already-granted path and return a clean
+  /// 200. Treating a 409 as success is what used to consume purchases credited to a session this
+  /// device no longer held.
   Future<RedeemResult> redeemPurchase(String purchaseToken, String productId) async {
-    try {
-      final res = await _dio.post('${Constants.baseUrl}/credits/purchase',
-          data: {'purchaseToken': purchaseToken, 'productId': productId});
-      final data = (res.data['data'] as Map).cast<String, dynamic>();
-      _balance = (data['credits'] as num).toInt();
-      notifyListeners();
-      // Both flags are absent on a server predating the ownership change, where a 200 only ever
-      // meant the caller itself had been credited.
-      return RedeemResult(
-        balance: _balance,
-        creditedToCaller: data['creditedToCaller'] as bool? ?? true,
-        alreadyGranted: data['alreadyGranted'] as bool? ?? false,
-      );
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 409) {
-        // An older server refusing a token it has already granted, without saying to whom. The
-        // caller must not assume it was itself: that assumption is what consumed purchases
-        // belonging to a session the device had lost, spending them for good.
-        return const RedeemResult(
-            balance: -1, creditedToCaller: false, alreadyGranted: true);
-      }
-      rethrow; // transient / verification failure → keep pending, retry
-    }
-  }
-
-  /// Recovers a purchase whose owning session this device no longer has.
-  ///
-  /// Only ever moves credits from an abandoned anonymous account; the server refuses anything
-  /// else with a 403. Returns the credits moved.
-  Future<int> claimPurchase(String purchaseToken, String productId) async {
-    final res = await _dio.post('${Constants.baseUrl}/credits/claim-purchase',
+    final res = await _dio.post('${Constants.baseUrl}/credits/purchase',
         data: {'purchaseToken': purchaseToken, 'productId': productId});
-    final moved = ((res.data['data'] as Map)['creditsMoved'] as num).toInt();
-    if (moved > 0) await refreshBalance();
-    return moved;
+    final data = (res.data['data'] as Map).cast<String, dynamic>();
+    _balance = (data['credits'] as num).toInt();
+    notifyListeners();
+    // Defaulted rather than required: a 200 from this endpoint has always meant the caller was
+    // credited, and the server now guarantees it — ownership is the caller by construction. The
+    // flags are still read so a future server that qualifies a 200 is obeyed, not assumed away.
+    return RedeemResult(
+      balance: _balance,
+      creditedToCaller: data['creditedToCaller'] as bool? ?? true,
+      alreadyGranted: data['alreadyGranted'] as bool? ?? false,
+    );
   }
 
   /// Drops the cached balance when the signed-in identity changes.

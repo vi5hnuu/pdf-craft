@@ -81,9 +81,11 @@ class UpdateNudge {
         builder: (dialogContext) => AlertDialog(
           icon: const Icon(Icons.system_update_outlined),
           title: Text(L10n.of(dialogContext).updateAvailableTitle),
-          content: Text(config.updateMessage?.trim().isNotEmpty == true
-              ? config.updateMessage!.trim()
-              : L10n.of(dialogContext).updateAvailableBody),
+          // Deliberately not config.updateMessage: that column is the gate's copy, written to
+          // explain why a build has been withdrawn, and the same sentence shown as an optional
+          // nudge either alarms the reader or reads as nonsense. One server message cannot serve
+          // both tones, so the optional ask keeps its own wording.
+          content: Text(L10n.of(dialogContext).updateAvailableBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
