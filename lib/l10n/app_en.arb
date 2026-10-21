@@ -2092,6 +2092,19 @@
   "optionExportValuesHint": "One per option, comma separated. Leave empty to export what is shown.",
   "sectionStyle": "Colours & border",
   "purchaseRestored": "Your credits have been restored.",
+  "notNow": "Not now",
+  "creditsSignInToBuy": "Create an account to buy credit packs.",
+  "creditsGuestBuyTitle": "Create an account to buy",
+  "creditsGuestBuyBody": "Credit packs are tied to an account so a purchase can never be lost.",
+  "creditsGuestBuyBodyWithCredits": "{count, plural, =1{Credit packs are tied to an account so a purchase can never be lost. Your 1 credit comes with you.} other{Credit packs are tied to an account so a purchase can never be lost. Your {count} credits come with you.}}",
+  "@creditsGuestBuyBodyWithCredits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "purchaseNeedsAccount": "Create an account to receive these credits. Your purchase is held until you do, and refunded by Google if you don't.",
   "purchaseOtherAccount": "This purchase belongs to a different account. Sign in to that account to use its credits.",
   "updateRequiredTitle": "Update required",
   "updateRequiredBody": "This version is no longer supported. Update to the latest version to carry on.",

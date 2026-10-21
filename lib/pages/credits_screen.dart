@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf_craft/models/http_state.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf_craft/routes.dart';
+import 'package:pdf_craft/singletons/auth_service.dart';
 import 'package:pdf_craft/theme/app_spacing.dart';
 import 'package:pdf_craft/l10n/l10n.dart';
 import 'package:pdf_craft/singletons/credit_service.dart';
@@ -87,7 +90,9 @@ class _CreditsScreenState extends State<CreditsScreen> {
       body: RefreshIndicator(
         onRefresh: () => CreditService().load(),
         child: AnimatedBuilder(
-          animation: Listenable.merge([CreditService(), PurchaseService()]),
+          // AuthService included so converting lifts the guest gate below without the screen
+          // needing to be reopened.
+          animation: Listenable.merge([CreditService(), PurchaseService(), AuthService()]),
           builder: (context, _) => ListView(
             padding: AppSpacing.screenPadding,
             physics: const AlwaysScrollableScrollPhysics(),
@@ -127,6 +132,18 @@ class _CreditsScreenState extends State<CreditsScreen> {
                 ),
               const SizedBox(height: 24),
               Text(L10n.of(context).creditsBuy, style: theme.textTheme.titleMedium),
+              // Said up front rather than only in the dialog, so tapping a price is not a
+              // surprise. The prices stay visible either way — deciding whether an account is
+              // worth it means knowing what a pack costs.
+              if (AuthService().isGuest)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    L10n.of(context).creditsSignInToBuy,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ),
               const SizedBox(height: 8),
               ..._packs.map((p) => _packTile(theme, p)),
               if (PurchaseService().initialized && !PurchaseService().available)
@@ -307,9 +324,50 @@ class _CreditsScreenState extends State<CreditsScreen> {
     );
   }
 
-  Future<void> _buy(String productId) => _run(_actionBuy, () async {
-    // The result (credit grant) is handled globally by PurchaseService via the purchase
-    // stream, so it completes even if the user leaves this screen.
-    await PurchaseService().buy(productId);
-  });
+  Future<void> _buy(String productId) async {
+    // Asked before Play is involved, not after. The server will not credit a guest, and Play
+    // would still take the money, so a guest who gets as far as the purchase sheet has been sold
+    // something that cannot be delivered — recoverable only by a three-day refund.
+    if (AuthService().isGuest) {
+      await _offerAccount();
+      return;
+    }
+    return _run(_actionBuy, () async {
+      // The result (credit grant) is handled globally by PurchaseService via the purchase
+      // stream, so it completes even if the user leaves this screen.
+      await PurchaseService().buy(productId);
+    });
+  }
+
+  /// Invites a guest to create an account, which is what makes buying possible.
+  ///
+  /// Conversion keeps the same account, so their balance comes with them — which is the fact
+  /// that makes this a fair thing to ask, and so it is what the dialog leads with.
+  Future<void> _offerAccount() async {
+    final balance = CreditService().balance;
+    final create = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.account_circle_outlined),
+        title: Text(L10n.of(ctx).creditsGuestBuyTitle),
+        content: Text(balance > 0
+            ? L10n.of(ctx).creditsGuestBuyBodyWithCredits(balance)
+            : L10n.of(ctx).creditsGuestBuyBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.of(ctx).notNow),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.of(ctx).authCreateAccount),
+          ),
+        ],
+      ),
+    );
+    if (create != true || !mounted) return;
+    // The auth route defaults to create mode, which is the mode that converts this guest in
+    // place rather than switching to another account and leaving the balance behind.
+    context.pushNamed(AppRoutes.authRoute.name);
+  }
 }
